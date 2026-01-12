@@ -17,17 +17,18 @@ db.initialize().then(() => {
     const catalogoRoutes = require('./routes/catalogoRoutes.js');
     const muestraAliRoutes = require('./routes/muestraAliRoutes.js');
     const reporteTPARoutes = require('./routes/reporteTPARoutes.js');
-    //const reporteRAMRoutes = require('./routes/reporteRAMRoutes.js');
+    const reporteRAMRoutes = require('./routes/reporteRAMRoutes.js');
 
     app.use('/AsisTec/Usuarios', analistasRoutes);
     app.use('/AsisTec/Catalogos', catalogoRoutes);
     app.use('/AsisTec/MuestraALI', muestraAliRoutes);
     app.use('/AsisTec/ReporteTPA', reporteTPARoutes);
+    app.use('/AsisTec/ReporteRAM', reporteRAMRoutes);
 
     app.listen(port, () => {
         console.log(`El servidor esta corriendo en el puerto ${port}`);
     });
 }).catch(err => {
-    console.error("No se pudo iniciar la aplicación debido a un error en la base de datos");
+    console.error("No se pudo iniciar la aplicación debido a un error:", err); // Mostrar el error real
     process.exit(1);
 });

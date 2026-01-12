@@ -5,6 +5,8 @@ const ReporteTPA = {};
 /**
  * Crea un reporte TPA inicial cuando se crea una muestra ALI
  * Estado inicial: NO_REALIZADO
+ * @param {number} codigoALI
+ * @param {object} connection - Conexión transaccional compartida
  */
 ReporteTPA.crearReporteTPAInicial = async (codigoALI, connection = null) => {
     try {
@@ -313,7 +315,7 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
 
         await connection.execute(sqlReporteGeneral, {
             codigo_ali: datos.codigoALI, // Sincronizado con JSON
-            estado_actual: datos.estado || 'BORRADOR',
+            estado_actual: datos.estado,
             obs_finales: datos.etapa6_cierre?.observaciones || null,
             firma: datos.etapa6_cierre?.firma || 'Sin firma',
             rut_mod: rutUsuario

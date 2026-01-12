@@ -1,5 +1,6 @@
 const db = require('../config/DB.js');
 const ReporteTPA = require('./reporteTPAModel.js');
+const ReporteRAM = require('./reporteRAMModel.js');
 
 const MuestraALI = {};
 
@@ -23,6 +24,8 @@ MuestraALI.crearMuestraALI = async (datos, callback) => {
 
         // 2. Crear automáticamente el reporte TPA (usando la misma conexión)
         await ReporteTPA.crearReporteTPAInicial(codigo_ali, connection);
+
+        await ReporteRAM.crearReporteRAMInicial(codigo_ali, connection);
 
         // 3. Si todo salió bien, hacemos COMMIT de ambas operaciones
         await connection.commit();
