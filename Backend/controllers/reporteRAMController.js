@@ -57,5 +57,26 @@ exports.guardarReporteRAM = async (req, res) => {
 
 }
 
+exports.previewCalculoRAM = async (req, res) => {
+    try {
+        const { etapa3_repeticiones } = req.body;
+
+        if (!etapa3_repeticiones || !Array.isArray(etapa3_repeticiones)) {
+            return res.status(400).json({ mensaje: 'Se requieren datos de etapa3_repeticiones para calcular' });
+        }
+
+        const resultados = ReporteRAM.calcularUFC(etapa3_repeticiones);
+
+        res.status(200).json({
+            mensaje: "Cálculo realizado (Preview)",
+            resultados: resultados
+        });
+
+    } catch (error) {
+        console.error('Error al calcular preview RAM:', error);
+        res.status(500).json({ mensaje: 'Error al calcular resultados RAM' });
+    }
+}
+
 
 

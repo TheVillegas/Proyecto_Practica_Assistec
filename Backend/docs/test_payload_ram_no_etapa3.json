@@ -1,0 +1,63 @@
+{
+    "codigo_ali": 123456,
+    "estado": "REALIZADO",
+    "etapa1": {
+        "nombre_equipo_incubacion": "INCUBADORA 1",
+        "agar_plate_count": "LOTE-123",
+        "n_muestra_10gr": 1,
+        "n_muestra_50gr": 1,
+        "hora_inicio_homogenizado": "10:00",
+        "hora_termino_siembra": "11:00"
+    },
+    "etapa2": {
+        "responsableAnalisis": "",
+        "responsableIncubacion": "",
+        "fechaInicioIncubacion": "2024-01-13",
+        "fechaFinIncubacion": "2024-01-15",
+        "horaInicioIncubacion": "12:00",
+        "horaFinIncubacion": "12:00",
+        "micropipetaUtilizada": ""
+    },
+    "etapa4": {
+        "horaInicio": "08:00",
+        "horaFin": "08:30",
+        "temperatura": 35,
+        "blancoUfc": 0,
+        "controlUfc": 0,
+        "controlSiembraEcoli": "Conforme",
+        "controlAmbientalPesado": 0,
+        "ufc": 100
+    },
+    "etapa5": {
+        "desfavorable": 0,
+        "mercado": "Nacional",
+        "tablaPagina": "Tabla 1",
+        "limite": "5000",
+        "fechaEntrega": "2024-01-15",
+        "horaEntrega": "15:00"
+    },
+    "etapa6": {
+        "analisis": null,
+        "controlBlanco": "OK",
+        "controlBlancoEstado": 1,
+        "controlSiembra": "OK",
+        "controlSiembraEstado": 1,
+        "duplicadoAli": "OK",
+        "duplicadoEstado": 1
+    },
+    "etapa7": {
+        "observacionesFinales": "Prueba de guardado sin etapa 3",
+        "firmaCoordinador": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKwAEQAAAABJRU5ErkJggg==",
+        "observaciones_finales_analistas": "Sin observaciones",
+        "formasCalculo": [
+            {
+                "id": 1,
+                "seleccionado": true
+            },
+            {
+                "id": 2,
+                "seleccionado": false
+            }
+        ]
+    }
+}

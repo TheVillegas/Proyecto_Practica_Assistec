@@ -1,0 +1,29 @@
+{
+    "etapa3_repeticiones": [
+        {
+            "numeroMuestra": 1,
+            "dil_1": -1,
+            "dil_2": -2,
+            "suspension_inicial": "1/10",
+            "volumen_concentrado": 1,
+            "numeroColonias": [
+                94,
+                98,
+                0,
+                0
+            ],
+            "duplicado": {
+                "dil_1": -1,
+                "dil_2": -2,
+                "suspension_inicial": "1/10",
+                "volumen_concentrado": 1,
+                "numeroColonias": [
+                    90,
+                    95,
+                    0,
+                    0
+                ]
+            }
+        }
+    ]
+}
