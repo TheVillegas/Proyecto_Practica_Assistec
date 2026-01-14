@@ -331,7 +331,8 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
         // --- ETAPA 3: MUESTRAS (Compleja - Función Auxiliar) ---
         if (datos.etapa3_repeticiones && Array.isArray(datos.etapa3_repeticiones)) {
             console.log("Procesando Etapa 3 (Muestras)...");
-            await ReporteRAM.procesarEtapa3RAM(connection, datos.codigo_ali || datos.codigoALI, datos.etapa3_repeticiones);
+            // Pasamos también el objeto duplicado hermano si existe
+            await ReporteRAM.procesarEtapa3RAM(connection, datos.codigo_ali || datos.codigoALI, datos.etapa3_repeticiones, datos.duplicado);
         }
 
         // --- ETAPA 4: LECTURA ---
@@ -492,7 +493,7 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
     }
 };
 
-ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras) => {
+ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicadoGlobal = null) => {
     // 1. Limpiar datos previos (Delete Cascade manual si no está configurado en BD)
     // Primero duplicados (Hija)
     const sqlDelDup = `DELETE FROM RAM_ETAPA3_DUPLICADO WHERE codigo_ali = :codigo_ali`;
@@ -525,14 +526,15 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras) => {
         )
     `;
 
+    // Mapa para rastrear: numero_muestra (del JSON) -> ID_GENERADO (BD)
+    const mapaMuestrasId = {};
+
     for (const m of muestras) {
         // Insertar Muestra
-        // NOTA DE CAMBIO: dis1/dis2 ahora se usan para guardar 'suspension_inicial' y 'volumen' si es necesario, 
-        // o asumimos que disolucion_1/2 en BD se reutilizan para estos nuevos conceptos.
         const resultMuestra = await connection.execute(sqlInsertMuestra, {
             codigo: codigoALI,
             num: m.numeroMuestra,
-            dis1: m.suspensionInicial || m.suspension_inicial || null, // Antes disolucion_1
+            dis1: ReporteRAM.interpretarSuspension(m.suspensionInicial || m.suspension_inicial), // Lógica mejorada: 10 -> 0.1
             dil1: m.dil || m.dil_1 || null,
             dis2: m.volumen || m.volumen_concentrado || null,          // Antes disolucion_2 (Reutilizada para volumen)
             dil2: m.dil2 || m.dil_2 || null,
@@ -545,7 +547,12 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras) => {
 
         const idMuestraGenerado = resultMuestra.outBinds.id_muestra_out[0];
 
-        // Insertar Duplicado si existe
+        // Guardamos el ID generado mapeado al numero de muestra del JSON
+        if (m.numeroMuestra) {
+            mapaMuestrasId[m.numeroMuestra] = idMuestraGenerado;
+        }
+
+        // --- RETROCOMPATIBILIDAD: Insertar Duplicado si viene ANIDADO (formato antiguo) ---
         if (m.duplicado) {
             await connection.execute(sqlInsertDup, {
                 codigo: codigoALI,
@@ -561,9 +568,89 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras) => {
             });
         }
     }
+
+    // --- NUEVO LÓGICA: Insertar Duplicado si viene como HERMANO (formato nuevo) ---
+    if (duplicadoGlobal && duplicadoGlobal.numero_muestra_duplicada) {
+        const numTarget = duplicadoGlobal.numero_muestra_duplicada;
+        const idOriginalTarget = mapaMuestrasId[numTarget];
+
+        if (idOriginalTarget) {
+            await connection.execute(sqlInsertDup, {
+                codigo: codigoALI,
+                id_orig: idOriginalTarget,
+                id_orig: idOriginalTarget,
+                dis1: ReporteRAM.parsearFraccion(duplicadoGlobal.suspensionInicial || duplicadoGlobal.suspension_inicial) || null,
+                dil1: duplicadoGlobal.dil_1 || duplicadoGlobal.dil || null,
+                dis2: duplicadoGlobal.volumen || duplicadoGlobal.volumen_concentrado || null,
+                dil2: duplicadoGlobal.dil_2 || duplicadoGlobal.dil2 || null,
+                c1: duplicadoGlobal.numeroColonias ? duplicadoGlobal.numeroColonias[0] : null,
+                c2: duplicadoGlobal.numeroColonias ? duplicadoGlobal.numeroColonias[1] : null,
+                c3: duplicadoGlobal.numeroColonias ? duplicadoGlobal.numeroColonias[2] : null,
+                c4: duplicadoGlobal.numeroColonias ? duplicadoGlobal.numeroColonias[3] : null
+            });
+        } else {
+            console.warn(`Advertencia: No se encontró la muestra original numero ${numTarget} para asociar el duplicado.`);
+        }
+    }
 };
 
 // --- FUNCIONES AUXILIARES DE CÁLCULO ---
+
+/**
+ * Selecciona las mejores diluciones consecutivas descartando MNPC (>300).
+ * Recibe array: [{dil: -2, colonias: [300, 310]}, {dil: -3, colonias: [42, 46]}]
+ */
+ReporteRAM.seleccionarMejoresDiluciones = (listaDiluciones) => {
+    if (!listaDiluciones || listaDiluciones.length === 0) return { dil1: -1, colonias: [] };
+
+    // 1. Ordenar por dilución (más concentrado a más diluido: -1, -2, -3...)
+    // Ojo: -1 > -2.
+    const ordenadas = [...listaDiluciones].sort((a, b) => b.dil - a.dil);
+
+    // 2. Filtrar válidas (que no sean MNPC => conteo <= 300)
+    // Asumimos que si CUALQUIERA de las placas es > 300, la dilución es MNPC (o si la suma es muy alta).
+    // ISO dice > 300 por placa (o > 150 según versión). Usaremos 300 como corte seguro.
+    const validas = ordenadas.filter(d => {
+        if (!d.colonias) return false;
+        // Si alguna placa tiene > 300, descartar.
+        return d.colonias.every(c => c <= 300);
+    });
+
+    if (validas.length === 0) return { dil1: -1, colonias: [] }; // Todo incontable
+
+    // 3. Buscar par consecutivo (ej: -3 y -4)
+    // Como están ordenadas (-2, -3, -4), buscamos d[i] y d[i+1] tal que d[i].dil - 1 == d[i+1].dil
+    for (let i = 0; i < validas.length - 1; i++) {
+        const d1 = validas[i];
+        const d2 = validas[i + 1];
+
+        // Verificar si son consecutivas (ej: -3 y -4)
+        // d1.dil (-3) - 1 === d2.dil (-4)
+        if (d1.dil - 1 === d2.dil) {
+            // ENCONTRADO PAR VÁLIDO CONSECUTIVO
+            // Formatear para calcularFormulaISO: [c1_a, c1_b, c2_a, c2_b]
+            const c1 = d1.colonias || [0, 0];
+            const c2 = d2.colonias || [0, 0];
+            const coloniasFlat = [c1[0], c1[1], c2[0], c2[1]];
+
+            return {
+                dil1: d1.dil,
+                colonias: coloniasFlat
+            };
+        }
+    }
+
+    // 4. Si no hay pares consecutivos, devolver la primera válida encontrada (la más concentrada válida)
+    // Esto pasa si solo hay una dilución válida.
+    const d1 = validas[0];
+    const c1 = d1.colonias || [0, 0];
+    // Rellenamos dilución 2 con ceros implícitos
+    return {
+        dil1: d1.dil,
+        colonias: [c1[0], c1[1], 0, 0]
+    };
+};
+
 /**
  * Calcula el resultado UFC basado en los conteos de colonias y diluciones.
  * Fórmula Estándar ISO 7218: N = Suma(C) / (V * (n1 + 0.1*n2) * d)
@@ -590,47 +677,131 @@ ReporteRAM.calcularItemIndividual = (muestras) => {
     const resultados = [];
 
     for (const m of muestras) {
-        // Obtenemos el exponente principal para el cálculo (preferencia: dil > disolucion)
-        const dilucionInput = m.dil || m.dil_1;
-        const volumenInput = m.volumen || m.volumen_concentrado || 1; // Default 1 ml
+        // --- CALCULO MUESTRA ---
+        let dilucionInput = null;
+        let volumenInput = 1;
+        let coloniasInput = [];
 
-        const resMuestra = ReporteRAM.calcularFormulaISO(m.numeroColonias, dilucionInput, volumenInput);
-
-        let resDuplicado = null;
-        if (m.duplicado) {
-            const dilDup = m.duplicado.dil || m.duplicado.dil01 || m.duplicado.dil_1;
-            const volDup = m.duplicado.volumen || m.duplicado.volumen_concentrado || 1;
-
-            resDuplicado = ReporteRAM.calcularFormulaISO(
-                m.duplicado.numeroColonias,
-                dilDup,
-                volDup
-            );
+        // Modo Automático (Opción B)
+        if (m.diluciones && Array.isArray(m.diluciones) && m.diluciones.length > 0) {
+            const seleccion = ReporteRAM.seleccionarMejoresDiluciones(m.diluciones);
+            dilucionInput = seleccion.dil1;
+            coloniasInput = seleccion.colonias;
+            volumenInput = m.volumen || m.volumen_concentrado || 1;
+        }
+        // Modo Manual (Legacy)
+        else {
+            dilucionInput = m.dil || m.dil_1;
+            if (dilucionInput === undefined || dilucionInput === null) {
+                dilucionInput = ReporteRAM.interpretarSuspension(m.suspensionInicial || m.suspension_inicial);
+                if (dilucionInput > 0 && dilucionInput < 1) { dilucionInput = Math.log10(dilucionInput); }
+            }
+            volumenInput = m.volumen || m.volumen_concentrado || 1;
+            coloniasInput = m.numeroColonias;
         }
 
-        resultados.push({
+        const resMuestra = ReporteRAM.calcularFormulaISO(coloniasInput, dilucionInput, volumenInput);
+
+        // --- CALCULO DUPLICADO ---
+        let resDuplicado = null;
+        // Check si existe duplicado (ya sea anidado antiguo o con estructura nueva)
+        if (m.duplicado && (m.duplicado.numeroColonias || (m.duplicado.diluciones && m.duplicado.diluciones.length > 0))) {
+            let dilDup = null;
+            let colDup = [];
+            let volDup = 1;
+
+            // Modo Automático Duplicado
+            if (m.duplicado.diluciones && Array.isArray(m.duplicado.diluciones) && m.duplicado.diluciones.length > 0) {
+                const selDup = ReporteRAM.seleccionarMejoresDiluciones(m.duplicado.diluciones);
+                dilDup = selDup.dil1;
+                colDup = selDup.colonias;
+                volDup = m.duplicado.volumen || m.duplicado.volumen_concentrado || 1;
+            }
+            // Modo Manual Duplicado
+            else {
+                dilDup = m.duplicado.dil || m.duplicado.dil01 || m.duplicado.dil_1 || null;
+                if (dilDup === null) {
+                    dilDup = ReporteRAM.interpretarSuspension(m.duplicado.suspensionInicial || m.duplicado.suspension_inicial);
+                    if (dilDup > 0 && dilDup < 1) { dilDup = Math.log10(dilDup); }
+                }
+                volDup = m.duplicado.volumen || m.duplicado.volumen_concentrado || 1;
+                colDup = m.duplicado.numeroColonias;
+            }
+
+            resDuplicado = ReporteRAM.calcularFormulaISO(colDup, dilDup, volDup);
+        }
+
+        // --- POLIMORFISMO: Prioridad al Duplicado ---
+        // Si hay duplicado calculado, ese es el valor que mostramos en "muestra".
+        let valorFinal = (resDuplicado !== null) ? resDuplicado : resMuestra;
+
+        const itemResultado = {
             numeroMuestra: m.numeroMuestra,
             muestra: {
-                valor: resMuestra,
-                resultadoRAM: ReporteRAM.formatoCientifico(resMuestra),
-                resultadoRPES: Math.round(resMuestra)
+                valor: valorFinal,
+                resultadoRAM: ReporteRAM.formatoCientifico(valorFinal),
+                resultadoRPES: Math.round(valorFinal)
             },
-            duplicado: resDuplicado !== null ? {
-                valor: resDuplicado,
-                resultadoRAM: ReporteRAM.formatoCientifico(resDuplicado),
-                resultadoRPES: Math.round(resDuplicado)
-            } : null,
-            // Valor consolidado para guardar en etapa4 (UFC final) - Usamos muestra 1 por defecto o promedio?
-            // Por ahora devolvemos la muestra 1 como principal para compatibilidad
-            ufc: Math.round(resMuestra)
-        });
+            ufc: Math.round(valorFinal)
+        };
+
+        resultados.push(itemResultado);
     }
-    // Si solo hay 1 muestra, devolvemos objeto plano con propiedad ufc para compatibilidad, 
-    // pero también el detalle 'resultados' para el frontend.
+
     return {
         ufc: resultados.length > 0 ? resultados[0].muestra.resultadoRPES : 0,
         detalle: resultados
     };
+};
+
+/**
+ * Interpreta la suspensión inicial.
+ * - Si es null/undefined -> Retorna DEFAULT 0.1 (1/10)
+ * - Soporta "1/10" -> 0.1
+ * - Soporta 10 (entero >= 1) -> 1/10 = 0.1 (Usuario envía denominador)
+ * - Soporta 0.1 -> 0.1
+ */
+ReporteRAM.interpretarSuspension = (valor) => {
+    // 1. Default si no viene nada: 1/10
+    if (valor === undefined || valor === null || valor === '') return 0.1;
+
+    // 2. Parsear string fraccionario si viene
+    const parsed = ReporteRAM.parsearFraccion(valor);
+    if (parsed === null) return 0.1; // Backup default
+
+    // 3. Si el valor es >= 1, asumimos que es el denominador X de 1/X
+    // Ej: 10 -> 1/10 = 0.1
+    // Ej: 100 -> 1/100 = 0.01
+    // Excepción de seguridad: Si es exactamente 1, 1/1 = 1.
+    if (parsed >= 1) {
+        return 1 / parsed;
+    }
+
+    // 4. Si es < 1 (ej 0.1), se asume que ya es el factor
+    return parsed;
+};
+
+/**
+ * Convierte inputs como "1/10" o "1:10" a decimal 0.1.
+ * Si es número, lo devuelve tal cual.
+ */
+ReporteRAM.parsearFraccion = (valor) => {
+    if (valor === undefined || valor === null) return null;
+    if (typeof valor === 'number') return valor;
+
+    // Si viene como string
+    const vStr = String(valor).trim();
+
+    if (vStr.includes('/')) {
+        const [num, den] = vStr.split('/');
+        return parseFloat(num) / parseFloat(den);
+    }
+    if (vStr.includes(':')) {
+        const [num, den] = vStr.split(':');
+        return parseFloat(num) / parseFloat(den);
+    }
+
+    return parseFloat(vStr);
 };
 
 ReporteRAM.calcularFormulaISO = (colonias, dilucionInput, volumenInput = 1) => {
@@ -645,8 +816,22 @@ ReporteRAM.calcularFormulaISO = (colonias, dilucionInput, volumenInput = 1) => {
     if (colonias[1] !== null && colonias[1] !== undefined) { sumaColonias += colonias[1]; n1++; }
 
     // Placas 3 y 4 (Dilución 2)
-    if (colonias[2] !== null && colonias[2] !== undefined) { sumaColonias += colonias[2]; n2++; }
-    if (colonias[3] !== null && colonias[3] !== undefined) { sumaColonias += colonias[3]; n2++; }
+    let sum2 = 0;
+    let n2Count = 0;
+    if (colonias[2] !== null && colonias[2] !== undefined) { sum2 += colonias[2]; n2Count++; }
+    if (colonias[3] !== null && colonias[3] !== undefined) { sum2 += colonias[3]; n2Count++; }
+
+    // Lógica Específica (Like Excel): Si la suma de col onias en la segunda dilución es 0,
+    // se asume que no es significativa o no se realizaron placas válidas para el cálculo ponderado.
+    // Especialmente si la primera dilución SÍ tiene recuento.
+    // Esto cambia el denominador de (n1 + 0.1n2) -> (n1).
+    if (sum2 > 0) {
+        sumaColonias += sum2;
+        n2 = n2Count;
+    } else {
+        // Ignoramos n2 si es 0 colonias (aunque n2Count sea 2). 
+        // Excel parece descartar la segunda dilución si da 0.
+    }
 
     if ((n1 + n2) === 0) return 0;
 

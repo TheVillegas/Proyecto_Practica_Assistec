@@ -1,0 +1,32 @@
+{
+    "etapa3_repeticiones": [
+        {
+            "numeroMuestra": 1,
+            "suspension_inicial": 10,
+            "volumen_concentrado": 1,
+            "diluciones": [
+                {
+                    "dil": -2,
+                    "colonias": [
+                        305,
+                        310
+                    ]
+                },
+                {
+                    "dil": -3,
+                    "colonias": [
+                        42,
+                        46
+                    ]
+                },
+                {
+                    "dil": -4,
+                    "colonias": [
+                        0,
+                        0
+                    ]
+                }
+            ]
+        }
+    ]
+}
