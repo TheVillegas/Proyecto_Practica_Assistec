@@ -111,16 +111,37 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
             }
         }
 
-        // Mapeo directo de columnas DB a JSON
+        // 6. Mapeo de columnas DB a JSON (Formato nuevo con diluciones múltiples)
         const muestras = resultMuestras.rows.map(m => {
             const dup = dupResult.find(d => d.ID_MUESTRA_ORIGINAL === m.ID_MUESTRA);
 
+            // Reconstruir el array de diluciones desde DIL_1 y DIL_2
+            const diluciones = [];
+            if (m.DIL_1 !== null) {
+                diluciones.push({
+                    dil: m.DIL_1,
+                    colonias: [m.C1, m.C2].filter(c => c !== null)
+                });
+            }
+            if (m.DIL_2 !== null) {
+                diluciones.push({
+                    dil: m.DIL_2,
+                    colonias: [m.C3, m.C4].filter(c => c !== null)
+                });
+            }
+
             return {
+                numero_Muestra: m.NUMERO_MUESTRA,
+                volumen: m.VOLUMEN || 1, // Si no está guardado, asumir 1
+                diluciones: diluciones,
+                resultado_ram: m.RESULTADO_RAM,
+                resultado_rpes: m.RESULTADO_RPES,
+                sumaColonias: m.SUMATORIA_COLONIAS,
+                promedio: m.PROMEDIO_COLONIAS,
+                n1: m.N1,
+                n2: m.N2,
+                // Retrocompatibilidad con formato antiguo (por si acaso)
                 numeroMuestra: m.NUMERO_MUESTRA,
-                disolucion: m.DISOLUCION_1,
-                dil: m.DIL_1,
-                disolucion2: m.DISOLUCION_2,
-                dil2: m.DIL_2,
                 numeroColonias: [m.C1, m.C2, m.C3, m.C4].filter(c => c !== null),
                 duplicado: dup ? {
                     codigoALI: dup.CODIGO_ALI,
@@ -328,14 +349,17 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
             });
         }
 
-        // --- ETAPA 3: MUESTRAS (Compleja - Función Auxiliar) ---
+        // --- ETAPA 3: MUESTRAS (Refactorizada - Mapeo directo del JSON) ---
         if (datos.etapa3_repeticiones && Array.isArray(datos.etapa3_repeticiones)) {
-            console.log("Procesando Etapa 3 (Muestras)...");
-            // Pasamos también el objeto duplicado hermano si existe
-            await ReporteRAM.procesarEtapa3RAM(connection, datos.codigo_ali || datos.codigoALI, datos.etapa3_repeticiones, datos.duplicado);
+            console.log("Procesando Etapa 3 (Muestras con resultados calculados)...");
+            await ReporteRAM.procesarEtapa3RAM(
+                connection,
+                datos.codigo_ali || datos.codigoALI,
+                datos.etapa3_repeticiones,
+                datos.duplicado
+            );
         }
 
-        // --- ETAPA 4: LECTURA ---
         if (datos.etapa4) {
             console.log("Procesando Etapa 4 (Lectura)...");
             const e4 = datos.etapa4;
@@ -493,105 +517,94 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
     }
 };
 
+/**
+ * Procesa y guarda las muestras de la Etapa 3 del reporte RAM
+ * Mapea el JSON con diluciones múltiples y resultados pre-calculados a RAM_ETAPA3_MUESTRAS
+ * @param {object} connection - Conexión transaccional de Oracle
+ * @param {string} codigoALI - Código de la muestra ALI
+ * @param {Array} muestras - Array de muestras con formato: {codigo_ali, numero_Muestra, volumen, diluciones[], resultado_ram, resultado_rpes, ...}
+ * @param {object} duplicadoGlobal - Objeto duplicado (formato nuevo, hermano de etapa3_repeticiones)
+ */
 ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicadoGlobal = null) => {
-    // 1. Limpiar datos previos (Delete Cascade manual si no está configurado en BD)
-    // Primero duplicados (Hija)
-    const sqlDelDup = `DELETE FROM RAM_ETAPA3_DUPLICADO WHERE codigo_ali = :codigo_ali`;
-    await connection.execute(sqlDelDup, { codigo_ali: codigoALI });
+    console.log(`[Etapa 3] Procesando ${muestras.length} muestras para ALI ${codigoALI}`);
 
-    // Segundo muestras (Padre de duplicados)
+    // 1. Limpiar datos previos de esta muestra ALI
     const sqlDelMuestras = `DELETE FROM RAM_ETAPA3_MUESTRAS WHERE codigo_ali = :codigo_ali`;
     await connection.execute(sqlDelMuestras, { codigo_ali: codigoALI });
 
-    // 2. Insertar nuevas muestras
+    // 2. SQL de inserción con TODOS los campos calculados
     const sqlInsertMuestra = `
         INSERT INTO RAM_ETAPA3_MUESTRAS (
-            CODIGO_ALI, NUMERO_MUESTRA, DISOLUCION_1, DIL_1, 
-            DISOLUCION_2, DIL_2, C1, C2, C3, C4
+            CODIGO_ALI, NUMERO_MUESTRA, DIL_1, DIL_2, 
+            C1, C2, C3, C4,
+            RESULTADO_RAM, RESULTADO_RPES, PROMEDIO_COLONIAS,
+            N1, N2, SUMATORIA_COLONIAS
         ) VALUES (
-            :codigo, :num, :dis1, :dil1,
-            :dis2, :dil2, :c1, :c2, :c3, :c4
-        ) returning ID_MUESTRA into :id_muestra_out
-    `;
-
-    const sqlInsertDup = `
-        INSERT INTO RAM_ETAPA3_DUPLICADO (
-            CODIGO_ALI, ID_MUESTRA_ORIGINAL, 
-            DISOLUCION_DUP_1, DIL_DUP_1, DISOLUCION_DUP_2, DIL_DUP_2,
-            C_DUP_1, C_DUP_2, C_DUP_3, C_DUP_4
-        ) VALUES (
-            :codigo, :id_orig,
-            :dis1, :dil1, :dis2, :dil2,
-            :c1, :c2, :c3, :c4
+            :codigo, :num, :dil1, :dil2,
+            :c1, :c2, :c3, :c4,
+            :resultado_ram, :resultado_rpes, :promedio,
+            :n1, :n2, :suma_colonias
         )
     `;
 
-    // Mapa para rastrear: numero_muestra (del JSON) -> ID_GENERADO (BD)
-    const mapaMuestrasId = {};
-
+    // 3. Procesar cada muestra del array
     for (const m of muestras) {
-        // Insertar Muestra
-        const resultMuestra = await connection.execute(sqlInsertMuestra, {
+        console.log(`[Etapa 3] Procesando muestra ${m.numero_Muestra} para ALI ${codigoALI}`);
+
+        // --- EXTRACCIÓN DE DILUCIONES ---
+        let dil1 = null;
+        let dil2 = null;
+        if (m.diluciones && Array.isArray(m.diluciones) && m.diluciones.length > 0) {
+            // Primera dilución
+            dil1 = m.diluciones[0].dil;
+            // Segunda dilución (si existe)
+            if (m.diluciones.length > 1) {
+                dil2 = m.diluciones[1].dil;
+            }
+        }
+
+        // --- EXTRACCIÓN DE TODAS LAS COLONIAS ---
+        // Concatenar colonias de TODAS las diluciones en un solo array
+        let todasLasColonias = [];
+        if (m.diluciones && Array.isArray(m.diluciones)) {
+            m.diluciones.forEach(d => {
+                if (d.colonias && Array.isArray(d.colonias)) {
+                    todasLasColonias = todasLasColonias.concat(d.colonias);
+                }
+            });
+        }
+
+        // Mapear a C1, C2, C3, C4 (máximo 4 colonias)
+        // Convertir "MNPC" a null para la base de datos
+        const c1 = todasLasColonias[0] !== undefined && todasLasColonias[0] !== "MNPC" ? todasLasColonias[0] : null;
+        const c2 = todasLasColonias[1] !== undefined && todasLasColonias[1] !== "MNPC" ? todasLasColonias[1] : null;
+        const c3 = todasLasColonias[2] !== undefined && todasLasColonias[2] !== "MNPC" ? todasLasColonias[2] : null;
+        const c4 = todasLasColonias[3] !== undefined && todasLasColonias[3] !== "MNPC" ? todasLasColonias[3] : null;
+
+        // --- MAPEO DIRECTO DE RESULTADOS CALCULADOS ---
+        // Los resultados ya vienen calculados del frontend, solo mapeamos
+        await connection.execute(sqlInsertMuestra, {
             codigo: codigoALI,
-            num: m.numeroMuestra,
-            dis1: ReporteRAM.interpretarSuspension(m.suspensionInicial || m.suspension_inicial), // Lógica mejorada: 10 -> 0.1
-            dil1: m.dil || m.dil_1 || null,
-            dis2: m.volumen || m.volumen_concentrado || null,          // Antes disolucion_2 (Reutilizada para volumen)
-            dil2: m.dil2 || m.dil_2 || null,
-            c1: m.numeroColonias ? m.numeroColonias[0] : null,
-            c2: m.numeroColonias ? m.numeroColonias[1] : null,
-            c3: m.numeroColonias ? m.numeroColonias[2] : null,
-            c4: m.numeroColonias ? m.numeroColonias[3] : null,
-            id_muestra_out: { type: db.oracledb.NUMBER, dir: db.oracledb.BIND_OUT }
+            num: m.numero_Muestra,
+            dil1: dil1,
+            dil2: dil2,
+            c1: c1,
+            c2: c2,
+            c3: c3,
+            c4: c4,
+            // Resultados pre-calculados del JSON
+            resultado_ram: m.resultado_ram || null,
+            resultado_rpes: m.resultado_rpes || null,
+            promedio: m.promedio !== undefined ? m.promedio : null,
+            n1: m.n1 || null,
+            n2: m.n2 || null,
+            suma_colonias: m.sumaColonias || null
         });
 
-        const idMuestraGenerado = resultMuestra.outBinds.id_muestra_out[0];
-
-        // Guardamos el ID generado mapeado al numero de muestra del JSON
-        if (m.numeroMuestra) {
-            mapaMuestrasId[m.numeroMuestra] = idMuestraGenerado;
-        }
-
-        // --- RETROCOMPATIBILIDAD: Insertar Duplicado si viene ANIDADO (formato antiguo) ---
-        if (m.duplicado) {
-            await connection.execute(sqlInsertDup, {
-                codigo: codigoALI,
-                id_orig: idMuestraGenerado,
-                dis1: m.duplicado.suspensionInicial || m.duplicado.suspension_inicial || null,
-                dil1: m.duplicado.dil01 || m.duplicado.dil_1 || m.duplicado.dil || null,
-                dis2: m.duplicado.volumen || m.duplicado.volumen_concentrado || null,
-                dil2: m.duplicado.dil02 || m.duplicado.dil_2 || m.duplicado.dil2 || null,
-                c1: m.duplicado.numeroColonias ? m.duplicado.numeroColonias[0] : null,
-                c2: m.duplicado.numeroColonias ? m.duplicado.numeroColonias[1] : null,
-                c3: m.duplicado.numeroColonias ? m.duplicado.numeroColonias[2] : null,
-                c4: m.duplicado.numeroColonias ? m.duplicado.numeroColonias[3] : null
-            });
-        }
+        console.log(`[Etapa 3] ✓ Muestra ${m.numero_Muestra} guardada con resultado: ${m.resultado_ram}`);
     }
 
-    // --- NUEVO LÓGICA: Insertar Duplicado si viene como HERMANO (formato nuevo) ---
-    if (duplicadoGlobal && duplicadoGlobal.numero_muestra_duplicada) {
-        const numTarget = duplicadoGlobal.numero_muestra_duplicada;
-        const idOriginalTarget = mapaMuestrasId[numTarget];
-
-        if (idOriginalTarget) {
-            await connection.execute(sqlInsertDup, {
-                codigo: codigoALI,
-                id_orig: idOriginalTarget,
-                id_orig: idOriginalTarget,
-                dis1: ReporteRAM.parsearFraccion(duplicadoGlobal.suspensionInicial || duplicadoGlobal.suspension_inicial) || null,
-                dil1: duplicadoGlobal.dil_1 || duplicadoGlobal.dil || null,
-                dis2: duplicadoGlobal.volumen || duplicadoGlobal.volumen_concentrado || null,
-                dil2: duplicadoGlobal.dil_2 || duplicadoGlobal.dil2 || null,
-                c1: duplicadoGlobal.numeroColonias ? duplicadoGlobal.numeroColonias[0] : null,
-                c2: duplicadoGlobal.numeroColonias ? duplicadoGlobal.numeroColonias[1] : null,
-                c3: duplicadoGlobal.numeroColonias ? duplicadoGlobal.numeroColonias[2] : null,
-                c4: duplicadoGlobal.numeroColonias ? duplicadoGlobal.numeroColonias[3] : null
-            });
-        } else {
-            console.warn(`Advertencia: No se encontró la muestra original numero ${numTarget} para asociar el duplicado.`);
-        }
-    }
+    console.log(`[Etapa 3] ✓ Procesamiento completado para ${muestras.length} muestras`);
 };
 
 // ============================================================================
@@ -601,10 +614,9 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicado
 // --- CONSTANTES ISO 7218 ---
 const MIN_CONTABLE = 10;
 const MAX_CONTABLE = 225;
-const AREA_PLACA = 65; // cm²
+const AREA_PLACA = 57; // cm²
 const LIMITE_SATURACION = 100; // ufc/cm²
-const UMBRAL_MNPC = AREA_PLACA * LIMITE_SATURACION; // 6500
-
+const UMBRAL_MNPC = AREA_PLACA * LIMITE_SATURACION; // 5700
 /**
  * Parsea valores de colonias, convirtiendo strings "MNPC" o "Incontable" a valores numéricos altos
  * @param {*} valor - Valor a parsear (número o string)
@@ -720,13 +732,24 @@ ReporteRAM.calcularMediaPonderada = (diluciones, volumen) => {
         n2 = dil2.optimas.length;
     }
 
-    // Factor de dilución (10^dil)
-    const d = Math.pow(10, Math.abs(dil1.dil));
+    let promedio = 0;
 
-    // Fórmula ISO
+    // Calcular promedio SOLO cuando hay UNA sola dilución válida (no dos consecutivas)
+    if (!dil2 && n1 > 0) {
+        // Caso: Solo 1 dilución → promedio de sus colonias
+        promedio = sumaC / n1;
+    }
+    // Si hay 2 diluciones consecutivas, promedio = 0 (no se usa)
+
+    // Factor de dilución (10^-dil)
+    // El usuario ingresa diluciones POSITIVAS (2, 3, 4...)
+    // Las convertimos a NEGATIVAS: Si dil = 3, entonces 10^(-3) = 0.001
+    const d = Math.pow(10, -Math.abs(dil1.dil));
+
+    // Fórmula ISO: N = ΣC / (V × (n1 + 0.1×n2) × 10^(-dil))
     const denominador = volumen * (n1 + 0.1 * n2) * d;
 
-    return denominador > 0 ? sumaC / denominador : 0;
+    return denominador > 0 ? { ufc: sumaC / denominador, sumaColonias: sumaC, promedio: promedio, n1: n1, n2: n2, dilucion: dil1.dil, factorDilucion: d } : { ufc: 0, sumaColonias: 0, promedio: 0, n1: 0, n2: 0, dilucion: null, factorDilucion: 0 };
 };
 
 /**
@@ -784,10 +807,16 @@ ReporteRAM.calcularRecuentoColonias = (datos) => {
         // PRIORIDAD 1: Cálculo Estándar (ISO)
         const optimales = dilucionesClasificadas.filter(d => d.tipo === 'RANGO_OPTIMO');
         if (optimales.length > 0) {
-            const ufc = ReporteRAM.calcularMediaPonderada(optimales, volumen);
+            const resultados = ReporteRAM.calcularMediaPonderada(optimales, volumen);
             return {
-                ufc: ufc,
-                textoReporte: ReporteRAM.formatearResultado(ufc, '=', false),
+                ufc: resultados.ufc,
+                sumaColonias: resultados.sumaColonias,
+                promedio: resultados.promedio,
+                n1: resultados.n1,
+                n2: resultados.n2,
+                dilucion: resultados.dilucion,
+                factorDilucion: resultados.factorDilucion,
+                textoReporte: ReporteRAM.formatearResultado(resultados.ufc, '=', false),
                 operador: '=',
                 esEstimado: false,
                 casoAplicado: 'PRIORIDAD_1'
@@ -799,11 +828,21 @@ ReporteRAM.calcularRecuentoColonias = (datos) => {
         if (bajas.length > 0) {
             // Tomar la dilución menor (más concentrada)
             const dilMenor = bajas.reduce((min, d) => d.dil > min.dil ? d : min, bajas[0]);
-            const d = Math.pow(10, Math.abs(dilMenor.dil));
+            const d = Math.pow(10, -Math.abs(dilMenor.dil));
             const resultado = 25 / (volumen * d);
+
+            // Calcular suma y conteo de placas
+            const sumaColonias = dilMenor.bajas.reduce((sum, c) => sum + c, 0);
+            const n1 = dilMenor.bajas.length;
 
             return {
                 ufc: resultado,
+                sumaColonias: sumaColonias,
+                promedio: n1 > 0 ? sumaColonias / n1 : 0,
+                n1: n1,
+                n2: 0,
+                dilucion: dilMenor.dil,
+                factorDilucion: d,
                 textoReporte: ReporteRAM.formatearResultado(resultado, '<', false),
                 operador: '<',
                 esEstimado: false,
@@ -821,13 +860,22 @@ ReporteRAM.calcularRecuentoColonias = (datos) => {
             const colonias = dilMayor.coloniasParsed.filter(c => c !== null);
             const promedio = colonias.reduce((sum, c) => sum + c, 0) / colonias.length;
 
-            const d = Math.pow(10, Math.abs(dilMayor.dil));
+            const d = Math.pow(10, -Math.abs(dilMayor.dil));
 
             // Sub-Caso A: Exceso Contable
             if (promedio < UMBRAL_MNPC) {
                 const ufc = promedio / (volumen * d);
+                const sumaColonias = colonias.reduce((sum, c) => sum + c, 0);
+                const n1 = colonias.length;
+
                 return {
                     ufc: ufc,
+                    sumaColonias: sumaColonias,
+                    promedio: promedio,
+                    n1: n1,
+                    n2: 0,
+                    dilucion: dilMayor.dil,
+                    factorDilucion: d,
                     textoReporte: ReporteRAM.formatearResultado(ufc, '=', true),
                     operador: '=',
                     esEstimado: true,
@@ -837,8 +885,17 @@ ReporteRAM.calcularRecuentoColonias = (datos) => {
             // Sub-Caso B: Saturación MNPC
             else {
                 const resultado = UMBRAL_MNPC / (volumen * d);
+                const sumaColonias = colonias.reduce((sum, c) => sum + c, 0);
+                const n1 = colonias.length;
+
                 return {
-                    ufc: null,
+                    ufc: resultado,
+                    sumaColonias: sumaColonias,
+                    promedio: promedio,
+                    n1: n1,
+                    n2: 0,
+                    dilucion: dilMayor.dil,
+                    factorDilucion: d,
                     textoReporte: ReporteRAM.formatearResultado(resultado, '>', false),
                     operador: '>',
                     esEstimado: false,
@@ -852,11 +909,20 @@ ReporteRAM.calcularRecuentoColonias = (datos) => {
         if (sinCrecimiento.length > 0) {
             // Tomar la dilución menor (más concentrada)
             const dilMenor = sinCrecimiento.reduce((min, d) => d.dil > min.dil ? d : min, sinCrecimiento[0]);
-            const d = Math.pow(10, Math.abs(dilMenor.dil));
+            const d = Math.pow(10, -Math.abs(dilMenor.dil));
             const resultado = 1 / (volumen * d);
+
+            // Suma de colonias (todas son 0)
+            const n1 = dilMenor.sinCrecimiento.length;
 
             return {
                 ufc: resultado,
+                sumaColonias: 0,
+                promedio: 0,
+                n1: n1,
+                n2: 0,
+                dilucion: dilMenor.dil,
+                factorDilucion: d,
                 textoReporte: ReporteRAM.formatearResultado(resultado, '<', false),
                 operador: '<',
                 esEstimado: false,

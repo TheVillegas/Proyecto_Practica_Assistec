@@ -1,0 +1,19 @@
+{
+    "volumen": 1,
+    "diluciones": [
+        {
+            "dil": -1,
+            "colonias": [
+                150,
+                160
+            ]
+        },
+        {
+            "dil": -2,
+            "colonias": [
+                15,
+                20
+            ]
+        }
+    ]
+}

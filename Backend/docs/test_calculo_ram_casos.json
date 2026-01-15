@@ -1,0 +1,175 @@
+{
+    "ejemplos": [
+        {
+            "nombre": "Caso 1: Dos diluciones consecutivas (Rango óptimo)",
+            "descripcion": "Dos diluciones con colonias en rango óptimo (10-225)",
+            "payload": {
+                "volumen": 1,
+                "diluciones": [
+                    {
+                        "dil": -1,
+                        "colonias": [
+                            150,
+                            160
+                        ]
+                    },
+                    {
+                        "dil": -2,
+                        "colonias": [
+                            15,
+                            20
+                        ]
+                    }
+                ]
+            },
+            "resultado_esperado": "~1,5 x 10^3"
+        },
+        {
+            "nombre": "Caso 2: Una sola dilución válida",
+            "descripcion": "Solo una dilución con colonias en rango óptimo",
+            "payload": {
+                "volumen": 1,
+                "diluciones": [
+                    {
+                        "dil": -2,
+                        "colonias": [
+                            280,
+                            290
+                        ]
+                    },
+                    {
+                        "dil": -3,
+                        "colonias": [
+                            45,
+                            50
+                        ]
+                    }
+                ]
+            },
+            "resultado_esperado": "~4,8 x 10^4"
+        },
+        {
+            "nombre": "Caso 3: Valores bajos (< 10)",
+            "descripcion": "Colonias por debajo del rango óptimo",
+            "payload": {
+                "volumen": 1,
+                "diluciones": [
+                    {
+                        "dil": -1,
+                        "colonias": [
+                            4,
+                            6
+                        ]
+                    },
+                    {
+                        "dil": -2,
+                        "colonias": [
+                            0,
+                            1
+                        ]
+                    }
+                ]
+            },
+            "resultado_esperado": "< 2,5 x 10^2"
+        },
+        {
+            "nombre": "Caso 4: Sin crecimiento",
+            "descripcion": "Todas las placas con 0 colonias",
+            "payload": {
+                "volumen": 1,
+                "diluciones": [
+                    {
+                        "dil": -1,
+                        "colonias": [
+                            0,
+                            0
+                        ]
+                    }
+                ]
+            },
+            "resultado_esperado": "< 1,0 x 10^1"
+        },
+        {
+            "nombre": "Caso 5: Estimación (> 225)",
+            "descripcion": "Colonias por encima del rango óptimo, se hace estimación",
+            "payload": {
+                "volumen": 1,
+                "diluciones": [
+                    {
+                        "dil": -3,
+                        "colonias": [
+                            350,
+                            360
+                        ]
+                    }
+                ]
+            },
+            "resultado_esperado": "3,6 x 10^5 (est)"
+        },
+        {
+            "nombre": "Caso 6: MNPC (Muy Numerosas Para Contar)",
+            "descripcion": "Placas con demasiadas colonias para contar",
+            "payload": {
+                "volumen": 0.1,
+                "diluciones": [
+                    {
+                        "dil": -3,
+                        "colonias": [
+                            "MNPC",
+                            "MNPC"
+                        ]
+                    }
+                ]
+            },
+            "resultado_esperado": "> 6,5 x 10^7"
+        },
+        {
+            "nombre": "Caso 7: Diluciones no consecutivas",
+            "descripcion": "Solo diluciones separadas (ej: -1 y -3, falta -2)",
+            "payload": {
+                "volumen": 1,
+                "diluciones": [
+                    {
+                        "dil": -1,
+                        "colonias": [
+                            180,
+                            190
+                        ]
+                    },
+                    {
+                        "dil": -3,
+                        "colonias": [
+                            12,
+                            15
+                        ]
+                    }
+                ]
+            },
+            "resultado_esperado": "Usa solo la primera dilución válida"
+        },
+        {
+            "nombre": "Caso 8: Mezcla de MNPC y valores normales",
+            "descripcion": "Primera dilución MNPC, segunda válida",
+            "payload": {
+                "volumen": 1,
+                "diluciones": [
+                    {
+                        "dil": -1,
+                        "colonias": [
+                            "MNPC",
+                            "MNPC"
+                        ]
+                    },
+                    {
+                        "dil": -2,
+                        "colonias": [
+                            45,
+                            52
+                        ]
+                    }
+                ]
+            },
+            "resultado_esperado": "Usa la dilución -2"
+        }
+    ]
+}
