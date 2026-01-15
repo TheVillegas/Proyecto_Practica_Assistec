@@ -59,22 +59,35 @@ exports.guardarReporteRAM = async (req, res) => {
 
 exports.previewCalculoRAM = async (req, res) => {
     try {
-        const { etapa3_repeticiones } = req.body;
+        const { volumen, diluciones } = req.body;
 
-        if (!etapa3_repeticiones || !Array.isArray(etapa3_repeticiones)) {
-            return res.status(400).json({ mensaje: 'Se requieren datos de etapa3_repeticiones para calcular' });
+        // Validar que vengan los datos necesarios
+        if (!diluciones || !Array.isArray(diluciones)) {
+            return res.status(400).json({
+                mensaje: 'Se requiere el array "diluciones" con formato: [{dil: -1, colonias: [305, "MNPC"]}, ...]'
+            });
         }
 
-        const resultados = ReporteRAM.calcularUFC(etapa3_repeticiones);
+        // Preparar datos para el nuevo algoritmo ISO 7218
+        const datosCalculo = {
+            volumen: volumen || 1,
+            diluciones: diluciones
+        };
+
+        // Usar el nuevo algoritmo ISO 7218
+        const resultado = ReporteRAM.calcularRecuentoColonias(datosCalculo);
 
         res.status(200).json({
-            mensaje: "Cálculo realizado (Preview)",
-            resultados: resultados
+            mensaje: "Cálculo realizado (Preview - ISO 7218)",
+            resultado: resultado
         });
 
     } catch (error) {
         console.error('Error al calcular preview RAM:', error);
-        res.status(500).json({ mensaje: 'Error al calcular resultados RAM' });
+        res.status(500).json({
+            mensaje: 'Error al calcular resultados RAM',
+            error: error.message
+        });
     }
 }
 
