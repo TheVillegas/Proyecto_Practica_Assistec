@@ -618,11 +618,10 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                                 codigo_material: mat.codigoMaterialSiembra
                             }
                         );
-                    }
+                    } z
                 }
             }
         }
-
         // Finalización exitosa
         await connection.commit();
         return { success: true, mensaje: "Reporte TPA guardado exitosamente" };

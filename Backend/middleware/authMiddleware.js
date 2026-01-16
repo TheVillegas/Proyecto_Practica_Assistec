@@ -6,46 +6,33 @@
  * 2. Body (Legacy/Frontend actual): rutUsuario, rolUsuario
 
  */
-const authMiddleware = (req, res, next) => {
-    try {
-        let rut = null;
-        let rol = null;
+const jwt = require('jsonwebtoken');
+const SECRET_KEY = process.env.JWT_SECRET;
 
-        // 1. Intentar leer de Headers (Prioridad Alta - Futuro)
-        if (req.headers['x-rut-usuario']) {
-            rut = req.headers['x-rut-usuario'];
+function authMiddleware(req, res, next) {
+    console.log('--- Debug AuthMiddleware ---');
+    console.log('Headers:', req.headers);
+    let token = req.headers['x-access-token'] || (req.body && req.body.token);
+
+    // Check Authorization header for Bearer token
+    if (!token && req.headers['authorization']) {
+        const authHeader = req.headers['authorization'];
+        if (authHeader.startsWith('Bearer ')) {
+            token = authHeader.substring(7, authHeader.length);
         }
-        if (req.headers['x-rol-usuario']) {
-            rol = parseInt(req.headers['x-rol-usuario'], 10);
-        }
-
-        // 2. Intentar leer de Body (Fallback - Presente)
-        // Nota: Solo leemos del body si no encontramos en headers, o para complementar
-        if (!rut && req.body?.rutUsuario) {
-            rut = req.body.rutUsuario;
-        }
-        // Aceptamos rol del body
-        if (rol === null && req.body?.rolUsuario !== undefined) {
-            rol = parseInt(req.body.rolUsuario, 10);
-        }
-
-        // 3. Inyectar identidad en la request
-        req.user = {
-            rut: rut,
-            rol: rol
-        };
-
-        // Log para depuración (Quitar en producción real)
-        // console.log(`[AuthMiddleware] Identidad detectada -> RUT: ${rut}, ROL: ${rol}`);
-
-        next();
-    } catch (error) {
-        console.error('[AuthMiddleware] Error procesando identidad:', error);
-        // En caso de error, dejamos pasar pero sin identidad, o podríamos bloquear con 500
-        // Por seguridad, mejor next() y que el controlador decida si necesita req.user válido
-        req.user = { rut: null, rol: null };
-        next();
     }
-};
+
+    if (!token) {
+        return res.status(401).json({ mensaje: 'Token no proporcionado' });
+    }
+    jwt.verify(token, SECRET_KEY, (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ mensaje: 'Token inválido' });
+        }
+        req.userId = decoded.id;
+        req.userRole = decoded.role;
+        next();
+    });
+}
 
 module.exports = authMiddleware;

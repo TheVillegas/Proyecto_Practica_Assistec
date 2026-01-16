@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const catalogoController = require('../controllers/catalogoController.js');
+const authMiddleware = require('../middleware/authMiddleware.js');
+
+// Proteger todas las rutas del catálogo
+router.use(authMiddleware);
 
 // --- 1. LUGARES ALMACENAMIENTO ---
 router.get('/lugares-almacenamiento', catalogoController.listarLugaresAlmacenamiento);

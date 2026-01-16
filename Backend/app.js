@@ -1,8 +1,15 @@
 const express = require("express");
 const app = express();
+
 const port = 3000;
 
 app.use(express.json());
+const cors = require('cors');
+app.use(cors({
+    origin: '*', // Permitir todas las orígenes por ahora (puedes restringirlo al puerto de ionic)
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token']
+}));
 
 app.get("/", (req, res) => {
     res.send("Servidor corriendo ✅");
@@ -18,12 +25,14 @@ db.initialize().then(() => {
     const muestraAliRoutes = require('./routes/muestraAliRoutes.js');
     const reporteTPARoutes = require('./routes/reporteTPARoutes.js');
     const reporteRAMRoutes = require('./routes/reporteRAMRoutes.js');
+    const exportarRoutes = require('./routes/exportarRoutes.js');
 
     app.use('/AsisTec/Usuarios', analistasRoutes);
     app.use('/AsisTec/Catalogos', catalogoRoutes);
     app.use('/AsisTec/MuestraALI', muestraAliRoutes);
     app.use('/AsisTec/ReporteTPA', reporteTPARoutes);
     app.use('/AsisTec/ReporteRAM', reporteRAMRoutes);
+    app.use('/AsisTec/Exportar', exportarRoutes);
 
     app.listen(port, () => {
         console.log(`El servidor esta corriendo en el puerto ${port}`);

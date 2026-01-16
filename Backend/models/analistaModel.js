@@ -39,4 +39,25 @@ Analista.obtenerPorRut = (rut, callback) => {
         .catch(err => callback(err));
 }
 
+Analista.obtenerPorCorreo = async (correo) => {
+    try {
+        const sql = `
+            SELECT rut_analista 
+            FROM USUARIOS 
+            WHERE correo_analista = :correo
+        `;
+
+        const result = await db.execute(sql, { correo: correo });
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        return result.rows[0].RUT_ANALISTA;
+    } catch (error) {
+        console.error('Error al obtener rut por correo:', error);
+        throw error;
+    }
+};
+
 module.exports = Analista;

@@ -12,6 +12,16 @@ MuestraALI.crearMuestraALI = async (datos, callback) => {
         // Obtenemos una conexión nativa para manejar la transacción manualmente
         connection = await db.getConnection();
 
+        // 0. Validar duplicados (Usando la misma conexión transaccional)
+        const checkSql = 'SELECT codigo_ali FROM MUESTRAS_ALI WHERE codigo_ali = :codigo_ali';
+        const checkResult = await connection.execute(checkSql, { codigo_ali });
+
+        if (checkResult.rows && checkResult.rows.length > 0) {
+            // Ya existe: liberamos conexión y retornamos error
+            await connection.close(); // Importante cerrar antes de salir
+            return callback(new Error(`El código ALI '${codigo_ali}' ya existe en el sistema.`));
+        }
+
         // 1. Crear la muestra ALI (sin autoCommit)
         const sql = 'INSERT INTO MUESTRAS_ALI (codigo_ali, codigo_otros, observaciones_cliente, observaciones_generales) VALUES (:codigo_ali, :codigo_otros, :observaciones_cliente, :observaciones_generales)';
 
@@ -43,26 +53,44 @@ MuestraALI.crearMuestraALI = async (datos, callback) => {
         }
         callback(err);
     } finally {
-        // Siempre liberar la conexión al pool
+        // Siempre liberar la conexión al pool si sigue abierta
+        // (Nota: oracledb suele manejar bien el close repetido o checkear isOpen, pero es buena práctica)
         if (connection) {
             try {
+                // Verificar si la conexión sigue abierta podría depender de la librería, 
+                // pero un close() extra en el finally es lo estándar para fuga de recursos.
                 await connection.close();
             } catch (closeErr) {
-                console.error("Error al cerrar conexión:", closeErr);
+                // Ignorar error si ya estaba cerrada
             }
         }
     }
 };
 
 MuestraALI.obtenerMuestraALI_porCodigoAli = (codigo_ali, callback) => {
-    const sql = 'SELECT * FROM MUESTRAS_ALI WHERE codigo_ali = :codigo_ali';
+    const sql = `
+        SELECT m.*, 
+               t.estado_actual as estado_tpa, 
+               r.estado_ram as estado_ram 
+        FROM MUESTRAS_ALI m
+        LEFT JOIN TPA_REPORTE t ON m.codigo_ali = t.codigo_ali
+        LEFT JOIN RAM_REPORTE r ON m.codigo_ali = r.codigo_ali
+        WHERE m.codigo_ali = :codigo_ali
+    `;
     db.execute(sql, { codigo_ali })
         .then(result => callback(null, result))
         .catch(err => callback(err));
 };
 
 MuestraALI.obtenerMuestrasALI = (callback) => {
-    const sql = 'SELECT * FROM MUESTRAS_ALI';
+    const sql = `
+        SELECT m.*, 
+               t.estado_actual as estado_tpa, 
+               r.estado_ram as estado_ram 
+        FROM MUESTRAS_ALI m
+        LEFT JOIN TPA_REPORTE t ON m.codigo_ali = t.codigo_ali
+        LEFT JOIN RAM_REPORTE r ON m.codigo_ali = r.codigo_ali
+    `;
     db.execute(sql)
         .then(result => callback(null, result))
         .catch(err => callback(err));
