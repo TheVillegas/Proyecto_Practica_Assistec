@@ -1,0 +1,1 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/TheVillegas/Proyecto_Practica_Frontend)[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/TheVillegas/Proyecto_Practica_Frontend)
