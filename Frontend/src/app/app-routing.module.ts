@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
+import { AuthGuard } from './guards/auth.guard';
 
 const routes: Routes = [
   {
@@ -9,23 +10,28 @@ const routes: Routes = [
   },
   {
     path: 'home',
-    loadChildren: () => import('./pages/home/home.module').then(m => m.HomePageModule)
+    loadChildren: () => import('./pages/home/home.module').then(m => m.HomePageModule),
+    canActivate: [AuthGuard]
   },
   {
     path: 'generar-ali-basico',
-    loadChildren: () => import('./pages/generar-ali-basico/generar-ali-basico.module').then(m => m.GenerarALiBasicoPageModule)
+    loadChildren: () => import('./pages/generar-ali-basico/generar-ali-basico.module').then(m => m.GenerarALiBasicoPageModule),
+    canActivate: [AuthGuard]
   },
   {
     path: 'busqueda-ali',
-    loadChildren: () => import('./pages/busqueda-ali/busqueda-ali.module').then(m => m.BusquedaALIPageModule)
+    loadChildren: () => import('./pages/busqueda-ali/busqueda-ali.module').then(m => m.BusquedaALIPageModule),
+    canActivate: [AuthGuard]
   },
   {
     path: 'reporte-tpa/:codigoALI',
-    loadChildren: () => import('./pages/reporte-tpa/reporte-tpa.module').then(m => m.ReporteTPAPageModule)
+    loadChildren: () => import('./pages/reporte-tpa/reporte-tpa.module').then(m => m.ReporteTPAPageModule),
+    canActivate: [AuthGuard]
   },
   {
     path: 'reporte-ram/:codigoALI',
-    loadChildren: () => import('./pages/reporte-ram/reporte-ram.module').then(m => m.ReporteRamPageModule)
+    loadChildren: () => import('./pages/reporte-ram/reporte-ram.module').then(m => m.ReporteRamPageModule),
+    canActivate: [AuthGuard]
   },
   {
     path: 'login',

@@ -67,26 +67,15 @@ export class GenerarALiBasicoPage implements OnInit {
     console.log('1. Botón presionado. Estado del formulario:', this.formularioIngresoALI.valid);
     console.log('2. Valores actuales:', this.formularioIngresoALI.value);
     if (this.formularioIngresoALI.invalid) {
-      console.log('El formulario es inválido. Faltan datos o están mal.');
       this.formularioIngresoALI.markAllAsTouched();
       const alert = await this.alertController.create({
         header: 'Error',
         message: 'Por favor, complete todos los campos correctamente.',
-        buttons: [
-          {
-            text: 'Entendido',
-            role: 'cancel',
-            handler: () => {
-              console.log('Entendido');
-            }
-          }
-        ]
+        buttons: ['Entendido']
       });
       await alert.present();
       return;
     }
-
-    console.log('Formulario válido. Creando alerta...');
 
     const alert = await this.alertController.create({
       header: 'Confirmacion',
@@ -94,7 +83,7 @@ export class GenerarALiBasicoPage implements OnInit {
       buttons: [
         {
           text: 'Revisar',
-          role: 'cancel', // Al hacer clic aquí, simplemente se cierra la alerta
+          role: 'cancel',
           handler: () => {
             console.log('Usuario quiere revisar');
           }
@@ -105,9 +94,27 @@ export class GenerarALiBasicoPage implements OnInit {
           handler: () => {
             console.log(this.formularioIngresoALI.value);
             const { aliMuestra, codigoSerna, observacionesCliente } = this.formularioIngresoALI.value;
-            this.aliService.agregarMuestraALI(aliMuestra, codigoSerna, observacionesCliente);
-            this.router.navigate(["/home"])
-            //Faltaria la logica con el backend; 
+
+            this.aliService.agregarMuestraALI(aliMuestra, codigoSerna, observacionesCliente).subscribe({
+              next: async (resp) => {
+                const successAlert = await this.alertController.create({
+                  header: 'Éxito',
+                  message: 'Muestra creada correctamente.',
+                  buttons: ['OK']
+                });
+                await successAlert.present();
+                this.router.navigate(["/home"]);
+              },
+              error: async (err) => {
+                console.error(err);
+                const errorAlert = await this.alertController.create({
+                  header: 'Error',
+                  message: 'No se pudo crear la muestra. ' + (err.error?.mensaje || 'Error desconocido'),
+                  buttons: ['OK']
+                });
+                await errorAlert.present();
+              }
+            });
           }
         }
       ]

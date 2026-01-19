@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth-service';
 import { Router } from '@angular/router';
+import { AlertController } from '@ionic/angular';
 
 @Component({
   selector: 'app-login',
@@ -14,7 +15,12 @@ export class LoginPage implements OnInit {
   loginForm: FormGroup;
   isLoading = false;
 
-  constructor(private formBuilder: FormBuilder, private authService: AuthService, private router: Router) {
+  constructor(
+    private formBuilder: FormBuilder,
+    private authService: AuthService,
+    private router: Router,
+    private alertController: AlertController
+  ) {
     this.loginForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
       contraseña: ['', [Validators.required, Validators.minLength(4)]],
@@ -32,9 +38,15 @@ export class LoginPage implements OnInit {
           this.isLoading = false;
           this.router.navigate(['/home']);
         },
-        error: (error) => {
+        error: async (error) => {
           console.log(error);
           this.isLoading = false;
+          const alert = await this.alertController.create({
+            header: 'Error',
+            message: error.error?.mensaje || 'Credenciales inválidas o error en el servidor',
+            buttons: ['OK']
+          });
+          await alert.present();
         }
       })
     } else {

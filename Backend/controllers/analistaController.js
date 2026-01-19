@@ -1,6 +1,7 @@
 const Analista = require('../models/analistaModel.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { mapAnalista } = require('../utils/mappers');
 
 // Asegúrate de que coincida con el del middleware (idealmente en .env)
 const SECRET_KEY = process.env.JWT_SECRET || 'secreto_super_secreto_para_desarrollo';
@@ -95,15 +96,13 @@ exports.loginAnalista = async (req, res) => {
                 { expiresIn: '1h' }
             );
 
+            // Mapper para el usuario logueado
+            const usuarioMapeado = mapAnalista(usuario);
+
             res.status(200).json({
                 mensaje: 'Login exitoso',
                 token: token,
-                usuario: {
-                    rut: usuario.RUT_ANALISTA || usuario.rut_analista,
-                    nombre: usuario.NOMBRE_APELLIDO_ANALISTA || usuario.nombre_apellido_analista,
-                    rol: usuario.ROL_ANALISTA || usuario.rol_analista,
-                    correo: usuario.CORREO_ANALISTA || usuario.correo_analista
-                }
+                usuario: usuarioMapeado
             });
         } catch (bkError) {
             console.error(bkError);
@@ -118,6 +117,8 @@ exports.listarAnalistas = (req, res) => {
             console.error(err);
             return res.status(500).json({ mensaje: 'Error al obtener analistas' });
         }
-        res.status(200).json(result.rows);
+        // Aplicar mapper a cada fila
+        const analistas = result.rows.map(mapAnalista);
+        res.status(200).json(analistas);
     });
 };

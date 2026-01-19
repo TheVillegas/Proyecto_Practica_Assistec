@@ -1,4 +1,5 @@
 const Catalogo = require('../models/catalogoModel.js');
+const { mapGeneric } = require('../utils/mappers');
 
 // --- 1. LUGARES ALMACENAMIENTO ---
 exports.listarLugaresAlmacenamiento = (req, res) => {
@@ -7,7 +8,7 @@ exports.listarLugaresAlmacenamiento = (req, res) => {
             console.error(err);
             return res.status(500).json({ mensaje: 'Error al obtener los lugares de almacenamiento' });
         }
-        res.status(200).json(result.rows);
+        res.status(200).json(result.rows.map(mapGeneric));
     });
 };
 
@@ -21,7 +22,7 @@ exports.obtenerLugarAlmacenamientoPorId = (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ mensaje: 'Lugar de almacenamiento no encontrado' });
         }
-        res.status(200).json(result.rows[0]);
+        res.status(200).json(mapGeneric(result.rows[0]));
     });
 };
 
@@ -75,7 +76,7 @@ exports.listarInstrumentos = (req, res) => {
             console.error(err);
             return res.status(500).json({ mensaje: 'Error al obtener los instrumentos' });
         }
-        res.status(200).json(result.rows);
+        res.status(200).json(result.rows.map(mapGeneric));
     });
 };
 
@@ -89,7 +90,7 @@ exports.obtenerInstrumentoPorId = (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ mensaje: 'Instrumento no encontrado' });
         }
-        res.status(200).json(result.rows[0]);
+        res.status(200).json(mapGeneric(result.rows[0]));
     });
 };
 
@@ -143,7 +144,7 @@ exports.listarMicropipetas = (req, res) => {
             console.error(err);
             return res.status(500).json({ mensaje: 'Error al obtener las micropipetas' });
         }
-        res.status(200).json(result.rows);
+        res.status(200).json(result.rows.map(mapGeneric));
     });
 };
 
@@ -157,7 +158,7 @@ exports.obtenerMicropipetaPorId = (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ mensaje: 'Micropipeta no encontrada' });
         }
-        res.status(200).json(result.rows[0]);
+        res.status(200).json(mapGeneric(result.rows[0]));
     });
 };
 
@@ -211,7 +212,7 @@ exports.listarEquiposLab = (req, res) => {
             console.error(err);
             return res.status(500).json({ mensaje: 'Error al obtener los equipos de laboratorio' });
         }
-        res.status(200).json(result.rows);
+        res.status(200).json(result.rows.map(mapGeneric));
     });
 };
 
@@ -225,7 +226,7 @@ exports.obtenerEquipoLabPorId = (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ mensaje: 'Equipo de laboratorio no encontrado' });
         }
-        res.status(200).json(result.rows[0]);
+        res.status(200).json(mapGeneric(result.rows[0]));
     });
 };
 
@@ -279,7 +280,7 @@ exports.listarMaterialSiembra = (req, res) => {
             console.error(err);
             return res.status(500).json({ mensaje: 'Error al obtener el material de siembra' });
         }
-        res.status(200).json(result.rows);
+        res.status(200).json(result.rows.map(mapGeneric));
     });
 };
 
@@ -293,7 +294,7 @@ exports.obtenerMaterialSiembraPorId = (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ mensaje: 'Material de siembra no encontrado' });
         }
-        res.status(200).json(result.rows[0]);
+        res.status(200).json(mapGeneric(result.rows[0]));
     });
 };
 
@@ -347,7 +348,7 @@ exports.listarDiluyentes = (req, res) => {
             console.error(err);
             return res.status(500).json({ mensaje: 'Error al obtener los diluyentes' });
         }
-        res.status(200).json(result.rows);
+        res.status(200).json(result.rows.map(mapGeneric));
     });
 };
 
@@ -361,7 +362,7 @@ exports.obtenerDiluyentePorId = (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ mensaje: 'Diluyente no encontrado' });
         }
-        res.status(200).json(result.rows[0]);
+        res.status(200).json(mapGeneric(result.rows[0]));
     });
 };
 
@@ -415,7 +416,7 @@ exports.listarEquiposIncubacion = (req, res) => {
             console.error(err);
             return res.status(500).json({ mensaje: 'Error al obtener los equipos de incubación' });
         }
-        res.status(200).json(result.rows);
+        res.status(200).json(result.rows.map(mapGeneric));
     });
 };
 
@@ -429,7 +430,7 @@ exports.obtenerEquipoIncubacionPorId = (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ mensaje: 'Equipo de incubación no encontrado' });
         }
-        res.status(200).json(result.rows[0]);
+        res.status(200).json(mapGeneric(result.rows[0]));
     });
 };
 
@@ -483,7 +484,7 @@ exports.listarMaestroChecklistLimpieza = (req, res) => {
             console.error(err);
             return res.status(500).json({ mensaje: 'Error al obtener el checklist de limpieza' });
         }
-        res.status(200).json(result.rows);
+        res.status(200).json(result.rows.map(mapGeneric));
     });
 };
 
@@ -497,7 +498,7 @@ exports.obtenerMaestroChecklistLimpiezaPorId = (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ mensaje: 'Item no encontrado' });
         }
-        res.status(200).json(result.rows[0]);
+        res.status(200).json(mapGeneric(result.rows[0]));
     });
 };
 
@@ -551,7 +552,7 @@ exports.listarMaestroTiposAnalisis = (req, res) => {
             console.error(err);
             return res.status(500).json({ mensaje: 'Error al obtener los tipos de análisis' });
         }
-        res.status(200).json(result.rows);
+        res.status(200).json(result.rows.map(mapGeneric));
     });
 };
 
@@ -565,7 +566,7 @@ exports.obtenerMaestroTipoAnalisisPorId = (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ mensaje: 'Tipo de análisis no encontrado' });
         }
-        res.status(200).json(result.rows[0]);
+        res.status(200).json(mapGeneric(result.rows[0]));
     });
 };
 
@@ -619,7 +620,7 @@ exports.listarMaestroFormasCalculo = (req, res) => {
             console.error(err);
             return res.status(500).json({ mensaje: 'Error al obtener las formas de cálculo' });
         }
-        res.status(200).json(result.rows);
+        res.status(200).json(result.rows.map(mapGeneric));
     });
 };
 
@@ -633,7 +634,7 @@ exports.obtenerMaestroFormaCalculoPorId = (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ mensaje: 'Forma de cálculo no encontrada' });
         }
-        res.status(200).json(result.rows[0]);
+        res.status(200).json(mapGeneric(result.rows[0]));
     });
 };
 
@@ -687,6 +688,6 @@ exports.getMaterialesPesado = (req, res) => {
             console.error(err);
             return res.status(500).json({ mensaje: 'Error al obtener los materiales pesados' });
         }
-        res.status(200).json(result.rows);
+        res.status(200).json(result.rows.map(mapGeneric));
     });
 };

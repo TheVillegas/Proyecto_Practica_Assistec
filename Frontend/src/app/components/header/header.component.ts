@@ -1,6 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { AuthService } from '../../services/auth-service';
 
 @Component({
   selector: 'app-header',
@@ -10,7 +11,10 @@ import { filter } from 'rxjs/operators';
 })
 export class HeaderComponent implements OnInit {
 
-  constructor(private router: Router) {
+  userName: string = 'Usuario';
+  userRole: string = 'Analista';
+
+  constructor(private router: Router, private authService: AuthService) {
     // Escuchar cambios de ruta para actualizar el segmento activo
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -24,6 +28,13 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit() {
     this.updateActiveSegment(this.router.url);
+
+    // Obtener usuario actual
+    const user = this.authService.getUsuario();
+    if (user) {
+      this.userName = user.nombreApellido || 'Usuario';
+      this.userRole = user.rol || 'Analista';
+    }
   }
 
   private updateActiveSegment(url: string) {
@@ -54,7 +65,8 @@ export class HeaderComponent implements OnInit {
   }
 
   goToLogin() {
-    console.log("Redirigiendo a Login");
+    console.log("Cerrando sesión...");
+    this.authService.logout(); // Limpiar token y usuario
     this.router.navigate(["/login"]);
   }
 

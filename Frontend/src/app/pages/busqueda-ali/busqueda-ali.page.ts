@@ -17,8 +17,20 @@ export class BusquedaALIPage implements OnInit {
   constructor(private aliService: AliService) { }
 
   ngOnInit() {
-    this.listaMuestras = this.aliService.getMuestras();
-    this.listaFiltrada = this.listaMuestras;
+    this.cargarMuestras();
+  }
+
+  cargarMuestras() {
+    this.aliService.getMuestras().subscribe({
+      next: (muestras) => {
+        console.log('Muestras Mapeadas:', muestras);
+        this.listaMuestras = muestras;
+        this.listaFiltrada = this.listaMuestras;
+      },
+      error: (err) => {
+        console.error('Error al cargar muestras', err);
+      }
+    });
   }
 
   buscarALI(event: any) {

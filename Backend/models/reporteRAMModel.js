@@ -528,11 +528,16 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
 ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicadoGlobal = null) => {
     console.log(`[Etapa 3] Procesando ${muestras.length} muestras para ALI ${codigoALI}`);
 
-    // 1. Limpiar datos previos de esta muestra ALI
+    // 1. Limpiar datos previos (Orden importante por FKs si no hay cascade)
+    // Borrar DUPLICADOS primero
+    const sqlDelDuplicados = `DELETE FROM RAM_ETAPA3_DUPLICADO WHERE codigo_ali = :codigo_ali`;
+    await connection.execute(sqlDelDuplicados, { codigo_ali: codigoALI });
+
+    // Borrar MUESTRAS
     const sqlDelMuestras = `DELETE FROM RAM_ETAPA3_MUESTRAS WHERE codigo_ali = :codigo_ali`;
     await connection.execute(sqlDelMuestras, { codigo_ali: codigoALI });
 
-    // 2. SQL de inserción con TODOS los campos calculados
+    // 2. SQL de inserción de MUESTRA con RETURNING ID
     const sqlInsertMuestra = `
         INSERT INTO RAM_ETAPA3_MUESTRAS (
             CODIGO_ALI, NUMERO_MUESTRA, DIL_1, DIL_2, 
@@ -544,10 +549,31 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicado
             :c1, :c2, :c3, :c4,
             :resultado_ram, :resultado_rpes, :promedio,
             :n1, :n2, :suma_colonias
+        ) RETURNING ID_MUESTRA INTO :id_muestra
+    `;
+
+    // 3. SQL de inserción de DUPLICADO
+    const sqlInsertDuplicado = `
+        INSERT INTO RAM_ETAPA3_DUPLICADO (
+            CODIGO_ALI, ID_MUESTRA_ORIGINAL,
+            DIL_DUP_1, DIL_DUP_2,
+            C_DUP_1, C_DUP_2, C_DUP_3, C_DUP_4,
+            RESULTADO_RAM_DUP, RESULTADO_RPES_DUP,
+            PROMEDIO_COLONIAS_DUPLICADO, 
+            N1_DUP, N2_DUP,
+            SUMATORIA_COLONIAS_DUPLICADO
+        ) VALUES (
+            :codigo, :id_muestra_original,
+            :dil1, :dil2,
+            :c1, :c2, :c3, :c4,
+            :resultado_ram, :resultado_rpes,
+            :promedio,
+            :n1, :n2,
+            :suma
         )
     `;
 
-    // 3. Procesar cada muestra del array
+    // 4. Procesar cada muestra del array
     for (const m of muestras) {
         console.log(`[Etapa 3] Procesando muestra ${m.numero_Muestra} para ALI ${codigoALI}`);
 
@@ -555,16 +581,13 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicado
         let dil1 = null;
         let dil2 = null;
         if (m.diluciones && Array.isArray(m.diluciones) && m.diluciones.length > 0) {
-            // Primera dilución
             dil1 = m.diluciones[0].dil;
-            // Segunda dilución (si existe)
             if (m.diluciones.length > 1) {
                 dil2 = m.diluciones[1].dil;
             }
         }
 
-        // --- EXTRACCIÓN DE TODAS LAS COLONIAS ---
-        // Concatenar colonias de TODAS las diluciones en un solo array
+        // --- EXTRACCIÓN DE COLONIAS ---
         let todasLasColonias = [];
         if (m.diluciones && Array.isArray(m.diluciones)) {
             m.diluciones.forEach(d => {
@@ -574,16 +597,14 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicado
             });
         }
 
-        // Mapear a C1, C2, C3, C4 (máximo 4 colonias)
-        // Convertir "MNPC" a null para la base de datos
         const c1 = todasLasColonias[0] !== undefined && todasLasColonias[0] !== "MNPC" ? todasLasColonias[0] : null;
         const c2 = todasLasColonias[1] !== undefined && todasLasColonias[1] !== "MNPC" ? todasLasColonias[1] : null;
         const c3 = todasLasColonias[2] !== undefined && todasLasColonias[2] !== "MNPC" ? todasLasColonias[2] : null;
         const c4 = todasLasColonias[3] !== undefined && todasLasColonias[3] !== "MNPC" ? todasLasColonias[3] : null;
 
-        // --- MAPEO DIRECTO DE RESULTADOS CALCULADOS ---
-        // Los resultados ya vienen calculados del frontend, solo mapeamos
-        await connection.execute(sqlInsertMuestra, {
+        // --- INSERTAR MUESTRA ---
+        // Necesitamos bindear el parametro de salida para obtener el ID
+        const resultMuestra = await connection.execute(sqlInsertMuestra, {
             codigo: codigoALI,
             num: m.numero_Muestra,
             dil1: dil1,
@@ -592,16 +613,54 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicado
             c2: c2,
             c3: c3,
             c4: c4,
-            // Resultados pre-calculados del JSON
             resultado_ram: m.resultado_ram || null,
             resultado_rpes: m.resultado_rpes || null,
             promedio: m.promedio !== undefined ? m.promedio : null,
             n1: m.n1 || null,
             n2: m.n2 || null,
-            suma_colonias: m.sumaColonias || null
+            suma_colonias: m.sumaColonias || null,
+            id_muestra: { type: db.oracledb.NUMBER, dir: db.oracledb.BIND_OUT }
         });
 
-        console.log(`[Etapa 3] ✓ Muestra ${m.numero_Muestra} guardada con resultado: ${m.resultado_ram}`);
+        // Obtener el ID generado
+        const idMuestraGenerado = resultMuestra.outBinds.id_muestra[0];
+
+        // --- PROCESAR DUPLICADO ---
+        // Verificar si existe "duplicado" en el objeto muestra
+        if (m.duplicado) {
+            console.log(`[Etapa 3] Guardando duplicado para muestra ${m.numero_Muestra} (ID: ${idMuestraGenerado})`);
+
+            // Extraer datos del duplicado (adaptar segun estructura JSON enviada por user)
+            // Estructura esperada en JSON: duplicado: { dil01, dil02, numeroColonias: [], resultado_ram, promedio, sumaColonias }
+            // NOTA: El usuario pidio agregar resultados calculados al duplicado.
+
+            const d = m.duplicado;
+
+            // Mapeo de colonias duplicadas
+            const cDup = d.numeroColonias || [];
+            const cDup1 = cDup[0] !== undefined ? cDup[0] : null;
+            const cDup2 = cDup[1] !== undefined ? cDup[1] : null;
+            const cDup3 = cDup[2] !== undefined ? cDup[2] : null;
+            const cDup4 = cDup[3] !== undefined ? cDup[3] : null;
+
+            await connection.execute(sqlInsertDuplicado, {
+                codigo: codigoALI,
+                id_muestra_original: idMuestraGenerado,
+                dil1: d.dil01 || null, // Asumiendo dil01 viene en el JSON
+                dil2: d.dil02 || null,
+                c1: cDup1,
+                c2: cDup2,
+                c3: cDup3,
+                c4: cDup4,
+                // Resultados duplicado
+                resultado_ram: d.resultado_ram || null, // resultado_ram del DUPLICADO
+                resultado_rpes: d.resultado_rpes || null,
+                promedio: d.promedio !== undefined ? d.promedio : null,
+                n1: d.n1 || null,
+                n2: d.n2 || null,
+                suma: d.sumaColonias || null
+            });
+        }
     }
 
     console.log(`[Etapa 3] ✓ Procesamiento completado para ${muestras.length} muestras`);

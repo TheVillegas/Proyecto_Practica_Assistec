@@ -10,8 +10,6 @@ const jwt = require('jsonwebtoken');
 const SECRET_KEY = process.env.JWT_SECRET;
 
 function authMiddleware(req, res, next) {
-    console.log('--- Debug AuthMiddleware ---');
-    console.log('Headers:', req.headers);
     let token = req.headers['x-access-token'] || (req.body && req.body.token);
 
     // Check Authorization header for Bearer token
@@ -29,8 +27,10 @@ function authMiddleware(req, res, next) {
         if (err) {
             return res.status(401).json({ mensaje: 'Token inválido' });
         }
-        req.userId = decoded.id;
-        req.userRole = decoded.role;
+        req.user = {
+            rut: decoded.id,
+            rol: decoded.role
+        };
         next();
     });
 }

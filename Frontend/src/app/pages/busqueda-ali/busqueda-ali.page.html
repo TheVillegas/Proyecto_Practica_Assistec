@@ -25,7 +25,7 @@
       </div>
 
       <!-- Results List -->
-      <app-ali-item-accordeon *ngFor="let muestra of listaFiltrada" [muestra]="muestra"></app-ali-item-accordeon>
+      <app-ali-item-accordeon *ngFor="let muestra of listaFiltrada" [muestra]="muestra" (onDelete)="cargarMuestras()"></app-ali-item-accordeon>
 
       <!-- Empty State -->
       <div *ngIf="listaFiltrada.length === 0" class="text-center py-12 text-slate-400">

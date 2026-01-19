@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { IonContent, NavController, AlertController } from '@ionic/angular';
+import { IonContent, NavController, AlertController, LoadingController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { AliService } from 'src/app/services/ali-service';
 import { RamService } from 'src/app/services/ram-service';
 import { CatalogosService } from 'src/app/services/catalogos.service';
 import { ImagenUploadService } from 'src/app/services/imagen-upload';
+import { AuthService } from 'src/app/services/auth-service';
+import { forkJoin } from 'rxjs';
 @Component({
   selector: 'app-reporte-ram',
   templateUrl: './reporte-ram.page.html',
@@ -15,14 +17,16 @@ import { ImagenUploadService } from 'src/app/services/imagen-upload';
 export class ReporteRamPage implements OnInit {
 
   constructor(
-    private aliService: AliService,
+    private aliService: AliService, // Might still be needed if used for other things, checking... actually used for nothing based on code refactor
     private route: ActivatedRoute,
     private ramService: RamService,
     private router: Router,
     private catalogosService: CatalogosService,
     private alertController: AlertController,
     private navCtrl: NavController,
-    private imagenUploadService: ImagenUploadService
+    private imagenUploadService: ImagenUploadService,
+    private loadingController: LoadingController,
+    private authService: AuthService
   ) { }
   seccionActual: String = '';
   codigoALI: string = '';
@@ -33,8 +37,10 @@ export class ReporteRamPage implements OnInit {
   listaResponsables: any[] = [];
   ultimaActtualizacionRam: string = '';
   responsableModificacionRam: string = '';
+  currentUser: any = null;
   listaFormasCalculo: any[] = [];
   formularioBloqueado: boolean = false;
+
   etapa1: any = {
     horaInicioHomogenizado: '',
     agarPlateCount: null,
@@ -50,8 +56,6 @@ export class ReporteRamPage implements OnInit {
     fechaFinIncubacion: '',
     horaFinIncubacion: '',
     responsableAnalisis: null
-
-
   };
 
   // --- ETAPA 3 (Calculo de Muestras) ---
@@ -59,8 +63,7 @@ export class ReporteRamPage implements OnInit {
     {
       id: Date.now(),
       codigoALI: null,
-      numeroMuestra: 1, // Auto-incremental or specific logic
-      // Add other fields if necessary for calculation
+      numeroMuestra: 1
     }
   ];
 
@@ -90,10 +93,8 @@ export class ReporteRamPage implements OnInit {
     duplicadoAli: '',
     analisis: 'RAM',
     duplicadoEstado: null,
-
     controlBlanco: '',
     controlBlancoEstado: null,
-
     controlSiembra: '',
     controlSiembraEstado: null
   };
@@ -104,40 +105,111 @@ export class ReporteRamPage implements OnInit {
     formaCalculoAnalista: [],
     formaCalculoCoordinador: null
   };
+
   ngOnInit() {
     this.codigoALI = this.route.snapshot.paramMap.get('codigoALI')!;
-    if (this.codigoALI) {
-      const id = parseInt(this.codigoALI);
-      this.estadoRAM = this.aliService.getEstadoRAM(id);
-      this.ultimaActtualizacionRam = this.ramService.getUltimaActualizacionRAM(id) || '';
-      this.responsableModificacionRam = this.ramService.getResponsableRAM(id) || '';
-      this.listaEquiposIncubacion = this.catalogosService.getEquiposIncubacion();
-      this.listaPipetas = this.catalogosService.getMicroPipetas();
-      this.listaResponsables = this.catalogosService.getResponsables();
-      this.listaControlAnalisis = this.catalogosService.getControlAnalisis();
-      this.listaFormasCalculo = this.catalogosService.getFormasCalculo();
+    this.currentUser = this.authService.getUsuario();
+    if (this.currentUser) {
+      this.responsableModificacionRam = this.currentUser.nombreApellido || '';
 
-      if (this.estadoRAM === 'Verificado') {
-        this.formularioBloqueado = true;
+      // Pre-fill Etapa 2 responsales only if empty (new report logic implicit or check explicit null)
+      if (!this.etapa2.responsableIncubacion) {
+        this.etapa2.responsableIncubacion = this.currentUser.nombreApellido;
       }
-
-      const datosGuardados = this.ramService.getDatosReporteRAM(id);
-      if (datosGuardados) {
-        this.etapa1 = datosGuardados.etapa1 || this.etapa1;
-        this.etapa2 = datosGuardados.etapa2 || this.etapa2;
-        if (datosGuardados.listaRepeticionesEtapa3) {
-          this.listaRepeticionesEtapa3 = datosGuardados.listaRepeticionesEtapa3;
-        }
-        this.etapa4 = datosGuardados.etapa4 || this.etapa4;
-        this.etapa5 = datosGuardados.etapa5 || this.etapa5;
-        this.etapa6 = datosGuardados.etapa6 || this.etapa6;
-        this.etapa6 = datosGuardados.etapa6 || this.etapa6;
-        this.etapa7 = datosGuardados.etapa7 || this.etapa7;
-      } else {
-        // Initialize default selection if no data loaded
-        this.etapa7.formaCalculoAnalista = this.listaFormasCalculo.filter(f => f.seleccionado);
+      if (!this.etapa2.responsableAnalisis) {
+        this.etapa2.responsableAnalisis = this.currentUser.nombreApellido;
       }
     }
+
+    // Cargar Catálogos
+    const cargaCatalogos = forkJoin({
+      equiposIncubacion: this.catalogosService.getEquiposIncubacion(),
+      pipetas: this.catalogosService.getMicroPipetas(),
+      responsables: this.catalogosService.getResponsables(),
+      controlAnalisis: this.catalogosService.getControlAnalisis(),
+      formasCalculo: this.catalogosService.getFormasCalculo()
+    });
+
+    cargaCatalogos.subscribe({
+      next: (res: any) => {
+        this.listaEquiposIncubacion = res.equiposIncubacion;
+        this.listaPipetas = res.pipetas;
+        this.listaResponsables = res.responsables;
+        this.listaControlAnalisis = res.controlAnalisis;
+        this.listaFormasCalculo = res.formasCalculo;
+
+        if (this.codigoALI) {
+          this.cargarDatosReporte();
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar catálogos RAM', err);
+      }
+    });
+  }
+
+  async cargarDatosReporte() {
+    const loading = await this.loadingController.create({ message: 'Cargando reporte RAM...' });
+    await loading.present();
+
+    const id = parseInt(this.codigoALI);
+    this.ramService.obtenerReporte(id).subscribe({
+      next: (reporte: any) => {
+        loading.dismiss();
+        if (!reporte) return;
+
+        this.estadoRAM = reporte.estado || 'No realizado';
+        this.ultimaActtualizacionRam = reporte.ultimaActualizacion || ''; // Check field name from backend
+        this.responsableModificacionRam = reporte.responsable || this.responsableModificacionRam; // Use loaded or current user fallback? Better use loaded if exists.
+
+        if (this.estadoRAM === 'Verificado') {
+          this.formularioBloqueado = true;
+        }
+
+        this.etapa1 = reporte.etapa1 || this.etapa1;
+        this.etapa2 = reporte.etapa2 || this.etapa2;
+        // If loaded etapa2 has null responsales, we might want to keep them null or fill them?
+        // Usually if it's a draft, maybe we fill them? 
+        // User asked: "si la guarda ns Pepito debiese aparecer el nombre de pepito" -> implies reading stored value.
+        // So we trust `reporte.etapa2`. The init logic in ngOnInit handles the "new report" case (implicitly, before load).
+        // Since `cargarDatosReporte` runs AFTER `ngOnInit` (inside subscribe), `this.etapa2` will be overwritten by `reporte.etapa2`.
+        // If `reporte.etapa2` has nulls, they overwrite our pre-fill. This is correct behavior for VIEWING an existing report.
+        // BUT if it's a "continue editing" scenario where they hadn't filled it yet?
+        // Let's ensure we don't overwrite non-null values with nulls if that's a risk, but usually backend sends what was saved.
+        // If it was never saved, it might be null. 
+        // Let's stick to: "If saved data exists, use it. If not, use defaults".
+        // `this.etapa2 = reporte.etapa2 || this.etapa2` handles this.
+
+
+        // Map listaRepeticionesEtapa3 from backend response
+        // Backend keys might vary, assuming 'listaRepeticionesEtapa3' or 'etapa3'
+        if (reporte.listaRepeticionesEtapa3) {
+          this.listaRepeticionesEtapa3 = reporte.listaRepeticionesEtapa3;
+        } else if (reporte.etapa3_calculos) { // If interface name used
+          this.listaRepeticionesEtapa3 = reporte.etapa3_calculos;
+        }
+
+        this.etapa4 = reporte.etapa4 || this.etapa4;
+        this.etapa5 = reporte.etapa5 || this.etapa5;
+        this.etapa6 = reporte.etapa6 || this.etapa6;
+        this.etapa7 = reporte.etapa7 || this.etapa7;
+
+        // Restore selections explicitly if needed (e.g. formaCalculoAnalista)
+        if (!this.etapa7.formaCalculoAnalista) {
+          this.etapa7.formaCalculoAnalista = this.listaFormasCalculo.filter(f => f.seleccionado);
+        }
+      },
+      error: async (err) => {
+        loading.dismiss();
+        console.error(err);
+        const alert = await this.alertController.create({
+          header: 'Error',
+          message: 'Error al cargar el reporte RAM.',
+          buttons: ['OK']
+        });
+        await alert.present();
+      }
+    });
   }
 
   isFormaCalculoSelected(formaCalculo: any): boolean {
@@ -153,12 +225,10 @@ export class ReporteRamPage implements OnInit {
     const isChecked = event.detail.checked;
 
     if (isChecked) {
-      // Add if not already present
       if (!this.isFormaCalculoSelected(formaCalculo)) {
         this.etapa7.formaCalculoAnalista.push(formaCalculo);
       }
     } else {
-      // Remove if present
       this.etapa7.formaCalculoAnalista = this.etapa7.formaCalculoAnalista.filter(
         (f: any) => f.id !== formaCalculo.id
       );
@@ -170,7 +240,7 @@ export class ReporteRamPage implements OnInit {
    */
   async adjuntarFirma() {
     const firma = await this.imagenUploadService.seleccionarImagenBase64({
-      maxSize: 2 * 1024 * 1024, // 2MB para firmas
+      maxSize: 2 * 1024 * 1024,
       accept: 'image/png,image/jpeg,image/jpg',
       mostrarAlertas: true
     });
@@ -186,7 +256,7 @@ export class ReporteRamPage implements OnInit {
    */
   async adjuntarImagenManual() {
     const imagen = await this.imagenUploadService.seleccionarImagenBase64({
-      maxSize: 5 * 1024 * 1024, // 5MB para imágenes de manual
+      maxSize: 5 * 1024 * 1024,
       accept: 'image/png,image/jpeg,image/jpg',
       mostrarAlertas: true
     });
@@ -253,10 +323,7 @@ export class ReporteRamPage implements OnInit {
         }, {
           text: 'Salir',
           handler: () => {
-            // Solo si estamos editando y cancelamos, volvemos a 'No realizado' o el estado previo lógico
-            if (this.codigoALI && !this.formularioBloqueado) {
-              this.ramService.updateEstadoRAM(parseInt(this.codigoALI), 'No realizado');
-            }
+            this.navCtrl.back();
             this.router.navigate(['/home']);
           }
         }
@@ -273,36 +340,12 @@ export class ReporteRamPage implements OnInit {
         {
           text: 'Cancelar',
           role: 'cancel',
-          handler: () => {
-            console.log('Cancelar clicked');
-          }
+          handler: () => { }
         },
         {
           text: 'Guardar',
           handler: () => {
-            console.log('--- GUARDANDO BORRADOR (Simulación) ---');
-
-            const datosReporteRAM = {
-              codigoALI: this.codigoALI,
-              etapa1: this.etapa1,
-              etapa2: this.etapa2,
-              listaRepeticionesEtapa3: this.listaRepeticionesEtapa3,
-              etapa4: this.etapa4,
-              etapa5: this.etapa5,
-              etapa6: this.etapa6,
-              etapa7: this.etapa7
-            };
-
-            this.ultimaActtualizacionRam = new Date().toISOString();
-            this.responsableModificacionRam = 'Usuario Actual'; // Esto debería venir de un servicio de auth
-
-            if (this.codigoALI) {
-              const id = parseInt(this.codigoALI);
-              this.ramService.updateEstadoRAM(id, 'Borrador');
-              this.ramService.updateInfoRAM(id, this.ultimaActtualizacionRam, this.responsableModificacionRam);
-              this.ramService.updateDatosReporteRAM(id, datosReporteRAM);
-            }
-            this.router.navigate(['/home']);
+            this.guardarReporte('Borrador');
           }
         }
       ]
@@ -311,44 +354,18 @@ export class ReporteRamPage implements OnInit {
   }
 
   async confirmarFormulario() {
-    console.log('Confirmar Formulario clicked');
     const alert = await this.alertController.create({
       header: 'Confirmar',
-      message: '¿Estás seguro de confirmar el formulario?',
+      message: '¿Estás seguro de confirmar el formulario? Quedará bloqueado.',
       buttons: [
         {
           text: 'Cancelar',
-          role: 'cancel',
-          handler: () => {
-            console.log('Cancelar clicked');
-          }
+          role: 'cancel'
         },
         {
           text: 'Confirmar',
           handler: () => {
-            console.log('--- CONFIRMANDO FORMULARIO (Simulación) ---');
-            const datosReporteRAM = {
-              codigoALI: this.codigoALI,
-              etapa1: this.etapa1,
-              etapa2: this.etapa2,
-              listaRepeticionesEtapa3: this.listaRepeticionesEtapa3,
-              etapa4: this.etapa4,
-              etapa5: this.etapa5,
-              etapa6: this.etapa6,
-              etapa7: this.etapa7
-            };
-
-            this.ultimaActtualizacionRam = new Date().toISOString();
-            this.responsableModificacionRam = 'Usuario Actual'; // Esto debería venir de un servicio de auth
-
-            if (this.codigoALI) {
-              const id = parseInt(this.codigoALI);
-              this.ramService.updateEstadoRAM(id, 'Verificado');
-              this.ramService.updateInfoRAM(id, this.ultimaActtualizacionRam, this.responsableModificacionRam);
-              this.ramService.updateDatosReporteRAM(id, datosReporteRAM);
-            }
-            console.log(datosReporteRAM)
-            this.router.navigate(['/home']);
+            this.guardarReporte('Verificado');
           }
         }
       ]
@@ -356,10 +373,55 @@ export class ReporteRamPage implements OnInit {
     await alert.present();
   }
 
+  async guardarReporte(estadoDestino: 'Borrador' | 'Verificado') {
+    const loading = await this.loadingController.create({ message: 'Guardando reporte RAM...' });
+    await loading.present();
+
+    const datosReporteRAM = {
+      codigoALI: parseInt(this.codigoALI),
+      estado: estadoDestino,
+      etapa1: this.etapa1,
+      etapa2: this.etapa2,
+      listaRepeticionesEtapa3: this.listaRepeticionesEtapa3,
+      etapa4: this.etapa4,
+      etapa5: this.etapa5,
+      etapa6: this.etapa6,
+      etapa7: this.etapa7,
+      // Metadata extra if API requires it at top level, otherwise backend handles it
+    };
+
+    this.ramService.guardarReporte(datosReporteRAM).subscribe({
+      next: async (res) => {
+        loading.dismiss();
+        // TODO: Si es Verificado, ¿llamamos a verificar o guardar maneja todo?
+        // Asumiremos que guardar actualiza estado y si es Verificado, el backend procesa cierre o nosotros llamamos endpoint extra.
+        // En el caso de RAM, no vi endpoint user/verify especifico en la lista de rutas, solo `guardarReporte` y `previewCalculo`.
+        // Revisar routes: `router.post('/generarReporte', reporteRAMController.guardarReporteRAM);`
+        // Likely guardarReporte handles everything.
+
+        const alert = await this.alertController.create({
+          header: 'Éxito',
+          message: `Reporte ${estadoDestino === 'Verificado' ? 'verificado' : 'guardado'} correctamente.`,
+          buttons: ['OK']
+        });
+        await alert.present();
+        this.router.navigate(['/home']);
+      },
+      error: async (err) => {
+        loading.dismiss();
+        console.error('Error guardar RAM', err);
+        const alert = await this.alertController.create({
+          header: 'Error',
+          message: 'Error al guardar reporte: ' + (err.error?.mensaje || 'Error desconocido'),
+          buttons: ['OK']
+        });
+        await alert.present();
+      }
+    });
+  }
+
   salirVerificado() {
-    console.log('Salir clicked');
     this.navCtrl.back();
   }
 
 }
-

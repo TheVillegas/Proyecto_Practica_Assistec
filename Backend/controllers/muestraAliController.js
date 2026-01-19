@@ -1,4 +1,5 @@
 const MuestraALI = require('../models/muestraAliModel.js');
+const { mapMuestraALI } = require('../utils/mappers');
 
 
 exports.crearMuestraALI = (req, res) => {
@@ -23,7 +24,9 @@ exports.listarMuestrasALI = (req, res) => {
             console.error(err);
             return res.status(500).json({ mensaje: 'Error al obtener las muestras' });
         }
-        res.status(200).json(result.rows);
+        // Aplicar mapper
+        const muestras = result.rows.map(mapMuestraALI);
+        res.status(200).json(muestras);
     })
 }
 
@@ -37,7 +40,8 @@ exports.obtenerMuestraALI_porCodigoAli = (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ mensaje: 'Muestra no encontrada' });
         }
-        res.status(200).json(result.rows[0]);
+        const muestra = mapMuestraALI(result.rows[0]);
+        res.status(200).json(muestra);
     })
 }
 

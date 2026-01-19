@@ -2,9 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AliService } from 'src/app/services/ali-service';
 import { CatalogosService } from 'src/app/services/catalogos.service';
+import { TpaService } from 'src/app/services/tpa-service';
+import { AuthService } from 'src/app/services/auth-service';
 import { ImagenUploadService } from 'src/app/services/imagen-upload';
-import { IonContent, NavController, AlertController } from '@ionic/angular';
+import { NavController, AlertController, LoadingController } from '@ionic/angular';
 import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-reporte-tpa',
@@ -20,6 +23,7 @@ export class ReporteTPAPage implements OnInit {
   estadoSeleccionado: string = '';
   ultimaActualizacion: string = '';
   responsableModificacion: string = 'Usuario Actual';
+  currentUser: any = null; // Store full user object
   // --- ETAPA 1 ---
   lugarAlmacenamientoEtapa1: string = '';
   observacionesEtapa1: string = '';
@@ -29,11 +33,11 @@ export class ReporteTPAPage implements OnInit {
     {
       id: 0,
       responsable: "",
-      fechaPreparacion: new Date().toISOString(),
-      horaInicio: new Date().toISOString(),
-      horaPesado: new Date().toISOString(),
+      fechaPreparacion: '',
+      horaInicio: '',
+      horaPesado: '',
       numeroMuestras: null,
-      equiposSeleccionados: [], // Changed from 'equipo' string
+      equiposSeleccionados: [],
       lugarAlmacenamiento: "",
       tipoAccion: "", // 'Retiro' | 'Pesado'
       listaMateriales: [{ id: 0, tipoMaterial: "", codigoMaterial: "" }],
@@ -41,7 +45,7 @@ export class ReporteTPAPage implements OnInit {
     }
   ];
   listaRepeticionesEtapa4: any[] = [
-    { id: 0, responsable: "", fecha: new Date().toISOString(), horaInicio: new Date().toISOString(), analisisARealizar: "" }
+    { id: 0, responsable: "", fecha: "", horaInicio: "", analisisARealizar: "" }
   ];
   listaMaterialSiembra: any[] = [
     { id: 0, nombre: "", codigoMaterialSiembra: "" }
@@ -68,102 +72,154 @@ export class ReporteTPAPage implements OnInit {
     private route: ActivatedRoute,
     private aliService: AliService,
     private catalogosService: CatalogosService,
+    private tpaService: TpaService,
+    private authService: AuthService,
     private navCtrl: NavController,
     private alertController: AlertController,
+    private loadingController: LoadingController,
     private router: Router,
     private imagenUploadService: ImagenUploadService
   ) { }
 
   ngOnInit() {
     this.codigoALI = this.route.snapshot.paramMap.get('codigoALI')!;
-    if (this.codigoALI) {
-      const id = parseInt(this.codigoALI);
-      this.estadoTPA = this.aliService.getEstadoTPA(id);
-
-      // Regla de Negocio: Si estadoTPA es 'Verificado', bloquear inmediatamente
-      if (this.estadoTPA === 'Verificado') {
-        this.formularioBloqueado = true;
-      } else {
-        this.formularioBloqueado = false;
-      }
-      this.ultimaActualizacion = this.aliService.getUltimaActualizacionTPA(id) || '';
-      this.responsableModificacion = this.aliService.getResponsableTPA(id) || 'Usuario Actual';
+    this.currentUser = this.authService.getUsuario();
+    if (this.currentUser) {
+      this.responsableModificacion = this.currentUser.nombreApellido || 'Usuario Actual';
     }
-    this.opcionesMateriales = this.catalogosService.getMaterialesPesados();
-    this.listaLugares = this.catalogosService.getLugaresAlmacenamiento();
-    this.listaResponsables = this.catalogosService.getResponsables();
-    this.listaEquipos = this.catalogosService.getEquiposInstrumentos();
-    this.listaLimpieza = this.catalogosService.getChecklistLimpieza();
-    this.opcionesMaterialSiembra = this.catalogosService.getMaterialSiembra();
-    this.listaEquiposSiembra = this.catalogosService.getEquiposSiembra();
-    this.opcionesDiluyentes = this.catalogosService.getDiluyentes();
 
-    // Cargar datos guardados si existen
-    if (this.codigoALI) {
-      const datosGuardados = this.aliService.getDatosReporteTPA(parseInt(this.codigoALI));
-      if (datosGuardados) {
-        console.log('Cargando datos guardados...', datosGuardados);
+    // Cargar Catálogos de forma paralela
+    const cargaCatalogos = forkJoin({
+      materiales: this.catalogosService.getMaterialesPesados(),
+      lugares: this.catalogosService.getLugaresAlmacenamiento(),
+      responsables: this.catalogosService.getResponsables(),
+      equipos: this.catalogosService.getEquiposInstrumentos(),
+      limpieza: this.catalogosService.getChecklistLimpieza(),
+      materialSiembra: this.catalogosService.getMaterialSiembra(),
+      equiposSiembra: this.catalogosService.getEquiposSiembra(),
+      diluyentes: this.catalogosService.getDiluyentes()
+    });
+
+    cargaCatalogos.subscribe({
+      next: (res: any) => {
+        this.opcionesMateriales = res.materiales;
+        this.listaLugares = res.lugares;
+        this.listaResponsables = res.responsables;
+        this.listaEquipos = res.equipos;
+
+        // Mapear limpieza (checklist base)
+        this.listaLimpieza = res.limpieza.map((item: any) => ({
+          ...item,
+          seleccionado: item.defSeleccionado === 1,
+          bloqueado: item.defBloqueado === 1
+        }));
+
+        this.opcionesMaterialSiembra = res.materialSiembra;
+
+        // Mapear equipos siembra base
+        this.listaEquiposSiembra = res.equiposSiembra.map((item: any) => ({ ...item, seleccionado: false }));
+
+        this.opcionesDiluyentes = res.diluyentes;
+
+        // Una vez cargados los catálogos, cargar el reporte si existe
+        if (this.codigoALI) {
+          this.cargarDatosReporte();
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar catálogos', err);
+      }
+    });
+  }
+
+  async cargarDatosReporte() {
+    const loading = await this.loadingController.create({ message: 'Cargando reporte...' });
+    await loading.present();
+
+    const id = parseInt(this.codigoALI);
+
+    this.tpaService.obtenerReporte(id).subscribe({
+      next: (reporte: any) => {
+        loading.dismiss();
+        if (!reporte) return;
+
+        this.estadoTPA = reporte.estado || 'No realizado';
+        this.formularioBloqueado = this.estadoTPA === 'Verificado';
+        this.ultimaActualizacion = reporte.fechaCierre || ''; // Ajustar campo
+        this.responsableModificacion = reporte.usuarioCierre || 'Usuario Actual'; // Ajustar campo
+
         // Etapa 1
-        this.lugarAlmacenamientoEtapa1 = datosGuardados.etapa1.lugarAlmacenamiento || '';
-        this.observacionesEtapa1 = datosGuardados.etapa1.observaciones || '';
+        if (reporte.etapa1) {
+          this.lugarAlmacenamientoEtapa1 = reporte.etapa1.lugarAlmacenamiento || '';
+          this.observacionesEtapa1 = reporte.etapa1.observaciones || '';
+        }
 
         // Etapa 2
-        if (datosGuardados.etapa2_manipulacion && datosGuardados.etapa2_manipulacion.length > 0) {
-          this.listaRepeticionesEtapa2 = datosGuardados.etapa2_manipulacion;
+        if (reporte.etapa2_manipulacion && reporte.etapa2_manipulacion.length > 0) {
+          this.listaRepeticionesEtapa2 = reporte.etapa2_manipulacion;
         }
 
         // Etapa 3 (Limpieza)
-        if (datosGuardados.etapa3_limpieza && datosGuardados.etapa3_limpieza.checklist) {
-          // Fusionar con la lista base para mantener IDs y nombres, pero actualizar seleccionados
+        if (reporte.etapa3_limpieza && reporte.etapa3_limpieza.checklist) {
+          // Fusionar con la lista base
           this.listaLimpieza.forEach(itemBase => {
-            const itemGuardado = datosGuardados.etapa3_limpieza.checklist.find((i: any) => i.id === itemBase.id);
+            // El reporte guardado usa "nombre", pero el catálogo usa "nombreItem"
+            const itemGuardado = reporte.etapa3_limpieza.checklist.find((i: any) => i.nombre.trim() === itemBase.nombreItem.trim());
             if (itemGuardado) {
-              itemBase.seleccionado = true;
+              itemBase.seleccionado = itemGuardado.seleccionado;
+              itemBase.bloqueado = itemGuardado.bloqueado;
             } else {
-              // Si no está en lo guardado (y no es bloqueado por defecto), desmarcar
               if (!itemBase.bloqueado) itemBase.seleccionado = false;
             }
           });
         }
 
         // Etapa 4
-        if (datosGuardados.etapa4_retiro && datosGuardados.etapa4_retiro.length > 0) {
-          this.listaRepeticionesEtapa4 = datosGuardados.etapa4_retiro;
+        if (reporte.etapa4_retiro && reporte.etapa4_retiro.length > 0) {
+          this.listaRepeticionesEtapa4 = reporte.etapa4_retiro;
         }
 
         // Etapa 5
-        if (datosGuardados.etapa5_siembra) {
-          if (datosGuardados.etapa5_siembra.materiales && datosGuardados.etapa5_siembra.materiales.length > 0) {
-            this.listaMaterialSiembra = datosGuardados.etapa5_siembra.materiales;
+        if (reporte.etapa5_siembra) {
+          if (reporte.etapa5_siembra.materiales && reporte.etapa5_siembra.materiales.length > 0) {
+            this.listaMaterialSiembra = reporte.etapa5_siembra.materiales;
           }
-          if (datosGuardados.etapa5_siembra.diluyentes && datosGuardados.etapa5_siembra.diluyentes.length > 0) {
-            this.listaDiluyentes = datosGuardados.etapa5_siembra.diluyentes;
+          if (reporte.etapa5_siembra.diluyentes && reporte.etapa5_siembra.diluyentes.length > 0) {
+            this.listaDiluyentes = reporte.etapa5_siembra.diluyentes;
           }
-          this.otrosEquiposSiembra = datosGuardados.etapa5_siembra.otrosEquipos || '';
+          this.otrosEquiposSiembra = reporte.etapa5_siembra.otrosEquipos || '';
 
-          // Restaurar selección de equipos de siembra
-          if (datosGuardados.etapa5_siembra.equipos) {
+          // Restaurar selección de equipos de siembra (by name mapping)
+          if (reporte.etapa5_siembra.equipos) {
             this.listaEquiposSiembra.forEach(eq => {
-              const savedEq = datosGuardados.etapa5_siembra.equipos.find((s: any) => s.id === eq.id);
-              if (savedEq) eq.seleccionado = true;
+              // El reporte usa "nombre", el catálogo "nombreEquipo"
+              const savedEq = reporte.etapa5_siembra.equipos.find((s: any) => s.nombre === eq.nombreEquipo);
+              if (savedEq) eq.seleccionado = savedEq.seleccionado; // o existe en array
               else eq.seleccionado = false;
             });
           }
         }
 
         // Etapa 6
-        /*
-        if (datosGuardados.etapa6_cierre) {
-          this.observacionesFinales = datosGuardados.etapa6_cierre.observaciones || '';
-          // La firma es más compleja de restaurar si es base64, asumimos que string base64 se guarda
-          if (datosGuardados.etapa6_cierre.firma && datosGuardados.etapa6_cierre.firma !== 'Sin firma' && datosGuardados.etapa6_cierre.firma !== 'Firma presente') {
-            this.firmaCoordinador = datosGuardados.etapa6_cierre.firma;
-          }
+        if (reporte.etapa6_cierre) {
+          this.observacionesFinales = reporte.etapa6_cierre.observaciones || '';
+          this.firmaCoordinador = (reporte.etapa6_cierre.firma && reporte.etapa6_cierre.firma !== 'Sin firma') ? reporte.etapa6_cierre.firma : null;
         }
-        */
+
+      },
+      error: async (err) => {
+        loading.dismiss();
+        console.error(err);
+        const alert = await this.alertController.create({
+          header: 'Error',
+          message: 'Error al cargar el reporte.',
+          buttons: ['OK']
+        });
+        await alert.present();
       }
-    }
+    });
   }
+
 
   cambiarEstado(event: any) {
     this.estadoSeleccionado = event.detail.value || '';
@@ -174,9 +230,9 @@ export class ReporteTPAPage implements OnInit {
     // const nuevoID = this.listaRepeticionesEtapa2.length + 1; // ID timestamp es mejor para no duplicar
     const nuevoItem = {
       id: Date.now(),
-      responsable: "",
-      fechaPreparacion: new Date().toISOString(),
-      horaPesado: new Date().toISOString(),
+      responsable: this.currentUser ? this.currentUser.nombreApellido : "",
+      fechaPreparacion: '',
+      horaPesado: '',
       numeroMuestras: null,
       equiposSeleccionados: [],
       lugarAlmacenamiento: "",
@@ -228,7 +284,7 @@ export class ReporteTPAPage implements OnInit {
     const nuevoID = this.listaRepeticionesEtapa4.length + 1;
     this.listaRepeticionesEtapa4.push({
       id: nuevoID,
-      responsable: '',
+      responsable: this.currentUser ? this.currentUser.nombreApellido : "",
       fecha: new Date().toISOString(),
       horaInicio: new Date().toISOString(),
       analisisARealizar: ''
@@ -306,11 +362,6 @@ export class ReporteTPAPage implements OnInit {
           text: 'Salir',
           handler: () => {
             this.navCtrl.back();
-            // Solo si estamos editando y cancelamos, volvemos a 'No realizado' o el estado previo lógico
-            if (this.codigoALI && !this.formularioBloqueado) {
-              this.aliService.updateEstadoTPA(parseInt(this.codigoALI), 'No realizado');
-            }
-            this.router.navigate(['/home']);
           }
         }
       ]
@@ -335,54 +386,7 @@ export class ReporteTPAPage implements OnInit {
         }, {
           text: 'Guardar',
           handler: () => {
-            console.log('--- GUARDANDO BORRADOR (Simulación) ---');
-
-            const limpiezaFiltrada = this.listaLimpieza.filter(l => l.seleccionado);
-            const equiposSiembraFiltrados = this.listaEquiposSiembra.filter(e => e.seleccionado);
-            const diluyentesFiltrados = this.listaDiluyentes.filter(d => d.nombre && d.nombre !== '');
-
-            console.log('Datos:', {
-              etapa2: this.listaRepeticionesEtapa2,
-              etapa4: this.listaRepeticionesEtapa4,
-              siembra: this.listaMaterialSiembra,
-              diluyentes: diluyentesFiltrados,
-              firma: this.firmaCoordinador ? 'Firma presente' : 'Sin firma'
-            });
-            // Construir objeto de datos para guardar
-            const datosParaGuardar = {
-              codigoALI: this.codigoALI,
-              etapa1: {
-                lugarAlmacenamiento: this.lugarAlmacenamientoEtapa1,
-                observaciones: this.observacionesEtapa1
-              },
-              etapa2_manipulacion: this.listaRepeticionesEtapa2,
-              etapa3_limpieza: {
-                checklist: limpiezaFiltrada,
-              },
-              etapa4_retiro: this.listaRepeticionesEtapa4,
-              etapa5_siembra: {
-                materiales: this.listaMaterialSiembra, // Guardamos todos para poder editar, no solo filtrados
-                equipos: equiposSiembraFiltrados,
-                otrosEquipos: this.otrosEquiposSiembra,
-                diluyentes: this.listaDiluyentes // Guardamos todos
-              },
-              etapa6_cierre: {
-                firma: this.firmaCoordinador, // Guardamos la firma real (Base64)
-                observaciones: this.observacionesFinales
-              }
-            };
-
-            this.estadoTPA = 'Borrador';
-            this.ultimaActualizacion = new Date().toISOString();
-            // Actualizar en el servicio para sincronización global
-            if (this.codigoALI) {
-              const id = parseInt(this.codigoALI);
-              this.aliService.updateEstadoTPA(id, 'Borrador');
-              this.aliService.updateInfoTPA(id, this.ultimaActualizacion, this.responsableModificacion);
-              this.aliService.updateDatosReporteTPA(id, datosParaGuardar);
-            }
-            this.router.navigate(['/home']);
-            // No bloqueamos el formulario
+            this.guardarReporte('Borrador');
           }
         }
       ]
@@ -402,62 +406,92 @@ export class ReporteTPAPage implements OnInit {
         }, {
           text: 'Confirmar y Bloquear',
           handler: () => {
-            console.log('--- CONFIRMANDO FORMULARIO (Simulación) ---');
-
-            // Filtrado de datos
-            const limpiezaFiltrada = this.listaLimpieza.filter(l => l.seleccionado);
-            const equiposSiembraFiltrados = this.listaEquiposSiembra.filter(e => e.seleccionado);
-            const diluyentesFiltrados = this.listaDiluyentes.filter(d => d.nombre && d.nombre !== '');
-            const materialesSiembraFiltrados = this.listaMaterialSiembra.filter(m => m.nombre && m.nombre !== '');
-
-            // Construcción del objeto completo para Backend
-            const reporteCompleto = {
-              codigoALI: this.codigoALI,
-              estado: 'Verificado',
-              etapa1: {
-                lugarAlmacenamiento: this.lugarAlmacenamientoEtapa1,
-                observaciones: this.observacionesEtapa1
-              },
-              etapa2_manipulacion: this.listaRepeticionesEtapa2, // Ya contiene equiposSeleccionados
-              etapa3_limpieza: {
-                checklist: limpiezaFiltrada,
-              },
-              etapa4_retiro: this.listaRepeticionesEtapa4,
-              etapa5_siembra: {
-                materiales: materialesSiembraFiltrados,
-                equipos: equiposSiembraFiltrados,
-                otrosEquipos: this.otrosEquiposSiembra,
-                diluyentes: diluyentesFiltrados
-              },
-              etapa6_cierre: {
-                firma: this.firmaCoordinador ? 'Firma presente' : 'Sin firma', // O la base64 real
-                observaciones: this.observacionesFinales
-              }
-            };
-
-            // Objeto con firma real para persistencia interna
-            const datosPersistentes = { ...reporteCompleto };
-            //datosPersistentes.etapa6_cierre.firma = this.firmaCoordinador; Error por tipo de dato del campo firma
-            datosPersistentes.etapa5_siembra.materiales = this.listaMaterialSiembra; // Guardar completos por si se desbloquea
-            datosPersistentes.etapa5_siembra.diluyentes = this.listaDiluyentes;
-            console.log('DATOS PARA BACKEND (FILTRADOS):', reporteCompleto);
-
-            // Aquí iría la lógica real de guardado final
-            this.formularioBloqueado = true;
-            this.estadoTPA = 'Verificado';
-            this.ultimaActualizacion = new Date().toISOString();
-            // Actualizar en el servicio para sincronización global
-            if (this.codigoALI) {
-              const id = parseInt(this.codigoALI);
-              this.aliService.updateEstadoTPA(id, 'Verificado');
-              this.aliService.updateInfoTPA(id, this.ultimaActualizacion, this.responsableModificacion);
-              this.aliService.updateDatosReporteTPA(id, datosPersistentes);
-            }
-            this.router.navigate(['/home']);
+            this.guardarReporte('Verificado');
           }
         }
       ]
     });
     await alert.present();
   }
+
+  async guardarReporte(estadoDestino: 'Borrador' | 'Verificado') {
+    const loading = await this.loadingController.create({ message: 'Guardando reporte...' });
+    await loading.present();
+
+    const limpiezaFiltrada = this.listaLimpieza.filter(l => l.seleccionado);
+    const equiposSiembraFiltrados = this.listaEquiposSiembra.filter(e => e.seleccionado);
+    // Guardamos todos los diluyentes y materiales, no solo filtrados, para permitir edición
+    const diluyentes = this.listaDiluyentes;
+    const materialesSiembra = this.listaMaterialSiembra;
+
+    const datosParaGuardar = {
+      codigoALI: parseInt(this.codigoALI),
+      estado: estadoDestino,
+      etapa1: {
+        lugarAlmacenamiento: this.lugarAlmacenamientoEtapa1,
+        observaciones: this.observacionesEtapa1
+      },
+      etapa2_manipulacion: this.listaRepeticionesEtapa2,
+      etapa3_limpieza: {
+        checklist: limpiezaFiltrada,
+      },
+      etapa4_retiro: this.listaRepeticionesEtapa4,
+      etapa5_siembra: {
+        materiales: materialesSiembra,
+        equipos: equiposSiembraFiltrados,
+        otrosEquipos: this.otrosEquiposSiembra,
+        diluyentes: diluyentes
+      },
+      etapa6_cierre: {
+        firma: this.firmaCoordinador,
+        observaciones: this.observacionesFinales
+      }
+    };
+
+    console.log(datosParaGuardar);
+    this.tpaService.guardarReporte(datosParaGuardar).subscribe({
+      next: async (resp) => {
+        // Si es verificado, llamamos al endpoint de verificación para firmar/cerrar administrativamente
+        if (estadoDestino === 'Verificado') {
+          const datosVerif = {
+            rutUsuario: this.authService.getUsuario()?.rut_analista,
+            observacionesFinales: this.observacionesFinales,
+            firma: this.firmaCoordinador || ''
+          };
+
+          this.tpaService.verificarReporte(parseInt(this.codigoALI), datosVerif).subscribe({
+            next: async () => {
+              loading.dismiss();
+              const alert = await this.alertController.create({ header: 'Éxito', message: 'Reporte verificado correctamente', buttons: ['OK'] });
+              await alert.present();
+              this.router.navigate(['/home']);
+            },
+            error: async (err) => {
+              loading.dismiss();
+              console.error('Error al verificar', err);
+              // Fallback: Se guardó pero falló verificación
+              const alert = await this.alertController.create({ header: 'Atención', message: 'Reporte guardado pero hubo un error en la verificación final.', buttons: ['OK'] });
+              await alert.present();
+              this.router.navigate(['/home']);
+            }
+          });
+
+        } else {
+          loading.dismiss();
+          const alert = await this.alertController.create({ header: 'Éxito', message: 'Borrador guardado correctamente', buttons: ['OK'] });
+          await alert.present();
+          this.router.navigate(['/home']);
+        }
+      },
+      error: async (err) => {
+        loading.dismiss();
+        console.error('Error al guardar', err);
+        const alert = await this.alertController.create({ header: 'Error', message: 'Error al guardar el reporte: ' + (err.error?.mensaje || err.message), buttons: ['OK'] });
+        await alert.present();
+      }
+    });
+
+  }
+
 }
+

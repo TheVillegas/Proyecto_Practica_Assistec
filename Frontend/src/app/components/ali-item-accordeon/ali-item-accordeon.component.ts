@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { ALI } from '../../interfaces/ali';
 import { AliService } from '../../services/ali-service';
 import { ImagenUploadService } from '../../services/imagen-upload';
@@ -14,6 +14,7 @@ import { AlertController } from '@ionic/angular';
 export class ALIItemAccordeonComponent implements OnInit {
 
   @Input() muestra!: ALI;
+  @Output() onDelete = new EventEmitter<void>();
   isExpanded: boolean = false;
 
   constructor(
@@ -30,16 +31,35 @@ export class ALIItemAccordeonComponent implements OnInit {
   }
 
   guardarObservaciones() {
-    this.aliService.updateObservacionesGenerales(this.muestra.ALIMuestra, this.muestra.observacionesGenerales);
-    // Opcional: Agregar feedback visual como un toast
-    console.log('Observaciones guardadas para la muestra', this.muestra.ALIMuestra);
+    this.aliService.updateObservacionesGenerales(this.muestra.ALIMuestra, this.muestra.observacionesGenerales)
+      .subscribe({
+        next: async () => {
+          console.log('Observaciones guardadas para la muestra', this.muestra.ALIMuestra);
+          // Feedback visual
+          const alert = await this.alertController.create({
+            header: 'Éxito',
+            message: 'Observaciones guardadas correctamente.',
+            buttons: ['OK']
+          });
+          await alert.present();
+        },
+        error: async (err) => {
+          console.error('Error al guardar observaciones', err);
+          const alert = await this.alertController.create({
+            header: 'Error',
+            message: 'No se pudieron guardar las observaciones.',
+            buttons: ['OK']
+          });
+          await alert.present();
+        }
+      });
   }
 
   async eliminarALI(event: Event) {
     event.stopPropagation();
     const alert = await this.alertController.create({
       header: 'Confirmar eliminación',
-      message: `¿Está seguro de que desea eliminar el ALI con ID ${this.muestra.CodigoSerna || this.muestra.ALIMuestra}?`,
+      message: `¿Está seguro de que desea eliminar el ALI con ID ${this.muestra.CodigoSerna || this.muestra.ALIMuestra}? Esto eliminará también los reportes asociados.`,
       buttons: [
         {
           text: 'Cancelar',
@@ -49,7 +69,27 @@ export class ALIItemAccordeonComponent implements OnInit {
           text: 'Eliminar',
           role: 'destructive',
           handler: () => {
-            this.aliService.eliminarMuestra(this.muestra.ALIMuestra);
+            this.aliService.eliminarMuestra(this.muestra.ALIMuestra).subscribe({
+              next: async () => {
+                console.log('Muestra eliminada');
+                const successAlert = await this.alertController.create({
+                  header: 'Éxito',
+                  message: 'Muestra eliminada correctamente.',
+                  buttons: ['OK']
+                });
+                await successAlert.present();
+                this.onDelete.emit(); // Notificar al padre para recargar lista
+              },
+              error: async (err) => {
+                console.error('Error al eliminar muestra', err);
+                const errorAlert = await this.alertController.create({
+                  header: 'Error',
+                  message: 'Error al eliminar la muestra: ' + (err.error?.mensaje || 'Error desconocido'),
+                  buttons: ['OK']
+                });
+                await errorAlert.present();
+              }
+            });
           }
         }
       ]

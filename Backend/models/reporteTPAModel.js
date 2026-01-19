@@ -124,7 +124,8 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 s.fecha_termino,
                 s.numero_muestras,
                 s.observaciones_sesion,
-                s.retiro_pesado
+                s.retiro_pesado,
+                s.lugar_almacenamiento
             FROM TPA_ETAPA2_SESION s
             LEFT JOIN USUARIOS u ON s.rut_analista = u.rut_analista
             WHERE s.codigo_ali = :codigo_ali
@@ -149,11 +150,18 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 SELECT 
                     m.tipo_material,
                     m.codigo_manual,
-                    p.codigo_pipeta,
-                    i.codigo_instrumento
+                    COALESCE(
+                        p.nombre_pipeta, 
+                        i.nombre_instrumento, 
+                        p_code.nombre_pipeta, 
+                        i_code.nombre_instrumento, 
+                        m.tipo_material
+                    ) as nombre_material
                 FROM TPA_ETAPA2_MATERIALES m
                 LEFT JOIN MICROPIPETAS p ON m.id_pipeta = p.id_pipeta
                 LEFT JOIN INSTRUMENTOS i ON m.id_instrumento = i.id_instrumento
+                LEFT JOIN MICROPIPETAS p_code ON m.tipo_material = p_code.codigo_pipeta
+                LEFT JOIN INSTRUMENTOS i_code ON m.tipo_material = i_code.codigo_instrumento
                 WHERE m.id_sesion = :id_sesion
             `;
             const resultMateriales = await connection.execute(sqlMateriales, { id_sesion: idSesion });
@@ -161,16 +169,17 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
             reporte.etapa2_manipulacion.push({
                 id: idSesion,
                 responsable: row.RESPONSABLE,
-                fechaPreparacion: row.FECHA_INICIO,
-                horaInicio: row.FECHA_INICIO ? new Date(row.FECHA_INICIO).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '',
-                horaPesado: row.FECHA_TERMINO ? new Date(row.FECHA_TERMINO).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '',
+                lugarAlmacenamiento: row.LUGAR_ALMACENAMIENTO || '',
+                fechaPreparacion: row.FECHA_INICIO ? new Date(row.FECHA_INICIO).toISOString().split('T')[0] : '',
+                horaInicio: row.FECHA_INICIO ? new Date(row.FECHA_INICIO).toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }) : '',
+                horaPesado: row.FECHA_TERMINO ? new Date(row.FECHA_TERMINO).toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }) : '',
                 numeroMuestras: row.NUMERO_MUESTRAS,
                 observacionesEtapa2: row.OBSERVACIONES_SESION,
                 tipoAccion: row.RETIRO_PESADO === 1 ? 'Pesado' : 'Retiro',
                 equiposSeleccionados: resultEquipos.rows.map(e => e.NOMBRE_EQUIPO),
                 listaMateriales: resultMateriales.rows.map((m, idx) => ({
                     id: idx,
-                    tipoMaterial: m.TIPO_MATERIAL || '',
+                    tipoMaterial: m.NOMBRE_MATERIAL || m.TIPO_MATERIAL || '',
                     codigoMaterial: m.CODIGO_MANUAL || ''
                 }))
             });
@@ -200,6 +209,7 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 r.id_retiro,
                 u.nombre_apellido_analista as responsable,
                 r.fecha_retiro,
+                r.hora_inicio,
                 r.accion_realizada
             FROM TPA_ETAPA4_RETIRO r
             LEFT JOIN USUARIOS u ON r.rut_analista = u.rut_analista
@@ -213,7 +223,7 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
             responsable: row.RESPONSABLE,
             fecha: row.FECHA_RETIRO ? new Date(row.FECHA_RETIRO).toISOString().split('T')[0] : '',
             horaInicio: row.HORA_INICIO || '',
-            accionRealizada: row.ACCION_REALIZADA
+            analisisARealizar: row.ACCION_REALIZADA
         }));
 
         // 5. Obtener Etapa 5 (Siembra)
@@ -358,15 +368,24 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
 
             for (const sesion of datos.etapa2_manipulacion) {
                 // a. Buscar RUT del responsable por su nombre (Tabla: USUARIOS)
-                const resAnalista = await connection.execute(
-                    `SELECT rut_analista FROM USUARIOS WHERE nombre_apellido_analista = :nombre`,
-                    { nombre: sesion.responsable }
-                );
+                // a. Buscar RUT del responsable por su nombre (Tabla: USUARIOS)
+                let rutReal = null;
+                if (!sesion.responsable || !sesion.responsable.trim()) {
+                    if (datos.estado === 'Verificado') {
+                        throw new Error(`El responsable es obligatorio en Etapa 2 para finalizar el reporte.`);
+                    }
+                    // Si es borrador, rutReal se mantiene null
+                } else {
+                    const resAnalista = await connection.execute(
+                        `SELECT rut_analista FROM USUARIOS WHERE nombre_apellido_analista = :nombre`,
+                        { nombre: sesion.responsable }
+                    );
 
-                if (resAnalista.rows.length === 0) {
-                    throw new Error(`Analista '${sesion.responsable}' no encontrado.`);
+                    if (resAnalista.rows.length === 0) {
+                        throw new Error(`Analista '${sesion.responsable}' no encontrado.`);
+                    }
+                    rutReal = resAnalista.rows[0].RUT_ANALISTA;
                 }
-                const rutReal = resAnalista.rows[0].RUT_ANALISTA;
 
                 // b. Preparar fechas y horas (Combinando fecha + hora del JSON)
                 let fechaInicio = null;
@@ -378,7 +397,10 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                         : sesion.fechaPreparacion;
 
                     if (sesion.horaInicio) {
-                        fechaInicio = new Date(`${baseDate}T${sesion.horaInicio}:00`);
+                        // Sanitizar Hora Inicio (Extraer HH:mm si viene en ISO)
+                        const rawHora = sesion.horaInicio;
+                        const cleanHora = rawHora.includes('T') ? rawHora.split('T')[1].substring(0, 5) : rawHora.substring(0, 5);
+                        fechaInicio = new Date(`${baseDate}T${cleanHora}:00`);
                     } else if (sesion.fechaPreparacion.includes('T')) {
                         fechaInicio = new Date(sesion.fechaPreparacion);
                     } else {
@@ -386,7 +408,10 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                     }
 
                     if (sesion.horaPesado) {
-                        fechaTermino = new Date(`${baseDate}T${sesion.horaPesado}:00`);
+                        // Sanitizar Hora Pesado
+                        const rawHora = sesion.horaPesado;
+                        const cleanHora = rawHora.includes('T') ? rawHora.split('T')[1].substring(0, 5) : rawHora.substring(0, 5);
+                        fechaTermino = new Date(`${baseDate}T${cleanHora}:00`);
                     }
                 }
 
@@ -399,9 +424,10 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                         numero_muestras,
                         observaciones_sesion,
                         retiro_pesado,
-                        codigo_ali
+                        codigo_ali,
+                        lugar_almacenamiento
                     ) VALUES (
-                        :rut, :f_ini, :f_ter, :num, :obs, :tipo, :ali
+                        :rut, :f_ini, :f_ter, :num, :obs, :tipo, :ali, :lugar
                     ) RETURNING id_sesion INTO :id_s
                 `;
 
@@ -413,6 +439,7 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                     obs: sesion.observacionesEtapa2,
                     tipo: sesion.tipoAccion === 'Pesado' ? 1 : 0,
                     ali: datos.codigoALI,
+                    lugar: sesion.lugarAlmacenamiento || '',
                     id_s: { type: db.oracledb.NUMBER, dir: db.oracledb.BIND_OUT }
                 });
 
@@ -436,13 +463,47 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                 // e. Insertar Lista de Materiales (Relación Hijo 2)
                 if (sesion.listaMateriales && Array.isArray(sesion.listaMateriales)) {
                     for (const mat of sesion.listaMateriales) {
+                        // Validación de integridad para Draft/Final
+                        if (!mat.tipoMaterial) {
+                            if (datos.estado === 'Verificado') {
+                                throw new Error(`El tipo de material es obligatorio en Etapa 2 para finalizar.`);
+                            }
+                            continue; // Saltar este material incompleto en borrador
+                        }
+
+                        let idPipeta = null;
+                        let idInstrumento = null;
+
+                        // Intentar buscar ID si es pipeta o instrumento
+                        // El frontend envía el código en 'tipoMaterial' (ej: '98-M')
+                        // Primero buscamos en MICROPIPETAS
+                        const resPipeta = await connection.execute(
+                            `SELECT id_pipeta FROM MICROPIPETAS WHERE codigo_pipeta = :cod`,
+                            { cod: mat.tipoMaterial }
+                        );
+
+                        if (resPipeta.rows.length > 0) {
+                            idPipeta = resPipeta.rows[0].ID_PIPETA;
+                        } else {
+                            // Si no es pipeta, buscamos en INSTRUMENTOS
+                            const resInstr = await connection.execute(
+                                `SELECT id_instrumento FROM INSTRUMENTOS WHERE codigo_instrumento = :cod`,
+                                { cod: mat.tipoMaterial }
+                            );
+                            if (resInstr.rows.length > 0) {
+                                idInstrumento = resInstr.rows[0].ID_INSTRUMENTO;
+                            }
+                        }
+
                         await connection.execute(
-                            `INSERT INTO TPA_ETAPA2_MATERIALES (id_sesion, tipo_material, codigo_manual) 
-                             VALUES (:id_s, :tipo, :cod)`,
+                            `INSERT INTO TPA_ETAPA2_MATERIALES (id_sesion, tipo_material, codigo_manual, id_pipeta, id_instrumento) 
+                             VALUES (:id_s, :tipo, :cod_manual, :id_p, :id_i)`,
                             {
                                 id_s: idSesionReal,
-                                tipo: mat.tipoMaterial,
-                                cod: mat.codigoMaterial
+                                tipo: mat.tipoMaterial, // Guardamos el código como backup
+                                cod_manual: mat.codigoMaterial,
+                                id_p: idPipeta,
+                                id_i: idInstrumento
                             }
                         );
                     }
@@ -460,14 +521,15 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
             );
 
             for (const item of datos.etapa3_limpieza.checklist) {
+                const nombreItem = item.nombre || item.nombreItem;
                 // Validación opcional: Verificar si el ítem existe en el maestro
                 const resItem = await connection.execute(
                     `SELECT id_item FROM MAESTRO_CHECKLIST_LIMPIEZA WHERE nombre_item = :nom`,
-                    { nom: item.nombre }
+                    { nom: nombreItem }
                 );
 
                 if (resItem.rows.length === 0) {
-                    throw new Error(`El item '${item.nombre}' no existe en el maestro de limpieza.`);
+                    throw new Error(`El item '${nombreItem}' no existe en el maestro de limpieza.`);
                 }
 
                 await connection.execute(`
@@ -476,7 +538,7 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                 `,
                     {
                         ali: datos.codigoALI,
-                        nom_item: item.nombre,
+                        nom_item: nombreItem,
                         sel: item.seleccionado ? 1 : 0,
                         blo: item.bloqueado ? 1 : 0
                     }
@@ -493,13 +555,21 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
             );
 
             for (const datosRetiro of datos.etapa4_retiro) {
-                const resAnalista = await connection.execute(
-                    `SELECT rut_analista FROM USUARIOS WHERE nombre_apellido_analista = :nom`,
-                    { nom: datosRetiro.responsable }
-                );
+                let rutReal = null;
+                if (!datosRetiro.responsable || !datosRetiro.responsable.trim()) {
+                    if (datos.estado === 'Verificado') {
+                        throw new Error(`El responsable es obligatorio en Etapa 4 para finalizar el reporte.`);
+                    }
+                } else {
+                    const resAnalista = await connection.execute(
+                        `SELECT rut_analista FROM USUARIOS WHERE nombre_apellido_analista = :nom`,
+                        { nom: datosRetiro.responsable }
+                    );
 
-                if (resAnalista.rows.length === 0) {
-                    throw new Error(`El analista '${datosRetiro.responsable}' no existe en la base de datos.`);
+                    if (resAnalista.rows.length === 0) {
+                        throw new Error(`El analista '${datosRetiro.responsable}' no existe en la base de datos.`);
+                    }
+                    rutReal = resAnalista.rows[0].RUT_ANALISTA;
                 }
 
                 await connection.execute(
@@ -518,10 +588,13 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                     )`
                     , {
                         ali: datos.codigoALI,
-                        rut: resAnalista.rows[0].RUT_ANALISTA,
+                        rut: rutReal,
                         fecha: new Date(datosRetiro.fecha), // Convertir a objeto Date para Oracle
-                        accion: datosRetiro.analisisARealizar,
-                        hora_inicio: datosRetiro.horaInicio
+                        accion: datosRetiro.analisisARealizar || datosRetiro.accionRealizada, /* Fallback por si acaso */
+                        // Sanitizar Hora Inicio Etapa 4 (Extraer HH:mm si viene en ISO, truncar a 10 chars max)
+                        hora_inicio: (datosRetiro.horaInicio && datosRetiro.horaInicio.includes('T'))
+                            ? datosRetiro.horaInicio.split('T')[1].substring(0, 5)
+                            : (datosRetiro.horaInicio ? datosRetiro.horaInicio.substring(0, 5) : null)
                     }
                 );
             }
@@ -581,9 +654,18 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
             // --- EQUIPOS (LAB) ---
             if (datos.etapa5_siembra.equipos && Array.isArray(datos.etapa5_siembra.equipos)) {
                 for (const equipo of datos.etapa5_siembra.equipos) {
+                    const nombreEquipo = equipo.nombre || equipo.nombreEquipo;
+
+                    if (!nombreEquipo) {
+                        if (datos.estado === 'Verificado') {
+                            throw new Error(`El nombre del equipo es obligatorio en Etapa 5 para finalizar.`);
+                        }
+                        continue;
+                    }
+
                     const equipoValido = await connection.execute(
                         `SELECT id_equipo FROM EQUIPOS_LAB WHERE nombre_equipo = :nom`,
-                        { nom: equipo.nombre }
+                        { nom: nombreEquipo }
                     );
 
 
@@ -618,7 +700,7 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                                 codigo_material: mat.codigoMaterialSiembra
                             }
                         );
-                    } z
+                    }
                 }
             }
         }

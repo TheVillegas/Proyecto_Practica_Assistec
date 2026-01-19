@@ -14,8 +14,8 @@
               <ion-label>Lugar de Almacenamiento de la muestra</ion-label>
               <ion-select placeholder="Seleccione un Lugar" class="selecionador_opciones"
                 [disabled]="formularioBloqueado" [(ngModel)]="lugarAlmacenamientoEtapa1">
-                <ion-select-option *ngFor="let lugar of listaLugares" [value]="lugar.nombre">
-                  {{ lugar.nombre }}
+                <ion-select-option *ngFor="let lugar of listaLugares" [value]="lugar.nombreLugar">
+                  {{ lugar.nombreLugar }}
                 </ion-select-option>
               </ion-select>
             </ion-col>
@@ -40,8 +40,8 @@
               <ion-label>Responsable </ion-label>
               <ion-select placeholder="Seleccione un Responsable" class="selecionador_opciones"
                 [disabled]="formularioBloqueado" [(ngModel)]="etapa2.responsable">
-                <ion-select-option *ngFor="let responsable of listaResponsables" [value]="responsable.nombre">
-                  {{ responsable.nombre }}
+                <ion-select-option *ngFor="let responsable of listaResponsables" [value]="responsable.nombreApellido">
+                  {{ responsable.nombreApellido }}
                 </ion-select-option>
               </ion-select>
             </ion-col>
@@ -75,10 +75,10 @@
               <ion-label>Equipo y/o Instrumento</ion-label>
               <ion-list class="lista_equipos_scroll">
                 <ion-item *ngFor="let equipo of listaEquipos">
-                  <ion-checkbox slot="start" [checked]="esEquipoSeleccionado(i, equipo.nombre)"
-                    (ionChange)="toggleEquipo(i, equipo.nombre)" [disabled]="formularioBloqueado">
+                  <ion-checkbox slot="start" [checked]="esEquipoSeleccionado(i, equipo.nombreEquipo)"
+                    (ionChange)="toggleEquipo(i, equipo.nombreEquipo)" [disabled]="formularioBloqueado">
                   </ion-checkbox>
-                  <ion-label>{{ equipo.nombre }}</ion-label>
+                  <ion-label>{{ equipo.nombreEquipo }}</ion-label>
                 </ion-item>
               </ion-list>
             </ion-col>
@@ -86,9 +86,9 @@
               <ion-label>Lugar de Almacenamiento de la muestra</ion-label>
               <ion-select placeholder="Seleccione un Equipo y/o Instrumento" class="selecionador_opciones"
                 [disabled]="formularioBloqueado" [(ngModel)]="etapa2.lugarAlmacenamiento">
-                <ion-select-option *ngFor="let lugar of listaLugares" [value]="lugar.nombre"
-                  [disabled]="lugar.nombre === 'Mesón Siembra'">
-                  {{ lugar.nombre }}
+                <ion-select-option *ngFor="let lugar of listaLugares" [value]="lugar.nombreLugar"
+                  [disabled]="lugar.nombreLugar === 'Mesón Siembra'">
+                  {{ lugar.nombreLugar }}
                 </ion-select-option>
               </ion-select>
             </ion-col>
@@ -108,7 +108,7 @@
                 <div class="contendor_doble">
                   <ion-select [(ngModel)]="material.tipoMaterial" placeholder="Seleccione la clave del material pesado"
                     class="selecionador_opciones" interface="alert" [disabled]="formularioBloqueado">
-                    <ion-select-option *ngFor="let opcion of opcionesMateriales" [value]="opcion.valor"
+                    <ion-select-option *ngFor="let opcion of opcionesMateriales" [value]="opcion.nombre"
                       [disabled]="opcion.esTitulo">
                       {{ opcion.nombre }}
                     </ion-select-option>
@@ -156,7 +156,7 @@
           <ion-item *ngFor="let item of listaLimpieza">
             <ion-checkbox slot="start" label-placement="end" [disabled]="item.bloqueado || formularioBloqueado"
               [(ngModel)]="item.seleccionado">
-              {{item.nombre}}
+              {{item.nombreItem}}
             </ion-checkbox>
           </ion-item>
         </ion-list>
@@ -174,8 +174,8 @@
               <ion-label>Responsable</ion-label>
               <ion-select placeholder="Seleccione un responsable" class="selecionador_opciones"
                 [(ngModel)]="etapa4.responsable" [disabled]="formularioBloqueado">
-                <ion-select-option *ngFor="let responsable of listaResponsables" [value]="responsable.nombre">
-                  {{responsable.nombre}}
+                <ion-select-option *ngFor="let responsable of listaResponsables" [value]="responsable.nombreApellido">
+                  {{responsable.nombreApellido}}
                 </ion-select-option>
               </ion-select>
             </ion-col>
@@ -225,14 +225,14 @@
                     <ion-label class="subtitulo">Codigo del Material</ion-label>
                   </ion-col>
                 </ion-row>
-
                 <div *ngFor="let material of listaMaterialSiembra; let i = index" class="fila_material">
                   <ion-row>
                     <ion-col size="6">
                       <ion-select placeholder="Seleccione" class="selecionador_opciones_small"
                         [(ngModel)]="material.nombre" [disabled]="formularioBloqueado">
-                        <ion-select-option *ngFor="let opcion of opcionesMaterialSiembra" [value]="opcion.nombre">
-                          {{opcion.nombre}}
+                        <ion-select-option *ngFor="let opcion of opcionesMaterialSiembra"
+                          [value]="opcion.nombreMaterial">
+                          {{opcion.nombreMaterial}}
                         </ion-select-option>
                       </ion-select>
                     </ion-col>
@@ -243,7 +243,6 @@
                     </ion-col>
                   </ion-row>
                 </div>
-
                 <ion-row>
                   <ion-col size="12">
                     <ion-button fill="clear" size="small" (click)="agregarMaterialSiembra()"
@@ -261,7 +260,7 @@
                 <ion-item *ngFor="let equipo of listaEquiposSiembra">
                   <ion-checkbox slot="start" label-placement="end" [(ngModel)]="equipo.seleccionado"
                     [disabled]="formularioBloqueado">
-                    {{equipo.nombre}}
+                    {{equipo.nombreEquipo}}
                   </ion-checkbox>
                 </ion-item>
               </ion-list>
@@ -282,8 +281,8 @@
                       <ion-label>Diluyente</ion-label>
                       <ion-select placeholder="Seleccione" class="selecionador_opciones_small"
                         [(ngModel)]="diluyente.nombre" [disabled]="formularioBloqueado">
-                        <ion-select-option *ngFor="let opcion of opcionesDiluyentes" [value]="opcion.nombre">
-                          {{opcion.nombre}}
+                        <ion-select-option *ngFor="let opcion of opcionesDiluyentes" [value]="opcion.nombreDiluyente">
+                          {{opcion.nombreDiluyente}}
                         </ion-select-option>
                       </ion-select>
                     </ion-col>

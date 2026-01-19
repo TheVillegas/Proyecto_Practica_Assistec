@@ -1,111 +1,69 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
 import { ALI } from '../interfaces/ali';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AliService {
+  private apiUrl = environment.apiUrl + '/MuestraALI';
 
-  muestraALI: ALI[] = [
-    {
-      ALIMuestra: 1, CodigoSerna: 123456, observacionesCliente: '', observacionesGenerales: '',
-      reporteTPA: { estado: 'Verificado', datosReporte: undefined },
-      reporteRAM: { estado: 'No realizado', datosReporte: undefined }
-    },
-    {
-      ALIMuestra: 2, CodigoSerna: 654321, observacionesCliente: '', observacionesGenerales: '',
-      reporteTPA: { estado: 'Borrador', datosReporte: undefined },
-      reporteRAM: { estado: 'Borrador', datosReporte: undefined }
-    },
-    {
-      ALIMuestra: 3, CodigoSerna: 111111, observacionesCliente: '', observacionesGenerales: '',
-      reporteTPA: { estado: 'No realizado', datosReporte: undefined },
-      reporteRAM: { estado: 'Borrador', datosReporte: undefined }
-    },
-  ];
+  constructor(private http: HttpClient) { }
 
-  constructor() { }
-
-  getMuestras(): ALI[] {
-    return this.muestraALI;
+  getMuestras(): Observable<ALI[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/obtenerMuestras`).pipe(
+      map(rows => rows.map(row => this.mapRowToALI(row)))
+    );
   }
 
-
-  getMuestraPorID(id: number): ALI {
-    return this.muestraALI.find(muestraALI => muestraALI.ALIMuestra == id)!;
+  getMuestraPorID(id: number): Observable<ALI> {
+    return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
+      map(row => this.mapRowToALI(row))
+    );
   }
 
-  getEstadoTPA(id: number): string {
-    return this.muestraALI.find(m => m.ALIMuestra == id)?.reporteTPA.estado!;
+  agregarMuestraALI(aliMuestra: number, codigoSerna: number, observacionesCliente: string): Observable<any> {
+    const body = {
+      codigo_ali: aliMuestra,
+      codigo_serna: codigoSerna, // Asumiendo que el backend podría usar codigo_otros o similar, ajustaremos si es necesario.
+      codigo_otros: codigoSerna, // Mapeo tentativo
+      observaciones_cliente: observacionesCliente,
+      observaciones_generales: ''
+    };
+    return this.http.post(`${this.apiUrl}/crearMuestra`, body);
   }
 
-  getEstadoRAM(id: number): string {
-    return this.muestraALI.find(m => m.ALIMuestra == id)?.reporteRAM.estado!;
+  // Métodos auxiliares de TPA/RAM se deben manejar en sus respectivos servicios
+  // Helper para mapear respuesta DB (ahora camelCase desde Backend) a Interface ALI
+  private mapRowToALI(row: any): ALI {
+    // El backend ahora retorna camelCase (ALIMuestra, CodigoSerna, etc.) gracias a los mappers.
+    // Sin embargo, mantenemos este método por seguridad para garantizar la estructura
+    // y por si algun campo necesita transformación adicional.
+    return {
+      ALIMuestra: row.ALIMuestra || row.CODIGO_ALI, // Soporte híbrido temporal
+      CodigoSerna: row.CodigoSerna || row.CODIGO_OTROS,
+      observacionesCliente: row.observacionesCliente || row.OBSERVACIONES_CLIENTE,
+      observacionesGenerales: row.observacionesGenerales || row.OBSERVACIONES_GENERALES,
+      reporteTPA: {
+        estado: row.reporteTPA?.estado || row.ESTADO_TPA || 'No realizado'
+      },
+      reporteRAM: {
+        estado: row.reporteRAM?.estado || row.ESTADO_RAM || 'No realizado'
+      }
+    };
   }
 
-  getObservacionesCliente(id: number): string {
-    return this.muestraALI.find(m => m.ALIMuestra == id)?.observacionesCliente!;
-  }
-  getObservacionesGenerales(id: number): string {
-    return this.muestraALI.find(m => m.ALIMuestra == id)?.observacionesGenerales!;
-  }
-
-  updateEstadoTPA(id: number, nuevoEstado: 'Verificado' | 'Borrador' | 'No realizado') {
-    const muestra = this.muestraALI.find(m => m.ALIMuestra == id);
-    if (muestra) {
-      muestra.reporteTPA.estado = nuevoEstado;
-    }
+  updateObservacionesGenerales(id: number, observacionesGenerales: string): Observable<any> {
+    const body = {
+      codigo_ali: id,
+      observaciones_generales: observacionesGenerales
+    };
+    return this.http.put(`${this.apiUrl}/observaciones`, body);
   }
 
-  updateObservacionesGenerales(id: number, observacionesGenerales: string) {
-    const muestra = this.muestraALI.find(m => m.ALIMuestra == id);
-    if (muestra) {
-      muestra.observacionesGenerales = observacionesGenerales;
-    }
+  eliminarMuestra(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`);
   }
-
-  getUltimaActualizacionTPA(id: number): string | undefined {
-    return this.muestraALI.find(m => m.ALIMuestra == id)?.reporteTPA.ultimaActualizacion;
-  }
-
-  getResponsableTPA(id: number): string | undefined {
-    return this.muestraALI.find(m => m.ALIMuestra == id)?.reporteTPA.responsable;
-  }
-
-  updateInfoTPA(id: number, fecha: string, responsable: string) {
-    const muestra = this.muestraALI.find(m => m.ALIMuestra == id);
-    if (muestra) {
-      muestra.reporteTPA.ultimaActualizacion = fecha;
-      muestra.reporteTPA.responsable = responsable;
-    }
-  }
-
-  updateDatosReporteTPA(id: number, datos: any) {
-    const muestra = this.muestraALI.find(m => m.ALIMuestra == id);
-    if (muestra) {
-      muestra.reporteTPA.datosReporte = datos;
-    }
-  }
-
-  getDatosReporteTPA(id: number): any {
-    return this.muestraALI.find(m => m.ALIMuestra == id)?.reporteTPA.datosReporte;
-  }
-
-  agregarMuestraALI(id: number, codigoSerna: number, observacionesCliente: string) {
-
-    const nuevaMuestra: ALI = {
-      ALIMuestra: id, CodigoSerna: codigoSerna, observacionesCliente: observacionesCliente, observacionesGenerales: '',
-      reporteTPA: { estado: 'No realizado' },
-      reporteRAM: { estado: 'No realizado' }
-    }
-    this.muestraALI.push(nuevaMuestra);
-  }
-
-  eliminarMuestra(id: number) {
-    const index = this.muestraALI.findIndex(m => m.ALIMuestra === id);
-    if (index > -1) {
-      this.muestraALI.splice(index, 1);
-    }
-  }
-
 }

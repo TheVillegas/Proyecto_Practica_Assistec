@@ -1,61 +1,31 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { ReporteRAM } from '../interfaces/reporte-ram.interface';
-import { AliService } from './ali-service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RamService {
+  private apiUrl = environment.apiUrl + '/ReporteRAM';
 
-  constructor(private aliService: AliService) { }
+  constructor(private http: HttpClient) { }
 
-  updateEstadoRAM(id: number, nuevoEstado: 'Verificado' | 'Borrador' | 'No realizado') {
-    const muestra = this.aliService.getMuestraPorID(id);
-    if (muestra) {
-      muestra.reporteRAM.estado = nuevoEstado;
-    }
+  obtenerReporte(codigoAli: number): Observable<ReporteRAM> {
+    return this.http.get<ReporteRAM>(`${this.apiUrl}/${codigoAli}`);
   }
 
-  // Faltaria Incluirla en el servicio debido a que estamos devolviendo un string 
-
-  getUltimaActualizacionRAM(id: number): string | undefined {
-    const muestra = this.aliService.getMuestraPorID(id);
-    if (muestra) {
-      return muestra.reporteRAM.ultimaActualizacion;
-    }
-    return '';
+  obtenerEstado(codigoAli: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${codigoAli}/estado`);
   }
 
-  getResponsableRAM(id: number): string | undefined {
-    const muestra = this.aliService.getMuestraPorID(id);
-    if (muestra) {
-      return muestra.reporteRAM.responsable;
-    }
-    return '';
+  guardarReporte(reporte: ReporteRAM): Observable<any> {
+    return this.http.post(`${this.apiUrl}/generarReporte`, reporte);
   }
 
-  updateInfoRAM(id: number, fecha: string, responsable: string) {
-    const muestra = this.aliService.getMuestraPorID(id);
-    if (muestra) {
-      muestra.reporteRAM.ultimaActualizacion = fecha;
-      muestra.reporteRAM.responsable = responsable;
-    }
+  // Endpoint específico para cálculo si se usa
+  calcularPreview(datosCalculo: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/calcular`, datosCalculo);
   }
-
-  updateDatosReporteRAM(id: number, datos: any) {
-    const muestra = this.aliService.getMuestraPorID(id);
-    if (muestra) {
-      muestra.reporteRAM.datosReporte = datos;
-    }
-  }
-
-  getDatosReporteRAM(id: number): any | undefined {
-    const muestra = this.aliService.getMuestraPorID(id);
-    if (muestra) {
-      return muestra.reporteRAM.datosReporte;
-    }
-    return undefined;
-  }
-
-
 }
