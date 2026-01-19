@@ -6,37 +6,58 @@ import {
     HttpInterceptor,
     HttpErrorResponse
 } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError, from } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { AlertController } from '@ionic/angular';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
 
-    constructor(private router: Router) { }
+    constructor(private router: Router, private alertController: AlertController) { }
 
     intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-        console.log('AuthInterceptor: Interceptando query a', request.url);
-        const token = localStorage.getItem('token');
-        console.log('AuthInterceptor: Token encontrado?', !!token);
+        const token = sessionStorage.getItem('token'); // Use sessionStorage
 
+        let authReq = request;
         if (token) {
-            const cloned = request.clone({
+            authReq = request.clone({
                 headers: request.headers.set('Authorization', `Bearer ${token}`)
             });
-            return next.handle(cloned);
         }
 
-        return next.handle(request).pipe(
+        return next.handle(authReq).pipe(
             catchError((error: HttpErrorResponse) => {
-                if (error.status === 401 || error.status === 403) {
-                    console.log('Sesión expirada o no autorizada. Redirigiendo al login...');
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('usuario');
-                    this.router.navigate(['/login']);
+                if (error.status === 401) {
+                    // Retornamos un Observable que muestra la alerta y luego redirige
+                    return from(this.mostrarAlertaExpiracion()).pipe(
+                        switchMap(() => {
+                            return throwError(() => error);
+                        })
+                    );
                 }
                 return throwError(() => error);
             })
         );
+    }
+
+    private async mostrarAlertaExpiracion() {
+        // Evitar multiples alertas si llegan 401s simultaneos? 
+        // Por simplicidad mostramos y limpiamos.
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('usuario');
+
+        const alert = await this.alertController.create({
+            header: 'Sesión Expirada',
+            message: 'Tu sesión ha terminado. Por favor inicia sesión nuevamente.',
+            buttons: [{
+                text: 'OK',
+                handler: () => {
+                    this.router.navigate(['/login']);
+                }
+            }],
+            backdropDismiss: false
+        });
+        await alert.present();
     }
 }

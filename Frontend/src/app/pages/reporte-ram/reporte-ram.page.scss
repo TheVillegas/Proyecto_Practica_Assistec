@@ -35,7 +35,7 @@ ion-accordion ion-item[slot="header"] {
     padding: 15px;
 }
 
-/* Estilos de Inputs para emular TPA */
+/* Estilos de Inputs para emular TPA - Modernizado */
 ion-input,
 ion-select,
 ion-textarea {
@@ -43,9 +43,13 @@ ion-textarea {
     --padding-end: 12px;
     --padding-top: 10px;
     --padding-bottom: 10px;
-    --padding-bottom: 10px;
-    --background: #ffffff;
-    border: 1px solid #555555; //Ajusta 
+    --background: #fdfdfd;
+    border: 1px solid #d1d5db;
+    /* Gris suave, mas moderno */
+    border-radius: 8px;
+    /* Bordes más redondeados */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    /* Sombra sutil */
     /* Más oscuro para mayor contraste */
     border-radius: 6px;
     font-size: 14px;

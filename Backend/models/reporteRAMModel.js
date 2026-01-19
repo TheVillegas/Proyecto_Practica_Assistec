@@ -165,7 +165,8 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
                 nMuestra10gr: r.N_MUESTRA_10GR,
                 nMuestra50gr: r.N_MUESTRA_50GR,
                 horaInicioHomogenizado: r.HORA_INICIO_HOMOGENIZADO,
-                horaTerminoSiembra: r.HORA_TERMINO_SIEMBRA
+                horaTerminoSiembra: r.HORA_TERMINO_SIEMBRA,
+                micropipetaUtilizada: r.MICROPIPETA_UTILIZADA
             },
 
             etapa2: {
@@ -174,8 +175,7 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
                 fechaInicioIncubacion: r.FECHA_INICIO_INCUBACION,
                 fechaFinIncubacion: r.FECHA_FIN_INCUBACION,
                 horaInicioIncubacion: r.HORA_INICIO_INCUBACION,
-                horaFinIncubacion: r.HORA_FIN_INCUBACION,
-                micropipetaUtilizada: r.MICROPIPETA_UTILIZADA
+                horaFinIncubacion: r.HORA_FIN_INCUBACION
             },
 
             etapa3_repeticiones: muestras,
@@ -264,6 +264,17 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
                 throw new Error(`El equipo '${datos.etapa1.nombre_equipo_incubacion}' no existe en el catálogo.`);
             }
 
+            // Validación Micropipeta (Movido a Etapa 1)
+            if (datos.etapa1.micropipetaUtilizada && datos.etapa1.micropipetaUtilizada.trim() !== "") {
+                const micropipeta = await connection.execute(
+                    `SELECT id_pipeta FROM MICROPIPETAS WHERE nombre_pipeta = :nombre`,
+                    { nombre: datos.etapa1.micropipetaUtilizada }
+                );
+                if (micropipeta.rows.length === 0) {
+                    throw new Error(`La micropipeta '${datos.etapa1.micropipetaUtilizada}' no existe en el sistema.`);
+                }
+            }
+
             const sqlEtapa1 = `
                 UPDATE RAM_REPORTE
                 SET agar_plate_count = :agar_plate_count,
@@ -271,7 +282,8 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
                     n_muestra_10gr = :n_muestra_10gr,
                     n_muestra_50gr = :n_muestra_50gr,
                     hora_inicio_homogenizado = :hora_inicio_homogenizado,
-                    hora_termino_siembra = :hora_termino_siembra
+                    hora_termino_siembra = :hora_termino_siembra,
+                    micropipeta_utilizada = :micropipeta
                 WHERE codigo_ali = :codigo_ali
             `;
 
@@ -282,6 +294,7 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
                 n_muestra_50gr: datos.etapa1.n_muestra_50gr || null,
                 hora_inicio_homogenizado: datos.etapa1.hora_inicio_homogenizado || null,
                 hora_termino_siembra: datos.etapa1.hora_termino_siembra || null,
+                micropipeta: datos.etapa1.micropipetaUtilizada || null,
                 codigo_ali: datos.codigo_ali || datos.codigoALI
             });
         }
@@ -315,16 +328,6 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
                 rutIncubacion = res.rows[0].RUT_ANALISTA;
             }
 
-            if (e2.micropipetaUtilizada && e2.micropipetaUtilizada.trim() !== "") {
-                const micropipeta = await connection.execute(
-                    `SELECT id_pipeta FROM MICROPIPETAS WHERE nombre_pipeta = :nombre`,
-                    { nombre: e2.micropipetaUtilizada }
-                );
-                if (micropipeta.rows.length === 0) {
-                    throw new Error(`La micropipeta '${e2.micropipetaUtilizada}' no existe en el sistema.`);
-                }
-            }
-
             const sqlEtapa2 = `
                 UPDATE RAM_REPORTE
                 SET id_responsable_analisis = NVL(:rutA, id_responsable_analisis),
@@ -332,8 +335,7 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
                     fecha_inicio_incubacion = TO_DATE(:fechaI, 'YYYY-MM-DD'),
                     fecha_fin_incubacion = TO_DATE(:fechaF, 'YYYY-MM-DD'),
                     hora_inicio_incubacion = :horaI,
-                    hora_fin_incubacion = :horaF,
-                    micropipeta_utilizada = :micro
+                    hora_fin_incubacion = :horaF
                 WHERE codigo_ali = :codigo_ali
             `;
 
@@ -344,7 +346,6 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
                 fechaF: e2.fechaFinIncubacion || null,
                 horaI: e2.horaInicioIncubacion || null,
                 horaF: e2.horaFinIncubacion || null,
-                micro: e2.micropipetaUtilizada || null,
                 codigo_ali: datos.codigo_ali || datos.codigoALI
             });
         }
@@ -543,12 +544,12 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicado
             CODIGO_ALI, NUMERO_MUESTRA, DIL_1, DIL_2, 
             C1, C2, C3, C4,
             RESULTADO_RAM, RESULTADO_RPES, PROMEDIO_COLONIAS,
-            N1, N2, SUMATORIA_COLONIAS
+            N1, N2, SUMATORIA_COLONIAS, FACTOR_DILUCION
         ) VALUES (
             :codigo, :num, :dil1, :dil2,
             :c1, :c2, :c3, :c4,
             :resultado_ram, :resultado_rpes, :promedio,
-            :n1, :n2, :suma_colonias
+            :n1, :n2, :suma_colonias, :factor_dilucion
         ) RETURNING ID_MUESTRA INTO :id_muestra
     `;
 
@@ -561,7 +562,7 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicado
             RESULTADO_RAM_DUP, RESULTADO_RPES_DUP,
             PROMEDIO_COLONIAS_DUPLICADO, 
             N1_DUP, N2_DUP,
-            SUMATORIA_COLONIAS_DUPLICADO
+            SUMATORIA_COLONIAS_DUPLICADO, FACTOR_DILUCION
         ) VALUES (
             :codigo, :id_muestra_original,
             :dil1, :dil2,
@@ -569,7 +570,7 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicado
             :resultado_ram, :resultado_rpes,
             :promedio,
             :n1, :n2,
-            :suma
+            :suma, :factor_dilucion
         )
     `;
 
@@ -619,6 +620,7 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicado
             n1: m.n1 || null,
             n2: m.n2 || null,
             suma_colonias: m.sumaColonias || null,
+            factor_dilucion: m.factorDilucion || null,
             id_muestra: { type: db.oracledb.NUMBER, dir: db.oracledb.BIND_OUT }
         });
 
@@ -658,7 +660,8 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicado
                 promedio: d.promedio !== undefined ? d.promedio : null,
                 n1: d.n1 || null,
                 n2: d.n2 || null,
-                suma: d.sumaColonias || null
+                suma: d.sumaColonias || null,
+                factor_dilucion: d.factorDilucion || null
             });
         }
     }

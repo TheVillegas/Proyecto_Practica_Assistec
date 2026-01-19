@@ -70,4 +70,9 @@ export class HeaderComponent implements OnInit {
     this.router.navigate(["/login"]);
   }
 
+  goToProfile() {
+    console.log("Redirigiendo a Configuración de Usuario");
+    this.router.navigate(["/configuracion-usuario"]);
+  }
+
 }

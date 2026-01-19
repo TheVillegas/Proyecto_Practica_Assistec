@@ -71,13 +71,14 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 l.nombre_lugar as lugar_almacenamiento,
                 r.observaciones_ingreso,
                 r.estado_actual as estado,
-                r.fecha_cierre,
-                r.usuario_cierre,
+                r.fecha_ultima_modificacion,
+                u_mod.nombre_apellido_analista as usuario_modificacion,
                 r.observaciones_finales,
                 r.firma_digital,
                 r.observaciones_generales_analistas
             FROM TPA_REPORTE r
             LEFT JOIN LUGARES_ALMACENAMIENTO l ON r.id_lugar = l.id_lugar
+            LEFT JOIN USUARIOS u_mod ON r.usuario_ultima_modificacion = u_mod.rut_analista
             WHERE r.codigo_ali = :codigo_ali
         `;
         const resultReporte = await connection.execute(sqlReporte, { codigo_ali: codigoALI });
@@ -109,9 +110,10 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 firma: repData.FIRMA_DIGITAL
             },
             // Agregamos campos faltantes que podrían servir
+            // Mapeamos a las propiedades que espera el Frontend
             observacionesGenerales: repData.OBSERVACIONES_GENERALES_ANALISTAS,
-            fechaCierre: repData.FECHA_CIERRE,
-            usuarioCierre: repData.USUARIO_CIERRE
+            fechaCierre: repData.FECHA_ULTIMA_MODIFICACION ? new Date(repData.FECHA_ULTIMA_MODIFICACION).toISOString() : '',
+            usuarioCierre: repData.USUARIO_MODIFICACION || 'Sin información'
         };
 
         // 2. Obtener sesiones de Etapa 2 (Manipulación)
@@ -319,7 +321,8 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                 estado_actual = :estado_actual,
                 observaciones_finales = :obs_finales,
                 firma_digital = :firma,
-                usuario_ultima_modificacion = :rut_mod
+                usuario_ultima_modificacion = :rut_mod,
+                fecha_ultima_modificacion = SYSDATE
             WHERE codigo_ali = :codigo_ali
         `;
 

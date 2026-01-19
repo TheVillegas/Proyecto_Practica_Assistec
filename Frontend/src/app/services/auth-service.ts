@@ -20,10 +20,10 @@ export class AuthService {
     }).pipe(
       tap(response => {
         if (response && response.token) {
-          localStorage.setItem('token', response.token);
-          // Opcional: guardar usuario en localStorage
+          sessionStorage.setItem('token', response.token);
+          // Opcional: guardar usuario en sessionStorage
           if (response.usuario) { // Controller returns 'usuario', not 'analista'
-            localStorage.setItem('usuario', JSON.stringify(response.usuario));
+            sessionStorage.setItem('usuario', JSON.stringify(response.usuario));
           }
         }
       })
@@ -36,16 +36,16 @@ export class AuthService {
   }
 
   logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('usuario');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('usuario');
   }
 
   getToken() {
-    return localStorage.getItem('token');
+    return sessionStorage.getItem('token');
   }
 
   getUsuario() {
-    const usuario = localStorage.getItem('usuario');
+    const usuario = sessionStorage.getItem('usuario');
     return usuario ? JSON.parse(usuario) : null;
   }
 }

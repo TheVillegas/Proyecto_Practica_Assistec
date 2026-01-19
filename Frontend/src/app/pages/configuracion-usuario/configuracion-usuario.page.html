@@ -1,0 +1,65 @@
+<app-header></app-header>
+
+<ion-content [fullscreen]="true" class="main-content">
+  <div class="profile-container">
+
+    <!-- Tarjeta de Perfil -->
+    <div class="profile-card">
+
+      <!-- Sección Avatar -->
+      <div class="avatar-section">
+        <div class="avatar-wrapper" (click)="cambiarFoto()">
+          <img [src]="usuario.avatar" alt="Avatar Usuario">
+          <div class="avatar-overlay">
+            <ion-icon name="camera-outline"></ion-icon>
+          </div>
+        </div>
+        <h2 class="user-name">{{ usuario.nombreApellido }}</h2>
+        <span class="user-role">{{ usuario.rol }}</span>
+      </div>
+
+      <!-- Sección Detalles -->
+      <div class="details-section">
+        <h3 class="section-title">Información Personal</h3>
+
+        <div class="input-group">
+          <ion-label>Nombre Completo</ion-label>
+          <div class="input-wrapper">
+            <ion-input [value]="usuario.nombreApellido" readonly></ion-input>
+            <ion-icon name="lock-closed-outline" class="lock-icon"></ion-icon>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <ion-label>RUT</ion-label>
+          <div class="input-wrapper">
+            <ion-input [value]="usuario.rut" readonly></ion-input>
+            <ion-icon name="lock-closed-outline" class="lock-icon"></ion-icon>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <ion-label>Correo Electrónico</ion-label>
+          <div class="input-wrapper editable">
+            <ion-input [value]="usuario.correo" readonly></ion-input>
+            <ion-button fill="clear" size="small" (click)="cambiarCorreo()">
+              Cambiar
+            </ion-button>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <ion-label>Contraseña</ion-label>
+          <div class="input-wrapper editable">
+            <ion-input value="********" readonly type="password"></ion-input>
+            <ion-button fill="clear" size="small" (click)="cambiarPassword()">
+              Cambiar
+            </ion-button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</ion-content>
