@@ -8,6 +8,10 @@ import { CatalogosService } from 'src/app/services/catalogos.service';
 import { ImagenUploadService } from 'src/app/services/imagen-upload';
 import { AuthService } from 'src/app/services/auth-service';
 import { forkJoin } from 'rxjs';
+import { Etapa1, Etapa2, Etapa3Item, Etapa4, Etapa5, Etapa6, Etapa7, ReporteRAM } from 'src/app/interfaces/reporte-ram.interface';
+import { EquipoIncubacion, Micropipeta, Responsable, TipoAnalisis, FormaCalculo } from 'src/app/interfaces/catalogo.interfaces';
+import { RamAdapter } from 'src/app/adapters/ram.adapter';
+
 @Component({
   selector: 'app-reporte-ram',
   templateUrl: './reporte-ram.page.html',
@@ -17,7 +21,7 @@ import { forkJoin } from 'rxjs';
 export class ReporteRamPage implements OnInit {
 
   constructor(
-    private aliService: AliService, // Might still be needed if used for other things, checking... actually used for nothing based on code refactor
+    private aliService: AliService,
     private route: ActivatedRoute,
     private ramService: RamService,
     private router: Router,
@@ -28,29 +32,32 @@ export class ReporteRamPage implements OnInit {
     private loadingController: LoadingController,
     private authService: AuthService
   ) { }
-  seccionActual: String = '';
+
+  // ... (properties remain) 
+  seccionActual: string = '';
   codigoALI: string = '';
   estadoRAM: string = '';
-  listaEquiposIncubacion: any[] = [];
-  listaPipetas: any[] = [];
-  listaControlAnalisis: any[] = [];
-  listaResponsables: any[] = [];
+  listaEquiposIncubacion: EquipoIncubacion[] = [];
+  listaPipetas: Micropipeta[] = [];
+  listaControlAnalisis: TipoAnalisis[] = [];
+  listaResponsables: Responsable[] = [];
   ultimaActtualizacionRam: string = '';
   responsableModificacionRam: string = '';
-  currentUser: any = null;
-  listaFormasCalculo: any[] = [];
+  currentUser: any = null; // Autenticacion usuario puede quedar any por ahora o tiparlo despues
+  listaFormasCalculo: FormaCalculo[] = [];
   formularioBloqueado: boolean = false;
 
-  etapa1: any = {
+  etapa1: Etapa1 = {
     horaInicioHomogenizado: '',
-    agarPlateCount: null,
+    agarPlateCount: '',
     equipoIncubacion: null,
     nMuestra10gr: null,
     nMuestra50gr: null,
-    horaTerminoSiembraRam: '',
+    horaTerminoSiembra: '',
     micropipetaUtilizada: null
   };
-  etapa2: any = {
+
+  etapa2: Etapa2 = {
     fechaInicioIncubacion: '',
     horaInicioIncubacion: '',
     responsableIncubacion: null,
@@ -60,7 +67,7 @@ export class ReporteRamPage implements OnInit {
   };
 
   // --- ETAPA 3 (Calculo de Muestras) ---
-  listaRepeticionesEtapa3: any[] = [
+  listaRepeticionesEtapa3: Etapa3Item[] = [
     {
       id: Date.now(),
       codigoALI: null,
@@ -68,9 +75,9 @@ export class ReporteRamPage implements OnInit {
     }
   ];
 
-  etapa4: any = {
+  etapa4: Etapa4 = {
     controlAmbientalPesado: null,
-    controlUFC: null,
+    controlUfc: null,
     horaInicio: '',
     horaFin: '',
     temperatura: null,
@@ -80,7 +87,7 @@ export class ReporteRamPage implements OnInit {
   };
 
 
-  etapa5: any = {
+  etapa5: Etapa5 = {
     desfavorable: null,
     tablaPagina: null,
     limite: null,
@@ -90,7 +97,7 @@ export class ReporteRamPage implements OnInit {
     imagenManual: null
   };
 
-  etapa6: any = {
+  etapa6: Etapa6 = {
     duplicadoAli: '',
     analisis: 'RAM',
     duplicadoEstado: null,
@@ -100,7 +107,7 @@ export class ReporteRamPage implements OnInit {
     controlSiembraEstado: null
   };
 
-  etapa7: any = {
+  etapa7: Etapa7 = {
     firmaCoordinador: null,
     observacionesFinales: '',
     formaCalculoAnalista: [],
@@ -113,7 +120,6 @@ export class ReporteRamPage implements OnInit {
     if (this.currentUser) {
       this.responsableModificacionRam = this.currentUser.nombreApellido || '';
 
-      // Pre-fill Etapa 2 responsales only if empty (new report logic implicit or check explicit null)
       if (!this.etapa2.responsableIncubacion) {
         this.etapa2.responsableIncubacion = this.currentUser.nombreApellido;
       }
@@ -137,14 +143,24 @@ export class ReporteRamPage implements OnInit {
         this.listaPipetas = res.pipetas;
         this.listaResponsables = res.responsables;
         this.listaControlAnalisis = res.controlAnalisis;
-        this.listaFormasCalculo = res.formasCalculo;
+        // Map defSeleccionado (database/backend) to seleccionado (frontend state)
+        this.listaFormasCalculo = res.formasCalculo.map((f: any) => ({
+          ...f,
+          seleccionado: f.defSeleccionado === 1
+        }));
 
         if (this.codigoALI) {
           this.cargarDatosReporte();
         }
       },
-      error: (err) => {
+      error: async (err) => {
         console.error('Error al cargar catálogos RAM', err);
+        const alert = await this.alertController.create({
+          header: 'Error de Carga',
+          message: 'No se pudieron cargar los catálogos necesarios. Por favor recargue la página o revise su conexión.',
+          buttons: ['OK']
+        });
+        await alert.present();
       }
     });
   }
@@ -159,97 +175,34 @@ export class ReporteRamPage implements OnInit {
         loading.dismiss();
         if (!reporte) return;
 
-        this.estadoRAM = reporte.estado || 'No realizado';
-        this.ultimaActtualizacionRam = reporte.ultimaActualizacion || '';
-        this.responsableModificacionRam = reporte.responsable || this.responsableModificacionRam;
+        // Uso del Adapter para transformar los datos
+        const viewModel = RamAdapter.mapReporteToView(reporte);
 
-        if (this.estadoRAM === 'Verificado') {
-          this.formularioBloqueado = true;
+        // Asignación al estado del componente
+        this.estadoRAM = viewModel.estadoRAM;
+        this.ultimaActtualizacionRam = viewModel.ultimaActualizacionRam;
+        if (viewModel.responsableModificacionRam) {
+          this.responsableModificacionRam = viewModel.responsableModificacionRam;
         }
 
-        this.etapa1 = reporte.etapa1 || this.etapa1;
-        this.etapa2 = reporte.etapa2 || this.etapa2;
-
-        // Formatear fechas para input date (YYYY-MM-DD)
-        if (this.etapa2.fechaInicioIncubacion) this.etapa2.fechaInicioIncubacion = this.formatDate(this.etapa2.fechaInicioIncubacion);
-        if (this.etapa2.fechaFinIncubacion) this.etapa2.fechaFinIncubacion = this.formatDate(this.etapa2.fechaFinIncubacion);
-
-        // Map listaRepeticionesEtapa3 from backend response
-        if (reporte.etapa3_repeticiones) {
-          this.listaRepeticionesEtapa3 = reporte.etapa3_repeticiones.map((m: any) => {
-            const dil1 = m.diluciones && m.diluciones[0] ? m.diluciones[0] : null;
-            const dil2 = m.diluciones && m.diluciones[1] ? m.diluciones[1] : null;
-
-            let dupFlat = null;
-            if (m.duplicado) {
-              const d = m.duplicado;
-              dupFlat = {
-                codigoALI: d.codigoALI,
-                numeroMuestraDuplicado: m.numero_Muestra,
-                dilDuplicado01: d.dil01,
-                dilDuplicado02: d.dil02,
-                numeroColoniasDuplicado01: d.numeroColonias?.[0],
-                numeroColoniasDuplicado02: d.numeroColonias?.[1],
-                numeroColoniasDuplicado03: d.numeroColonias?.[2],
-                numeroColoniasDuplicado04: d.numeroColonias?.[3],
-                resultadoRAMDuplicado01: d.resultado_ram,
-                resultadoRPESDuplicado01: d.resultado_rpes,
-                disolucionDuplicado01: d.disolucion01,
-                disolucionDuplicado02: d.disolucion02,
-                promedioDuplicado: d.promedio,
-                sumaColoniasDuplicado: d.sumaColonias,
-                n1Duplicado: d.n1,
-                n2Duplicado: d.n2,
-                factorDilucionDuplicado: d.factorDilucion,
-                codigoALIDuplicado: d.codigoALI
-              };
-            }
-
-            return {
-              id: Date.now() + Math.random(),
-              codigoALI: reporte.codigoALI,
-              numeroMuestra: m.numero_Muestra,
-              dil: dil1 ? dil1.dil : '',
-              dil2: dil2 ? dil2.dil : '',
-              numeroColonias01: dil1 && dil1.colonias ? dil1.colonias[0] : '',
-              numeroColonias02: dil1 && dil1.colonias ? dil1.colonias[1] : '',
-              numeroColonias03: dil2 && dil2.colonias ? dil2.colonias[0] : '',
-              numeroColonias04: dil2 && dil2.colonias ? dil2.colonias[1] : '',
-              resultadoRAM01: m.resultado_ram,
-              resultadoRPES01: m.resultado_rpes,
-              promedio: m.promedio,
-              sumaColonias: m.sumaColonias,
-              n1: m.n1,
-              n2: m.n2,
-              factorDilucion: m.factorDilucion,
-              ...dupFlat
-            };
-          });
+        // Bloquear solo si no es rol 1 (Supervisor)
+        // Rol 1 siempre puede editar o revertir
+        if (this.currentUser && this.currentUser.rol === 1) {
+          this.formularioBloqueado = false;
+        } else {
+          this.formularioBloqueado = viewModel.formularioBloqueado;
         }
 
-        if (!this.listaRepeticionesEtapa3 || this.listaRepeticionesEtapa3.length === 0) {
-          this.listaRepeticionesEtapa3 = [{
-            id: Date.now(),
-            codigoALI: this.codigoALI,
-            numeroMuestra: 1,
-            numeroMuestraDuplicado: 1
-          }];
-        }
+        this.etapa1 = viewModel.etapa1;
+        this.etapa2 = viewModel.etapa2;
+        this.listaRepeticionesEtapa3 = viewModel.listaRepeticionesEtapa3;
+        this.etapa4 = viewModel.etapa4;
+        this.etapa5 = viewModel.etapa5;
+        this.etapa6 = viewModel.etapa6;
+        this.etapa7 = viewModel.etapa7;
 
-        this.etapa4 = reporte.etapa4 || this.etapa4;
-        this.etapa5 = reporte.etapa5 || this.etapa5;
-
-        // Formatear fecha etapa 5
-        if (this.etapa5.fechaEntrega) this.etapa5.fechaEntrega = this.formatDate(this.etapa5.fechaEntrega);
-        // Convertir desfavorable a string si es necesario para el segment
-        if (this.etapa5.desfavorable !== null && this.etapa5.desfavorable !== undefined) {
-          this.etapa5.desfavorable = String(this.etapa5.desfavorable);
-        }
-
-        this.etapa6 = reporte.etapa6 || this.etapa6;
-        this.etapa7 = reporte.etapa7 || this.etapa7;
-
-        if (!this.etapa7.formaCalculoAnalista) {
+        // Lógica específica de presentación que depende de catálogos locales
+        if (!this.etapa7.formaCalculoAnalista || this.etapa7.formaCalculoAnalista.length === 0) {
           this.etapa7.formaCalculoAnalista = this.listaFormasCalculo.filter(f => f.seleccionado);
         }
       },
@@ -266,17 +219,16 @@ export class ReporteRamPage implements OnInit {
     });
   }
 
-  formatDate(dateString: string): string {
-    if (!dateString) return '';
-    return dateString.split('T')[0];
-  }
+  // NOTE: Private mapping methods and formatDate have been moved to RamAdapter
 
-  isFormaCalculoSelected(formaCalculo: any): boolean {
+
+  isFormaCalculoSelected(formaCalculo: FormaCalculo): boolean {
     if (!this.etapa7.formaCalculoAnalista) return false;
-    return this.etapa7.formaCalculoAnalista.some((f: any) => f.id === formaCalculo.id);
+    // Check by idForma (or id if legacy)
+    return this.etapa7.formaCalculoAnalista.some((f: any) => (f.idForma || f.id) === formaCalculo.idForma);
   }
 
-  toggleFormaCalculo(formaCalculo: any, event: any) {
+  toggleFormaCalculo(formaCalculo: FormaCalculo, event: any) {
     if (!this.etapa7.formaCalculoAnalista) {
       this.etapa7.formaCalculoAnalista = [];
     }
@@ -285,11 +237,15 @@ export class ReporteRamPage implements OnInit {
 
     if (isChecked) {
       if (!this.isFormaCalculoSelected(formaCalculo)) {
-        this.etapa7.formaCalculoAnalista.push(formaCalculo);
+        this.etapa7.formaCalculoAnalista.push({
+          id: formaCalculo.idForma, // Keep generic 'id' if backend expects it in the JSON array
+          idForma: formaCalculo.idForma,
+          nombreForma: formaCalculo.nombreForma
+        });
       }
     } else {
       this.etapa7.formaCalculoAnalista = this.etapa7.formaCalculoAnalista.filter(
-        (f: any) => f.id !== formaCalculo.id
+        (f: any) => (f.idForma || f.id) !== formaCalculo.idForma
       );
     }
   }
@@ -412,6 +368,26 @@ export class ReporteRamPage implements OnInit {
     await alert.present();
   }
 
+  async confirmarDevolverBorrador() {
+    const alert = await this.alertController.create({
+      header: 'Devolver a Borrador',
+      message: '¿Estás seguro de devolver este reporte a estado Borrador? Esto permitirá que los analistas vuelvan a editarlo.',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Devolver',
+          handler: () => {
+            this.guardarReporte('Borrador');
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
   async confirmarFormulario() {
     const alert = await this.alertController.create({
       header: 'Confirmar',
@@ -437,7 +413,7 @@ export class ReporteRamPage implements OnInit {
     await loading.present();
 
     // Mapeo Frontend (Plano) -> Backend (Anidado) para guardar
-    const etapa3_backend = this.listaRepeticionesEtapa3.map((item: any) => {
+    const etapa3_backend = this.listaRepeticionesEtapa3.map((item: Etapa3Item) => {
       const diluciones = [];
 
       // Reconstruir Diluciones
@@ -454,9 +430,9 @@ export class ReporteRamPage implements OnInit {
         });
       }
 
-      // Reconstruir Duplicado (solo si existe en el item, usualmente item 0)
+      // Reconstruir Duplicado
       let duplicado = null;
-      if (item.dilDuplicado01) { // Basic check if duplicado data exists
+      if (item.dilDuplicado01) {
         duplicado = {
           dil01: item.dilDuplicado01,
           dil02: item.dilDuplicado02,
@@ -469,7 +445,6 @@ export class ReporteRamPage implements OnInit {
           resultado_ram: item.resultadoRAMDuplicado01,
           resultado_rpes: item.resultadoRPESDuplicado01,
           codigoALI: item.codigoALIDuplicado,
-          // Nuevos campos
           promedio: item.promedioDuplicado,
           sumaColonias: item.sumaColoniasDuplicado,
           n1: item.n1Duplicado,
@@ -481,11 +456,10 @@ export class ReporteRamPage implements OnInit {
       return {
         codigo_ali: parseInt(this.codigoALI),
         numero_Muestra: item.numeroMuestra,
-        volumen: 1, // Default
+        volumen: 1,
         diluciones: diluciones,
         resultado_ram: item.resultadoRAM01,
         resultado_rpes: item.resultadoRPES01,
-        // Nuevos campos para Muestra
         promedio: item.promedio,
         sumaColonias: item.sumaColonias,
         n1: item.n1,
@@ -505,9 +479,14 @@ export class ReporteRamPage implements OnInit {
       etapa4: this.etapa4,
       etapa5: this.etapa5,
       etapa6: this.etapa6,
-      etapa7: this.etapa7,
+      etapa7: {
+        ...this.etapa7,
+        formaCalculoAnalista: this.etapa7.formaCalculoAnalista || [],
+        formaCalculoCoordinador: this.etapa7.formaCalculoCoordinador || []
+      },
     };
 
+    console.log(datosReporteRAM);
     this.ramService.guardarReporte(datosReporteRAM).subscribe({
       next: async (res) => {
         loading.dismiss();
@@ -542,34 +521,58 @@ export class ReporteRamPage implements OnInit {
     this.navCtrl.back();
   }
 
-  // --- Lógica de Cálculo RAM ---
+  // --- Lógica de Cálculo RAM (Unificada) ---
 
-  async calcularMuestra(index: number, etapa3: any) {
-    const loading = await this.loadingController.create({ message: 'Calculando...' });
+  async calcularMuestra(index: number, etapa3: Etapa3Item) {
+    await this.ejecutarCalculo(etapa3, false);
+  }
+
+  async calcularDuplicado(etapa3: Etapa3Item) {
+    await this.ejecutarCalculo(etapa3, true);
+  }
+
+  private async ejecutarCalculo(etapa3: Etapa3Item, esDuplicado: boolean) {
+    const tipo = esDuplicado ? 'Duplicado' : 'Muestra';
+    const loading = await this.loadingController.create({ message: `Calculando ${tipo}...` });
     await loading.present();
 
     try {
-      // Construir payload para el servicio
       const diluciones = [];
 
-      // Primera dilución
-      if (etapa3.dil !== null && etapa3.dil !== '') {
+      // Mapeo dinámico según si es duplicado o no
+      const dilKey = esDuplicado ? 'dilDuplicado' : 'dil';
+      const colKey = esDuplicado ? 'numeroColoniasDuplicado' : 'numeroColonias';
+
+      // Primera dilución (01)
+      // Accessing dynamic properties needs casting or index signature, 
+      // but for readability we can just use if/else cleanly or getter function.
+      // Let's use clean separate if blocks to avoid 'any' casting if possible, or accept minor repetition for type safety.
+
+      let d1 = esDuplicado ? etapa3.dilDuplicado01 : etapa3.dil;
+      let c1_1 = esDuplicado ? etapa3.numeroColoniasDuplicado01 : etapa3.numeroColonias01;
+      let c1_2 = esDuplicado ? etapa3.numeroColoniasDuplicado02 : etapa3.numeroColonias02;
+
+      if (d1 !== null && d1 !== '' && d1 !== undefined) {
         diluciones.push({
-          dil: Number(etapa3.dil),
-          colonias: [etapa3.numeroColonias01, etapa3.numeroColonias02]
+          dil: Number(d1),
+          colonias: [c1_1, c1_2]
         });
       }
 
-      // Segunda dilución (si existe)
-      if (etapa3.dil2 !== null && etapa3.dil2 !== '') {
+      // Segunda dilución (02/03-04)
+      let d2 = esDuplicado ? etapa3.dilDuplicado02 : etapa3.dil2;
+      let c2_1 = esDuplicado ? etapa3.numeroColoniasDuplicado03 : etapa3.numeroColonias03;
+      let c2_2 = esDuplicado ? etapa3.numeroColoniasDuplicado04 : etapa3.numeroColonias04;
+
+      if (d2 !== null && d2 !== '' && d2 !== undefined) {
         diluciones.push({
-          dil: Number(etapa3.dil2),
-          colonias: [etapa3.numeroColonias03, etapa3.numeroColonias04]
+          dil: Number(d2),
+          colonias: [c2_1, c2_2]
         });
       }
 
       const datosCalculo = {
-        volumen: 1, // Por defecto 1ml
+        volumen: 1,
         diluciones: diluciones
       };
 
@@ -577,17 +580,24 @@ export class ReporteRamPage implements OnInit {
         next: (res: any) => {
           loading.dismiss();
           if (res && res.resultado) {
-            etapa3.resultadoRAM01 = res.resultado.textoReporte; // Usamos el texto formateado
-            // Si el input en HTML es type="number", esto fallará si trae "<". 
-            // Se debe cambiar el HTML a type="text".
-            etapa3.resultadoRPES01 = res.resultado.ufc; // Guardamos valor numérico o estimado
-
-            // Guardar otros valores calculados útiles si el modelo lo permite
-            etapa3.promedio = res.resultado.promedio;
-            etapa3.sumaColonias = res.resultado.sumaColonias;
-            etapa3.n1 = res.resultado.n1;
-            etapa3.n2 = res.resultado.n2;
-            etapa3.factorDilucion = res.resultado.factorDilucion;
+            if (esDuplicado) {
+              etapa3.resultadoRAMDuplicado01 = res.resultado.textoReporte;
+              // Usar textoRPES si existe (prioridad 2), sino usar ufc (o el formateado)
+              etapa3.resultadoRPESDuplicado01 = res.resultado.textoRPES || res.resultado.ufc;
+              etapa3.promedioDuplicado = res.resultado.promedio;
+              etapa3.sumaColoniasDuplicado = res.resultado.sumaColonias;
+              etapa3.n1Duplicado = res.resultado.n1;
+              etapa3.n2Duplicado = res.resultado.n2;
+              etapa3.factorDilucionDuplicado = res.resultado.factorDilucion;
+            } else {
+              etapa3.resultadoRAM01 = res.resultado.textoReporte;
+              etapa3.resultadoRPES01 = res.resultado.textoRPES || res.resultado.ufc;
+              etapa3.promedio = res.resultado.promedio;
+              etapa3.sumaColonias = res.resultado.sumaColonias;
+              etapa3.n1 = res.resultado.n1;
+              etapa3.n2 = res.resultado.n2;
+              etapa3.factorDilucion = res.resultado.factorDilucion;
+            }
           }
         },
         error: async (err) => {
@@ -608,63 +618,37 @@ export class ReporteRamPage implements OnInit {
     }
   }
 
-  async calcularDuplicado(etapa3: any) {
-    const loading = await this.loadingController.create({ message: 'Calculando Duplicado...' });
-    await loading.present();
+  // TrackBy Function for ngFor optimization
+  trackByFn(index: number, item: any): number {
+    return item.id;
+  }
 
-    try {
-      const diluciones = [];
+  isFormaCalculoCoordinadorSelected(formaCalculo: any): boolean {
+    if (!this.etapa7.formaCalculoCoordinador) return false;
+    // Use idForma consistently
+    return this.etapa7.formaCalculoCoordinador.some((f: any) => (f.idForma || f.id) === formaCalculo.idForma);
+  }
 
-      // Primera dilución duplicado
-      if (etapa3.dilDuplicado01 !== null && etapa3.dilDuplicado01 !== '') {
-        diluciones.push({
-          dil: Number(etapa3.dilDuplicado01),
-          colonias: [etapa3.numeroColoniasDuplicado01, etapa3.numeroColoniasDuplicado02]
+  toggleFormaCalculoCoordinador(formaCalculo: any, event: any) {
+    if (!this.etapa7.formaCalculoCoordinador) {
+      this.etapa7.formaCalculoCoordinador = [];
+    }
+
+    const isChecked = event.detail.checked;
+
+    if (isChecked) {
+      if (!this.isFormaCalculoCoordinadorSelected(formaCalculo)) {
+        // Ensure consistency with object structure
+        this.etapa7.formaCalculoCoordinador.push({
+          id: formaCalculo.idForma,
+          idForma: formaCalculo.idForma,
+          nombreForma: formaCalculo.nombreForma
         });
       }
-
-      // Segunda dilución duplicado
-      if (etapa3.dilDuplicado02 !== null && etapa3.dilDuplicado02 !== '') {
-        diluciones.push({
-          dil: Number(etapa3.dilDuplicado02),
-          colonias: [etapa3.numeroColoniasDuplicado03, etapa3.numeroColoniasDuplicado04]
-        });
-      }
-
-      const datosCalculo = {
-        volumen: 1,
-        diluciones: diluciones
-      };
-
-      this.ramService.calcularPreview(datosCalculo).subscribe({
-        next: (res: any) => {
-          loading.dismiss();
-          if (res && res.resultado) {
-            etapa3.resultadoRAMDuplicado01 = res.resultado.textoReporte;
-            etapa3.resultadoRPESDuplicado01 = res.resultado.ufc;
-
-            // Guardar valores en propiedades planas para fácil binding
-            etapa3.promedioDuplicado = res.resultado.promedio;
-            etapa3.sumaColoniasDuplicado = res.resultado.sumaColonias;
-            etapa3.n1Duplicado = res.resultado.n1;
-            etapa3.n2Duplicado = res.resultado.n2;
-            etapa3.factorDilucionDuplicado = res.resultado.factorDilucion;
-          }
-        },
-        error: async (err) => {
-          loading.dismiss();
-          console.error(err);
-          const alert = await this.alertController.create({
-            header: 'Error',
-            message: err.error?.mensaje || 'Error al calcular duplicado.',
-            buttons: ['OK']
-          });
-          await alert.present();
-        }
-      });
-
-    } catch (e) {
-      loading.dismiss();
+    } else {
+      this.etapa7.formaCalculoCoordinador = this.etapa7.formaCalculoCoordinador.filter(
+        (f: any) => (f.idForma || f.id) !== formaCalculo.idForma
+      );
     }
   }
 

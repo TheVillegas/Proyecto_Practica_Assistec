@@ -5,6 +5,7 @@ import { ImagenUploadService } from '../../services/imagen-upload';
 import { Router } from '@angular/router';
 import { query } from '@angular/animations';
 import { AlertController } from '@ionic/angular';
+import { AuthService } from '../../services/auth-service';
 @Component({
   selector: 'app-ali-item-accordeon',
   templateUrl: './ali-item-accordeon.component.html',
@@ -13,6 +14,7 @@ import { AlertController } from '@ionic/angular';
 })
 export class ALIItemAccordeonComponent implements OnInit {
 
+  currentUser: any = null;
   @Input() muestra!: ALI;
   @Output() onDelete = new EventEmitter<void>();
   isExpanded: boolean = false;
@@ -21,10 +23,13 @@ export class ALIItemAccordeonComponent implements OnInit {
     private router: Router,
     private aliService: AliService,
     private alertController: AlertController,
-    private imagenUploadService: ImagenUploadService
+    private imagenUploadService: ImagenUploadService,
+    private authService: AuthService
   ) { }
 
-  ngOnInit() { }
+  ngOnInit() {
+    this.currentUser = this.authService.getUsuario();
+  }
 
   toggleExpand() {
     this.isExpanded = !this.isExpanded;
@@ -235,6 +240,13 @@ export class ALIItemAccordeonComponent implements OnInit {
    */
   formatearFecha(fechaISO: string): string {
     return this.imagenUploadService.formatearFecha(fechaISO);
+  }
+
+  formatearEstado(estado: string | undefined): string {
+    if (!estado) return 'Pendiente';
+    const estadoLimpio = estado.replace('_', ' ').toLowerCase();
+    // Capitalize first letter of each word
+    return estadoLimpio.replace(/\b\w/g, l => l.toUpperCase());
   }
 
 }

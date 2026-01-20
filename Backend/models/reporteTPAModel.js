@@ -339,14 +339,14 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
             const sqlLugar = `
                 SELECT id_lugar
                 FROM LUGARES_ALMACENAMIENTO
-                WHERE nombre_lugar = :nombre_lugar
+                WHERE UPPER(nombre_lugar) = UPPER(:nombre_lugar)
             `;
             const resultadoLugar = await connection.execute(sqlLugar, {
-                nombre_lugar: datos.etapa1.lugarAlmacenamiento // Sincronizado con JSON
+                nombre_lugar: datos.etapa1.lugarAlmacenamiento
             });
 
             if (resultadoLugar.rows.length > 0) {
-                const idLugarReal = resultadoLugar.rows[0].ID_LUGAR; // Oracle es sensible a MAYÚSCULAS
+                const idLugarReal = resultadoLugar.rows[0].ID_LUGAR;
                 await connection.execute(`
                     UPDATE TPA_REPORTE SET
                         id_lugar = :id_lugar,
@@ -355,7 +355,7 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                 `, {
                     id_lugar: idLugarReal,
                     codigo_ali: datos.codigoALI,
-                    obs: datos.etapa1.observaciones // Sincronizado con JSON
+                    obs: datos.etapa1.observaciones
                 });
             }
         }
@@ -380,7 +380,7 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                     // Si es borrador, rutReal se mantiene null
                 } else {
                     const resAnalista = await connection.execute(
-                        `SELECT rut_analista FROM USUARIOS WHERE nombre_apellido_analista = :nombre`,
+                        `SELECT rut_analista FROM USUARIOS WHERE UPPER(nombre_apellido_analista) = UPPER(:nombre)`,
                         { nombre: sesion.responsable }
                     );
 
@@ -452,7 +452,7 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                 if (sesion.equiposSeleccionados && Array.isArray(sesion.equiposSeleccionados)) {
                     for (const nombreEquipo of sesion.equiposSeleccionados) {
                         const resEq = await connection.execute(
-                            `SELECT id_equipo FROM EQUIPOS_LAB WHERE nombre_equipo = :nom`,
+                            `SELECT id_equipo FROM EQUIPOS_LAB WHERE UPPER(nombre_equipo) = UPPER(:nom)`,
                             { nom: nombreEquipo }
                         );
                         if (resEq.rows.length > 0) {
@@ -527,7 +527,7 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                 const nombreItem = item.nombre || item.nombreItem;
                 // Validación opcional: Verificar si el ítem existe en el maestro
                 const resItem = await connection.execute(
-                    `SELECT id_item FROM MAESTRO_CHECKLIST_LIMPIEZA WHERE nombre_item = :nom`,
+                    `SELECT id_item FROM MAESTRO_CHECKLIST_LIMPIEZA WHERE UPPER(nombre_item) = UPPER(:nom)`,
                     { nom: nombreItem }
                 );
 
@@ -565,7 +565,7 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                     }
                 } else {
                     const resAnalista = await connection.execute(
-                        `SELECT rut_analista FROM USUARIOS WHERE nombre_apellido_analista = :nom`,
+                        `SELECT rut_analista FROM USUARIOS WHERE UPPER(nombre_apellido_analista) = UPPER(:nom)`,
                         { nom: datosRetiro.responsable }
                     );
 
@@ -637,7 +637,7 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
             if (datos.etapa5_siembra.diluyentes && Array.isArray(datos.etapa5_siembra.diluyentes)) {
                 for (const dil of datos.etapa5_siembra.diluyentes) {
                     const resMast = await connection.execute(
-                        `SELECT id_diluyente FROM DILUYENTES WHERE nombre_diluyente = :nom`,
+                        `SELECT id_diluyente FROM DILUYENTES WHERE UPPER(nombre_diluyente) = UPPER(:nom)`,
                         { nom: dil.nombre }
                     );
                     if (resMast.rows.length > 0) {
@@ -667,7 +667,7 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                     }
 
                     const equipoValido = await connection.execute(
-                        `SELECT id_equipo FROM EQUIPOS_LAB WHERE nombre_equipo = :nom`,
+                        `SELECT id_equipo FROM EQUIPOS_LAB WHERE UPPER(nombre_equipo) = UPPER(:nom)`,
                         { nom: nombreEquipo }
                     );
 
@@ -690,7 +690,7 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
             if (datos.etapa5_siembra.materiales && Array.isArray(datos.etapa5_siembra.materiales)) {
                 for (const mat of datos.etapa5_siembra.materiales) {
                     const resMast = await connection.execute(
-                        `SELECT id_material_siembra FROM MATERIAL_SIEMBRA WHERE nombre_material = :nom`,
+                        `SELECT id_material_siembra FROM MATERIAL_SIEMBRA WHERE UPPER(nombre_material) = UPPER(:nom)`,
                         { nom: mat.nombre }
                     );
                     if (resMast.rows.length > 0) {

@@ -4,7 +4,7 @@ const reporteRAMController = require('../controllers/reporteRAMController');
 const authMiddleware = require('../middleware/authMiddleware.js');
 
 // Proteger rutas de Reportes RAM
-router.use(authMiddleware);
+router.use(authMiddleware.verifyToken);
 
 router.get('/:codigo_ali/estado', reporteRAMController.obtenerEstadoRam);
 router.get('/:codigo_ali', reporteRAMController.obtenerReporteRAM);

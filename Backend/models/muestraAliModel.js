@@ -107,18 +107,28 @@ MuestraALI.eliminarMuestraALI = (codigo_ali, callback) => {
     // Bloque PL/SQL para borrar en cascada manual respetando las FKs
     const sql = `
         BEGIN
-            -- 1. Borrar hijos de RAM_REPORTE (aunque tengan CASCADE, aseguramos)
+            -- 1. Borrar hijos de RAM_REPORTE
+            -- Tablas de cálculo (Legacy y Actual)
+            BEGIN EXECUTE IMMEDIATE 'DELETE FROM RAM_ETAPA7_FORMAS_CALCULO WHERE codigo_ali = :1' USING :codigo_ali; EXCEPTION WHEN OTHERS THEN NULL; END;
+            BEGIN EXECUTE IMMEDIATE 'DELETE FROM RAM_FORMAS_CALCULO WHERE codigo_ali = :1' USING :codigo_ali; EXCEPTION WHEN OTHERS THEN NULL; END;
+
+            -- Muestras y duplicados
             DELETE FROM RAM_ETAPA3_DUPLICADO WHERE codigo_ali = :codigo_ali;
             DELETE FROM RAM_ETAPA3_MUESTRAS WHERE codigo_ali = :codigo_ali;
+            
+            -- Finalmente el reporte
             DELETE FROM RAM_REPORTE WHERE codigo_ali = :codigo_ali;
 
             -- 2. Borrar sub-etapas de TPA_REPORTE
-            -- TPA_ETAPA5_RECURSOS tiene CASCADE desde TPA_ETAPA5_SIEMBRA
+            -- Borramos recursivamente recursos, equipos y materiales por si no hay CASCADE
+            DELETE FROM TPA_ETAPA5_RECURSOS WHERE id_siembra IN (SELECT id_siembra FROM TPA_ETAPA5_SIEMBRA WHERE codigo_ali = :codigo_ali);
             DELETE FROM TPA_ETAPA5_SIEMBRA WHERE codigo_ali = :codigo_ali;
+            
             DELETE FROM TPA_ETAPA4_RETIRO WHERE codigo_ali = :codigo_ali;
             DELETE FROM TPA_ETAPA3_CHECKLIST WHERE codigo_ali = :codigo_ali;
             
-            -- TPA_ETAPA2_EQUIPOS y MATERIALES tienen CASCADE desde TPA_ETAPA2_SESION
+            DELETE FROM TPA_ETAPA2_EQUIPOS WHERE id_sesion IN (SELECT id_sesion FROM TPA_ETAPA2_SESION WHERE codigo_ali = :codigo_ali);
+            DELETE FROM TPA_ETAPA2_MATERIALES WHERE id_sesion IN (SELECT id_sesion FROM TPA_ETAPA2_SESION WHERE codigo_ali = :codigo_ali);
             DELETE FROM TPA_ETAPA2_SESION WHERE codigo_ali = :codigo_ali;
 
             -- 3. Borrar reporte TPA

@@ -1,7 +1,31 @@
 # --- Dependencias (Lo más importante) ---
 node_modules/
 **/node_modules/
+package-lock.json
 
 # --- Seguridad (Claves y secretos) ---
 .env
 **/Backend/.env
+**/.env
+
+# --- Build & Runtime ---
+dist/
+www/
+coverage/
+.angular/
+.ionic/
+.serverless/
+build/
+
+# --- IDE & OS ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

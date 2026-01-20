@@ -41,17 +41,40 @@ exports.guardarReporteRAM = async (req, res) => {
     try {
         const datos = req.body;
 
-        if (!datos.codigo_ali) {
-            return res.status(400).json({ mensaje: 'El codigo_ali es requerido' });
+        const rutUsuario = req.user?.rut || null;
+
+        if (!rutUsuario) {
+            return res.status(401).json({ mensaje: 'No se pudo identificar al usuario. Token inválido.' });
         }
 
-        const result = await ReporteRAM.guardarReporteRAM(datos);
+        // Obtener estado y rol para validaciones de seguridad
+        const estadoActual = await ReporteRAM.obtenerEstadoRAM(datos.codigoALI);
+        const { rol } = req.user || { rol: 0 };
+
+
+
+        // REGLA 1: Bloqueo TOTAL si está verificado/finalizado, EXCEPTO para Rol 1 (Supervisor)
+        if ((estadoActual?.toUpperCase() === 'VERIFICADO' || estadoActual?.toUpperCase() === 'FINALIZADO') && rol != 1) {
+            return res.status(403).json({
+                mensaje: 'El reporte ya ha sido VERIFICADO y no puede modificarse.'
+            });
+        }
+
+        // REGLA 2: Bloqueo a Analistas Junior (Rol 0) si está pendiente de revisión (similar a TPA)
+        // (Opcional, si aplica la misma lógica de negocio)
+        if (estadoActual?.toUpperCase() === 'PENDIENTE' && rol == 0) {
+            return res.status(403).json({
+                mensaje: 'El reporte está PENDIENTE de revisión por el supervisor.'
+            });
+        }
+
+        const result = await ReporteRAM.guardarReporteRAM(datos, rutUsuario);
 
         res.status(200).json(result);
 
     } catch (error) {
         console.error('Error al guardar reporte RAM:', error);
-        res.status(500).json({ mensaje: 'Error al guardar el reporte RAM' });
+        res.status(500).json({ mensaje: 'Error al guardar el reporte RAM: ' + error.message, error: error.message });
     }
 
 

@@ -4,7 +4,7 @@ const reporteTPAController = require('../controllers/reporteTPAController.js');
 const authMiddleware = require('../middleware/authMiddleware.js');
 
 // Aplicar middleware a todas las rutas (o selectivamente)
-router.use(authMiddleware);
+router.use(authMiddleware.verifyToken);
 
 router.get('/:codigo_ali', reporteTPAController.obtenerReporteTPA);
 router.get('/:codigo_ali/estado', reporteTPAController.obtenerEstadoReporte);

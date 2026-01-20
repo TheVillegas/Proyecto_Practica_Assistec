@@ -2,7 +2,7 @@ const db = require('../config/DB.js');
 
 const Analista = {};
 
-Analista.crear = (datos, callback) => {
+Analista.crear = async (datos) => {
     const {
         rut_analista,
         nombre_apellido_analista,
@@ -20,23 +20,17 @@ Analista.crear = (datos, callback) => {
         rol_analista: 0
     };
 
-    db.execute(sql, binds, { autoCommit: true })
-        .then(result => callback(null, result))
-        .catch(err => callback(err));
+    return await db.execute(sql, binds, { autoCommit: true });
 };
 
-Analista.obtenerAnalistas = (callback) => {
+Analista.obtenerAnalistas = async () => {
     const sql = 'SELECT * FROM USUARIOS';
-    db.execute(sql)
-        .then(result => callback(null, result))
-        .catch(err => callback(err));
+    return await db.execute(sql);
 }
 
-Analista.obtenerPorRut = (rut, callback) => {
+Analista.obtenerPorRut = async (rut) => {
     const sql = 'SELECT * FROM USUARIOS WHERE rut_analista = :rut';
-    db.execute(sql, { rut })
-        .then(result => callback(null, result))
-        .catch(err => callback(err));
+    return await db.execute(sql, { rut });
 }
 
 Analista.obtenerPorCorreo = async (correo) => {

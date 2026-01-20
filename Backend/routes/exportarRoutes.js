@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const exportarController = require('../controllers/exportarController');
+const authMiddleware = require('../middleware/authMiddleware.js');
 
+// Proteger rutas de exportación
+router.use(authMiddleware.verifyToken);
 /**
  * @route POST /api/exportar/tpa
  * @desc Genera y descarga un reporte TPA en formato Excel

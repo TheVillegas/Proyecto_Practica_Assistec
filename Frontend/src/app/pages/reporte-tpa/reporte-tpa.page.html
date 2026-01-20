@@ -362,8 +362,13 @@
           </ion-button>
         </ion-col>
         <ion-col size="4">
-          <ion-button expand="block" color="medium" (click)="confirmarGuardarBorrador()">
+          <ion-button expand="block" color="medium" (click)="confirmarGuardarBorrador()"
+            *ngIf="!(currentUser?.rol === 1 && (estadoTPA?.toUpperCase() === 'VERIFICADO' || estadoTPA?.toUpperCase() === 'FINALIZADO'))">
             Guardar Borrador
+          </ion-button>
+          <ion-button expand="block" color="warning" (click)="confirmarDevolverBorrador()"
+            *ngIf="currentUser?.rol === 1 && (estadoTPA?.toUpperCase() === 'VERIFICADO' || estadoTPA?.toUpperCase() === 'FINALIZADO')">
+            Devolver a Borrador
           </ion-button>
         </ion-col>
         <ion-col size="4">

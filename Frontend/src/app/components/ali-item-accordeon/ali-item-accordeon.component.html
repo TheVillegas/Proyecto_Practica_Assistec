@@ -32,8 +32,8 @@
 
       <div class="btn-separator"></div>
 
-      <!-- Delete Button -->
-      <button class="btn-delete" title="Eliminar ALI" (click)="eliminarALI($event)">
+      <!-- Delete Button (Only Role 1) -->
+      <button *ngIf="currentUser?.rol === 1" class="btn-delete" title="Eliminar ALI" (click)="eliminarALI($event)">
         <ion-icon name="trash-outline" class="delete-icon"></ion-icon>
       </button>
 
@@ -100,13 +100,13 @@
           <div class="doc-card" [ngClass]="getContainerStyle(muestra.reporteTPA.estado)">
             <div class="doc-icon-wrapper">
               <ion-icon
-                [name]="muestra.reporteTPA.estado === 'Verificado' ? 'checkmark-circle-outline' : 'document-outline'"
+                [name]="muestra.reporteTPA.estado?.toUpperCase() === 'VERIFICADO' ? 'checkmark-circle-outline' : 'document-outline'"
                 class="doc-icon"
-                [ngClass]="muestra.reporteTPA.estado === 'Verificado' ? 'text-brand-primary' : 'text-gray-400'">
+                [ngClass]="muestra.reporteTPA.estado?.toUpperCase() === 'VERIFICADO' ? 'text-brand-primary' : 'text-gray-400'">
               </ion-icon>
               <div class="doc-info">
                 <span class="doc-label"
-                  [ngClass]="muestra.reporteTPA.estado === 'Verificado' ? 'text-gray-900' : 'text-gray-700'">
+                  [ngClass]="muestra.reporteTPA.estado?.toUpperCase() === 'VERIFICADO' ? 'text-gray-900' : 'text-gray-700'">
                   Reporte TPA
                 </span>
                 <a class="doc-link" (click)="goToReporteTPA($event)">
@@ -115,7 +115,7 @@
               </div>
             </div>
             <span class="status-badge-custom" [ngClass]="getColorEstado(muestra.reporteTPA.estado)">
-              {{ muestra.reporteTPA.estado || 'PENDIENTE' }}
+              {{ formatearEstado(muestra.reporteTPA.estado) }}
             </span>
           </div>
 
@@ -123,13 +123,13 @@
           <div class="doc-card" [ngClass]="getContainerStyle(muestra.reporteRAM.estado)">
             <div class="doc-icon-wrapper">
               <ion-icon
-                [name]="muestra.reporteRAM.estado === 'Verificado' ? 'checkmark-circle-outline' : 'document-outline'"
+                [name]="muestra.reporteRAM.estado?.toUpperCase() === 'VERIFICADO' ? 'checkmark-circle-outline' : 'document-outline'"
                 class="doc-icon"
-                [ngClass]="muestra.reporteRAM.estado === 'Verificado' ? 'text-brand-primary' : 'text-gray-400'">
+                [ngClass]="muestra.reporteRAM.estado?.toUpperCase() === 'VERIFICADO' ? 'text-brand-primary' : 'text-gray-400'">
               </ion-icon>
               <div class="doc-info">
                 <span class="doc-label"
-                  [ngClass]="muestra.reporteRAM.estado === 'Verificado' ? 'text-gray-900' : 'text-gray-700'">
+                  [ngClass]="muestra.reporteRAM.estado?.toUpperCase() === 'VERIFICADO' ? 'text-gray-900' : 'text-gray-700'">
                   Reporte RAM
                 </span>
                 <a class="doc-link" (click)="goToReporteRAM($event)">
@@ -138,7 +138,7 @@
               </div>
             </div>
             <span class="status-badge-custom" [ngClass]="getColorEstado(muestra.reporteRAM.estado)">
-              {{ muestra.reporteRAM.estado || 'PENDIENTE' }}
+              {{ formatearEstado(muestra.reporteRAM.estado) }}
             </span>
           </div>
 

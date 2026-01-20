@@ -32,11 +32,11 @@
             </ion-col>
             <ion-col size="2">
               <ion-label>N de Muestra 10gr/90ml</ion-label>
-              <ion-input type="number" [disabled]="formularioBloqueado" [(ngModel)]="etapa1.nMuestra10gr"></ion-input>
+              <ion-input type="text" [disabled]="formularioBloqueado" [(ngModel)]="etapa1.nMuestra10gr"></ion-input>
             </ion-col>
             <ion-col size="2">
               <ion-label>N de Muestra 50gr/450ml</ion-label>
-              <ion-input type="number" [disabled]="formularioBloqueado" [(ngModel)]="etapa1.nMuestra50gr"></ion-input>
+              <ion-input type="text" [disabled]="formularioBloqueado" [(ngModel)]="etapa1.nMuestra50gr"></ion-input>
             </ion-col>
             <ion-col size="2">
               <ion-label>Hora de termino de Siembra</ion-label>
@@ -111,7 +111,7 @@
         </ion-grid>
       </div>
     </ion-accordion>
-    <ion-accordion *ngFor="let etapa3 of listaRepeticionesEtapa3; let i = index; let isLast = last"
+    <ion-accordion *ngFor="let etapa3 of listaRepeticionesEtapa3; let i = index; let isLast = last; trackBy: trackByFn"
       [value]="'etapa3'+i">
       <ion-item slot="header">
         <ion-label>ETAPA 3 : Calculo de Muestras {{i+1}}</ion-label>
@@ -600,7 +600,7 @@
             <ion-col size="auto" *ngFor="let formaCalculo of listaFormasCalculo" class="ion-margin-horizontal">
               <ion-checkbox [checked]="isFormaCalculoSelected(formaCalculo)"
                 (ionChange)="toggleFormaCalculo(formaCalculo, $event)">
-                {{formaCalculo.nombre}}</ion-checkbox>
+                {{formaCalculo.nombreForma}}</ion-checkbox>
             </ion-col>
           </ion-row>
 
@@ -611,9 +611,9 @@
           </ion-row>
           <ion-row class="ion-justify-content-center">
             <ion-col size="auto" *ngFor="let formaCalculo of listaFormasCalculo" class="ion-margin-horizontal">
-              <ion-checkbox [checked]="isFormaCalculoSelected(formaCalculo)"
-                (ionChange)="toggleFormaCalculo(formaCalculo, $event)">
-                {{formaCalculo.nombre}}</ion-checkbox>
+              <ion-checkbox [checked]="isFormaCalculoCoordinadorSelected(formaCalculo)"
+                (ionChange)="toggleFormaCalculoCoordinador(formaCalculo, $event)">
+                {{formaCalculo.nombreForma}}</ion-checkbox>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -622,6 +622,8 @@
   </ion-accordion-group>
 </ion-content>
 
-<app-footer-acciones [formularioBloqueado]="formularioBloqueado" (cancelar)="confirmarCancelar()"
-  (guardarBorrador)="confirmarGuardarBorrador()" (confirmar)="confirmarFormulario()" (salir)="salirVerificado()">
+<app-footer-acciones [formularioBloqueado]="formularioBloqueado"
+  [showRevertButton]="currentUser?.rol === 1 && (estadoRAM === 'Verificado' || estadoRAM === 'Finalizado')"
+  (cancelar)="confirmarCancelar()" (guardarBorrador)="confirmarGuardarBorrador()"
+  (revertir)="confirmarDevolverBorrador()" (confirmar)="confirmarFormulario()" (salir)="salirVerificado()">
 </app-footer-acciones>

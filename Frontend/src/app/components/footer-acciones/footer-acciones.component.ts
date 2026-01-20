@@ -10,11 +10,13 @@ export class FooterAccionesComponent implements OnInit {
 
     @Input() formularioBloqueado: boolean = false;
     @Input() cargando: boolean = false;
+    @Input() showRevertButton: boolean = false;
 
     @Output() cancelar = new EventEmitter<void>();
     @Output() guardarBorrador = new EventEmitter<void>();
     @Output() confirmar = new EventEmitter<void>();
     @Output() salir = new EventEmitter<void>();
+    @Output() revertir = new EventEmitter<void>();
 
     constructor() { }
 
@@ -34,6 +36,10 @@ export class FooterAccionesComponent implements OnInit {
 
     onSalir() {
         this.salir.emit();
+    }
+
+    onRevertir() {
+        this.revertir.emit();
     }
 
 }

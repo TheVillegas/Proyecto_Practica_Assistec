@@ -29,12 +29,16 @@ export class HeaderComponent implements OnInit {
   ngOnInit() {
     this.updateActiveSegment(this.router.url);
 
-    // Obtener usuario actual
-    const user = this.authService.getUsuario();
-    if (user) {
-      this.userName = user.nombreApellido || 'Usuario';
-      this.userRole = user.rol || 'Analista';
-    }
+    // Suscribirse a cambios del usuario para actualización en tiempo real
+    this.authService.currentUser$.subscribe(user => {
+      if (user) {
+        this.userName = user.nombreApellido || 'Usuario';
+        this.userRole = user.rol === 1 ? 'Supervisor' : 'Analista';
+      } else {
+        this.userName = 'Usuario';
+        this.userRole = 'Analista';
+      }
+    });
   }
 
   private updateActiveSegment(url: string) {

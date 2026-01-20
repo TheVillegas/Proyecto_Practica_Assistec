@@ -31,11 +31,15 @@ exports.guardarReporteTPA = async (req, res) => {
         }
 
         // Obtener estado y rol
+        // Obtener estado y rol
         const estadoActual = await ReporteTPA.obtenerEstadoReporte(datos.codigoALI);
         const { rol } = req.user || { rol: 0 }; // Fallback a 0 si no hay middleware activo aún en pruebas
 
-        // REGLA 1: Bloqueo TOTAL si está verificado
-        if (estadoActual === 'VERIFICADO') {
+
+
+        // REGLA 1: Bloqueo TOTAL si está verificado, EXCEPTO para Rol 1 (Supervisor)
+        // Usamos != para permitir coincidencia si rol viene como string o number
+        if (estadoActual?.toUpperCase() === 'VERIFICADO' && rol != 1) {
             return res.status(403).json({
                 mensaje: 'El reporte ya ha sido VERIFICADO y no puede modificarse.'
             });
@@ -49,7 +53,11 @@ exports.guardarReporteTPA = async (req, res) => {
         }
 
         // Si es Rol 1 o el estado es BORRADOR, permitimos continuar
-        const rutUsuario = req.user?.rut || datos.rutUsuario || null;
+        const rutUsuario = req.user?.rut || null;
+
+        if (!rutUsuario) {
+            return res.status(401).json({ mensaje: 'No se pudo identificar al usuario. Token inválido.' });
+        }
 
 
         const result = await ReporteTPA.guardarReporteCompleto(datos, rutUsuario);
@@ -64,12 +72,12 @@ exports.guardarReporteTPA = async (req, res) => {
 exports.verificarReporte = async (req, res) => {
     try {
         const { codigo_ali } = req.params;
-        // Obtenemos identidad del middleware, con fallback al body si fuera necesario
-        const rut_usuario = req.user.rut || req.body.rut_usuario;
+        // Obtenemos identidad estrictamente del middleware de autenticación
+        const rut_usuario = req.user?.rut;
         const { observaciones_finales, firma } = req.body;
 
         if (!rut_usuario) {
-            return res.status(400).json({ mensaje: 'El RUT del usuario es requerido' });
+            return res.status(401).json({ mensaje: 'No se pudo identificar al usuario. Token inválido.' });
         }
 
         const result = await ReporteTPA.verificarReporte(

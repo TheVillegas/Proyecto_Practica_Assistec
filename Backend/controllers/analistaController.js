@@ -3,8 +3,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { mapAnalista } = require('../utils/mappers');
 
-// Asegúrate de que coincida con el del middleware (idealmente en .env)
-const SECRET_KEY = process.env.JWT_SECRET || 'secreto_super_secreto_para_desarrollo';
+
+// Asegúrate de tener JWT_SECRET en tus variables de entorno
+const SECRET_KEY = process.env.JWT_SECRET;
 
 exports.crearAnalista = async (req, res) => {
     try {
@@ -16,36 +17,27 @@ exports.crearAnalista = async (req, res) => {
         }
 
         // 1. Validar si el analista ya existe
-        Analista.obtenerPorRut(datos.rut_analista, async (err, result) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).json({ mensaje: 'Error al verificar usuario' });
-            }
+        const result = await Analista.obtenerPorRut(datos.rut_analista);
 
-            if (result.rows && result.rows.length > 0) {
-                return res.status(400).json({ mensaje: 'El RUT ya está registrado' });
-            }
+        if (result.rows && result.rows.length > 0) {
+            return res.status(400).json({ mensaje: 'El RUT ya está registrado' });
+        }
 
-            // 2. Encriptar contraseña
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(datos.contrasena_analista, salt);
+        // 2. Encriptar contraseña
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(datos.contrasena_analista, salt);
 
-            // Reemplazamos la contraseña plana por la hasheada
-            datos.contrasena_analista = hashedPassword;
+        // Reemplazamos la contraseña plana por la hasheada
+        datos.contrasena_analista = hashedPassword;
 
-            // 3. Crear usuario
-            Analista.crear(datos, (errCreate, resultCreate) => {
-                if (errCreate) {
-                    console.error(errCreate);
-                    return res.status(500).json({ mensaje: 'Error al crear el analista en la BD' });
-                }
+        // 3. Crear usuario
+        const resultCreate = await Analista.crear(datos);
 
-                res.status(201).json({
-                    mensaje: 'Analista creado exitosamente',
-                    filasAfectadas: resultCreate.rowsAffected
-                });
-            });
+        res.status(201).json({
+            mensaje: 'Analista creado exitosamente',
+            filasAfectadas: resultCreate.rowsAffected
         });
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ mensaje: 'Error interno del servidor' });
@@ -53,20 +45,22 @@ exports.crearAnalista = async (req, res) => {
 };
 
 exports.loginAnalista = async (req, res) => {
-    const { correo, contrasena_analista } = req.body;
+    try {
+        const { correo, contrasena_analista } = req.body;
 
-    if (!correo || !contrasena_analista) {
-        return res.status(400).json({ mensaje: 'Debe ingresar correo y contraseña' });
-    }
-
-    // hay que buscar el rut por correo
-    const rut_analista = await Analista.obtenerPorCorreo(correo);
-    // 1. Buscar usuario por RUT
-    Analista.obtenerPorRut(rut_analista, async (err, result) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ mensaje: 'Error al intentar loguearse' });
+        if (!correo || !contrasena_analista) {
+            return res.status(400).json({ mensaje: 'Debe ingresar correo y contraseña' });
         }
+
+        // hay que buscar el rut por correo
+        const rut_analista = await Analista.obtenerPorCorreo(correo);
+
+        if (!rut_analista) {
+            return res.status(401).json({ mensaje: 'Credenciales inválidas' });
+        }
+
+        // 1. Buscar usuario por RUT
+        const result = await Analista.obtenerPorRut(rut_analista);
 
         // Si no se encuentra el usuario
         if (!result.rows || result.rows.length === 0) {
@@ -79,46 +73,44 @@ exports.loginAnalista = async (req, res) => {
         // Intentamos leer en mayúsculas (Oracle) o minúsculas por compatibilidad
         const passHashDB = usuario.CONTRASENA_ANALISTA || usuario.contrasena_analista;
 
-        try {
-            const validPassword = await bcrypt.compare(contrasena_analista, passHashDB);
+        const validPassword = await bcrypt.compare(contrasena_analista, passHashDB);
 
-            if (!validPassword) {
-                return res.status(401).json({ mensaje: 'Credenciales inválidas' });
-            }
-
-            // 3. Generar Token JWT
-            const token = jwt.sign(
-                {
-                    id: usuario.RUT_ANALISTA || usuario.rut_analista,
-                    role: usuario.ROL_ANALISTA || usuario.rol_analista
-                },
-                SECRET_KEY,
-                { expiresIn: '1h' }
-            );
-
-            // Mapper para el usuario logueado
-            const usuarioMapeado = mapAnalista(usuario);
-
-            res.status(200).json({
-                mensaje: 'Login exitoso',
-                token: token,
-                usuario: usuarioMapeado
-            });
-        } catch (bkError) {
-            console.error(bkError);
-            res.status(500).json({ mensaje: 'Error al validar credenciales' });
+        if (!validPassword) {
+            return res.status(401).json({ mensaje: 'Credenciales inválidas' });
         }
-    });
+
+        // 3. Generar Token JWT
+        const token = jwt.sign(
+            {
+                id: usuario.RUT_ANALISTA || usuario.rut_analista,
+                role: usuario.ROL_ANALISTA || usuario.rol_analista
+            },
+            SECRET_KEY,
+            { expiresIn: '1h' }
+        );
+
+        // Mapper para el usuario logueado
+        const usuarioMapeado = mapAnalista(usuario);
+
+        res.status(200).json({
+            mensaje: 'Login exitoso',
+            token: token,
+            usuario: usuarioMapeado
+        });
+    } catch (bkError) {
+        console.error(bkError);
+        res.status(500).json({ mensaje: 'Error al validar credenciales' });
+    }
 };
 
-exports.listarAnalistas = (req, res) => {
-    Analista.obtenerAnalistas((err, result) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ mensaje: 'Error al obtener analistas' });
-        }
+exports.listarAnalistas = async (req, res) => {
+    try {
+        const result = await Analista.obtenerAnalistas();
         // Aplicar mapper a cada fila
         const analistas = result.rows.map(mapAnalista);
         res.status(200).json(analistas);
-    });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ mensaje: 'Error al obtener analistas' });
+    }
 };

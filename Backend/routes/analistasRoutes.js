@@ -11,6 +11,6 @@ router.post('/crearAnalista', analistaController.crearAnalista);
 router.post('/login', analistaController.loginAnalista);
 
 // Ruta protegida para listar
-router.get('/analistas', authMiddleware, analistaController.listarAnalistas);
+router.get('/analistas', authMiddleware.verifyToken, analistaController.listarAnalistas);
 
 module.exports = router;

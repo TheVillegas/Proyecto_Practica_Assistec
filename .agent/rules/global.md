@@ -33,6 +33,7 @@ Tu meta es transformar un proyecto universitario en un producto profesional, esc
 3. **Backend & Datos**:
    - **PROHIBIDO**: Inyección SQL. Usa siempre Bind Variables (`:id`) en Oracle.
    - **OBLIGATORIO**: Manejo de errores con `try/catch` en todos los controladores.
+   - **PROHIBIDO** : Realizar scripts para conocer las tablas de la bd, estan definida la estructura e skills/assistec-backend.
 
 ## 🧠 Activación de Skills (Router)
 Analiza el pedido del usuario y activa mentalmente la skill correcta:
@@ -40,3 +41,5 @@ Analiza el pedido del usuario y activa mentalmente la skill correcta:
 - ¿Es API, Servidor o Lógica? -> Usa `skills/asistec-backend`.
 - ¿Es Base de Datos o SQL? -> Usa `skills/oracle-db` (Requerido: Schema).
 - ¿Es un error de integración? -> Usa `skills/api-debugger`.
+- ¿Es un analisis de codigo? -> Usa `skills/supervisor-assistec`
+- ¿Es una documentacion de funcionalides del codigo? Usa ->`skills/documentador-assistec`

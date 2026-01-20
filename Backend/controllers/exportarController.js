@@ -30,7 +30,7 @@ const exportarReporteTPA = async (req, res) => {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
         const outputName = `Reporte_TPA_${dataJson.codigoALI}_${timestamp}`;
 
-        console.log(`Generando reporte TPA para código ALI: ${dataJson.codigoALI}`);
+
 
         // Generar el reporte
         const filePath = await generarReporteTPA(dataJson, outputName);

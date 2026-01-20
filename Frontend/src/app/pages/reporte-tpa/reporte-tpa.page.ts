@@ -8,6 +8,15 @@ import { ImagenUploadService } from 'src/app/services/imagen-upload';
 import { NavController, AlertController, LoadingController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import {
+  LugarAlmacenamiento,
+  MaterialPesado,
+  Responsable,
+  EquipoLaboratorio,
+  ItemChecklistLimpieza,
+  MaterialSiembra,
+  Diluyente
+} from 'src/app/interfaces/catalogo.interfaces';
 
 @Component({
   selector: 'app-reporte-tpa',
@@ -53,17 +62,17 @@ export class ReporteTPAPage implements OnInit {
   listaDiluyentes: any[] = [
     { id: 0, nombre: "", codigoDiluyente: "" }
   ];
-  listaLimpieza: any[] = [];
+  listaLimpieza: (ItemChecklistLimpieza & { seleccionado?: boolean, bloqueado?: boolean })[] = [];
   observacionesLimpieza: string = ''; // Etapa 3
 
-  opcionesMateriales: any[] = [];
-  listaLugares: any[] = [];
-  listaResponsables: any[] = [];
-  listaEquipos: any[] = [];
-  opcionesMaterialSiembra: any[] = [];
-  listaEquiposSiembra: any[] = [];
+  opcionesMateriales: MaterialPesado[] = [];
+  listaLugares: LugarAlmacenamiento[] = [];
+  listaResponsables: Responsable[] = [];
+  listaEquipos: EquipoLaboratorio[] = [];
+  opcionesMaterialSiembra: MaterialSiembra[] = [];
+  listaEquiposSiembra: (EquipoLaboratorio & { seleccionado?: boolean })[] = [];
   otrosEquiposSiembra: string = ''; // Etapa 5
-  opcionesDiluyentes: any[] = [];
+  opcionesDiluyentes: Diluyente[] = [];
   firmaCoordinador: string | null = null;
   observacionesFinales: string = ''; // Etapa 6
   formularioBloqueado: boolean = false;
@@ -85,7 +94,7 @@ export class ReporteTPAPage implements OnInit {
     this.codigoALI = this.route.snapshot.paramMap.get('codigoALI')!;
     this.currentUser = this.authService.getUsuario();
     if (this.currentUser) {
-      this.responsableModificacion = this.currentUser.nombreApellido || 'Usuario Actual';
+      this.responsableModificacion = this.currentUser.nombreApellido;
     }
 
     // Cargar Catálogos de forma paralela
@@ -144,7 +153,17 @@ export class ReporteTPAPage implements OnInit {
         if (!reporte) return;
 
         this.estadoTPA = reporte.estado || 'No realizado';
-        this.formularioBloqueado = this.estadoTPA === 'Verificado';
+        // Normalizar estado para comparación segura
+        const estadoNormalizado = this.estadoTPA.trim().toUpperCase();
+
+        // Bloquear solo si no es rol 1 (Supervisor)
+        // Rol 1 siempre puede editar o revertir
+        if (this.currentUser && this.currentUser.rol === 1) {
+          this.formularioBloqueado = false;
+        } else {
+          // Si es analista (Rol 0) y está Verificado o Finalizado, se bloquea
+          this.formularioBloqueado = (estadoNormalizado === 'VERIFICADO' || estadoNormalizado === 'FINALIZADO');
+        }
         this.ultimaActualizacion = reporte.fechaCierre || ''; // Ajustar campo
         this.responsableModificacion = reporte.usuarioCierre || 'Usuario Actual'; // Ajustar campo
 
@@ -308,7 +327,16 @@ export class ReporteTPAPage implements OnInit {
   }
 
   agregarLimpieza(instrumento: string) {
-    this.listaLimpieza.push(instrumento);
+    // This seems to add a custom item, need to respect interface.
+    // 'instrumento' arg name suggests string, but we rely on object structure.
+    this.listaLimpieza.push({
+      idItem: Date.now(),
+      nombreItem: instrumento,
+      defSeleccionado: 1,
+      defBloqueado: 0,
+      seleccionado: true,
+      bloqueado: false
+    });
     console.log(this.listaLimpieza);
   }
 
@@ -385,6 +413,26 @@ export class ReporteTPAPage implements OnInit {
           cssClass: 'secondary'
         }, {
           text: 'Guardar',
+          handler: () => {
+            this.guardarReporte('Borrador');
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  async confirmarDevolverBorrador() {
+    const alert = await this.alertController.create({
+      header: 'Devolver a Borrador',
+      message: '¿Estás seguro de devolver este reporte a estado Borrador? Esto permitirá que los analistas vuelvan a editarlo.',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+          cssClass: 'secondary'
+        }, {
+          text: 'Devolver',
           handler: () => {
             this.guardarReporte('Borrador');
           }

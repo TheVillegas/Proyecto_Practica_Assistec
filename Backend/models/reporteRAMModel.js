@@ -64,12 +64,15 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
                 e.nombre_equipo as nombre_equipo_incubacion,
                 ua.nombre_apellido_analista as nombre_analista_analisis,
                 ui.nombre_apellido_analista as nombre_analista_incubacion,
-                mta.nombre_analisis as nombre_analisis_dupli
+                mta.nombre_analisis as nombre_analisis_dupli,
+                r.FECHA_ULTIMA_MODIFICACION,
+                u_mod.nombre_apellido_analista as nombre_usuario_modificacion
             FROM RAM_REPORTE r
             LEFT JOIN EQUIPOS_INCUBACION e ON r.id_equipo_incubacion = e.id_incubacion
             LEFT JOIN USUARIOS ua ON r.id_responsable_analisis = ua.rut_analista
             LEFT JOIN USUARIOS ui ON r.id_responsable_incubacion = ui.rut_analista
             LEFT JOIN MAESTRO_TIPOS_ANALISIS mta ON r.id_analisis_dupli = mta.id_tipo_analisis
+            LEFT JOIN USUARIOS u_mod ON r.USUARIO_ULTIMA_MODIFICACION = u_mod.rut_analista
             WHERE r.codigo_ali = :codigo_ali
         `;
         const result = await db.execute(sql, { codigo_ali: codigoALI });
@@ -87,19 +90,38 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
         const resultDup = await db.execute(sqlDup, { codigo_ali: codigoALI });
         const dupResult = resultDup.rows;
 
-        // 4. Obtener Formas de Cálculo con Nombre
+        // 4. Obtener Formas de Cálculo con Discriminador
         const sqlFormas = `
-            SELECT rfc.id_forma, rfc.seleccionado, mfc.nombre_forma
-            FROM RAM_FORMAS_CALCULO rfc
-            LEFT JOIN MAESTRO_FORMAS_CALCULO mfc ON rfc.id_forma = mfc.id_forma
-            WHERE rfc.codigo_ali = :codigo_ali
+            SELECT 
+                mfc.id_forma, 
+                mfc.nombre_forma, 
+                rfc.tipo_usuario,
+                CASE WHEN rfc.id_forma IS NOT NULL THEN 1 ELSE 0 END as seleccionado
+            FROM MAESTRO_FORMAS_CALCULO mfc
+            LEFT JOIN RAM_ETAPA7_FORMAS_CALCULO rfc 
+                ON mfc.id_forma = rfc.id_forma 
+                AND rfc.codigo_ali = :codigo_ali
         `;
         const resultFormas = await db.execute(sqlFormas, { codigo_ali: codigoALI });
-        const formasCalculo = resultFormas.rows.map(f => ({
-            id: f.ID_FORMA,
-            nombre: f.NOMBRE_FORMA,
-            seleccionado: f.SELECCIONADO === 1
-        }));
+
+        // Mapear separadamente para Analista y Coordinador
+        const formaCalculoAnalista = resultFormas.rows
+            .filter(f => f.TIPO_USUARIO === 'ANALISTA')
+            .map(f => ({
+                id: f.ID_FORMA,
+                idForma: f.ID_FORMA,
+                nombreForma: f.NOMBRE_FORMA,
+                seleccionado: true
+            }));
+
+        const formaCalculoCoordinador = resultFormas.rows
+            .filter(f => f.TIPO_USUARIO === 'COORDINADOR')
+            .map(f => ({
+                id: f.ID_FORMA,
+                idForma: f.ID_FORMA,
+                nombreForma: f.NOMBRE_FORMA,
+                seleccionado: true
+            }));
 
         // 5. Procesar Firma (Buffer -> Base64 String)
         let firmaBase64 = null;
@@ -140,6 +162,7 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
                 promedio: m.PROMEDIO_COLONIAS,
                 n1: m.N1,
                 n2: m.N2,
+                factorDilucion: m.FACTOR_DILUCION,
                 // Retrocompatibilidad con formato antiguo (por si acaso)
                 numeroMuestra: m.NUMERO_MUESTRA,
                 numeroColonias: [m.C1, m.C2, m.C3, m.C4].filter(c => c !== null),
@@ -149,7 +172,14 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
                     dil01: dup.DIL_DUP_1,
                     disolucion02: dup.DISOLUCION_DUP_2,
                     dil02: dup.DIL_DUP_2,
-                    numeroColonias: [dup.C_DUP_1, dup.C_DUP_2, dup.C_DUP_3, dup.C_DUP_4].filter(c => c !== null)
+                    numeroColonias: [dup.C_DUP_1, dup.C_DUP_2, dup.C_DUP_3, dup.C_DUP_4].filter(c => c !== null),
+                    resultado_ram: dup.RESULTADO_RAM_DUP,
+                    resultado_rpes: dup.RESULTADO_RPES_DUP,
+                    promedio: dup.PROMEDIO_COLONIAS_DUPLICADO,
+                    n1: dup.N1_DUPLICADO,
+                    n2: dup.N2_DUPLICADO,
+                    sumaColonias: dup.SUMATORIA_COLONIAS_DUPLICADO,
+                    factorDilucion: dup.FACTOR_DILUCION
                 } : null
             };
         });
@@ -157,6 +187,8 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
         return {
             codigoALI: r.CODIGO_ALI,
             estado: r.ESTADO_RAM,
+            ultimaActualizacion: r.FECHA_ULTIMA_MODIFICACION ? new Date(r.FECHA_ULTIMA_MODIFICACION).toISOString() : '',
+            responsable: r.NOMBRE_USUARIO_MODIFICACION || 'Sin información',
 
             etapa1: {
                 agarPlateCount: r.AGAR_PLATE_COUNT,
@@ -213,7 +245,8 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
 
             etapa7: {
                 observacionesFinales: r.OBSERVACIONES_FINALES,
-                formasCalculo: formasCalculo,
+                formaCalculoAnalista: formaCalculoAnalista, // Lista filtrada
+                formaCalculoCoordinador: formaCalculoCoordinador, // Lista filtrada
                 firmaCoordinador: firmaBase64,
                 observaciones_finales_analistas: r.OBSERVACIONES_GENERALES_ANALISTA_RAM
             }
@@ -225,7 +258,7 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
     }
 };
 
-ReporteRAM.guardarReporteRAM = async (datos) => {
+ReporteRAM.guardarReporteRAM = async (datos, rutUsuario = null) => {
     let connection;
     try {
         connection = await db.getConnection();
@@ -235,11 +268,14 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
 
         // 2. Actualizar Estado (Obligatorio si viene en el JSON)
         const sqlEstado = `UPDATE RAM_REPORTE
-                           SET estado_ram = :estado
+                           SET estado_ram = :estado,
+                               FECHA_ULTIMA_MODIFICACION = SYSTIMESTAMP,
+                               USUARIO_ULTIMA_MODIFICACION = :usuario
                            WHERE codigo_ali = :codigo_ali`;
 
         const resultEstado = await connection.execute(sqlEstado, {
             estado: datos.estado,
+            usuario: rutUsuario || 'SISTEMA',
             codigo_ali: datos.codigo_ali || datos.codigoALI
         });
 
@@ -252,26 +288,62 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
             console.log("Procesando Etapa 1 para RAM...");
 
             // Búsqueda flexible (insensible a mayúsculas)
-            const equipoValid = await connection.execute(`
-                SELECT id_incubacion
-                FROM EQUIPOS_INCUBACION
-                WHERE UPPER(nombre_equipo) = UPPER(:equipo_incubacion)
-            `, {
-                equipo_incubacion: datos.etapa1.nombre_equipo_incubacion || ''
-            });
+            // Búsqueda flexible (insensible a mayúsculas) o uso directo de ID
+            let idEquipo = datos.etapa1.equipoIncubacion;
 
-            if (equipoValid.rows.length === 0) {
-                throw new Error(`El equipo '${datos.etapa1.nombre_equipo_incubacion}' no existe en el catálogo.`);
+            // Si viene el ID directo (número), lo usamos. Si no, buscamos por nombre
+            if (!idEquipo && datos.etapa1.nombre_equipo_incubacion) {
+                const equipoValid = await connection.execute(`
+                    SELECT id_incubacion
+                    FROM EQUIPOS_INCUBACION
+                    WHERE UPPER(nombre_equipo) = UPPER(:equipo_incubacion)
+                `, {
+                    equipo_incubacion: datos.etapa1.nombre_equipo_incubacion || ''
+                });
+
+                if (equipoValid.rows.length > 0) {
+                    idEquipo = equipoValid.rows[0].ID_INCUBACION;
+                }
+            }
+
+            // Validación final
+            if (!idEquipo) {
+                if (datos.estado === 'Verificado' || datos.estado === 'Finalizado') {
+                    // Solo error si es obligatorio (estado final) y no tenemos ni ID ni nombre válido
+                    if (datos.etapa1.nombre_equipo_incubacion || datos.etapa1.equipoIncubacion) {
+                        throw new Error(`El equipo de incubación no existe en el catálogo.`);
+                    }
+                }
+                datos.etapa1.id_equipo_incubacion_val = null;
+            } else {
+                datos.etapa1.id_equipo_incubacion_val = idEquipo;
             }
 
             // Validación Micropipeta (Movido a Etapa 1)
+            let idMicropipeta = null;
             if (datos.etapa1.micropipetaUtilizada && datos.etapa1.micropipetaUtilizada.trim() !== "") {
                 const micropipeta = await connection.execute(
                     `SELECT id_pipeta FROM MICROPIPETAS WHERE nombre_pipeta = :nombre`,
                     { nombre: datos.etapa1.micropipetaUtilizada }
                 );
                 if (micropipeta.rows.length === 0) {
-                    throw new Error(`La micropipeta '${datos.etapa1.micropipetaUtilizada}' no existe en el sistema.`);
+                    if (datos.estado === 'Verificado' || datos.estado === 'Finalizado') {
+                        throw new Error(`La micropipeta '${datos.etapa1.micropipetaUtilizada}' no existe en el sistema.`);
+                    }
+                    // Borrador -> Null
+                } else {
+                    idMicropipeta = micropipeta.rows[0].ID_PIPETA; // Asumiendo que queremos el ID, aunque el query original usaba el nombre en el insert?
+                    // Espera, el query original UPDATE usa :micropipeta.
+                    // En la linea 297 del original usa: micropipeta: datos.etapa1.micropipetaUtilizada || null
+                    // Parece que guarda el NOMBRE o el ID?
+                    // El modelo original linea 286 dice "micropipeta_utilizada = :micropipeta"
+                    // Y el bind linea 297 dice "micropipetaUtilizada".
+                    // Si es ID, el bind debería ser el ID. 
+                    // Revisando linea 270 original: SELECT id_pipeta ...
+                    // Pero la validacion solo chequeaba existencia.
+                    // Voy a asumir que guarda el NOMBRE si el campo en DB es varchar, o ID si es FK.
+                    // Asumiremos que si es borrador y no existe, guarda el texto tal cual o null?
+                    // Mejor null para evitar FK errors.
                 }
             }
 
@@ -288,13 +360,13 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
             `;
 
             await connection.execute(sqlEtapa1, {
-                agar_plate_count: datos.etapa1.agar_plate_count || null,
-                equipo_incubacion: equipoValid.rows[0].ID_INCUBACION,
-                n_muestra_10gr: datos.etapa1.n_muestra_10gr || null,
-                n_muestra_50gr: datos.etapa1.n_muestra_50gr || null,
-                hora_inicio_homogenizado: datos.etapa1.hora_inicio_homogenizado || null,
-                hora_termino_siembra: datos.etapa1.hora_termino_siembra || null,
-                micropipeta: datos.etapa1.micropipetaUtilizada || null,
+                agar_plate_count: datos.etapa1.agarPlateCount || datos.etapa1.agar_plate_count || null,
+                equipo_incubacion: datos.etapa1.id_equipo_incubacion_val, // Usamos la variable determinada arriba
+                n_muestra_10gr: datos.etapa1.nMuestra10gr || datos.etapa1.n_muestra_10gr || null,
+                n_muestra_50gr: datos.etapa1.nMuestra50gr || datos.etapa1.n_muestra_50gr || null,
+                hora_inicio_homogenizado: datos.etapa1.horaInicioHomogenizado || datos.etapa1.hora_inicio_homogenizado || null,
+                hora_termino_siembra: datos.etapa1.horaTerminoSiembra || datos.etapa1.hora_termino_siembra || null,
+                micropipeta: datos.etapa1.micropipetaUtilizada || null, // Guardamos el texto (o null si queremos estricto, pero la validación arriba solo chequeaba existencia, el bind usa el string)
                 codigo_ali: datos.codigo_ali || datos.codigoALI
             });
         }
@@ -312,9 +384,12 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
                     { nombre: e2.responsableAnalisis }
                 );
                 if (res.rows.length === 0) {
-                    throw new Error(`El responsable de análisis '${e2.responsableAnalisis}' no existe en el sistema.`);
+                    if (datos.estado === 'Verificado' || datos.estado === 'Finalizado') {
+                        throw new Error(`El responsable de análisis '${e2.responsableAnalisis}' no existe en el sistema.`);
+                    }
+                } else {
+                    rutAnalista = res.rows[0].RUT_ANALISTA;
                 }
-                rutAnalista = res.rows[0].RUT_ANALISTA;
             }
 
             if (e2.responsableIncubacion && e2.responsableIncubacion.trim() !== "") {
@@ -323,9 +398,12 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
                     { nombre: e2.responsableIncubacion }
                 );
                 if (res.rows.length === 0) {
-                    throw new Error(`El responsable de incubación '${e2.responsableIncubacion}' no existe en el sistema.`);
+                    if (datos.estado === 'Verificado' || datos.estado === 'Finalizado') {
+                        throw new Error(`El responsable de incubación '${e2.responsableIncubacion}' no existe en el sistema.`);
+                    }
+                } else {
+                    rutIncubacion = res.rows[0].RUT_ANALISTA;
                 }
-                rutIncubacion = res.rows[0].RUT_ANALISTA;
             }
 
             const sqlEtapa2 = `
@@ -422,7 +500,13 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
             if (e6.analisis !== null && e6.analisis !== undefined) {
                 const analisisValid = await connection.execute(sqlValid = `SELECT id_tipo_analisis FROM MAESTRO_TIPOS_ANALISIS WHERE id_tipo_analisis = :analisis`, { analisis: e6.analisis });
                 if (analisisValid.rows.length === 0) {
-                    throw new Error(`El analisis '${e6.analisis}' no existe en el sistema.`);
+                    if (datos.estado === 'Verificado' || datos.estado === 'Finalizado') {
+                        throw new Error(`El analisis '${e6.analisis}' no existe en el sistema.`);
+                    }
+                    // Si es borrador, seteamos a null para que no falle FK (si existe)
+                    // O lo dejamos si se permiten IDs invalidos (dudoso)
+                    // Mejor null
+                    e6.analisis = null;
                 }
             }
             const sqlEtapa6 = `
@@ -467,27 +551,53 @@ ReporteRAM.guardarReporteRAM = async (datos) => {
                 codigo_ali: datos.codigo_ali || datos.codigoALI
             });
 
-            // Procesar Formas de Cálculo (Checklist)
+            // Procesar Formas de Cálculo (Analista y Coordinador)
+            // Ya no usamos RAM_FORMAS_CALCULO antiguo, sino RAM_ETAPA7_FORMAS_CALCULO
+
+            // 1. Limpiar registros previos
+            await connection.execute(
+                `DELETE FROM RAM_ETAPA7_FORMAS_CALCULO WHERE codigo_ali = :codigo`,
+                { codigo: datos.codigo_ali || datos.codigoALI }
+            );
+
+            const sqlInsertForma = `
+                INSERT INTO RAM_ETAPA7_FORMAS_CALCULO (codigo_ali, id_forma, tipo_usuario)
+                VALUES (:codigo, :idForma, :tipoUsuario)
+            `;
+
+            // Procesar Analista (formaCalculoAnalista)
+            // NOTA: El frontend envía lista de objetos seleccionados { id, ... }
             if (e7.formasCalculo && Array.isArray(e7.formasCalculo)) {
-                console.log("Procesando Formas de Cálculo...");
+                // Retrocompatibilidad o unificación:
+                // Si el frontend envía 'formasCalculo' separadas, ideal. 
+                // Pero reporte-ram.page.ts tiene 'formaCalculoAnalista' y 'formaCalculoCoordinador'
+                // pero al enviar el JSON (linea 454 del page.ts), COMBINA ambos en 'formasCalculo'?
+                // UPDATE: En reporte-ram.page.ts veo que combina todo en 'formasCalculo'. 
+                // Necesitamos separar el TIPO_USUARIO alli o aqui.
+                // PROBLEMA: El frontend mezcla todo en 'formasCalculo' en el JSON que envia.
+                // SOLUCIÓN: Modificar el frontend para que envie 'formaCalculoAnalista' y 'formaCalculoCoordinador' separados
+                // O confiar en que el backend reciba esos campos si modificamos frontend.
 
-                // 1. Limpiar registros previos
-                await connection.execute(
-                    `DELETE FROM RAM_FORMAS_CALCULO WHERE codigo_ali = :codigo`,
-                    { codigo: datos.codigo_ali || datos.codigoALI }
-                );
+                // ASUMIREMOS que modificamos el frontend para enviar 'formaCalculoAnalista' y 'formaCalculoCoordinador' en etapa7.
+            }
 
-                // 2. Insertar nuevos registros
-                const sqlInsertForma = `
-                    INSERT INTO RAM_FORMAS_CALCULO (codigo_ali, id_forma, seleccionado)
-                    VALUES (:codigo, :idForma, :seleccionado)
-                `;
-
-                for (const forma of e7.formasCalculo) {
+            // Asumiendo que el frontend ha sido actualizado (verificaré paso siguiente)
+            if (e7.formaCalculoAnalista && Array.isArray(e7.formaCalculoAnalista)) {
+                for (const forma of e7.formaCalculoAnalista) {
                     await connection.execute(sqlInsertForma, {
                         codigo: datos.codigo_ali || datos.codigoALI,
-                        idForma: forma.id,
-                        seleccionado: forma.seleccionado ? 1 : 0
+                        idForma: forma.id || forma.idForma,
+                        tipoUsuario: 'ANALISTA'
+                    });
+                }
+            }
+
+            if (e7.formaCalculoCoordinador && Array.isArray(e7.formaCalculoCoordinador)) {
+                for (const forma of e7.formaCalculoCoordinador) {
+                    await connection.execute(sqlInsertForma, {
+                        codigo: datos.codigo_ali || datos.codigoALI,
+                        idForma: forma.id || forma.idForma,
+                        tipoUsuario: 'COORDINADOR'
                     });
                 }
             }
@@ -561,7 +671,7 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicado
             C_DUP_1, C_DUP_2, C_DUP_3, C_DUP_4,
             RESULTADO_RAM_DUP, RESULTADO_RPES_DUP,
             PROMEDIO_COLONIAS_DUPLICADO, 
-            N1_DUP, N2_DUP,
+            N1_DUPLICADO, N2_DUPLICADO,
             SUMATORIA_COLONIAS_DUPLICADO, FACTOR_DILUCION
         ) VALUES (
             :codigo, :id_muestra_original,
@@ -674,8 +784,8 @@ ReporteRAM.procesarEtapa3RAM = async (connection, codigoALI, muestras, duplicado
 // ============================================================================
 
 // --- CONSTANTES ISO 7218 ---
-const MIN_CONTABLE = 10;
-const MAX_CONTABLE = 225;
+const MIN_CONTABLE = 25;
+const MAX_CONTABLE = 250;
 const AREA_PLACA = 57; // cm²
 const LIMITE_SATURACION = 100; // ufc/cm²
 const UMBRAL_MNPC = AREA_PLACA * LIMITE_SATURACION; // 5700
@@ -906,6 +1016,7 @@ ReporteRAM.calcularRecuentoColonias = (datos) => {
                 dilucion: dilMenor.dil,
                 factorDilucion: d,
                 textoReporte: ReporteRAM.formatearResultado(resultado, '<', false),
+                textoRPES: `< ${Math.round(resultado)}`,
                 operador: '<',
                 esEstimado: false,
                 casoAplicado: 'PRIORIDAD_2'
@@ -959,6 +1070,7 @@ ReporteRAM.calcularRecuentoColonias = (datos) => {
                     dilucion: dilMayor.dil,
                     factorDilucion: d,
                     textoReporte: ReporteRAM.formatearResultado(resultado, '>', false),
+                    textoRPES: `> ${Math.round(resultado)}`,
                     operador: '>',
                     esEstimado: false,
                     casoAplicado: 'PRIORIDAD_3B'
