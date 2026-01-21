@@ -10,8 +10,8 @@ export class RamAdapter {
 
         const viewModel: any = {
             estadoRAM: reporte.estado || 'No realizado',
-            ultimaActualizacionRam: reporte.ultimaActualizacion || '',
-            responsableModificacionRam: reporte.responsable || '', // Se rellena en el componente si es necesario
+            ultimaActualizacionRam: reporte.fechaUltimaModificacion || reporte.ultimaActualizacion || '',
+            responsableModificacionRam: reporte.usuarioUltimaModificacion || reporte.responsable || '', // Se rellena en el componente si es necesario
             formularioBloqueado: reporte.estado === 'Verificado',
             etapa1: reporte.etapa1 || {},
             etapa2: reporte.etapa2 || {},

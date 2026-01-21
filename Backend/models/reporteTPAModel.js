@@ -6,22 +6,17 @@ const ReporteTPA = {};
  * Crea un reporte TPA inicial cuando se crea una muestra ALI
  * Estado inicial: NO_REALIZADO
  * @param {number} codigoALI
- * @param {object} connection - Conexión transaccional compartida
+ * @param {object} client - Cliente transaccional compartido (Postgres Client)
  */
-ReporteTPA.crearReporteTPAInicial = async (codigoALI, connection = null) => {
+ReporteTPA.crearReporteTPAInicial = async (codigoALI, client = null) => {
     try {
-        const sql = 'INSERT INTO TPA_REPORTE (codigo_ali, estado_actual) VALUES (:codigo_ali, :estado_actual)';
-        const binds = {
-            codigo_ali: codigoALI,
-            estado_actual: 'NO_REALIZADO'
-        };
+        const sql = 'INSERT INTO TPA_REPORTE (codigo_ali, estado_actual) VALUES ($1, $2)';
+        const values = [codigoALI, 'NO_REALIZADO'];
 
-        if (connection) {
-            // Si pasamos una conexión, ejecutamos sin autoCommit (la transacción la maneja el padre)
-            return await connection.execute(sql, binds);
+        if (client) {
+            return await client.query(sql, values);
         } else {
-            // Si no hay conexión, usamos el wrapper global con autoCommit
-            return await db.execute(sql, binds, { autoCommit: true });
+            return await db.execute(sql, values);
         }
     } catch (err) {
         console.error(`[ReporteTPA] Error al crear reporte inicial para ALI ${codigoALI}:`, err);
@@ -37,18 +32,16 @@ ReporteTPA.obtenerEstadoReporte = async (codigoALI) => {
         const sql = `
             SELECT estado_actual 
             FROM TPA_REPORTE 
-            WHERE codigo_ali = :codigo_ali
+            WHERE codigo_ali = $1
         `;
 
-        const result = await db.execute(sql, { codigo_ali: codigoALI });
+        const result = await db.execute(sql, [codigoALI]);
 
         if (result.rows.length === 0) {
             return null;
         }
 
-        // Al estar configurado oracledb.OUT_FORMAT_OBJECT en DB.js, las filas son objetos
-        // Por defecto Oracle devuelve las llaves en MAYÚSCULAS
-        return result.rows[0].ESTADO_ACTUAL;
+        return result.rows[0].estado_actual;
     } catch (error) {
         console.error('Error al obtener estado del reporte:', error);
         throw error;
@@ -59,9 +52,12 @@ ReporteTPA.obtenerEstadoReporte = async (codigoALI) => {
  * Obtiene el reporte TPA completo con todas sus etapas
  */
 ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
-    let connection;
+    let client;
     try {
-        connection = await db.getConnection();
+        // Usamos un cliente para garantizar lectura consistente si se quisiera,
+        // aunque para lectura simple db.execute basta. Usaré db.execute para consistencia con DB.js
+        // Pero el codigo original usaba getConnection. Mantendré getConnection si hay multiples queries para usar la misma conexión del pool.
+        client = await db.getConnection();
 
         // 1. Obtener datos principales del reporte
         const sqlReporte = `
@@ -79,9 +75,9 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
             FROM TPA_REPORTE r
             LEFT JOIN LUGARES_ALMACENAMIENTO l ON r.id_lugar = l.id_lugar
             LEFT JOIN USUARIOS u_mod ON r.usuario_ultima_modificacion = u_mod.rut_analista
-            WHERE r.codigo_ali = :codigo_ali
+            WHERE r.codigo_ali = $1
         `;
-        const resultReporte = await connection.execute(sqlReporte, { codigo_ali: codigoALI });
+        const resultReporte = await client.query(sqlReporte, [codigoALI]);
 
         if (resultReporte.rows.length === 0) {
             return null;
@@ -90,11 +86,11 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
         const repData = resultReporte.rows[0];
 
         const reporte = {
-            codigoALI: repData.CODIGO_ALI,
-            estado: repData.ESTADO,
+            codigoALI: repData.codigo_ali, // Postgres devuelve lowercase
+            estado: repData.estado,
             etapa1: {
-                lugarAlmacenamiento: repData.LUGAR_ALMACENAMIENTO,
-                observaciones: repData.OBSERVACIONES_INGRESO
+                lugarAlmacenamiento: repData.lugar_almacenamiento,
+                observaciones: repData.observaciones_ingreso
             },
             etapa2_manipulacion: [],
             etapa3_limpieza: { checklist: [] },
@@ -106,14 +102,12 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 otrosEquipos: ''
             },
             etapa6_cierre: {
-                observaciones: repData.OBSERVACIONES_FINALES,
-                firma: repData.FIRMA_DIGITAL
+                observaciones: repData.observaciones_finales,
+                firma: repData.firma_digital
             },
-            // Agregamos campos faltantes que podrían servir
-            // Mapeamos a las propiedades que espera el Frontend
-            observacionesGenerales: repData.OBSERVACIONES_GENERALES_ANALISTAS,
-            fechaCierre: repData.FECHA_ULTIMA_MODIFICACION ? new Date(repData.FECHA_ULTIMA_MODIFICACION).toISOString() : '',
-            usuarioCierre: repData.USUARIO_MODIFICACION || 'Sin información'
+            observacionesGenerales: repData.observaciones_generales_analistas,
+            fechaCierre: repData.fecha_ultima_modificacion ? new Date(repData.fecha_ultima_modificacion).toISOString() : '',
+            usuarioCierre: repData.usuario_modificacion || 'Sin información'
         };
 
         // 2. Obtener sesiones de Etapa 2 (Manipulación)
@@ -130,22 +124,22 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 s.lugar_almacenamiento
             FROM TPA_ETAPA2_SESION s
             LEFT JOIN USUARIOS u ON s.rut_analista = u.rut_analista
-            WHERE s.codigo_ali = :codigo_ali
+            WHERE s.codigo_ali = $1
             ORDER BY s.id_sesion
         `;
-        const resultEtapa2 = await connection.execute(sqlEtapa2, { codigo_ali: codigoALI });
+        const resultEtapa2 = await client.query(sqlEtapa2, [codigoALI]);
 
         for (const row of resultEtapa2.rows) {
-            const idSesion = row.ID_SESION;
+            const idSesion = row.id_sesion;
 
             // Obtener equipos de esta sesión
             const sqlEquipos = `
                 SELECT e.nombre_equipo
                 FROM TPA_ETAPA2_EQUIPOS eq
                 JOIN EQUIPOS_LAB e ON eq.id_equipo = e.id_equipo
-                WHERE eq.id_sesion = :id_sesion
+                WHERE eq.id_sesion = $1
             `;
-            const resultEquipos = await connection.execute(sqlEquipos, { id_sesion: idSesion });
+            const resultEquipos = await client.query(sqlEquipos, [idSesion]);
 
             // Obtener materiales de esta sesión
             const sqlMateriales = `
@@ -164,25 +158,25 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 LEFT JOIN INSTRUMENTOS i ON m.id_instrumento = i.id_instrumento
                 LEFT JOIN MICROPIPETAS p_code ON m.tipo_material = p_code.codigo_pipeta
                 LEFT JOIN INSTRUMENTOS i_code ON m.tipo_material = i_code.codigo_instrumento
-                WHERE m.id_sesion = :id_sesion
+                WHERE m.id_sesion = $1
             `;
-            const resultMateriales = await connection.execute(sqlMateriales, { id_sesion: idSesion });
+            const resultMateriales = await client.query(sqlMateriales, [idSesion]);
 
             reporte.etapa2_manipulacion.push({
                 id: idSesion,
-                responsable: row.RESPONSABLE,
-                lugarAlmacenamiento: row.LUGAR_ALMACENAMIENTO || '',
-                fechaPreparacion: row.FECHA_INICIO ? new Date(row.FECHA_INICIO).toISOString().split('T')[0] : '',
-                horaInicio: row.FECHA_INICIO ? new Date(row.FECHA_INICIO).toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }) : '',
-                horaPesado: row.FECHA_TERMINO ? new Date(row.FECHA_TERMINO).toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }) : '',
-                numeroMuestras: row.NUMERO_MUESTRAS,
-                observacionesEtapa2: row.OBSERVACIONES_SESION,
-                tipoAccion: row.RETIRO_PESADO === 1 ? 'Pesado' : 'Retiro',
-                equiposSeleccionados: resultEquipos.rows.map(e => e.NOMBRE_EQUIPO),
+                responsable: row.responsable,
+                lugarAlmacenamiento: row.lugar_almacenamiento || '',
+                fechaPreparacion: row.fecha_inicio ? new Date(row.fecha_inicio).toISOString().split('T')[0] : '',
+                horaInicio: row.fecha_inicio ? new Date(row.fecha_inicio).toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }) : '',
+                horaPesado: row.fecha_termino ? new Date(row.fecha_termino).toLocaleTimeString('es-CL', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }) : '',
+                numeroMuestras: row.numero_muestras,
+                observacionesEtapa2: row.observaciones_sesion,
+                tipoAccion: row.retiro_pesado === 1 ? 'Pesado' : 'Retiro',
+                equiposSeleccionados: resultEquipos.rows.map(e => e.nombre_equipo),
                 listaMateriales: resultMateriales.rows.map((m, idx) => ({
                     id: idx,
-                    tipoMaterial: m.NOMBRE_MATERIAL || m.TIPO_MATERIAL || '',
-                    codigoMaterial: m.CODIGO_MANUAL || ''
+                    tipoMaterial: m.nombre_material || m.tipo_material || '',
+                    codigoMaterial: m.codigo_manual || ''
                 }))
             });
         }
@@ -195,14 +189,14 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 seleccionado,
                 bloqueado
             FROM TPA_ETAPA3_CHECKLIST
-            WHERE codigo_ali = :codigo_ali
+            WHERE codigo_ali = $1
         `;
-        const resultEtapa3 = await connection.execute(sqlEtapa3, { codigo_ali: codigoALI });
+        const resultEtapa3 = await client.query(sqlEtapa3, [codigoALI]);
 
         reporte.etapa3_limpieza.checklist = resultEtapa3.rows.map(r => ({
-            nombre: r.NOMBRE_ITEM,
-            seleccionado: r.SELECCIONADO === 1,
-            bloqueado: r.BLOQUEADO === 1
+            nombre: r.nombre_item,
+            seleccionado: r.seleccionado === 1,
+            bloqueado: r.bloqueado === 1
         }));
 
         // 4. Obtener Etapa 4 (Retiro)
@@ -215,17 +209,17 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 r.accion_realizada
             FROM TPA_ETAPA4_RETIRO r
             LEFT JOIN USUARIOS u ON r.rut_analista = u.rut_analista
-            WHERE r.codigo_ali = :codigo_ali
+            WHERE r.codigo_ali = $1
             ORDER BY r.id_retiro
         `;
-        const resultEtapa4 = await connection.execute(sqlEtapa4, { codigo_ali: codigoALI });
+        const resultEtapa4 = await client.query(sqlEtapa4, [codigoALI]);
 
         reporte.etapa4_retiro = resultEtapa4.rows.map(row => ({
-            id: row.ID_RETIRO,
-            responsable: row.RESPONSABLE,
-            fecha: row.FECHA_RETIRO ? new Date(row.FECHA_RETIRO).toISOString().split('T')[0] : '',
-            horaInicio: row.HORA_INICIO || '',
-            analisisARealizar: row.ACCION_REALIZADA
+            id: row.id_retiro,
+            responsable: row.responsable,
+            fecha: row.fecha_retiro ? new Date(row.fecha_retiro).toISOString().split('T')[0] : '',
+            horaInicio: row.hora_inicio || '',
+            analisisARealizar: row.accion_realizada
         }));
 
         // 5. Obtener Etapa 5 (Siembra)
@@ -235,14 +229,14 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 observaciones_siembra,
                 otros_equipos_texto
             FROM TPA_ETAPA5_SIEMBRA
-            WHERE codigo_ali = :codigo_ali
+            WHERE codigo_ali = $1
         `;
-        const resultEtapa5 = await connection.execute(sqlEtapa5, { codigo_ali: codigoALI });
+        const resultEtapa5 = await client.query(sqlEtapa5, [codigoALI]);
 
         if (resultEtapa5.rows.length > 0) {
             const rowSiembra = resultEtapa5.rows[0];
-            const idSiembra = rowSiembra.ID_SIEMBRA;
-            reporte.etapa5_siembra.otrosEquipos = rowSiembra.OTROS_EQUIPOS_TEXTO || '';
+            const idSiembra = rowSiembra.id_siembra;
+            reporte.etapa5_siembra.otrosEquipos = rowSiembra.otros_equipos_texto || '';
 
             // Obtener recursos de siembra (diluyentes, equipos, materiales)
             const sqlRecursos = `
@@ -261,29 +255,29 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 LEFT JOIN MATERIAL_SIEMBRA m ON r.id_material_siembra = m.id_material_siembra
                 LEFT JOIN DILUYENTES d ON r.id_diluyente = d.id_diluyente
                 LEFT JOIN EQUIPOS_LAB e ON r.id_equipo = e.id_equipo
-                WHERE r.id_siembra = :id_siembra
+                WHERE r.id_siembra = $1
             `;
-            const resultRecursos = await connection.execute(sqlRecursos, { id_siembra: idSiembra });
+            const resultRecursos = await client.query(sqlRecursos, [idSiembra]);
 
             resultRecursos.rows.forEach((row, idx) => {
-                const categoria = row.CATEGORIA_RECURSO;
+                const categoria = row.categoria_recurso;
                 if (categoria === 'DILUYENTE') {
                     reporte.etapa5_siembra.diluyentes.push({
                         id: idx,
-                        nombre: row.NOMBRE_DILUYENTE,
-                        codigoDiluyente: row.CODIGO_DILUYENTE
+                        nombre: row.nombre_diluyente,
+                        codigoDiluyente: row.codigo_diluyente
                     });
                 } else if (categoria === 'EQUIPO') {
                     reporte.etapa5_siembra.equipos.push({
                         id: idx,
-                        nombre: row.NOMBRE_EQUIPO,
-                        seleccionado: row.SELECCIONADO === 1
+                        nombre: row.nombre_equipo,
+                        seleccionado: row.seleccionado === 1
                     });
                 } else if (categoria === 'MATERIAL') {
                     reporte.etapa5_siembra.materiales.push({
                         id: idx,
-                        nombre: row.NOMBRE_MATERIAL,
-                        codigoMaterialSiembra: row.CODIGO_MATERIAL
+                        nombre: row.nombre_material,
+                        codigoMaterialSiembra: row.codigo_material
                     });
                 }
             });
@@ -295,102 +289,92 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
         console.error('Error al obtener reporte TPA:', error);
         throw error;
     } finally {
-        if (connection) {
-            try {
-                await connection.close();
-            } catch (err) {
-                console.error('Error al cerrar conexión:', err);
-            }
+        if (client) {
+            client.release();
         }
     }
 };
+
 /**
  * Guarda o actualiza el reporte TPA completo
  * Usa transacciones para garantizar consistencia
  */
 ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
-    let connection;
+    let client;
     try {
-        connection = await db.getConnection();
+        client = await db.getConnection();
+        await client.query('BEGIN');
 
-        // Iniciamos transacción mediante savepoint (opcional pero recomendado)
-        await connection.execute('SAVEPOINT inicio_guardado');
-        //Falta agregar el nombre de la persona que modifico el reporte.
         const sqlReporteGeneral = `
             UPDATE TPA_REPORTE SET
-                estado_actual = :estado_actual,
-                observaciones_finales = :obs_finales,
-                firma_digital = :firma,
-                usuario_ultima_modificacion = :rut_mod,
-                fecha_ultima_modificacion = SYSDATE
-            WHERE codigo_ali = :codigo_ali
+                estado_actual = $1,
+                observaciones_finales = $2,
+                firma_digital = $3,
+                usuario_ultima_modificacion = $4,
+                fecha_ultima_modificacion = $6
+            WHERE codigo_ali = $5
         `;
 
-        await connection.execute(sqlReporteGeneral, {
-            codigo_ali: datos.codigoALI, // Sincronizado con JSON
-            estado_actual: datos.estado,
-            obs_finales: datos.etapa6_cierre?.observaciones || null,
-            firma: datos.etapa6_cierre?.firma || 'Sin firma',
-            rut_mod: rutUsuario
-        });
+        await client.query(sqlReporteGeneral, [
+            datos.estado,
+            datos.etapa6_cierre?.observaciones || null,
+            datos.etapa6_cierre?.firma || 'Sin firma',
+            rutUsuario,
+            datos.codigoALI,
+            datos.fechaUltimaModificacion ? new Date(datos.fechaUltimaModificacion) : new Date()
+        ]);
 
         if (datos.etapa1 !== undefined) {
             console.log("Guardando datos Etapa 1...");
             const sqlLugar = `
                 SELECT id_lugar
                 FROM LUGARES_ALMACENAMIENTO
-                WHERE UPPER(nombre_lugar) = UPPER(:nombre_lugar)
+                WHERE UPPER(nombre_lugar) = UPPER($1)
             `;
-            const resultadoLugar = await connection.execute(sqlLugar, {
-                nombre_lugar: datos.etapa1.lugarAlmacenamiento
-            });
+            const resultadoLugar = await client.query(sqlLugar, [datos.etapa1.lugarAlmacenamiento]);
 
             if (resultadoLugar.rows.length > 0) {
-                const idLugarReal = resultadoLugar.rows[0].ID_LUGAR;
-                await connection.execute(`
+                const idLugarReal = resultadoLugar.rows[0].id_lugar;
+                await client.query(`
                     UPDATE TPA_REPORTE SET
-                        id_lugar = :id_lugar,
-                        observaciones_ingreso = :obs
-                    WHERE codigo_ali = :codigo_ali
-                `, {
-                    id_lugar: idLugarReal,
-                    codigo_ali: datos.codigoALI,
-                    obs: datos.etapa1.observaciones
-                });
+                        id_lugar = $1,
+                        observaciones_ingreso = $2
+                    WHERE codigo_ali = $3
+                `, [
+                    idLugarReal,
+                    datos.etapa1.observaciones,
+                    datos.codigoALI
+                ]);
             }
         }
-        // 2. Etapa 2: Manipulación (Sesiones, Equipos y Materiales)
+
+        // 2. Etapa 2: Manipulación
         if (datos.etapa2_manipulacion !== undefined) {
             console.log("Guardando datos Etapa 2 (Manipulación)...");
 
-            // Limpieza inicial para evitar duplicados
-            await connection.execute(
-                `DELETE FROM TPA_ETAPA2_SESION WHERE codigo_ali = :ali`,
-                { ali: datos.codigoALI }
+            await client.query(
+                'DELETE FROM TPA_ETAPA2_SESION WHERE codigo_ali = $1',
+                [datos.codigoALI]
             );
 
             for (const sesion of datos.etapa2_manipulacion) {
-                // a. Buscar RUT del responsable por su nombre (Tabla: USUARIOS)
-                // a. Buscar RUT del responsable por su nombre (Tabla: USUARIOS)
                 let rutReal = null;
                 if (!sesion.responsable || !sesion.responsable.trim()) {
                     if (datos.estado === 'Verificado') {
                         throw new Error(`El responsable es obligatorio en Etapa 2 para finalizar el reporte.`);
                     }
-                    // Si es borrador, rutReal se mantiene null
                 } else {
-                    const resAnalista = await connection.execute(
-                        `SELECT rut_analista FROM USUARIOS WHERE UPPER(nombre_apellido_analista) = UPPER(:nombre)`,
-                        { nombre: sesion.responsable }
+                    const resAnalista = await client.query(
+                        'SELECT rut_analista FROM USUARIOS WHERE UPPER(nombre_apellido_analista) = UPPER($1)',
+                        [sesion.responsable]
                     );
 
                     if (resAnalista.rows.length === 0) {
                         throw new Error(`Analista '${sesion.responsable}' no encontrado.`);
                     }
-                    rutReal = resAnalista.rows[0].RUT_ANALISTA;
+                    rutReal = resAnalista.rows[0].rut_analista;
                 }
 
-                // b. Preparar fechas y horas (Combinando fecha + hora del JSON)
                 let fechaInicio = null;
                 let fechaTermino = null;
 
@@ -399,26 +383,32 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                         ? sesion.fechaPreparacion.split('T')[0]
                         : sesion.fechaPreparacion;
 
+                    // Calcular fechaInicio
+                    let dInicio = null;
                     if (sesion.horaInicio) {
-                        // Sanitizar Hora Inicio (Extraer HH:mm si viene en ISO)
                         const rawHora = sesion.horaInicio;
                         const cleanHora = rawHora.includes('T') ? rawHora.split('T')[1].substring(0, 5) : rawHora.substring(0, 5);
-                        fechaInicio = new Date(`${baseDate}T${cleanHora}:00`);
+                        dInicio = new Date(`${baseDate}T${cleanHora}:00`);
                     } else if (sesion.fechaPreparacion.includes('T')) {
-                        fechaInicio = new Date(sesion.fechaPreparacion);
+                        dInicio = new Date(sesion.fechaPreparacion);
                     } else {
-                        fechaInicio = new Date(baseDate);
+                        dInicio = new Date(baseDate);
+                    }
+                    if (dInicio && !isNaN(dInicio.getTime())) {
+                        fechaInicio = dInicio;
                     }
 
+                    // Calcular fechaTermino (horaPesado)
                     if (sesion.horaPesado) {
-                        // Sanitizar Hora Pesado
                         const rawHora = sesion.horaPesado;
                         const cleanHora = rawHora.includes('T') ? rawHora.split('T')[1].substring(0, 5) : rawHora.substring(0, 5);
-                        fechaTermino = new Date(`${baseDate}T${cleanHora}:00`);
+                        const dTermino = new Date(`${baseDate}T${cleanHora}:00`);
+                        if (dTermino && !isNaN(dTermino.getTime())) {
+                            fechaTermino = dTermino;
+                        }
                     }
                 }
 
-                // c. Insertar Sesión principal
                 const sqlSesion = `
                     INSERT INTO TPA_ETAPA2_SESION (
                         rut_analista,
@@ -429,85 +419,77 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                         retiro_pesado,
                         codigo_ali,
                         lugar_almacenamiento
-                    ) VALUES (
-                        :rut, :f_ini, :f_ter, :num, :obs, :tipo, :ali, :lugar
-                    ) RETURNING id_sesion INTO :id_s
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+                    RETURNING id_sesion
                 `;
 
-                const resInsertSesion = await connection.execute(sqlSesion, {
-                    rut: rutReal,
-                    f_ini: fechaInicio,
-                    f_ter: fechaTermino,
-                    num: sesion.numeroMuestras,
-                    obs: sesion.observacionesEtapa2,
-                    tipo: sesion.tipoAccion === 'Pesado' ? 1 : 0,
-                    ali: datos.codigoALI,
-                    lugar: sesion.lugarAlmacenamiento || '',
-                    id_s: { type: db.oracledb.NUMBER, dir: db.oracledb.BIND_OUT }
-                });
+                const resInsertSesion = await client.query(sqlSesion, [
+                    rutReal,
+                    fechaInicio,
+                    fechaTermino,
+                    sesion.numeroMuestras,
+                    sesion.observacionesEtapa2,
+                    sesion.tipoAccion === 'Pesado' ? 1 : 0,
+                    datos.codigoALI,
+                    sesion.lugarAlmacenamiento || ''
+                ]);
 
-                const idSesionReal = resInsertSesion.outBinds.id_s[0];
+                const idSesionReal = resInsertSesion.rows[0].id_sesion;
 
-                // d. Insertar Equipos Seleccionados (Relación Hijo 1)
                 if (sesion.equiposSeleccionados && Array.isArray(sesion.equiposSeleccionados)) {
                     for (const nombreEquipo of sesion.equiposSeleccionados) {
-                        const resEq = await connection.execute(
-                            `SELECT id_equipo FROM EQUIPOS_LAB WHERE UPPER(nombre_equipo) = UPPER(:nom)`,
-                            { nom: nombreEquipo }
+                        const resEq = await client.query(
+                            'SELECT id_equipo FROM EQUIPOS_LAB WHERE UPPER(nombre_equipo) = UPPER($1)',
+                            [nombreEquipo]
                         );
                         if (resEq.rows.length > 0) {
-                            await connection.execute(
-                                `INSERT INTO TPA_ETAPA2_EQUIPOS (id_equipo, id_sesion) VALUES (:id_e, :id_s)`,
-                                { id_e: resEq.rows[0].ID_EQUIPO, id_s: idSesionReal }
+                            await client.query(
+                                'INSERT INTO TPA_ETAPA2_EQUIPOS (id_equipo, id_sesion) VALUES ($1, $2)',
+                                [resEq.rows[0].id_equipo, idSesionReal]
                             );
                         }
                     }
                 }
-                // e. Insertar Lista de Materiales (Relación Hijo 2)
+
                 if (sesion.listaMateriales && Array.isArray(sesion.listaMateriales)) {
                     for (const mat of sesion.listaMateriales) {
-                        // Validación de integridad para Draft/Final
                         if (!mat.tipoMaterial) {
                             if (datos.estado === 'Verificado') {
                                 throw new Error(`El tipo de material es obligatorio en Etapa 2 para finalizar.`);
                             }
-                            continue; // Saltar este material incompleto en borrador
+                            continue;
                         }
 
                         let idPipeta = null;
                         let idInstrumento = null;
 
-                        // Intentar buscar ID si es pipeta o instrumento
-                        // El frontend envía el código en 'tipoMaterial' (ej: '98-M')
-                        // Primero buscamos en MICROPIPETAS
-                        const resPipeta = await connection.execute(
-                            `SELECT id_pipeta FROM MICROPIPETAS WHERE codigo_pipeta = :cod`,
-                            { cod: mat.tipoMaterial }
+                        const resPipeta = await client.query(
+                            'SELECT id_pipeta FROM MICROPIPETAS WHERE codigo_pipeta = $1',
+                            [mat.tipoMaterial]
                         );
 
                         if (resPipeta.rows.length > 0) {
-                            idPipeta = resPipeta.rows[0].ID_PIPETA;
+                            idPipeta = resPipeta.rows[0].id_pipeta;
                         } else {
-                            // Si no es pipeta, buscamos en INSTRUMENTOS
-                            const resInstr = await connection.execute(
-                                `SELECT id_instrumento FROM INSTRUMENTOS WHERE codigo_instrumento = :cod`,
-                                { cod: mat.tipoMaterial }
+                            const resInstr = await client.query(
+                                'SELECT id_instrumento FROM INSTRUMENTOS WHERE codigo_instrumento = $1',
+                                [mat.tipoMaterial]
                             );
                             if (resInstr.rows.length > 0) {
-                                idInstrumento = resInstr.rows[0].ID_INSTRUMENTO;
+                                idInstrumento = resInstr.rows[0].id_instrumento;
                             }
                         }
 
-                        await connection.execute(
+                        await client.query(
                             `INSERT INTO TPA_ETAPA2_MATERIALES (id_sesion, tipo_material, codigo_manual, id_pipeta, id_instrumento) 
-                             VALUES (:id_s, :tipo, :cod_manual, :id_p, :id_i)`,
-                            {
-                                id_s: idSesionReal,
-                                tipo: mat.tipoMaterial, // Guardamos el código como backup
-                                cod_manual: mat.codigoMaterial,
-                                id_p: idPipeta,
-                                id_i: idInstrumento
-                            }
+                             VALUES ($1, $2, $3, $4, $5)`,
+                            [
+                                idSesionReal,
+                                mat.tipoMaterial,
+                                mat.codigoMaterial,
+                                idPipeta,
+                                idInstrumento
+                            ]
                         );
                     }
                 }
@@ -517,44 +499,40 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
         if (datos.etapa3_limpieza && Array.isArray(datos.etapa3_limpieza.checklist)) {
             console.log("Guardando datos Etapa 3 ...");
 
-
-            await connection.execute(
-                `DELETE FROM TPA_ETAPA3_CHECKLIST WHERE codigo_ali = :ali`,
-                { ali: datos.codigoALI }
+            await client.query(
+                'DELETE FROM TPA_ETAPA3_CHECKLIST WHERE codigo_ali = $1',
+                [datos.codigoALI]
             );
 
             for (const item of datos.etapa3_limpieza.checklist) {
                 const nombreItem = item.nombre || item.nombreItem;
-                // Validación opcional: Verificar si el ítem existe en el maestro
-                const resItem = await connection.execute(
-                    `SELECT id_item FROM MAESTRO_CHECKLIST_LIMPIEZA WHERE UPPER(nombre_item) = UPPER(:nom)`,
-                    { nom: nombreItem }
+                const resItem = await client.query(
+                    'SELECT id_item FROM MAESTRO_CHECKLIST_LIMPIEZA WHERE UPPER(nombre_item) = UPPER($1)',
+                    [nombreItem]
                 );
 
                 if (resItem.rows.length === 0) {
                     throw new Error(`El item '${nombreItem}' no existe en el maestro de limpieza.`);
                 }
 
-                await connection.execute(`
+                await client.query(`
                     INSERT INTO TPA_ETAPA3_CHECKLIST (codigo_ali, nombre_item, seleccionado, bloqueado)
-                    VALUES (:ali, :nom_item, :sel, :blo)
-                `,
-                    {
-                        ali: datos.codigoALI,
-                        nom_item: nombreItem,
-                        sel: item.seleccionado ? 1 : 0,
-                        blo: item.bloqueado ? 1 : 0
-                    }
-                );
+                    VALUES ($1, $2, $3, $4)
+                `, [
+                    datos.codigoALI,
+                    nombreItem,
+                    item.seleccionado ? 1 : 0,
+                    item.bloqueado ? 1 : 0
+                ]);
             }
         }
 
         if (datos.etapa4_retiro !== undefined) {
             console.log("Guardando datos Etapa 4 ... ");
 
-            await connection.execute(
-                `DELETE FROM TPA_ETAPA4_RETIRO WHERE codigo_ali = :ali`,
-                { ali: datos.codigoALI }
+            await client.query(
+                'DELETE FROM TPA_ETAPA4_RETIRO WHERE codigo_ali = $1',
+                [datos.codigoALI]
             );
 
             for (const datosRetiro of datos.etapa4_retiro) {
@@ -564,41 +542,43 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                         throw new Error(`El responsable es obligatorio en Etapa 4 para finalizar el reporte.`);
                     }
                 } else {
-                    const resAnalista = await connection.execute(
-                        `SELECT rut_analista FROM USUARIOS WHERE UPPER(nombre_apellido_analista) = UPPER(:nom)`,
-                        { nom: datosRetiro.responsable }
+                    const resAnalista = await client.query(
+                        'SELECT rut_analista FROM USUARIOS WHERE UPPER(nombre_apellido_analista) = UPPER($1)',
+                        [datosRetiro.responsable]
                     );
 
                     if (resAnalista.rows.length === 0) {
                         throw new Error(`El analista '${datosRetiro.responsable}' no existe en la base de datos.`);
                     }
-                    rutReal = resAnalista.rows[0].RUT_ANALISTA;
+                    rutReal = resAnalista.rows[0].rut_analista;
                 }
 
-                await connection.execute(
+                // Validar fecha retiro
+                let fechaRetiro = null;
+                if (datosRetiro.fecha) {
+                    const d = new Date(datosRetiro.fecha);
+                    if (!isNaN(d.getTime())) {
+                        fechaRetiro = d;
+                    }
+                }
+
+                await client.query(
                     `INSERT INTO TPA_ETAPA4_RETIRO (
                         codigo_ali,
                         rut_analista,
                         fecha_retiro,
                         accion_realizada,
                         hora_inicio
-                    ) VALUES (
-                        :ali,
-                        :rut,
-                        :fecha,
-                        :accion,
-                        :hora_inicio
-                    )`
-                    , {
-                        ali: datos.codigoALI,
-                        rut: rutReal,
-                        fecha: new Date(datosRetiro.fecha), // Convertir a objeto Date para Oracle
-                        accion: datosRetiro.analisisARealizar || datosRetiro.accionRealizada, /* Fallback por si acaso */
-                        // Sanitizar Hora Inicio Etapa 4 (Extraer HH:mm si viene en ISO, truncar a 10 chars max)
-                        hora_inicio: (datosRetiro.horaInicio && datosRetiro.horaInicio.includes('T'))
+                    ) VALUES ($1, $2, $3, $4, $5)`,
+                    [
+                        datos.codigoALI,
+                        rutReal,
+                        fechaRetiro,
+                        datosRetiro.analisisARealizar || datosRetiro.accionRealizada,
+                        (datosRetiro.horaInicio && datosRetiro.horaInicio.includes('T'))
                             ? datosRetiro.horaInicio.split('T')[1].substring(0, 5)
                             : (datosRetiro.horaInicio ? datosRetiro.horaInicio.substring(0, 5) : null)
-                    }
+                    ]
                 );
             }
         }
@@ -606,55 +586,49 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
         if (datos.etapa5_siembra !== undefined) {
             console.log("Guardando datos Etapa 5 (Siembra)... ");
 
-            // 1. Limpieza incremental (Hijos primero, luego Maestro por constraint)
-            await connection.execute(
-                `DELETE FROM TPA_ETAPA5_RECURSOS 
-                 WHERE id_siembra IN (SELECT id_siembra FROM TPA_ETAPA5_SIEMBRA WHERE codigo_ali = :ali)`,
-                { ali: datos.codigoALI }
-            );
-            await connection.execute(
-                `DELETE FROM TPA_ETAPA5_SIEMBRA WHERE codigo_ali = :ali`,
-                { ali: datos.codigoALI }
+            // Limpiar
+            const deleteRecursosSql = `DELETE FROM TPA_ETAPA5_RECURSOS 
+                 WHERE id_siembra IN (SELECT id_siembra FROM TPA_ETAPA5_SIEMBRA WHERE codigo_ali = $1)`;
+            await client.query(deleteRecursosSql, [datos.codigoALI]);
+
+            await client.query(
+                'DELETE FROM TPA_ETAPA5_SIEMBRA WHERE codigo_ali = $1',
+                [datos.codigoALI]
             );
 
-            // 2. Insertar en tabla Maestra (SIEMBRA)
-            // No usamos bucle porque etapa5_siembra es un objeto {...}
-            const resSiembra = await connection.execute(
+            const resSiembra = await client.query(
                 `INSERT INTO TPA_ETAPA5_SIEMBRA (codigo_ali, otros_equipos_texto) 
-                 VALUES (:ali, :otros) 
-                 RETURNING id_siembra INTO :id_s`,
-                {
-                    ali: datos.codigoALI,
-                    otros: datos.etapa5_siembra.otrosEquipos || '',
-                    id_s: { type: db.oracledb.NUMBER, dir: db.oracledb.BIND_OUT }
-                }
+                 VALUES ($1, $2) 
+                 RETURNING id_siembra`,
+                [
+                    datos.codigoALI,
+                    datos.etapa5_siembra.otrosEquipos || ''
+                ]
             );
-            const idSiembraReal = resSiembra.outBinds.id_s[0];
+            const idSiembraReal = resSiembra.rows[0].id_siembra;
 
-            // 3. Procesar Listas Secuencialmente
-
-            // --- DILUYENTES ---
+            // DILUYENTES
             if (datos.etapa5_siembra.diluyentes && Array.isArray(datos.etapa5_siembra.diluyentes)) {
                 for (const dil of datos.etapa5_siembra.diluyentes) {
-                    const resMast = await connection.execute(
-                        `SELECT id_diluyente FROM DILUYENTES WHERE UPPER(nombre_diluyente) = UPPER(:nom)`,
-                        { nom: dil.nombre }
+                    const resMast = await client.query(
+                        'SELECT id_diluyente FROM DILUYENTES WHERE UPPER(nombre_diluyente) = UPPER($1)',
+                        [dil.nombre]
                     );
                     if (resMast.rows.length > 0) {
-                        await connection.execute(
+                        await client.query(
                             `INSERT INTO TPA_ETAPA5_RECURSOS (id_siembra, categoria_recurso, id_diluyente, codigo_diluyente) 
-                             VALUES (:id_s, 'DILUYENTE', :id_d, :cod)`,
-                            {
-                                id_s: idSiembraReal,
-                                id_d: resMast.rows[0].ID_DILUYENTE,
-                                cod: dil.codigoDiluyente
-                            }
+                             VALUES ($1, 'DILUYENTE', $2, $3)`,
+                            [
+                                idSiembraReal,
+                                resMast.rows[0].id_diluyente,
+                                dil.codigoDiluyente
+                            ]
                         );
                     }
                 }
             }
 
-            // --- EQUIPOS (LAB) ---
+            // EQUIPOS
             if (datos.etapa5_siembra.equipos && Array.isArray(datos.etapa5_siembra.equipos)) {
                 for (const equipo of datos.etapa5_siembra.equipos) {
                     const nombreEquipo = equipo.nombre || equipo.nombreEquipo;
@@ -666,55 +640,54 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                         continue;
                     }
 
-                    const equipoValido = await connection.execute(
-                        `SELECT id_equipo FROM EQUIPOS_LAB WHERE UPPER(nombre_equipo) = UPPER(:nom)`,
-                        { nom: nombreEquipo }
+                    const equipoValido = await client.query(
+                        'SELECT id_equipo FROM EQUIPOS_LAB WHERE UPPER(nombre_equipo) = UPPER($1)',
+                        [nombreEquipo]
                     );
 
-
                     if (equipoValido.rows.length > 0) {
-                        await connection.execute(
+                        await client.query(
                             `INSERT INTO TPA_ETAPA5_RECURSOS (id_siembra, categoria_recurso, id_equipo, seleccionado) 
-                             VALUES (:id_s, 'EQUIPO', :id_e, :sel)`,
-                            {
-                                id_s: idSiembraReal,
-                                id_e: equipoValido.rows[0].ID_EQUIPO,
-                                sel: equipo.seleccionado ? 1 : 0
-                            }
+                             VALUES ($1, 'EQUIPO', $2, $3)`,
+                            [
+                                idSiembraReal,
+                                equipoValido.rows[0].id_equipo,
+                                equipo.seleccionado ? 1 : 0
+                            ]
                         );
                     }
                 }
             }
 
-            // --- MATERIALES ---
+            // MATERIALES
             if (datos.etapa5_siembra.materiales && Array.isArray(datos.etapa5_siembra.materiales)) {
                 for (const mat of datos.etapa5_siembra.materiales) {
-                    const resMast = await connection.execute(
-                        `SELECT id_material_siembra FROM MATERIAL_SIEMBRA WHERE UPPER(nombre_material) = UPPER(:nom)`,
-                        { nom: mat.nombre }
+                    const resMast = await client.query(
+                        'SELECT id_material_siembra FROM MATERIAL_SIEMBRA WHERE UPPER(nombre_material) = UPPER($1)',
+                        [mat.nombre]
                     );
                     if (resMast.rows.length > 0) {
-                        await connection.execute(
+                        await client.query(
                             `INSERT INTO TPA_ETAPA5_RECURSOS (id_siembra, categoria_recurso, id_material_siembra, codigo_material) 
-                             VALUES (:id_siembra, 'MATERIAL', :id_material_siembra, :codigo_material)`,
-                            {
-                                id_siembra: idSiembraReal,
-                                id_material_siembra: resMast.rows[0].ID_MATERIAL_SIEMBRA,
-                                codigo_material: mat.codigoMaterialSiembra
-                            }
+                             VALUES ($1, 'MATERIAL', $2, $3)`,
+                            [
+                                idSiembraReal,
+                                resMast.rows[0].id_material_siembra,
+                                mat.codigoMaterialSiembra
+                            ]
                         );
                     }
                 }
             }
         }
-        // Finalización exitosa
-        await connection.commit();
+
+        await client.query('COMMIT');
         return { success: true, mensaje: "Reporte TPA guardado exitosamente" };
 
     } catch (error) {
-        if (connection) {
+        if (client) {
             try {
-                await connection.execute('ROLLBACK TO SAVEPOINT inicio_guardado');
+                await client.query('ROLLBACK');
             } catch (rbError) {
                 console.error('Error al hacer rollback:', rbError);
             }
@@ -722,12 +695,8 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
         console.error('Error al guardar reporte TPA:', error);
         throw error;
     } finally {
-        if (connection) {
-            try {
-                await connection.close();
-            } catch (error) {
-                console.error('Error al cerrar conexión:', error);
-            }
+        if (client) {
+            client.release();
         }
     }
 };
@@ -740,19 +709,19 @@ ReporteTPA.verificarReporte = async (codigoALI, rutUsuario, observacionesFinales
         const sql = `
             UPDATE TPA_REPORTE SET
                 estado_actual = 'VERIFICADO',
-                fecha_cierre = SYSDATE,
-                usuario_cierre = :rut_usuario,
-                observaciones_finales = :obs_finales,
-                firma_digital = :firma
-            WHERE codigo_ali = :codigo_ali
+                fecha_cierre = NOW(),
+                usuario_cierre = $1,
+                observaciones_finales = $2,
+                firma_digital = $3
+            WHERE codigo_ali = $4
         `;
 
-        const result = await db.execute(sql, {
-            codigo_ali: codigoALI,
-            rut_usuario: rutUsuario,
-            obs_finales: observacionesFinales,
-            firma: firma || 'Sin firma'
-        }, { autoCommit: true });
+        const result = await db.execute(sql, [
+            rutUsuario,
+            observacionesFinales,
+            firma || 'Sin firma',
+            codigoALI
+        ]);
 
         return { success: true, result };
     } catch (error) {

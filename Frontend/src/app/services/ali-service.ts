@@ -42,15 +42,15 @@ export class AliService {
     // Sin embargo, mantenemos este método por seguridad para garantizar la estructura
     // y por si algun campo necesita transformación adicional.
     return {
-      ALIMuestra: row.ALIMuestra || row.CODIGO_ALI, // Soporte híbrido temporal
-      CodigoSerna: row.CodigoSerna || row.CODIGO_OTROS,
-      observacionesCliente: row.observacionesCliente || row.OBSERVACIONES_CLIENTE,
-      observacionesGenerales: row.observacionesGenerales || row.OBSERVACIONES_GENERALES,
+      ALIMuestra: row.ALIMuestra || row.CODIGO_ALI || row.codigo_ali, // Soporte híbrido temporal y PostgreRaw
+      CodigoSerna: row.CodigoSerna || row.CODIGO_OTROS || row.codigo_otros,
+      observacionesCliente: row.observacionesCliente || row.OBSERVACIONES_CLIENTE || row.observaciones_cliente,
+      observacionesGenerales: row.observacionesGenerales || row.OBSERVACIONES_GENERALES || row.observaciones_generales,
       reporteTPA: {
-        estado: row.reporteTPA?.estado || row.ESTADO_TPA || 'No realizado'
+        estado: row.reporteTPA?.estado || row.ESTADO_TPA || row.estado_tpa || 'No realizado'
       },
       reporteRAM: {
-        estado: row.reporteRAM?.estado || row.ESTADO_RAM || 'No realizado'
+        estado: row.reporteRAM?.estado || row.ESTADO_RAM || row.estado_ram || 'No realizado'
       }
     };
   }

@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+
+  #Base de datos
+  BD_AsisTec:
+    image: postgres:latest # Usamos build cuando no realizamos pull por consola e images cuando ya existe la imagen.
+    container_name: contenedor_asistec_bd
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=${MI_CLAVE_POSTGRES}
+      - POSTGRES_DB=${NOMBRE_DB}
+      - TZ=America/Santiago
+      - PGTZ=America/Santiago
+    volumes:
+      - ./BD/postgres/init_refined.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend_asistec:
+    build: ./Backend
+    volumes:
+      - ./Backend:/app
+      - /app/node_modules
+    container_name: "contenedor_asistec_backend"
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_USER=postgres
+      - DB_PASSWORD=${MI_CLAVE_POSTGRES}
+      - DB_HOST=BD_AsisTec # Nombre del servicio de arriba
+      - DB_NAME=${NOMBRE_DB}
+      - DB_PORT=${DB_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - BD_AsisTec
+
+  #Frontend
+  frontend_asistec:
+    build: ./Frontend
+    volumes:
+      - ./Frontend:/app
+      - /app/node_modules
+    container_name: "contenedor_asistec_frontend"
+    restart: always
+    ports:
+      - "8100:8100"
+    depends_on:
+      - backend_asistec
+
+volumes:
+  pgdata:

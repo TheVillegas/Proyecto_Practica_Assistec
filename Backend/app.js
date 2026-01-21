@@ -23,7 +23,6 @@ app.get("/", (req, res) => {
 
 // 11. Conexión a la BD
 const db = require('./config/DB.js');
-
 // Esperar a que la BD esté lista antes de arrancar el servidor
 db.initialize().then(() => {
     const analistasRoutes = require('./routes/analistasRoutes.js');

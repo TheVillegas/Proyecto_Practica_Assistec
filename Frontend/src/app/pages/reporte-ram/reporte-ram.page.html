@@ -79,8 +79,8 @@
             </ion-col>
             <ion-col size="2">
               <ion-label>Responsable de la Incubacion</ion-label>
-              <ion-select [disabled]="formularioBloqueado" [(ngModel)]="etapa2.responsableIncubacion">
-                <ion-select-option *ngFor="let responsable of listaResponsables" [value]="responsable.nombreApellido">
+              <ion-select [disabled]="formularioBloqueado" [(ngModel)]="etapa2.idResponsableIncubacion">
+                <ion-select-option *ngFor="let responsable of listaResponsables" [value]="responsable.rut">
                   {{ responsable.nombreApellido }}
                 </ion-select-option>
               </ion-select>
@@ -101,8 +101,8 @@
             <hr class="linea_divisoria">
             <ion-col size="2">
               <ion-label>Responsable del Analisis</ion-label>
-              <ion-select [disabled]="formularioBloqueado" [(ngModel)]="etapa2.responsableAnalisis">
-                <ion-select-option *ngFor="let responsable of listaResponsables" [value]="responsable.nombreApellido">
+              <ion-select [disabled]="formularioBloqueado" [(ngModel)]="etapa2.idResponsableAnalisis">
+                <ion-select-option *ngFor="let responsable of listaResponsables" [value]="responsable.rut">
                   {{ responsable.nombreApellido }}
                 </ion-select-option>
               </ion-select>

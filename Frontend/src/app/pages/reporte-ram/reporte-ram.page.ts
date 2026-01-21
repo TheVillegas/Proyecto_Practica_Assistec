@@ -60,10 +60,10 @@ export class ReporteRamPage implements OnInit {
   etapa2: Etapa2 = {
     fechaInicioIncubacion: '',
     horaInicioIncubacion: '',
-    responsableIncubacion: null,
+    idResponsableIncubacion: null,
     fechaFinIncubacion: '',
     horaFinIncubacion: '',
-    responsableAnalisis: null
+    idResponsableAnalisis: null
   };
 
   // --- ETAPA 3 (Calculo de Muestras) ---
@@ -120,11 +120,11 @@ export class ReporteRamPage implements OnInit {
     if (this.currentUser) {
       this.responsableModificacionRam = this.currentUser.nombreApellido || '';
 
-      if (!this.etapa2.responsableIncubacion) {
-        this.etapa2.responsableIncubacion = this.currentUser.nombreApellido;
+      if (!this.etapa2.idResponsableIncubacion) {
+        this.etapa2.idResponsableIncubacion = this.currentUser.rut;
       }
-      if (!this.etapa2.responsableAnalisis) {
-        this.etapa2.responsableAnalisis = this.currentUser.nombreApellido;
+      if (!this.etapa2.idResponsableAnalisis) {
+        this.etapa2.idResponsableAnalisis = this.currentUser.rut;
       }
     }
 
@@ -484,6 +484,7 @@ export class ReporteRamPage implements OnInit {
         formaCalculoAnalista: this.etapa7.formaCalculoAnalista || [],
         formaCalculoCoordinador: this.etapa7.formaCalculoCoordinador || []
       },
+      fechaUltimaModificacion: new Date().toISOString()
     };
 
     console.log(datosReporteRAM);

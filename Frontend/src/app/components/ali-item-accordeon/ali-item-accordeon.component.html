@@ -100,13 +100,13 @@
           <div class="doc-card" [ngClass]="getContainerStyle(muestra.reporteTPA.estado)">
             <div class="doc-icon-wrapper">
               <ion-icon
-                [name]="muestra.reporteTPA.estado?.toUpperCase() === 'VERIFICADO' ? 'checkmark-circle-outline' : 'document-outline'"
+                [name]="muestra.reporteTPA.estado.toUpperCase() === 'VERIFICADO' ? 'checkmark-circle-outline' : 'document-outline'"
                 class="doc-icon"
-                [ngClass]="muestra.reporteTPA.estado?.toUpperCase() === 'VERIFICADO' ? 'text-brand-primary' : 'text-gray-400'">
+                [ngClass]="muestra.reporteTPA.estado.toUpperCase() === 'VERIFICADO' ? 'text-brand-primary' : 'text-gray-400'">
               </ion-icon>
               <div class="doc-info">
                 <span class="doc-label"
-                  [ngClass]="muestra.reporteTPA.estado?.toUpperCase() === 'VERIFICADO' ? 'text-gray-900' : 'text-gray-700'">
+                  [ngClass]="muestra.reporteTPA.estado.toUpperCase() === 'VERIFICADO' ? 'text-gray-900' : 'text-gray-700'">
                   Reporte TPA
                 </span>
                 <a class="doc-link" (click)="goToReporteTPA($event)">
@@ -123,13 +123,13 @@
           <div class="doc-card" [ngClass]="getContainerStyle(muestra.reporteRAM.estado)">
             <div class="doc-icon-wrapper">
               <ion-icon
-                [name]="muestra.reporteRAM.estado?.toUpperCase() === 'VERIFICADO' ? 'checkmark-circle-outline' : 'document-outline'"
+                [name]="muestra.reporteRAM.estado.toUpperCase() === 'VERIFICADO' ? 'checkmark-circle-outline' : 'document-outline'"
                 class="doc-icon"
-                [ngClass]="muestra.reporteRAM.estado?.toUpperCase() === 'VERIFICADO' ? 'text-brand-primary' : 'text-gray-400'">
+                [ngClass]="muestra.reporteRAM.estado.toUpperCase() === 'VERIFICADO' ? 'text-brand-primary' : 'text-gray-400'">
               </ion-icon>
               <div class="doc-info">
                 <span class="doc-label"
-                  [ngClass]="muestra.reporteRAM.estado?.toUpperCase() === 'VERIFICADO' ? 'text-gray-900' : 'text-gray-700'">
+                  [ngClass]="muestra.reporteRAM.estado.toUpperCase() === 'VERIFICADO' ? 'text-gray-900' : 'text-gray-700'">
                   Reporte RAM
                 </span>
                 <a class="doc-link" (click)="goToReporteRAM($event)">

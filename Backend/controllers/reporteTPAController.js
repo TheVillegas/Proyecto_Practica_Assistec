@@ -60,6 +60,12 @@ exports.guardarReporteTPA = async (req, res) => {
         }
 
 
+        // REGLA 3: Seguridad - Prevenir que Rol 0 manipule el estado a VERIFICADO manual
+        if (rol == 0 && (datos.estado === 'VERIFICADO')) {
+            console.warn(`Usuario Rol 0 intentó guardar TPA como 'VERIFICADO'. Forzando a 'PENDIENTE'.`);
+            datos.estado = 'PENDIENTE';
+        }
+
         const result = await ReporteTPA.guardarReporteCompleto(datos, rutUsuario);
 
         res.status(200).json(result);

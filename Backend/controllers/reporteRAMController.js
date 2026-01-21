@@ -68,6 +68,13 @@ exports.guardarReporteRAM = async (req, res) => {
             });
         }
 
+        // REGLA 3: Seguridad - Prevenir que Rol 0 (Analista) finalice el reporte arbitrariamente
+        // Si el usuario es Rol 0 y envía estado VERIFICADO o FINALIZADO, forzamos PENDIENTE o BORRADOR
+        if (rol == 0 && (datos.estado === 'VERIFICADO' || datos.estado === 'FINALIZADO')) {
+            console.warn(`Usuario Rol 0 intentó guardar RAM como '${datos.estado}'. Forzando a 'PENDIENTE'.`);
+            datos.estado = 'PENDIENTE';
+        }
+
         const result = await ReporteRAM.guardarReporteRAM(datos, rutUsuario);
 
         res.status(200).json(result);

@@ -11,10 +11,10 @@ export interface Etapa1 {
 export interface Etapa2 {
     fechaInicioIncubacion: string;
     horaInicioIncubacion: string;
-    responsableIncubacion: string | null;
+    idResponsableIncubacion: string | null;
     fechaFinIncubacion: string;
     horaFinIncubacion: string;
-    responsableAnalisis: string | null;
+    idResponsableAnalisis: string | null;
 }
 
 export interface Etapa3Item {

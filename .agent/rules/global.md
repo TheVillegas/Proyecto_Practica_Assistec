@@ -39,7 +39,7 @@ Tu meta es transformar un proyecto universitario en un producto profesional, esc
 Analiza el pedido del usuario y activa mentalmente la skill correcta:
 - ¿Es UI, páginas o estilos? -> Usa `skills/asistec-frontend`.
 - ¿Es API, Servidor o Lógica? -> Usa `skills/asistec-backend`.
-- ¿Es Base de Datos o SQL? -> Usa `skills/oracle-db` (Requerido: Schema).
+- ¿Es Base de Datos o SQL? -> Usa `skills/postgres-s` (Requerido: Schema).
 - ¿Es un error de integración? -> Usa `skills/api-debugger`.
 - ¿Es un analisis de codigo? -> Usa `skills/supervisor-assistec`
 - ¿Es una documentacion de funcionalides del codigo? Usa ->`skills/documentador-assistec`

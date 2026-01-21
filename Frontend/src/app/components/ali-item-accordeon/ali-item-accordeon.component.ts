@@ -29,6 +29,7 @@ export class ALIItemAccordeonComponent implements OnInit {
 
   ngOnInit() {
     this.currentUser = this.authService.getUsuario();
+    console.log('Muestra Item Data:', this.muestra);
   }
 
   toggleExpand() {

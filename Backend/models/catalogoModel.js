@@ -9,8 +9,8 @@ Catalogo.obtenerLugaresAlmacenamiento = async () => {
 };
 
 Catalogo.obtenerLugarAlmacenamiento_porID = async (id) => {
-    const sql = 'SELECT * FROM LUGARES_ALMACENAMIENTO WHERE id_lugar = :id';
-    return await db.execute(sql, { id });
+    const sql = 'SELECT * FROM LUGARES_ALMACENAMIENTO WHERE id_lugar = $1';
+    return await db.execute(sql, [id]);
 };
 
 // --- 2. INSTRUMENTOS ---
@@ -20,8 +20,8 @@ Catalogo.obtenerInstrumentos = async () => {
 };
 
 Catalogo.obtenerInstrumento_porID = async (id) => {
-    const sql = 'SELECT * FROM INSTRUMENTOS WHERE id_instrumento = :id';
-    return await db.execute(sql, { id });
+    const sql = 'SELECT * FROM INSTRUMENTOS WHERE id_instrumento = $1';
+    return await db.execute(sql, [id]);
 };
 
 // --- 3. MICROPIPETAS ---
@@ -31,8 +31,8 @@ Catalogo.obtenerMicropipetas = async () => {
 };
 
 Catalogo.obtenerMicropipeta_porID = async (id) => {
-    const sql = 'SELECT * FROM MICROPIPETAS WHERE id_pipeta = :id';
-    return await db.execute(sql, { id });
+    const sql = 'SELECT * FROM MICROPIPETAS WHERE id_pipeta = $1';
+    return await db.execute(sql, [id]);
 };
 
 // --- 4. EQUIPOS DE LABORATORIO ---
@@ -42,8 +42,8 @@ Catalogo.obtenerEquiposLab = async () => {
 };
 
 Catalogo.obtenerEquipoLab_porID = async (id) => {
-    const sql = 'SELECT * FROM EQUIPOS_LAB WHERE id_equipo = :id';
-    return await db.execute(sql, { id });
+    const sql = 'SELECT * FROM EQUIPOS_LAB WHERE id_equipo = $1';
+    return await db.execute(sql, [id]);
 };
 
 // --- 5. MATERIAL SIEMBRA ---
@@ -53,8 +53,8 @@ Catalogo.obtenerMaterialSiembra = async () => {
 };
 
 Catalogo.obtenerMaterialSiembra_porID = async (id) => {
-    const sql = 'SELECT * FROM MATERIAL_SIEMBRA WHERE id_material_siembra = :id';
-    return await db.execute(sql, { id });
+    const sql = 'SELECT * FROM MATERIAL_SIEMBRA WHERE id_material_siembra = $1';
+    return await db.execute(sql, [id]);
 };
 
 // --- 6. DILUYENTES ---
@@ -64,8 +64,8 @@ Catalogo.obtenerDiluyentes = async () => {
 };
 
 Catalogo.obtenerDiluyente_porID = async (id) => {
-    const sql = 'SELECT * FROM DILUYENTES WHERE id_diluyente = :id';
-    return await db.execute(sql, { id });
+    const sql = 'SELECT * FROM DILUYENTES WHERE id_diluyente = $1';
+    return await db.execute(sql, [id]);
 };
 
 // --- 7. EQUIPOS INCUBACION ---
@@ -75,8 +75,8 @@ Catalogo.obtenerEquiposIncubacion = async () => {
 };
 
 Catalogo.obtenerEquipoIncubacion_porID = async (id) => {
-    const sql = 'SELECT * FROM EQUIPOS_INCUBACION WHERE id_incubacion = :id';
-    return await db.execute(sql, { id });
+    const sql = 'SELECT * FROM EQUIPOS_INCUBACION WHERE id_incubacion = $1';
+    return await db.execute(sql, [id]);
 };
 
 // --- 8. MAESTRO CHECKLIST LIMPIEZA ---
@@ -86,8 +86,8 @@ Catalogo.obtenerMaestroChecklistLimpieza = async () => {
 };
 
 Catalogo.obtenerMaestroChecklistLimpieza_porID = async (id) => {
-    const sql = 'SELECT * FROM MAESTRO_CHECKLIST_LIMPIEZA WHERE id_item = :id';
-    return await db.execute(sql, { id });
+    const sql = 'SELECT * FROM MAESTRO_CHECKLIST_LIMPIEZA WHERE id_item = $1';
+    return await db.execute(sql, [id]);
 };
 
 // --- 9. MAESTRO TIPOS ANALISIS ---
@@ -97,8 +97,8 @@ Catalogo.obtenerMaestroTiposAnalisis = async () => {
 };
 
 Catalogo.obtenerMaestroTiposAnalisis_porID = async (id) => {
-    const sql = 'SELECT * FROM MAESTRO_TIPOS_ANALISIS WHERE id_tipo_analisis = :id';
-    return await db.execute(sql, { id });
+    const sql = 'SELECT * FROM MAESTRO_TIPOS_ANALISIS WHERE id_tipo_analisis = $1';
+    return await db.execute(sql, [id]);
 };
 
 // --- 10. MAESTRO FORMAS CALCULO ---
@@ -108,8 +108,8 @@ Catalogo.obtenerMaestroFormasCalculo = async () => {
 };
 
 Catalogo.obtenerMaestroFormasCalculo_porID = async (id) => {
-    const sql = 'SELECT * FROM MAESTRO_FORMAS_CALCULO WHERE id_forma = :id';
-    return await db.execute(sql, { id });
+    const sql = 'SELECT * FROM MAESTRO_FORMAS_CALCULO WHERE id_forma = $1';
+    return await db.execute(sql, [id]);
 };
 
 // --- VISTA UNIFICADA ---

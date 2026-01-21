@@ -23,10 +23,10 @@ const mapGeneric = (obj) => {
 const mapAnalista = (dbUser) => {
     if (!dbUser) return null;
     return {
-        rut: dbUser.RUT_ANALISTA,
-        nombreApellido: dbUser.NOMBRE_APELLIDO_ANALISTA, // Frontend: nombreApellido
-        correo: dbUser.CORREO_ANALISTA,
-        rol: dbUser.ROL_ANALISTA,
+        rut: dbUser.RUT_ANALISTA || dbUser.rut_analista,
+        nombreApellido: dbUser.NOMBRE_APELLIDO_ANALISTA || dbUser.nombre_apellido_analista, // Frontend: nombreApellido
+        correo: dbUser.CORREO_ANALISTA || dbUser.correo_analista,
+        rol: (dbUser.ROL_ANALISTA !== undefined) ? dbUser.ROL_ANALISTA : dbUser.rol_analista,
         // No devolvemos contraseña
     };
 };
@@ -35,17 +35,17 @@ const mapAnalista = (dbUser) => {
 const mapMuestraALI = (dbRow) => {
     if (!dbRow) return null;
     return {
-        ALIMuestra: dbRow.CODIGO_ALI,           // Frontend: ALIMuestra
-        CodigoSerna: dbRow.CODIGO_OTROS,        // Frontend: CodigoSerna
-        observacionesCliente: dbRow.OBSERVACIONES_CLIENTE,
-        observacionesGenerales: dbRow.OBSERVACIONES_GENERALES,
+        ALIMuestra: dbRow.CODIGO_ALI || dbRow.codigo_ali,           // Frontend: ALIMuestra
+        CodigoSerna: dbRow.CODIGO_OTROS || dbRow.codigo_otros,        // Frontend: CodigoSerna
+        observacionesCliente: dbRow.OBSERVACIONES_CLIENTE || dbRow.observaciones_cliente,
+        observacionesGenerales: dbRow.OBSERVACIONES_GENERALES || dbRow.observaciones_generales,
 
         // Estructura anidada para reportes
         reporteTPA: {
-            estado: dbRow.ESTADO_TPA || 'NO_REALIZADO'
+            estado: dbRow.ESTADO_TPA || dbRow.estado_tpa || 'NO_REALIZADO'
         },
         reporteRAM: {
-            estado: dbRow.ESTADO_RAM || 'NO_REALIZADO'
+            estado: dbRow.ESTADO_RAM || dbRow.estado_ram || 'NO_REALIZADO'
         }
     };
 };

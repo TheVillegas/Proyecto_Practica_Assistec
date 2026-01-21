@@ -7,12 +7,13 @@ import {
     HttpErrorResponse
 } from '@angular/common/http';
 import { Observable, throwError, from } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, switchMap, finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { AlertController } from '@ionic/angular';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
+    private isShowingAlert = false;
 
     constructor(private router: Router, private alertController: AlertController) { }
 
@@ -29,7 +30,13 @@ export class AuthInterceptor implements HttpInterceptor {
         return next.handle(authReq).pipe(
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 401) {
-                    // Retornamos un Observable que muestra la alerta y luego redirige
+                    // Si el 401 viene del login, no es "Sesion Expirada", es "Credenciales Invalidas"
+                    // Dejamos que el componente de login maneje el error
+                    if (request.url.includes('/login')) {
+                        return throwError(() => error);
+                    }
+
+                    // Para otras rutas, es token invalido/expirado
                     return from(this.mostrarAlertaExpiracion()).pipe(
                         switchMap(() => {
                             return throwError(() => error);
@@ -42,8 +49,11 @@ export class AuthInterceptor implements HttpInterceptor {
     }
 
     private async mostrarAlertaExpiracion() {
-        // Evitar multiples alertas si llegan 401s simultaneos? 
-        // Por simplicidad mostramos y limpiamos.
+        if (this.isShowingAlert) {
+            return;
+        }
+
+        this.isShowingAlert = true;
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('usuario');
 
@@ -53,11 +63,17 @@ export class AuthInterceptor implements HttpInterceptor {
             buttons: [{
                 text: 'OK',
                 handler: () => {
+                    this.isShowingAlert = false;
                     this.router.navigate(['/login']);
                 }
             }],
             backdropDismiss: false
         });
         await alert.present();
+
+        // Aseguramos que si se cierra por otra via, bajemos la bandera (aunque backdropDismiss es false)
+        await alert.onDidDismiss().then(() => {
+            this.isShowingAlert = false;
+        });
     }
 }

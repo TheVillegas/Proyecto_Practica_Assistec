@@ -493,7 +493,8 @@ export class ReporteTPAPage implements OnInit {
       etapa6_cierre: {
         firma: this.firmaCoordinador,
         observaciones: this.observacionesFinales
-      }
+      },
+      fechaUltimaModificacion: new Date().toISOString()
     };
 
     console.log(datosParaGuardar);
