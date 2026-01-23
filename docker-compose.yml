@@ -4,7 +4,7 @@ services:
 
   #Base de datos
   BD_AsisTec:
-    image: postgres:18 # Usamos build cuando no realizamos pull por consola e images cuando ya existe la imagen.
+    image: postgres:17 # Usar una versión estable (16). La 18 no existe oficialmente aún.
     container_name: contenedor_asistec_bd
     ports:
       - "5432:5432"
@@ -15,7 +15,7 @@ services:
       - PGTZ=America/Santiago
     volumes:
       - ./BD/postgres/init_refined.sql:/docker-entrypoint-initdb.d/init.sql
-      - pgdata:/var/lib/postgresql
+      - pgdata:/var/lib/postgresql/data # Ruta estándar para evitar el error de "data in /var/lib/postgresql"
 
   backend_asistec:
     build: ./Backend

@@ -1,0 +1,8 @@
+{
+    "/AsisTec": {
+        "target": "http://backend_asistec:3000",
+        "secure": false,
+        "changeOrigin": true,
+        "logLevel": "debug"
+    }
+}
