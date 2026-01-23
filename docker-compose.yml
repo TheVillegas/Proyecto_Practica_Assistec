@@ -4,7 +4,7 @@ services:
 
   #Base de datos
   BD_AsisTec:
-    image: postgres:latest # Usamos build cuando no realizamos pull por consola e images cuando ya existe la imagen.
+    image: postgres:18 # Usamos build cuando no realizamos pull por consola e images cuando ya existe la imagen.
     container_name: contenedor_asistec_bd
     ports:
       - "5432:5432"
@@ -15,12 +15,14 @@ services:
       - PGTZ=America/Santiago
     volumes:
       - ./BD/postgres/init_refined.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql
 
   backend_asistec:
     build: ./Backend
     volumes:
       - ./Backend:/app
       - /app/node_modules
+      - ./.env:/app/.env
     container_name: "contenedor_asistec_backend"
     restart: always
     ports:

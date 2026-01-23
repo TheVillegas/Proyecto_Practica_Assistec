@@ -1,13 +1,21 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 
+
+// Validar variables de entorno
+if (!process.env.DB_USER || !process.env.DB_HOST || !process.env.NOMBRE_DB || !process.env.MI_CLAVE_POSTGRES || !process.env.DB_PORT) {
+    console.error('🚨 ERROR: Faltan variables de entorno críticas para PostgreSQL');
+    console.error('Verifica tu archivo .env');
+    process.exit(1);
+}
+
 // Configuración de conexión para PostgreSQL
 const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.NOMBRE_DB,
-    password: process.env.MI_CLAVE_POSTGRES,
-    port: process.env.DB_PORT,
+    user: String(process.env.DB_USER),
+    host: String(process.env.DB_HOST),
+    database: String(process.env.NOMBRE_DB),
+    password: String(process.env.MI_CLAVE_POSTGRES),
+    port: parseInt(process.env.DB_PORT, 10),
 });
 
 pool.on('error', (err, client) => {
@@ -15,15 +23,31 @@ pool.on('error', (err, client) => {
     process.exit(-1);
 });
 
+//añadir delay para esperar a la base de datos
 async function initialize() {
-    try {
-        const client = await pool.connect();
-        console.log("Conexión a PostgreSQL exitosa");
-        client.release();
-    } catch (error) {
-        console.error("Error al conectar con PostgreSQL:", error);
-        // No lanzamos error fatal aquí para permitir reintentos si es necesario, 
-        // pero en producción deberíamos asegurar la db.
+    const MAX_RETRIES = 5;
+    const RETRY_DELAY = 10000; // 10 segundos
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            console.log(`🔄 Intento ${attempt}/${MAX_RETRIES} de conexión a PostgreSQL...`);
+
+            const client = await pool.connect();
+            console.log("✅ Conexión a PostgreSQL exitosa");
+            client.release();
+            return; // Salir si la conexión fue exitosa
+
+        } catch (error) {
+            console.error(`❌ Intento ${attempt} falló:`, error.message);
+
+            if (attempt < MAX_RETRIES) {
+                console.log(`⏳ Reintentando en ${RETRY_DELAY / 1000}s...`);
+                await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+            } else {
+                console.error("🚨 CRÍTICO: No se pudo conectar a PostgreSQL después de todos los intentos");
+                throw error;
+            }
+        }
     }
 }
 
