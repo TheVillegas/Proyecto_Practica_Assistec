@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+
+  # Base de datos
+  BD_AsisTec:
+    image: postgres:17
+    container_name: contenedor_asistec_bd
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=${MI_CLAVE_POSTGRES}
+      - POSTGRES_DB=${NOMBRE_DB}
+      - TZ=America/Santiago
+      - PGTZ=America/Santiago
+    volumes:
+      - ./BD/postgres/init_refined.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+
+  backend_asistec:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    # VOLUMES REMOVED for Production Stability (No Hot-Reload)
+    # volumes:
+    #   - ./Backend:/app
+    #   - /app/node_modules
+    volumes:
+      - ./Backend/.env:/app/.env
+    container_name: "contenedor_asistec_backend"
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_USER=postgres
+      - MI_CLAVE_POSTGRES=${MI_CLAVE_POSTGRES}
+      - DB_HOST=BD_AsisTec
+      - NOMBRE_DB=${NOMBRE_DB}
+      - DB_PORT=${DB_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      # STORAGE_TYPE for future switching (defaulting to LOCAL or S3 as configured in code)
+      - STORAGE_TYPE=LOCAL
+    depends_on:
+      - BD_AsisTec
+
+  frontend_asistec:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    # VOLUMES REMOVED for Production Stability (No Hot-Reload)
+    # volumes:
+    #   - ./Frontend:/app
+    #   - /app/node_modules
+    container_name: "contenedor_asistec_frontend"
+    restart: always
+    ports:
+      - "8100:80" # Mapping 8100 external to 80 internal (Nginx)
+    depends_on:
+      - backend_asistec
+
+volumes:
+  pgdata:

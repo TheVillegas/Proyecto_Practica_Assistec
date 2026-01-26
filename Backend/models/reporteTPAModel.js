@@ -1,4 +1,5 @@
 const db = require('../config/DB.js');
+const { getObjectSignedUrl } = require('../utils/s3');
 
 const ReporteTPA = {};
 
@@ -85,6 +86,12 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
 
         const repData = resultReporte.rows[0];
 
+        // --- S3 SIGNING ---
+        let firmaUrl = repData.firma_digital;
+        if (firmaUrl && firmaUrl.startsWith('uploads/')) {
+            firmaUrl = await getObjectSignedUrl(firmaUrl);
+        }
+
         const reporte = {
             codigoALI: repData.codigo_ali, // Postgres devuelve lowercase
             estado: repData.estado,
@@ -103,7 +110,7 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
             },
             etapa6_cierre: {
                 observaciones: repData.observaciones_finales,
-                firma: repData.firma_digital
+                firma: firmaUrl // USAR URL FIRMADA
             },
             observacionesGenerales: repData.observaciones_generales_analistas,
             fechaCierre: repData.fecha_ultima_modificacion ? new Date(repData.fecha_ultima_modificacion).toISOString() : '',

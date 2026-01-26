@@ -363,15 +363,15 @@ export class ReporteTPAPage implements OnInit {
    * Adjunta la firma de la coordinadora usando el servicio centralizado
    */
   async adjuntarFirma() {
-    const firma = await this.imagenUploadService.seleccionarImagenBase64({
+    const firma = await this.imagenUploadService.seleccionarImagen({
       maxSize: 2 * 1024 * 1024, // 2MB para firmas
       accept: 'image/png,image/jpeg,image/jpg',
       mostrarAlertas: true
     });
 
-    if (firma) {
-      this.firmaCoordinador = firma;
-      console.log('Firma adjuntada exitosamente');
+    if (firma && firma.url) {
+      this.firmaCoordinador = firma.url;
+      console.log('Firma adjuntada exitosamente (S3)');
     }
   }
 

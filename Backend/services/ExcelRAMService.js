@@ -1,4 +1,5 @@
 const ExcelJS = require('exceljs');
+const { getObjectBuffer } = require('../utils/s3');
 
 class ExcelRAMService {
     static async generarBuffer(datos) {
@@ -617,9 +618,41 @@ class ExcelRAMService {
 
         currentRow += 3;
 
-        // --- FIRMA ---
+        // --- FIRMA COORDINADOR ---
+        // Check if signature exists and is a URL (S3)
+        const firmaUrl = datos.etapa7?.firmaCoordinador;
+        let firmaInsertada = false;
+
+        if (firmaUrl && typeof firmaUrl === 'string' && firmaUrl.includes('http')) {
+            try {
+                // Intentar extraer KEY: uploads/...
+                // Formato esperado: https://BUCKET.s3.REGION.amazonaws.com/KEY
+                // O: https://s3.REGION.amazonaws.com/BUCKET/KEY
+                // Estrategia robusta: buscar "uploads/"
+                const match = firmaUrl.match(/(uploads\/.*?)(\?|$)/);
+                if (match && match[1]) {
+                    const key = match[1];
+                    const buffer = await getObjectBuffer(key);
+                    const imageId = workbook.addImage({
+                        buffer: buffer,
+                        extension: 'png', // Asumimos PNG por defecto si no podemos deducir
+                    });
+
+                    // Insertar sobre la línea (aprox H-K)
+                    sheet.addImage(imageId, {
+                        tl: { col: 7, row: currentRow - 1 }, // H
+                        br: { col: 11, row: currentRow + 1 }  // K
+                    });
+                    firmaInsertada = true;
+                }
+            } catch (e) {
+                console.error('Error insertando firma coordinador S3:', e);
+            }
+        }
+
         sheet.mergeCells(`H${currentRow}:K${currentRow} `);
         const firmaLine = sheet.getCell(`H${currentRow} `);
+        // Si hay imagen, quitamos la línea baja para que no se vea doble, o la dejamos como base. Dejémosla.
         firmaLine.value = '__________________________';
         firmaLine.alignment = { horizontal: 'center', vertical: 'bottom' };
 
@@ -630,7 +663,101 @@ class ExcelRAMService {
         firmaLabel.alignment = { horizontal: 'center', vertical: 'top' };
         firmaLabel.font = { italic: true };
 
-        sheet.pageSetup.printArea = `A1:K${currentRow} `;
+        currentRow += 2;
+
+        // --- MANUAL DE INOCUIDAD (Etapa 5) ---
+        // Insertar imagen si existe
+        const manualUrl = datos.etapa5?.manualInocuidad;
+        if (manualUrl && typeof manualUrl === 'string' && manualUrl.includes('http')) {
+            sheet.mergeCells(`A${currentRow}:K${currentRow}`);
+            const titleManual = sheet.getCell(`A${currentRow}`);
+            titleManual.value = 'EVIDENCIA MANUAL INOCUIDAD (Etapa 5)';
+            titleManual.style = headerStyle;
+            titleManual.alignment = { horizontal: 'left', indent: 1 };
+            currentRow++;
+
+            try {
+                const match = manualUrl.match(/(uploads\/.*?)(\?|$)/);
+                if (match && match[1]) {
+                    const key = match[1];
+                    const buffer = await getObjectBuffer(key);
+                    const imageId = workbook.addImage({
+                        buffer: buffer,
+                        extension: 'png',
+                    });
+
+                    const startRow = currentRow;
+                    const endRow = currentRow + 15;
+
+                    sheet.addImage(imageId, {
+                        tl: { col: 0, row: startRow },
+                        br: { col: 10.9, row: endRow }
+                    });
+
+                    currentRow = endRow + 1;
+                }
+            } catch (e) {
+                console.error('Error insertando manual inocuidad S3:', e);
+                sheet.getCell(`A${currentRow}`).value = 'Error al cargar imagen del manual.';
+                currentRow++;
+            }
+            currentRow += 2;
+        }
+
+        // --- ANEXOS VISUALES (ALI_IMAGENES) ---
+        if (datos.imagenes && datos.imagenes.length > 0) {
+            // currentRow += 2; // Ya sumado arriba
+            sheet.mergeCells(`A${currentRow}:K${currentRow}`);
+            const titleAnexos = sheet.getCell(`A${currentRow}`);
+            titleAnexos.value = 'ANEXOS VISUALES (Observaciones)';
+            titleAnexos.style = headerStyle;
+            titleAnexos.alignment = { horizontal: 'left', indent: 1 };
+            currentRow++;
+
+            for (const imgMeta of datos.imagenes) {
+                try {
+                    if (!imgMeta.s3_key) continue;
+
+                    const buffer = await getObjectBuffer(imgMeta.s3_key);
+
+                    // Determinar extensión
+                    let ext = 'png';
+                    if (imgMeta.tipo_mime && imgMeta.tipo_mime.includes('jpeg')) ext = 'jpeg';
+                    else if (imgMeta.tipo_mime && imgMeta.tipo_mime.includes('jpg')) ext = 'jpeg';
+                    else if (imgMeta.tipo_mime && imgMeta.tipo_mime.includes('png')) ext = 'png';
+
+                    const imageId = workbook.addImage({
+                        buffer: buffer,
+                        extension: ext,
+                    });
+
+                    // Insertar imagen ocupando aprox 15 filas
+                    const startRow = currentRow;
+                    const endRow = currentRow + 15;
+
+                    // Ajustar filas para que no se superpongan
+                    sheet.addImage(imageId, {
+                        tl: { col: 0, row: startRow }, // Columna A
+                        br: { col: 10.9, row: endRow }   // Hasta fin de K (aprox)
+                    });
+
+                    // Etiqueta abajo
+                    sheet.mergeCells(`A${endRow + 1}:K${endRow + 1}`);
+                    const labelCell = sheet.getCell(`A${endRow + 1}`);
+                    labelCell.value = `Fig: ${imgMeta.nombre_archivo} (${formatearFecha(imgMeta.fecha_subida)})`;
+                    labelCell.alignment = { horizontal: 'center', vertical: 'top' };
+                    labelCell.font = { italic: true, size: 9 };
+
+                    currentRow = endRow + 3; // Espacio para la siguiente imagen
+                } catch (error) {
+                    console.error('Error incrustando imagen en Excel:', error);
+                    sheet.getCell(`A${currentRow}`).value = `Error al cargar imagen: ${imgMeta.nombre_archivo}`;
+                    currentRow += 2;
+                }
+            }
+        }
+
+        sheet.pageSetup.printArea = `A1:K${currentRow}`;
 
         return await workbook.xlsx.writeBuffer();
     }

@@ -2,10 +2,12 @@ import { ReporteRAM } from './reporte-ram.interface';
 import { ReporteTPA } from './reporte-tpa.interface';
 
 export interface ImagenObservacion {
+    id_imagen?: number;     // ID de la base de datos (si ya está guardada)
     nombre: string;
     tipo: string;
     tamanio: number;
-    data: string; // Base64 string
+    s3_key: string;         // Referencia S3
+    url?: string;           // URL firmada temporal (para visualización)
     fechaAdjunto: string;
 }
 

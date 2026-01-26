@@ -53,6 +53,23 @@ export class AuthService {
     return sessionStorage.getItem('token');
   }
 
+  // Actualizar Foto Perfil
+  actualizarFotoPerfil(rut: string, urlFoto: string): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/foto-perfil/${rut}`, { url_foto: urlFoto }).pipe(
+      tap(() => {
+        // Actualizar almacenamiento local
+        const currentUser = this.getUsuarioFromStorage();
+        if (currentUser) {
+          currentUser.url_foto = urlFoto; // Asegurar consistencia con backend
+          if (currentUser.urlFoto) currentUser.urlFoto = urlFoto;
+
+          sessionStorage.setItem('usuario', JSON.stringify(currentUser));
+          this.currentUserSubject.next(currentUser);
+        }
+      })
+    );
+  }
+
   getUsuario() {
     return this.currentUserSubject.value;
   }

@@ -27,6 +27,7 @@ const mapAnalista = (dbUser) => {
         nombreApellido: dbUser.NOMBRE_APELLIDO_ANALISTA || dbUser.nombre_apellido_analista, // Frontend: nombreApellido
         correo: dbUser.CORREO_ANALISTA || dbUser.correo_analista,
         rol: (dbUser.ROL_ANALISTA !== undefined) ? dbUser.ROL_ANALISTA : dbUser.rol_analista,
+        urlFoto: dbUser.URL_FOTO || dbUser.url_foto, // Added mapped field
         // No devolvemos contraseña
     };
 };

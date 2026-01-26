@@ -1,4 +1,5 @@
 const db = require('../config/DB.js');
+const { getObjectSignedUrl } = require('../utils/s3');
 
 const Analista = {};
 
@@ -25,12 +26,32 @@ Analista.crear = async (datos) => {
 
 Analista.obtenerAnalistas = async () => {
     const sql = 'SELECT * FROM USUARIOS';
-    return await db.execute(sql);
+    const result = await db.execute(sql);
+
+    // Sign URLs
+    for (const row of result.rows) {
+        if (row.URL_FOTO && row.URL_FOTO.startsWith('uploads/')) {
+            row.URL_FOTO = await getObjectSignedUrl(row.URL_FOTO);
+        } else if (row.url_foto && row.url_foto.startsWith('uploads/')) {
+            row.url_foto = await getObjectSignedUrl(row.url_foto);
+        }
+    }
+    return result;
 }
 
 Analista.obtenerPorRut = async (rut) => {
     const sql = 'SELECT * FROM USUARIOS WHERE rut_analista = $1';
-    return await db.execute(sql, [rut]);
+    const result = await db.execute(sql, [rut]);
+
+    if (result.rows.length > 0) {
+        const row = result.rows[0];
+        if (row.URL_FOTO && row.URL_FOTO.startsWith('uploads/')) {
+            row.URL_FOTO = await getObjectSignedUrl(row.URL_FOTO);
+        } else if (row.url_foto && row.url_foto.startsWith('uploads/')) {
+            row.url_foto = await getObjectSignedUrl(row.url_foto); // Case sensitive handling
+        }
+    }
+    return result;
 }
 
 Analista.obtenerPorCorreo = async (correo) => {
@@ -52,6 +73,21 @@ Analista.obtenerPorCorreo = async (correo) => {
         console.error('Error al obtener rut por correo:', error);
         throw error;
     }
+};
+
+Analista.actualizarFoto = async (rut, urlFoto) => {
+    const extractKey = (url) => {
+        if (!url) return null;
+        if (url.includes('uploads/')) {
+            const part = url.split('uploads/')[1];
+            return 'uploads/' + part.split('?')[0];
+        }
+        return url;
+    };
+    const key = extractKey(urlFoto);
+
+    const sql = `UPDATE USUARIOS SET URL_FOTO = $1 WHERE RUT_ANALISTA = $2`;
+    return await db.execute(sql, [key, rut]);
 };
 
 module.exports = Analista;

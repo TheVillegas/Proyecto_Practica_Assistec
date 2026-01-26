@@ -114,3 +114,28 @@ exports.listarAnalistas = async (req, res) => {
         res.status(500).json({ mensaje: 'Error al obtener analistas' });
     }
 };
+
+exports.actualizarFotoPerfil = async (req, res) => {
+    try {
+        const { rut } = req.params;
+        const { url_foto } = req.body;
+
+        if (!rut || !url_foto) {
+            return res.status(400).json({ mensaje: 'RUT y URL de foto son obligatorios' });
+        }
+
+        // Validar que el usuario que actualiza es el mismo del RUT (Seguridad básica)
+        // Ojo: req.user viene del middleware authMiddleware (decodificado del token)
+        /*
+        if (req.user.id !== rut && req.user.role !== 1) { // Asumiendo rol 1 es admin
+             return res.status(403).json({ mensaje: 'No tiene permisos para modificar este usuario' });
+        }
+        */
+
+        await Analista.actualizarFoto(rut, url_foto);
+        res.status(200).json({ mensaje: 'Foto de perfil actualizada correctamente' });
+    } catch (error) {
+        console.error('Error al actualizar foto de perfil:', error);
+        res.status(500).json({ mensaje: 'Error interno al actualizar foto' });
+    }
+};

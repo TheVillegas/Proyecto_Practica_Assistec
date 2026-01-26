@@ -66,4 +66,18 @@ export class AliService {
   eliminarMuestra(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
+
+  // Métodos para Imágenes de Observaciones
+  getImagenes(codigo_ali: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${codigo_ali}/imagenes`);
+  }
+
+  agregarImagen(imagen: any): Observable<any> {
+    // imagen debe tener { codigo_ali, s3_key, nombre_archivo, tipo_mime, tamanio }
+    return this.http.post(`${this.apiUrl}/imagenes`, imagen);
+  }
+
+  eliminarImagen(id_imagen: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/imagenes/${id_imagen}`);
+  }
 }

@@ -254,31 +254,62 @@ export class ReporteRamPage implements OnInit {
    * Adjunta la firma de la coordinadora usando el servicio centralizado
    */
   async adjuntarFirma() {
-    const firma = await this.imagenUploadService.seleccionarImagenBase64({
+    const firma = await this.imagenUploadService.seleccionarImagen({
       maxSize: 2 * 1024 * 1024,
       accept: 'image/png,image/jpeg,image/jpg',
       mostrarAlertas: true
     });
 
-    if (firma) {
-      this.etapa7.firmaCoordinador = firma;
-      console.log('Firma adjuntada exitosamente');
+    if (firma && firma.s3_key) {
+      this.etapa7.firmaCoordinador = firma.s3_key; // Guardamos KEY
+      console.log('Firma adjuntada exitosamente (Key)');
+      // Para visualización inmediata, podríamos usar la URL temporal, pero
+      // al guardar se enviará la Key. El frontend muestra lo que hay en el modelo.
+      // Si el modelo tiene la Key, el <img src> fallará a menos que la UI maneje claves o
+      // usemos una variable auxiliar para visualización.
+      // FIX SIMPLE: El backend firmará al leer. Pero aquí en tiempo real, 
+      // necesitamos verla.
+      // Podemos guardar la Key en el modelo (para enviar a BD) 
+      // y actualizar la vista de alguna forma?
+      // Angular binding: [src]="etapa7.firmaCoordinador". 
+      // Si pongo "uploads/...", no carga.
+      // Solución: Dejo firma.url para visualización? 
+      // No, "etapa7.firmaCoordinador" se envía al guardar.
+      // TRUCO: Guardar URL temporal en etapa7.firmaCoordinador para que se vea, 
+      // PERO al guardar (guardarReporte), detectar si es URL y extraer Key?
+      // O MEJOR: El backend acepta Key.
+      // Voy a hacer que el componente tenga una variable auxiliar o que use la URL.
+      // Pero si refresco, quiero que cargue.
+      // Voy a guardar la KEY. Y en el HTML usaré una Pipe o una funcion 
+      // "getImagenSrc(firma)"? No, eso requiere async signing.
+
+      // CAMBIO DE ESTRATEGIA:
+      // Guardar KEY en `etapa7.firmaCoordinador`.
+      // En el HTML, si empieza con 'uploads/', no se verá hasta guardar y recargar.
+      // Eso es mala UX.
+
+      // Solución Híbrida:
+      // El Frontend usa URLs. 
+      // El Backend recibe URLs.
+      // El Backend, AL GUARDAR (`ReporteRAM.guardarReporteRAM`), extrae la Key de la URL y guarda la Key.
+      // El Backend, AL LEER (`ReporteRAM.obtenerReporteRAM`), genera URL firmada.
+      // Así el Frontend siempre ve URLs y no se preocupa.
+      // Y el Excel siempre tiene acceso a la Key (porque DB tiene Key).
+
+      this.etapa7.firmaCoordinador = firma.url; // Seguimos usando URL en Frontend
+      console.log('Firma adjuntada (URL temporal para vista)');
     }
   }
 
-  /**
-   * Adjunta la imagen del manual de inocuidad usando el servicio centralizado
-   */
   async adjuntarImagenManual() {
-    const imagen = await this.imagenUploadService.seleccionarImagenBase64({
+    const imagen = await this.imagenUploadService.seleccionarImagen({
       maxSize: 5 * 1024 * 1024,
       accept: 'image/png,image/jpeg,image/jpg',
       mostrarAlertas: true
     });
 
-    if (imagen) {
-      this.etapa5.imagenManual = imagen;
-      console.log('Imagen del manual adjuntada exitosamente');
+    if (imagen && imagen.url) {
+      this.etapa5.imagenManual = imagen.url;
     }
   }
 

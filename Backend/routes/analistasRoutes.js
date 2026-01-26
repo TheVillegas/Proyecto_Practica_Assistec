@@ -13,4 +13,7 @@ router.post('/login', analistaController.loginAnalista);
 // Ruta protegida para listar
 router.get('/analistas', authMiddleware.verifyToken, analistaController.listarAnalistas);
 
+// Actualizar foto perfil
+router.put('/foto-perfil/:rut', authMiddleware.verifyToken, analistaController.actualizarFotoPerfil);
+
 module.exports = router;

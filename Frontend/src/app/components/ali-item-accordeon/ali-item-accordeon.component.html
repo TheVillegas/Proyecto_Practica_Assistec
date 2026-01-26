@@ -75,7 +75,7 @@
                 <h5 class="imagenes-title">Imágenes Adjuntadas:</h5>
                 <div class="imagen-item" *ngFor="let imagen of muestra.imagenesObservaciones; let i = index">
                   <div class="imagen-preview">
-                    <img [src]="imagen.data" [alt]="imagen.nombre" class="thumbnail">
+                    <img [src]="imagen.url || imagen.data" [alt]="imagen.nombre" class="thumbnail">
                   </div>
                   <div class="imagen-info">
                     <span class="imagen-nombre" [title]="imagen.nombre">{{ imagen.nombre }}</span>

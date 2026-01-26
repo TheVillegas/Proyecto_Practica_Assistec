@@ -3,6 +3,7 @@ const ReporteTPA = require('../models/reporteTPAModel');
 const ExcelRAMService = require('../services/ExcelRAMService');
 const ExcelTPAService = require('../services/ExcelTPAService');
 const path = require('path');
+const db = require('../config/DB.js');
 
 /**
  * Controlador para exportar reporte RAM a Excel
@@ -21,6 +22,10 @@ const exportarReporteRAM = async (req, res) => {
         if (!datosRAM) {
             return res.status(404).json({ error: 'Reporte RAM no encontrado' });
         }
+
+        // Obtener imágenes adjuntas
+        const imagenesQuery = await db.query('SELECT * FROM ALI_IMAGENES WHERE CODIGO_ALI = $1', [codigoALI]);
+        datosRAM.imagenes = imagenesQuery.rows;
 
         // Generar buffer
         const buffer = await ExcelRAMService.generarBuffer(datosRAM);
@@ -57,6 +62,10 @@ const exportarReporteTPA = async (req, res) => {
         if (!datosTPA) {
             return res.status(404).json({ error: 'Reporte TPA no encontrado' });
         }
+
+        // Obtener imágenes adjuntas (compartidas por ALI)
+        const imagenesQuery = await db.query('SELECT * FROM ALI_IMAGENES WHERE CODIGO_ALI = $1', [codigoALI]);
+        datosTPA.imagenes = imagenesQuery.rows;
 
         // Generar buffer
         const buffer = await ExcelTPAService.generarBuffer(datosTPA);

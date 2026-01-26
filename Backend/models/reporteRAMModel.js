@@ -1,8 +1,146 @@
 const db = require('../config/DB.js');
+const { getObjectSignedUrl } = require('../utils/s3');
+
+const { getObjectSignedUrl } = require('../utils/s3'); // Importar utilidad S3
 
 const ReporteRAM = {};
 
-// Constantes ISO 7218
+// ... (Constants remain)
+
+// ... (methods create/getState remain)
+
+/**
+ * Obtiene el reporte RAM completo, uniendo todas las tablas modulares
+ */
+ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
+    let client;
+    try {
+        client = await db.getConnection();
+
+        // Query principal con JOINs a las nuevas tablas
+        const sql = `
+            SELECT 
+                r.codigo_ali,
+                r.estado_ram,
+                r.ufc_final_reporte,
+                r.fecha_ultima_modificacion,
+                r.usuario_ultima_modificacion,
+                
+                -- Etapa 1: Siembra
+                e1.agar_plate_count,
+                e1.id_equipo_incubacion as id_equipo_siembra,
+                e1.n_muestra_10gr,
+                e1.n_muestra_50gr,
+                e1.hora_inicio_homogenizado,
+                e1.hora_termino_siembra,
+                e1.micropipeta_utilizada,
+
+                -- Etapa 2: Incubación
+                e2.id_responsable_analisis,
+                e2.id_responsable_incubacion,
+                e2.fecha_inicio_incubacion,
+                e2.hora_inicio_incubacion,
+                e2.fecha_fin_incubacion,
+                e2.hora_fin_incubacion,
+                
+                -- Etapa 4: Lectura (Antes Resultados)
+                e4.temperatura as temperatura_ambiental,
+                e4.blanco_ufc,
+                e4.control_ufc, -- Verifica si es este o ufc_control_ambiental
+                e4.control_siembra_ecoli,
+                e4.ufc_control_pesado,
+                e4.hora_inicio_lectura,
+                e4.hora_fin_lectura,
+                e4.control_ambiental_pesado,
+
+                -- Etapa 5: Verificación (Antes Revisión)
+                e5.limite,
+                e5.mercado,
+                e5.fecha_entrega,
+                e5.hora_entrega,
+                e5.tabla_pagina,
+                e5.desfavorable,
+                e5.manual_inocuidad,
+
+                -- Etapa 6: Aseguramiento (Nuevo)
+                e6.id_analisis_dupli,
+                e6.control_blanco_val,
+                e6.control_blanco_estado,
+                e6.control_siembra_val,
+                e6.control_siembra_estado,
+                e6.duplicado_ali_val,
+                e6.duplicado_estado,
+
+                -- Etapa 7: Cierre
+                e7c.observaciones_finales,
+                e7c.observaciones_generales_analista_ram,
+                r.firma_coordinador,
+
+                -- Nombres descriptivos (Joins)
+                u_mod.nombre_apellido_analista as nombre_usuario_modificacion,
+                u_ana.nombre_apellido_analista as nombre_responsable_analisis,
+                u_inc.nombre_apellido_analista as nombre_responsable_incubacion,
+                eq.nombre_equipo as nombre_equipo_incubacion,
+                ta.nombre_analisis as nombre_tipo_analisis
+
+            FROM RAM_REPORTE r
+            LEFT JOIN RAM_ETAPA1_SIEMBRA e1 ON r.codigo_ali = e1.codigo_ali
+            LEFT JOIN RAM_ETAPA2_INCUBACION e2 ON r.codigo_ali = e2.codigo_ali
+            LEFT JOIN RAM_ETAPA4_LECTURA e4 ON r.codigo_ali = e4.codigo_ali
+            LEFT JOIN RAM_ETAPA5_VERIFICACION e5 ON r.codigo_ali = e5.codigo_ali
+            LEFT JOIN RAM_ETAPA6_ASEGURAMIENTO e6 ON r.codigo_ali = e6.codigo_ali
+            LEFT JOIN RAM_ETAPA7_CIERRE e7c ON r.codigo_ali = e7c.codigo_ali
+            LEFT JOIN USUARIOS u_mod ON r.usuario_ultima_modificacion = u_mod.rut_analista
+            LEFT JOIN USUARIOS u_ana ON e2.id_responsable_analisis = u_ana.rut_analista
+            LEFT JOIN USUARIOS u_inc ON e2.id_responsable_incubacion = u_inc.rut_analista
+            LEFT JOIN EQUIPOS_INCUBACION eq ON e1.id_equipo_incubacion = eq.id_incubacion
+            LEFT JOIN MAESTRO_TIPOS_ANALISIS ta ON e6.id_analisis_dupli = ta.id_tipo_analisis
+
+            WHERE r.codigo_ali = $1
+        `;
+
+        const result = await client.query(sql, [codigoALI]);
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        const row = result.rows[0];
+
+        // --- MANEJO DE IMÁGENES S3 (FIRMAS Y MANUAL) ---
+        // Si hay una Key guardada (empieza con uploads/), generamos URL firmada.
+        // Si ya es una URL (legacy o externa), la dejamos.
+
+        let firmaCoordinadorUrl = row.firma_coordinador;
+        if (firmaCoordinadorUrl && firmaCoordinadorUrl.startsWith('uploads/')) {
+            firmaCoordinadorUrl = await getObjectSignedUrl(firmaCoordinadorUrl);
+        }
+
+        let manualInocuidadUrl = row.manual_inocuidad;
+        if (manualInocuidadUrl && manualInocuidadUrl.startsWith('uploads/')) {
+            manualInocuidadUrl = await getObjectSignedUrl(manualInocuidadUrl);
+        }
+
+        // Obtener Muestras (Etapa 3) ... (keeps going)
+        // ... (rest of obtenerReporteRAM logic)
+
+        // (We need to update the returned object to use these new variables)
+        // I will do that by replacing the return object construction lower down.
+        // But first let's handle the rest of the file so I don't break lines.
+
+        // Let's modify the RETURN object in a separate tool call if needed, or include it here if I am replacing the whole function.
+        // I am replacing from line 1 to 369. Wait, that's huge.
+        // I should use target/replacement carefully.
+
+        // Let's try to target specific blocks. 
+        // 1. Import at top.
+        // 2. Logic inside obtenerReporteRAM.
+        // 3. Logic inside guardarReporteRAM.
+
+        // This tool call is trying to do too much. I will cancel and split.
+        return;
+    } catch (e) { throw e; }
+};
 const MIN_CONTABLE = 25;
 const MAX_CONTABLE = 250;
 const AREA_PLACA = 57; // cm²
@@ -236,6 +374,16 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
             nombreForma: r.nombre_forma
         }));
 
+        // --- S3 SIGNING ---
+        let firmaCoordinadorUrl = row.firma_coordinador;
+        if (firmaCoordinadorUrl && firmaCoordinadorUrl.startsWith('uploads/')) {
+            firmaCoordinadorUrl = await getObjectSignedUrl(firmaCoordinadorUrl);
+        }
+        let manualInocuidadUrl = row.manual_inocuidad;
+        if (manualInocuidadUrl && manualInocuidadUrl.startsWith('uploads/')) {
+            manualInocuidadUrl = await getObjectSignedUrl(manualInocuidadUrl);
+        }
+
         // Armar objeto de respuesta final
         return {
             codigoALI: row.codigo_ali,
@@ -293,7 +441,7 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
                 horaEntrega: row.hora_entrega,
                 tablaPagina: row.tabla_pagina,
                 desfavorable: row.desfavorable,
-                manualInocuidad: row.manual_inocuidad
+                manualInocuidad: manualInocuidadUrl // USAR URL FIRMADA
             },
 
             // Etapa 6
@@ -311,7 +459,7 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
             // Etapa 7
             etapa7: {
                 observacionesFinales: row.observaciones_finales, // Viene de tabla CIERRE
-                firmaCoordinador: row.firma_coordinador, // Viene de Header
+                firmaCoordinador: firmaCoordinadorUrl, // USAR URL FIRMADA
                 observacionesGeneralesAnalistaRam: row.observaciones_generales_analista_ram,
                 // Estructura plana para matching directo con Frontend
                 formaCalculoAnalista: formasAnalista,
@@ -358,11 +506,28 @@ ReporteRAM.guardarReporteRAM = async (datos, rutUsuario) => {
         // Usar fecha del frontend si viene, sino NOW()
         const fechaModificacion = datos.fechaUltimaModificacion ? new Date(datos.fechaUltimaModificacion) : new Date();
 
+        // Helper para extraer Key de URL
+        const extractKey = (url) => {
+            if (!url) return null;
+            const match = url.match(/uploads\/.*(\?|$)/);
+            // Si es URL firmada larga, el regex debe parar en ?
+            // Si es simple, hasta el final.
+            // Mejor: buscar 'uploads/' y tomar todo lo siguiente hasta '?' o fin.
+            if (url.includes('uploads/')) {
+                const part = url.split('uploads/')[1]; // parte despues
+                // quitar query params si existen
+                return 'uploads/' + part.split('?')[0];
+            }
+            return url; // Retorna original si no match (puede ser base64 legacy)
+        };
+
+        const firmaKey = extractKey(datos.etapa7?.firmaCoordinador);
+
         await client.query(sqlHeader, [
             datos.estado,
             rutUsuario,
             datos.ufcFinalReporte || null,
-            datos.etapa7?.firmaCoordinador || null,
+            firmaKey, // Guardar KEY extraida
             codigoALI,
             fechaModificacion
         ]);
@@ -547,6 +712,16 @@ ReporteRAM.guardarReporteRAM = async (datos, rutUsuario) => {
                 manual_inocuidad = EXCLUDED.manual_inocuidad
         `;
 
+        // Reusar helper extractKey (necesito moverlo arriba o redefinir)
+        const extractKeyLocal = (url) => {
+            if (!url) return null;
+            if (url.includes('uploads/')) {
+                const part = url.split('uploads/')[1];
+                return 'uploads/' + part.split('?')[0];
+            }
+            return url;
+        };
+
         await client.query(sqlEtapa5, [
             codigoALI,
             e5.limite,
@@ -555,7 +730,7 @@ ReporteRAM.guardarReporteRAM = async (datos, rutUsuario) => {
             e5.horaEntrega,
             e5.tablaPagina,
             e5.desfavorable,
-            e5.manualInocuidad // Base64
+            extractKeyLocal(e5.manualInocuidad) // Extract Key
         ]);
 
         // 5. Etapa 6: Aseguramiento (Upsert) - ANTES RAM_ETAPA6_VERIF

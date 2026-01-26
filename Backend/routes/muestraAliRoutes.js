@@ -13,5 +13,10 @@ router.put('/observaciones', muestraAliController.actualizarObservacionesGeneral
 // Solo Supervisores (Rol 1) pueden eliminar muestras
 router.delete('/:codigo_ali', authMiddleware.authorize(1), muestraAliController.eliminarMuestraALI);
 
+// Rutas para Imágenes de Observaciones
+const aliImagenesController = require('../controllers/aliImagenesController.js');
+router.post('/imagenes', aliImagenesController.agregarImagen);
+router.get('/:codigo_ali/imagenes', aliImagenesController.obtenerImagenes);
+router.delete('/imagenes/:id_imagen', aliImagenesController.eliminarImagen);
 
 module.exports = router;

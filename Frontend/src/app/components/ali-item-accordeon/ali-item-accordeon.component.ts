@@ -36,6 +36,18 @@ export class ALIItemAccordeonComponent implements OnInit {
   ngOnInit() {
     this.currentUser = this.authService.getUsuario();
     console.log('Muestra Item Data:', this.muestra);
+    this.cargarImagenes();
+  }
+
+  cargarImagenes() {
+    this.aliService.getImagenes(this.muestra.ALIMuestra).subscribe({
+      next: (imagenes) => {
+        this.muestra.imagenesObservaciones = imagenes;
+      },
+      error: (err) => {
+        console.error('Error cargando imagenes', err);
+      }
+    });
   }
 
   toggleExpand() {
@@ -251,35 +263,51 @@ export class ALIItemAccordeonComponent implements OnInit {
    * Usa el servicio ImagenUploadService para manejar la selección y validación
    */
   async adjuntarImagen() {
-    // Usar el servicio para seleccionar la imagen
-    const imagen = await this.imagenUploadService.seleccionarImagen({
-      maxSize: 5 * 1024 * 1024, // 5MB
+    // 1. Subir a S3 (el servicio ya devuelve {key, url} y maneja errores UI)
+    const imagenObj = await this.imagenUploadService.seleccionarImagen({
+      maxSize: 5 * 1024 * 1024,
       accept: 'image/jpeg,image/jpg,image/png,image/gif',
       mostrarAlertas: true
     });
 
-    if (!imagen) {
-      // Usuario canceló o hubo un error (ya manejado por el servicio)
-      return;
-    }
+    if (!imagenObj) return;
 
-    // Inicializar el array de imágenes si no existe
-    if (!this.muestra.imagenesObservaciones) {
-      this.muestra.imagenesObservaciones = [];
-    }
+    // 2. Guardar Metadata en DB
+    const payload = {
+      codigo_ali: this.muestra.ALIMuestra,
+      s3_key: imagenObj.s3_key,
+      nombre_archivo: imagenObj.nombre,
+      tipo_mime: imagenObj.tipo,
+      tamanio: imagenObj.tamanio
+    };
 
-    // Agregar la imagen al array
-    this.muestra.imagenesObservaciones.push(imagen);
+    this.aliService.agregarImagen(payload).subscribe({
+      next: async (resp: any) => {
+        // Agregar al array local con el ID generado y la URL
+        imagenObj.id_imagen = resp.imagen.id_imagen;
 
-    // Mostrar confirmación
-    const alert = await this.alertController.create({
-      header: 'Imagen adjuntada',
-      message: `La imagen "${imagen.nombre}" se ha adjuntado correctamente`,
-      buttons: ['OK']
+        if (!this.muestra.imagenesObservaciones) {
+          this.muestra.imagenesObservaciones = [];
+        }
+        this.muestra.imagenesObservaciones.push(imagenObj);
+
+        const alert = await this.alertController.create({
+          header: 'Imagen guardada',
+          message: `La imagen "${imagenObj.nombre}" se ha subido correctamente.`,
+          buttons: ['OK']
+        });
+        await alert.present();
+      },
+      error: async (err) => {
+        console.error('Error guardando metadata imagen:', err);
+        const alert = await this.alertController.create({
+          header: 'Error',
+          message: 'La imagen se subió a S3 pero falló el registro en base de datos.',
+          buttons: ['OK']
+        });
+        await alert.present();
+      }
     });
-    await alert.present();
-
-    console.log('Imagen adjuntada exitosamente:', imagen.nombre);
   }
 
   /**
@@ -300,9 +328,20 @@ export class ALIItemAccordeonComponent implements OnInit {
           text: 'Eliminar',
           role: 'destructive',
           handler: () => {
-            if (this.muestra.imagenesObservaciones) {
-              this.muestra.imagenesObservaciones.splice(index, 1);
-              console.log('Imagen eliminada del índice:', index);
+            const imagen = this.muestra.imagenesObservaciones![index];
+            if (imagen && imagen.id_imagen) {
+              this.aliService.eliminarImagen(imagen.id_imagen).subscribe({
+                next: () => {
+                  this.muestra.imagenesObservaciones?.splice(index, 1);
+                  console.log('Imagen eliminada:', imagen.nombre);
+                },
+                error: (err) => {
+                  console.error('Error eliminando imagen:', err);
+                }
+              });
+            } else {
+              // Si por alguna razón no tiene ID (fallo previo o imagen legacy), borrar localmente
+              this.muestra.imagenesObservaciones?.splice(index, 1);
             }
           }
         }
