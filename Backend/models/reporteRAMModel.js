@@ -1,7 +1,7 @@
 const db = require('../config/DB.js');
 const { getObjectSignedUrl } = require('../utils/s3');
 
-const { getObjectSignedUrl } = require('../utils/s3'); // Importar utilidad S3
+
 
 const ReporteRAM = {};
 

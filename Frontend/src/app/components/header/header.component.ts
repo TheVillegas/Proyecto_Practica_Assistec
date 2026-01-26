@@ -13,6 +13,7 @@ export class HeaderComponent implements OnInit {
 
   userName: string = 'Usuario';
   userRole: string = 'Analista';
+  userPhoto: string = '';
 
   constructor(private router: Router, private authService: AuthService) {
     // Escuchar cambios de ruta para actualizar el segmento activo
@@ -34,9 +35,11 @@ export class HeaderComponent implements OnInit {
       if (user) {
         this.userName = user.nombreApellido || 'Usuario';
         this.userRole = user.rol === 1 ? 'Supervisor' : 'Analista';
+        this.userPhoto = user.url_foto || user.urlFoto || 'https://ui-avatars.com/api/?name=' + (this.userName || 'U') + '&background=random';
       } else {
         this.userName = 'Usuario';
         this.userRole = 'Analista';
+        this.userPhoto = 'https://ui-avatars.com/api/?name=Usuario&background=random';
       }
     });
   }

@@ -43,7 +43,7 @@
 
     <!-- Avatar -->
     <div class="avatar-box group" (click)="goToProfile()" style="cursor: pointer;">
-      <img src="https://avatars.githubusercontent.com/u/127423201?v=4&size=64" alt="Avatar">
+      <img [src]="userPhoto" alt="Avatar" class="w-full h-full object-cover">
     </div>
 
     <!-- Separador -->

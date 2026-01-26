@@ -24,7 +24,7 @@ const exportarReporteRAM = async (req, res) => {
         }
 
         // Obtener imágenes adjuntas
-        const imagenesQuery = await db.query('SELECT * FROM ALI_IMAGENES WHERE CODIGO_ALI = $1', [codigoALI]);
+        const imagenesQuery = await db.execute('SELECT * FROM ALI_IMAGENES WHERE CODIGO_ALI = $1', [codigoALI]);
         datosRAM.imagenes = imagenesQuery.rows;
 
         // Generar buffer
@@ -64,7 +64,7 @@ const exportarReporteTPA = async (req, res) => {
         }
 
         // Obtener imágenes adjuntas (compartidas por ALI)
-        const imagenesQuery = await db.query('SELECT * FROM ALI_IMAGENES WHERE CODIGO_ALI = $1', [codigoALI]);
+        const imagenesQuery = await db.execute('SELECT * FROM ALI_IMAGENES WHERE CODIGO_ALI = $1', [codigoALI]);
         datosTPA.imagenes = imagenesQuery.rows;
 
         // Generar buffer

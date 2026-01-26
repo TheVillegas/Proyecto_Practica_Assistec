@@ -39,7 +39,7 @@ db.initialize().then(() => {
     app.use('/AsisTec/ReporteTPA', reporteTPARoutes);
     app.use('/AsisTec/ReporteRAM', reporteRAMRoutes);
     app.use('/AsisTec/Exportar', exportarRoutes);
-    app.use('/AsisTec/Upload', uploadRoutes);
+    app.use('/AsisTec', uploadRoutes);
 
     app.listen(port, () => {
         console.log(`El servidor esta corriendo en el puerto ${port}`);

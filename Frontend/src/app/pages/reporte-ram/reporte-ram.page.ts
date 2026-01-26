@@ -296,7 +296,7 @@ export class ReporteRamPage implements OnInit {
       // Así el Frontend siempre ve URLs y no se preocupa.
       // Y el Excel siempre tiene acceso a la Key (porque DB tiene Key).
 
-      this.etapa7.firmaCoordinador = firma.url; // Seguimos usando URL en Frontend
+      this.etapa7.firmaCoordinador = firma.url || null; // Seguimos usando URL en Frontend
       console.log('Firma adjuntada (URL temporal para vista)');
     }
   }

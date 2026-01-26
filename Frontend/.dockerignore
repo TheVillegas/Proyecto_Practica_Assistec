@@ -1,4 +1,8 @@
 node_modules
 npm-debug.log
 www
+dist
+.angular
 .git
+.vscode
+.idea

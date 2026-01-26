@@ -15,7 +15,8 @@ exports.agregarImagen = async (req, res) => {
             RETURNING *
         `;
         const values = [codigo_ali, s3_key, nombre_archivo, tipo_mime, tamanio];
-        const result = await db.query(query, values);
+        const result = await db.execute(query, values);
+
 
         res.status(201).json({
             mensaje: 'Imagen registrada correctamente',
@@ -32,7 +33,7 @@ exports.obtenerImagenes = async (req, res) => {
 
     try {
         const query = `SELECT * FROM ALI_IMAGENES WHERE CODIGO_ALI = $1 ORDER BY FECHA_SUBIDA DESC`;
-        const result = await db.query(query, [codigo_ali]);
+        const result = await db.execute(query, [codigo_ali]);
 
         // Generar URLs firmadas para cada imagen y mapear a camelCase
         const imagenes = await Promise.all(result.rows.map(async (img) => {
@@ -61,7 +62,7 @@ exports.eliminarImagen = async (req, res) => {
     try {
         // Primero obtener la key para borrar de S3 (pendiente: implementar borrado S3 real si se desea)
         // Por ahora solo borramos de la DB
-        const result = await db.query('DELETE FROM ALI_IMAGENES WHERE ID_IMAGEN = $1 RETURNING *', [id_imagen]);
+        const result = await db.execute('DELETE FROM ALI_IMAGENES WHERE ID_IMAGEN = $1 RETURNING *', [id_imagen]);
 
         if (result.rowCount === 0) {
             return res.status(404).json({ mensaje: 'Imagen no encontrada' });

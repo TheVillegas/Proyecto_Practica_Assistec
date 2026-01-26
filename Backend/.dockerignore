@@ -3,3 +3,6 @@ npm-debug.log
 logs
 .git
 .env
+.vscode
+.idea
+outputs
