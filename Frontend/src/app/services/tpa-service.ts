@@ -27,4 +27,9 @@ export class TpaService {
     verificarReporte(codigoAli: number, datosVerificacion: { rutUsuario: number, observacionesFinales: string, firma: string }): Observable<any> {
         return this.http.put(`${this.apiUrl}/${codigoAli}/verificar`, datosVerificacion);
     }
+
+    exportarExcel(codigoAli: number): Observable<Blob> {
+        const url = `${environment.apiUrl}/exportar/tpa`;
+        return this.http.post(url, { codigoALI: codigoAli }, { responseType: 'blob' });
+    }
 }

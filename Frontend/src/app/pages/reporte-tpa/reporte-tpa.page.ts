@@ -375,6 +375,38 @@ export class ReporteTPAPage implements OnInit {
     }
   }
 
+  /**
+   * Exporta el reporte TPA a Excel
+   */
+  exportarExcel() {
+    if (!this.codigoALI) {
+      this.alertController.create({ header: 'Aviso', message: 'No hay código ALI asociado', buttons: ['OK'] }).then(a => a.present());
+      return;
+    }
+
+    this.tpaService.exportarExcel(parseInt(this.codigoALI)).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Reporte_TPA_ALI-${this.codigoALI}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: async (err) => {
+        console.error('Error al exportar Excel:', err);
+        const alert = await this.alertController.create({
+          header: 'Error',
+          message: 'Error al descargar el reporte TPA.',
+          buttons: ['OK']
+        });
+        await alert.present();
+      }
+    });
+  }
+
   // --- Lógica de la Barra de Acciones ---
 
   async confirmarCancelar() {

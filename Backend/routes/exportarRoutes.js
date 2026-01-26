@@ -13,6 +13,13 @@ router.use(authMiddleware.verifyToken);
 router.post('/tpa', exportarController.exportarReporteTPA);
 
 /**
+ * @route POST /api/exportar/ram
+ * @desc Genera y descarga un reporte RAM en formato Excel
+ * @access Public (ajustar según middleware de autenticación)
+ */
+router.post('/ram', exportarController.exportarReporteRAM);
+
+/**
  * @route GET /api/exportar/listar
  * @desc Obtiene la lista de reportes generados
  * @access Public (ajustar según middleware de autenticación)

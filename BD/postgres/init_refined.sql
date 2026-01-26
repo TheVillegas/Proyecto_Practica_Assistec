@@ -358,17 +358,17 @@ VALUES ('Puntas 1 ML', '1 ML'),
     ('Probeta 250 ML', '250 ML'),
     ('Probeta 100 ML', '100 ML');
 INSERT INTO MICROPIPETAS (NOMBRE_PIPETA, CODIGO_PIPETA, CAPACIDAD)
-VALUES ('Pipeta 22-M', '22-M', '1 ML'),
-    ('Pipeta 23-M', '23-M', '1 ML'),
-    ('Pipeta 72-M', '72-M', '1 ML'),
-    ('Pipeta 98-M', '98-M', '1 ML'),
-    ('Pipeta 100-M', '100-M', '1 ML'),
-    ('Pipeta 102-M', '102-M', '1 ML'),
-    ('Pipeta 32-M', '32-M', '10 ML'),
-    ('Pipeta 75-M', '75-M', '10 ML'),
-    ('Pipeta 94-M', '94-M', '10 ML'),
-    ('Pipeta 103-M', '103-M', '10 ML'),
-    ('Pipeta 106-M', '106-M', '10 ML');
+VALUES ('Micropipeta 22-M', '22-M', '1 ML'),
+    ('Micropipeta 23-M', '23-M', '1 ML'),
+    ('Micropipeta 72-M', '72-M', '1 ML'),
+    ('Micropipeta 98-M', '98-M', '1 ML'),
+    ('Micropipeta 100-M', '100-M', '1 ML'),
+    ('Micropipeta 102-M', '102-M', '1 ML'),
+    ('Micropipeta 32-M', '32-M', '10 ML'),
+    ('Micropipeta 75-M', '75-M', '10 ML'),
+    ('Micropipeta 94-M', '94-M', '10 ML'),
+    ('Micropipeta 103-M', '103-M', '10 ML'),
+    ('Micropipeta 106-M', '106-M', '10 ML');
 -- Usuario Administrador por defecto (Contraseña: admin123 hash provisional)
 INSERT INTO USUARIOS (
         RUT_ANALISTA,

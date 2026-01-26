@@ -522,6 +522,39 @@ export class ReporteRamPage implements OnInit {
     this.navCtrl.back();
   }
 
+  /**
+   * Exporta el reporte RAM a Excel
+   */
+  exportarExcel() {
+    if (!this.codigoALI) {
+      // this.presentToast('No hay código ALI asociado', 'warning'); // Not implemented helper? Alert instead
+      this.alertController.create({ header: 'Aviso', message: 'No hay código ALI asociado', buttons: ['OK'] }).then(a => a.present());
+      return;
+    }
+
+    this.ramService.exportarExcel(parseInt(this.codigoALI)).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Reporte_RAM_ALI-${this.codigoALI}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: async (err) => {
+        console.error('Error al exportar Excel:', err);
+        const alert = await this.alertController.create({
+          header: 'Error',
+          message: 'Error al descargar el reporte RAM.',
+          buttons: ['OK']
+        });
+        await alert.present();
+      }
+    });
+  }
+
   // --- Lógica de Cálculo RAM (Unificada) ---
 
   async calcularMuestra(index: number, etapa3: Etapa3Item) {

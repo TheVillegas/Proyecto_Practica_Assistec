@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'app-titulos-reportes',
@@ -14,6 +14,8 @@ export class TitulosReportesComponent implements OnInit {
   @Input() tipoReporte: 'TPA' | 'RAM' | '' = '';
   @Input() ultimaActualizacion: string = '';
   @Input() responsable: string = '';
+  @Output() onExportar = new EventEmitter<void>();
+
   constructor() { }
 
 

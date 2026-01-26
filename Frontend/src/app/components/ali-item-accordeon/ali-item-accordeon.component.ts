@@ -4,8 +4,11 @@ import { AliService } from '../../services/ali-service';
 import { ImagenUploadService } from '../../services/imagen-upload';
 import { Router } from '@angular/router';
 import { query } from '@angular/animations';
-import { AlertController } from '@ionic/angular';
+import { AlertController, ActionSheetController } from '@ionic/angular';
 import { AuthService } from '../../services/auth-service';
+import { RamService } from 'src/app/services/ram-service';
+import { TpaService } from 'src/app/services/tpa-service';
+
 @Component({
   selector: 'app-ali-item-accordeon',
   templateUrl: './ali-item-accordeon.component.html',
@@ -24,7 +27,10 @@ export class ALIItemAccordeonComponent implements OnInit {
     private aliService: AliService,
     private alertController: AlertController,
     private imagenUploadService: ImagenUploadService,
-    private authService: AuthService
+    private authService: AuthService,
+    private actionSheetController: ActionSheetController,
+    private ramService: RamService,
+    private tpaService: TpaService
   ) { }
 
   ngOnInit() {
@@ -34,6 +40,86 @@ export class ALIItemAccordeonComponent implements OnInit {
 
   toggleExpand() {
     this.isExpanded = !this.isExpanded;
+  }
+
+  async exportarExcel(event: Event) {
+    event.stopPropagation();
+
+    const actionSheet = await this.actionSheetController.create({
+      header: 'Generar Reporte Excel',
+      buttons: [
+        {
+          text: 'Reporte RAM',
+          icon: 'document-text-outline',
+          handler: () => {
+            this.generarRAM();
+          }
+        },
+        {
+          text: 'Reporte TPA',
+          icon: 'clipboard-outline',
+          handler: () => {
+            this.generarTPA();
+          }
+        },
+        {
+          text: 'Cancelar',
+          icon: 'close',
+          role: 'cancel'
+        }
+      ]
+    });
+    await actionSheet.present();
+  }
+
+  generarRAM() {
+    if (!this.muestra.ALIMuestra) return;
+    this.ramService.exportarExcel(this.muestra.ALIMuestra).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Reporte_RAM_ALI-${this.muestra.ALIMuestra}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: async (err) => {
+        console.error('Error exportando RAM:', err);
+        const alert = await this.alertController.create({
+          header: 'Error',
+          message: 'Error al descargar reporte RAM',
+          buttons: ['OK']
+        });
+        await alert.present();
+      }
+    });
+  }
+
+  generarTPA() {
+    if (!this.muestra.ALIMuestra) return;
+    this.tpaService.exportarExcel(this.muestra.ALIMuestra).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Reporte_TPA_ALI-${this.muestra.ALIMuestra}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: async (err) => {
+        console.error('Error exportando TPA:', err);
+        const alert = await this.alertController.create({
+          header: 'Error',
+          message: 'Error al descargar reporte TPA',
+          buttons: ['OK']
+        });
+        await alert.present();
+      }
+    });
   }
 
   guardarObservaciones() {

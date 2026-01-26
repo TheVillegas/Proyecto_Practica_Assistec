@@ -120,7 +120,9 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
                 -- Nombres descriptivos (Joins)
                 u_mod.nombre_apellido_analista as nombre_usuario_modificacion,
                 u_ana.nombre_apellido_analista as nombre_responsable_analisis,
-                u_inc.nombre_apellido_analista as nombre_responsable_incubacion
+                u_inc.nombre_apellido_analista as nombre_responsable_incubacion,
+                eq.nombre_equipo as nombre_equipo_incubacion,
+                ta.nombre_analisis as nombre_tipo_analisis
 
             FROM RAM_REPORTE r
             LEFT JOIN RAM_ETAPA1_SIEMBRA e1 ON r.codigo_ali = e1.codigo_ali
@@ -132,6 +134,8 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
             LEFT JOIN USUARIOS u_mod ON r.usuario_ultima_modificacion = u_mod.rut_analista
             LEFT JOIN USUARIOS u_ana ON e2.id_responsable_analisis = u_ana.rut_analista
             LEFT JOIN USUARIOS u_inc ON e2.id_responsable_incubacion = u_inc.rut_analista
+            LEFT JOIN EQUIPOS_INCUBACION eq ON e1.id_equipo_incubacion = eq.id_incubacion
+            LEFT JOIN MAESTRO_TIPOS_ANALISIS ta ON e6.id_analisis_dupli = ta.id_tipo_analisis
 
             WHERE r.codigo_ali = $1
         `;
@@ -212,6 +216,26 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
             };
         }));
 
+        // Obtener Formas de Cálculo (Etapa 7)
+        const sqlFormas = `
+            SELECT f.id_forma, f.tipo_usuario, m.nombre_forma 
+            FROM RAM_ETAPA7_FORMAS_CALCULO f
+            JOIN MAESTRO_FORMAS_CALCULO m ON f.id_forma = m.id_forma
+            WHERE f.codigo_ali = $1
+        `;
+        const resFormas = await client.query(sqlFormas, [codigoALI]);
+
+        const formasAnalista = resFormas.rows.filter(r => r.tipo_usuario === 'ANALISTA').map(r => ({
+            id: r.id_forma,
+            idForma: r.id_forma,
+            nombreForma: r.nombre_forma
+        }));
+        const formasCoordinador = resFormas.rows.filter(r => r.tipo_usuario === 'COORDINADOR').map(r => ({
+            id: r.id_forma,
+            idForma: r.id_forma,
+            nombreForma: r.nombre_forma
+        }));
+
         // Armar objeto de respuesta final
         return {
             codigoALI: row.codigo_ali,
@@ -224,6 +248,7 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
             etapa1: {
                 agarPlateCount: row.agar_plate_count,
                 equipoIncubacion: row.id_equipo_siembra,
+                nombreEquipoIncubacion: row.nombre_equipo_incubacion,
                 nMuestra10gr: row.n_muestra_10gr,
                 nMuestra50gr: row.n_muestra_50gr,
                 horaInicioHomogenizado: row.hora_inicio_homogenizado,
@@ -232,10 +257,11 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
             },
 
             // Etapa 2
-            // Etapa 2
             etapa2: {
                 idResponsableAnalisis: row.id_responsable_analisis,
+                nombreResponsableAnalisis: row.nombre_responsable_analisis,
                 idResponsableIncubacion: row.id_responsable_incubacion,
+                nombreResponsableIncubacion: row.nombre_responsable_incubacion,
                 fechaInicioIncubacion: row.fecha_inicio_incubacion,
                 horaInicioIncubacion: row.hora_inicio_incubacion,
                 fechaFinIncubacion: row.fecha_fin_incubacion,
@@ -274,6 +300,7 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
             etapa6: {
                 duplicadoAli: row.duplicado_ali_val, // Nombre mapeado a prop
                 analisis: row.id_analisis_dupli,
+                nombreAnalisis: row.nombre_tipo_analisis,
                 duplicadoEstado: row.duplicado_estado,
                 controlBlanco: row.control_blanco_val,
                 controlBlancoEstado: row.control_blanco_estado,
@@ -285,8 +312,10 @@ ReporteRAM.obtenerReporteRAM = async (codigoALI) => {
             etapa7: {
                 observacionesFinales: row.observaciones_finales, // Viene de tabla CIERRE
                 firmaCoordinador: row.firma_coordinador, // Viene de Header
-                observacionesGeneralesAnalistaRam: row.observaciones_generales_analista_ram
-                // Formas de cálculo se podrían cargar aparte si es necesario
+                observacionesGeneralesAnalistaRam: row.observaciones_generales_analista_ram,
+                // Estructura plana para matching directo con Frontend
+                formaCalculoAnalista: formasAnalista,
+                formaCalculoCoordinador: formasCoordinador
             }
         };
 
@@ -573,6 +602,46 @@ ReporteRAM.guardarReporteRAM = async (datos, rutUsuario) => {
             e7.observacionesFinales,
             e7.observacionesGeneralesAnalistaRam
         ]);
+
+        // 6.5 Guardar Formas de Cálculo (Borrar e insertar nuevas)
+        await client.query('DELETE FROM RAM_ETAPA7_FORMAS_CALCULO WHERE codigo_ali = $1', [codigoALI]);
+
+        const guardarFormas = async (formas, tipoUsuario) => {
+            if (!formas || !Array.isArray(formas)) return;
+            for (const f of formas) {
+                // Verificar si está seleccionado (si viene como objeto {id: 1, selected: true} o similar)
+                // Si viene como ID directo, se asume seleccionado.
+                let idForma = null;
+                let seleccionado = false;
+
+                if (typeof f === 'object' && f !== null) {
+                    // Si está en el array, asumimos que está seleccionado (a menos que tenga selected: false explícito)
+                    // El frontend envía array de seleccionados, así que por defecto es true.
+                    if (f.selected === false || f.seleccionado === false || f.checked === false) {
+                        seleccionado = false;
+                    } else {
+                        seleccionado = true;
+                        idForma = f.id || f.id_forma || f.idForma;
+                    }
+                } else {
+                    // Si es número/string, es un ID
+                    idForma = f;
+                    seleccionado = true;
+                }
+
+                if (seleccionado && idForma) {
+                    await client.query(`
+                        INSERT INTO RAM_ETAPA7_FORMAS_CALCULO (codigo_ali, id_forma, tipo_usuario)
+                        VALUES ($1, $2, $3)
+                    `, [codigoALI, idForma, tipoUsuario]);
+                }
+            }
+        };
+
+        // Procesar Analista y Coordinador
+        // El frontend parece enviar 'formaCalculoAnalista' y 'formaCalculoCoordinador' dentro de etapa7
+        await guardarFormas(e7.formaCalculoAnalista, 'ANALISTA');
+        await guardarFormas(e7.formaCalculoCoordinador, 'COORDINADOR');
 
         await client.query('COMMIT');
         return { success: true, mensaje: 'Reporte RAM guardado correctamente' };

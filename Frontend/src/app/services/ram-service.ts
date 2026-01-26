@@ -28,4 +28,9 @@ export class RamService {
   calcularPreview(datosCalculo: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/calcular`, datosCalculo);
   }
+
+  exportarExcel(codigoAli: number): Observable<Blob> {
+    const url = `${environment.apiUrl}/exportar/ram`;
+    return this.http.post(url, { codigoALI: codigoAli }, { responseType: 'blob' });
+  }
 }
