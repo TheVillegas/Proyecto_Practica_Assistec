@@ -332,7 +332,6 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
         ]);
 
         if (datos.etapa1 !== undefined) {
-            console.log("Guardando datos Etapa 1...");
             const sqlLugar = `
                 SELECT id_lugar
                 FROM LUGARES_ALMACENAMIENTO
@@ -357,7 +356,6 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
 
         // 2. Etapa 2: Manipulación
         if (datos.etapa2_manipulacion !== undefined) {
-            console.log("Guardando datos Etapa 2 (Manipulación)...");
 
             await client.query(
                 'DELETE FROM TPA_ETAPA2_SESION WHERE codigo_ali = $1',
@@ -504,7 +502,6 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
         }
 
         if (datos.etapa3_limpieza && Array.isArray(datos.etapa3_limpieza.checklist)) {
-            console.log("Guardando datos Etapa 3 ...");
 
             await client.query(
                 'DELETE FROM TPA_ETAPA3_CHECKLIST WHERE codigo_ali = $1',
@@ -535,7 +532,6 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
         }
 
         if (datos.etapa4_retiro !== undefined) {
-            console.log("Guardando datos Etapa 4 ... ");
 
             await client.query(
                 'DELETE FROM TPA_ETAPA4_RETIRO WHERE codigo_ali = $1',
@@ -590,122 +586,115 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
             }
         }
 
-        if (datos.etapa5_siembra !== undefined) {
-            console.log("Guardando datos Etapa 5 (Siembra)... ");
+        await client.query(
+            'DELETE FROM TPA_ETAPA5_SIEMBRA WHERE codigo_ali = $1',
+            [datos.codigoALI]
+        );
 
-            // Limpiar
-            const deleteRecursosSql = `DELETE FROM TPA_ETAPA5_RECURSOS 
-                 WHERE id_siembra IN (SELECT id_siembra FROM TPA_ETAPA5_SIEMBRA WHERE codigo_ali = $1)`;
-            await client.query(deleteRecursosSql, [datos.codigoALI]);
-
-            await client.query(
-                'DELETE FROM TPA_ETAPA5_SIEMBRA WHERE codigo_ali = $1',
-                [datos.codigoALI]
-            );
-
-            const resSiembra = await client.query(
-                `INSERT INTO TPA_ETAPA5_SIEMBRA (codigo_ali, otros_equipos_texto) 
+        const resSiembra = await client.query(
+            `INSERT INTO TPA_ETAPA5_SIEMBRA (codigo_ali, otros_equipos_texto) 
                  VALUES ($1, $2) 
                  RETURNING id_siembra`,
-                [
-                    datos.codigoALI,
-                    datos.etapa5_siembra.otrosEquipos || ''
-                ]
-            );
-            const idSiembraReal = resSiembra.rows[0].id_siembra;
+            [
+                datos.codigoALI,
+                datos.etapa5_siembra.otrosEquipos || ''
+            ]
+        );
+        const idSiembraReal = resSiembra.rows[0].id_siembra;
 
-            // DILUYENTES
-            if (datos.etapa5_siembra.diluyentes && Array.isArray(datos.etapa5_siembra.diluyentes)) {
-                for (const dil of datos.etapa5_siembra.diluyentes) {
-                    const resMast = await client.query(
-                        'SELECT id_diluyente FROM DILUYENTES WHERE UPPER(nombre_diluyente) = UPPER($1)',
-                        [dil.nombre]
-                    );
-                    if (resMast.rows.length > 0) {
-                        await client.query(
-                            `INSERT INTO TPA_ETAPA5_RECURSOS (id_siembra, categoria_recurso, id_diluyente, codigo_diluyente) 
+        // DILUYENTES
+        if (datos.etapa5_siembra.diluyentes && Array.isArray(datos.etapa5_siembra.diluyentes)) {
+            for (const dil of datos.etapa5_siembra.diluyentes) {
+                const resMast = await client.query(
+                    'SELECT id_diluyente FROM DILUYENTES WHERE UPPER(nombre_diluyente) = UPPER($1)',
+                    [dil.nombre]
+                );
+                if (resMast.rows.length > 0) {
+                    await client.query(
+                        `INSERT INTO TPA_ETAPA5_RECURSOS (id_siembra, categoria_recurso, id_diluyente, codigo_diluyente) 
                              VALUES ($1, 'DILUYENTE', $2, $3)`,
-                            [
-                                idSiembraReal,
-                                resMast.rows[0].id_diluyente,
-                                dil.codigoDiluyente
-                            ]
-                        );
-                    }
+                        [
+                            idSiembraReal,
+                            resMast.rows[0].id_diluyente,
+                            dil.codigoDiluyente
+                        ]
+                    );
                 }
             }
+        }
 
-            // EQUIPOS
-            if (datos.etapa5_siembra.equipos && Array.isArray(datos.etapa5_siembra.equipos)) {
-                for (const equipo of datos.etapa5_siembra.equipos) {
-                    const nombreEquipo = equipo.nombre || equipo.nombreEquipo;
+        // EQUIPOS
+        if (datos.etapa5_siembra.equipos && Array.isArray(datos.etapa5_siembra.equipos)) {
+            for (const equipo of datos.etapa5_siembra.equipos) {
+                const nombreEquipo = equipo.nombre || equipo.nombreEquipo;
 
-                    if (!nombreEquipo) {
-                        if (datos.estado === 'Verificado') {
-                            throw new Error(`El nombre del equipo es obligatorio en Etapa 5 para finalizar.`);
-                        }
-                        continue;
+                if (!nombreEquipo) {
+                    if (datos.estado === 'Verificado') {
+                        throw new Error(`El nombre del equipo es obligatorio en Etapa 5 para finalizar.`);
                     }
+                    continue;
+                }
 
-                    const equipoValido = await client.query(
-                        'SELECT id_equipo FROM EQUIPOS_LAB WHERE UPPER(nombre_equipo) = UPPER($1)',
-                        [nombreEquipo]
-                    );
+                const equipoValido = await client.query(
+                    'SELECT id_equipo FROM EQUIPOS_LAB WHERE UPPER(nombre_equipo) = UPPER($1)',
+                    [nombreEquipo]
+                );
 
-                    if (equipoValido.rows.length > 0) {
-                        await client.query(
-                            `INSERT INTO TPA_ETAPA5_RECURSOS (id_siembra, categoria_recurso, id_equipo, seleccionado) 
+                if (equipoValido.rows.length > 0) {
+                    await client.query(
+                        `INSERT INTO TPA_ETAPA5_RECURSOS (id_siembra, categoria_recurso, id_equipo, seleccionado) 
                              VALUES ($1, 'EQUIPO', $2, $3)`,
-                            [
-                                idSiembraReal,
-                                equipoValido.rows[0].id_equipo,
-                                equipo.seleccionado ? 1 : 0
-                            ]
-                        );
-                    }
-                }
-            }
-
-            // MATERIALES
-            if (datos.etapa5_siembra.materiales && Array.isArray(datos.etapa5_siembra.materiales)) {
-                for (const mat of datos.etapa5_siembra.materiales) {
-                    const resMast = await client.query(
-                        'SELECT id_material_siembra FROM MATERIAL_SIEMBRA WHERE UPPER(nombre_material) = UPPER($1)',
-                        [mat.nombre]
+                        [
+                            idSiembraReal,
+                            equipoValido.rows[0].id_equipo,
+                            equipo.seleccionado ? 1 : 0
+                        ]
                     );
-                    if (resMast.rows.length > 0) {
-                        await client.query(
-                            `INSERT INTO TPA_ETAPA5_RECURSOS (id_siembra, categoria_recurso, id_material_siembra, codigo_material) 
-                             VALUES ($1, 'MATERIAL', $2, $3)`,
-                            [
-                                idSiembraReal,
-                                resMast.rows[0].id_material_siembra,
-                                mat.codigoMaterialSiembra
-                            ]
-                        );
-                    }
                 }
             }
         }
 
-        await client.query('COMMIT');
-        return { success: true, mensaje: "Reporte TPA guardado exitosamente" };
-
-    } catch (error) {
-        if (client) {
-            try {
-                await client.query('ROLLBACK');
-            } catch (rbError) {
-                console.error('Error al hacer rollback:', rbError);
+        // MATERIALES
+        if (datos.etapa5_siembra.materiales && Array.isArray(datos.etapa5_siembra.materiales)) {
+            for (const mat of datos.etapa5_siembra.materiales) {
+                const resMast = await client.query(
+                    'SELECT id_material_siembra FROM MATERIAL_SIEMBRA WHERE UPPER(nombre_material) = UPPER($1)',
+                    [mat.nombre]
+                );
+                if (resMast.rows.length > 0) {
+                    await client.query(
+                        `INSERT INTO TPA_ETAPA5_RECURSOS (id_siembra, categoria_recurso, id_material_siembra, codigo_material) 
+                             VALUES ($1, 'MATERIAL', $2, $3)`,
+                        [
+                            idSiembraReal,
+                            resMast.rows[0].id_material_siembra,
+                            mat.codigoMaterialSiembra
+                        ]
+                    );
+                }
             }
-        }
-        console.error('Error al guardar reporte TPA:', error);
-        throw error;
-    } finally {
-        if (client) {
-            client.release();
         }
     }
+        }
+
+await client.query('COMMIT');
+return { success: true, mensaje: "Reporte TPA guardado exitosamente" };
+
+    } catch (error) {
+    if (client) {
+        try {
+            await client.query('ROLLBACK');
+        } catch (rbError) {
+            console.error('Error al hacer rollback:', rbError);
+        }
+    }
+    console.error('Error al guardar reporte TPA:', error);
+    throw error;
+} finally {
+    if (client) {
+        client.release();
+    }
+}
 };
 
 /**

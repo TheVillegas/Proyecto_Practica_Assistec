@@ -359,6 +359,35 @@ class ExcelRAMService {
         sheet.getCell(`F${currentRow}`).value = e5.mercado || 'N/A';
         sheet.getCell(`F${currentRow}`).border = borderStyle;
 
+        // Insertar imagen del Manual de Inocuidad si existe
+        // Insertar imagen del Manual de Inocuidad si existe
+        if (e5.manualInocuidad) {
+            try {
+                // Si es una URL firmada, extraer la Key (uploads/...)
+                let imageKey = e5.manualInocuidad;
+                if (imageKey.includes('uploads/')) {
+                    const parts = imageKey.split('uploads/');
+                    // Tomar la parte después de uploads/ y quitar query params si existen
+                    imageKey = 'uploads/' + parts[1].split('?')[0];
+                }
+
+                const imageBuffer = await getObjectBuffer(imageKey);
+                const imageId = workbook.addImage({
+                    buffer: imageBuffer,
+                    extension: 'png',
+                });
+
+                // Posicionar imagen en columnas G-K, filas desde etapa5Title hasta currentRow
+                const imageStartRow = currentRow - 2; // Fila donde comienza "Desfavorable"
+                sheet.addImage(imageId, {
+                    tl: { col: 6.2, row: imageStartRow - 0.2 }, // Top-left: columna G
+                    br: { col: 10.8, row: currentRow + 0.8 }     // Bottom-right: columna K
+                });
+            } catch (error) {
+                console.error('Error al insertar imagen Manual de Inocuidad:', error);
+            }
+        }
+
         currentRow += 2;
 
         // --- ETAPA 6: CONTROL DE CALIDAD ---
@@ -387,14 +416,17 @@ class ExcelRAMService {
         sheet.getCell(`A${currentRow}`).font = labelStyle;
         sheet.getCell(`A${currentRow}`).border = borderStyle;
 
-        sheet.getCell(`C${currentRow}`).value = 'Análisis:';
-        sheet.getCell(`C${currentRow}`).font = labelStyle;
+        sheet.getCell(`C${currentRow}`).value = e6.duplicadoAli || '';
         sheet.getCell(`C${currentRow}`).border = borderStyle;
 
-        sheet.getCell(`D${currentRow}`).value = e6.nombreAnalisis || 'RAM';
+        sheet.getCell(`D${currentRow}`).value = 'Análisis:';
+        sheet.getCell(`D${currentRow}`).font = labelStyle;
         sheet.getCell(`D${currentRow}`).border = borderStyle;
 
-        aplicarFormatoCumplimiento(sheet.getCell(`E${currentRow}`), e6.duplicadoEstado || 'CUMPLE');
+        sheet.getCell(`E${currentRow}`).value = e6.nombreAnalisis || 'RAM';
+        sheet.getCell(`E${currentRow}`).border = borderStyle;
+
+        aplicarFormatoCumplimiento(sheet.getCell(`F${currentRow}`), e6.duplicadoEstado || 'CUMPLE');
 
         currentRow++;
 

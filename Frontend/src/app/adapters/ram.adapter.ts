@@ -16,7 +16,10 @@ export class RamAdapter {
             etapa1: reporte.etapa1 || {},
             etapa2: reporte.etapa2 || {},
             etapa4: reporte.etapa4 || {},
-            etapa5: reporte.etapa5 || {},
+            etapa5: {
+                ...reporte.etapa5,
+                imagenManual: reporte.etapa5?.manualInocuidad
+            },
             etapa6: reporte.etapa6 || {},
             etapa7: reporte.etapa7 || {}
         };

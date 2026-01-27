@@ -262,42 +262,7 @@ export class ReporteRamPage implements OnInit {
 
     if (firma && firma.s3_key) {
       this.etapa7.firmaCoordinador = firma.s3_key; // Guardamos KEY
-      console.log('Firma adjuntada exitosamente (Key)');
-      // Para visualización inmediata, podríamos usar la URL temporal, pero
-      // al guardar se enviará la Key. El frontend muestra lo que hay en el modelo.
-      // Si el modelo tiene la Key, el <img src> fallará a menos que la UI maneje claves o
-      // usemos una variable auxiliar para visualización.
-      // FIX SIMPLE: El backend firmará al leer. Pero aquí en tiempo real, 
-      // necesitamos verla.
-      // Podemos guardar la Key en el modelo (para enviar a BD) 
-      // y actualizar la vista de alguna forma?
-      // Angular binding: [src]="etapa7.firmaCoordinador". 
-      // Si pongo "uploads/...", no carga.
-      // Solución: Dejo firma.url para visualización? 
-      // No, "etapa7.firmaCoordinador" se envía al guardar.
-      // TRUCO: Guardar URL temporal en etapa7.firmaCoordinador para que se vea, 
-      // PERO al guardar (guardarReporte), detectar si es URL y extraer Key?
-      // O MEJOR: El backend acepta Key.
-      // Voy a hacer que el componente tenga una variable auxiliar o que use la URL.
-      // Pero si refresco, quiero que cargue.
-      // Voy a guardar la KEY. Y en el HTML usaré una Pipe o una funcion 
-      // "getImagenSrc(firma)"? No, eso requiere async signing.
-
-      // CAMBIO DE ESTRATEGIA:
-      // Guardar KEY en `etapa7.firmaCoordinador`.
-      // En el HTML, si empieza con 'uploads/', no se verá hasta guardar y recargar.
-      // Eso es mala UX.
-
-      // Solución Híbrida:
-      // El Frontend usa URLs. 
-      // El Backend recibe URLs.
-      // El Backend, AL GUARDAR (`ReporteRAM.guardarReporteRAM`), extrae la Key de la URL y guarda la Key.
-      // El Backend, AL LEER (`ReporteRAM.obtenerReporteRAM`), genera URL firmada.
-      // Así el Frontend siempre ve URLs y no se preocupa.
-      // Y el Excel siempre tiene acceso a la Key (porque DB tiene Key).
-
       this.etapa7.firmaCoordinador = firma.url || null; // Seguimos usando URL en Frontend
-      console.log('Firma adjuntada (URL temporal para vista)');
     }
   }
 
@@ -508,7 +473,10 @@ export class ReporteRamPage implements OnInit {
       etapa2: this.etapa2,
       etapa3_repeticiones: etapa3_backend, // Send nested structure
       etapa4: this.etapa4,
-      etapa5: this.etapa5,
+      etapa5: {
+        ...this.etapa5,
+        manualInocuidad: this.etapa5.imagenManual // Map frontend prop to backend prop
+      },
       etapa6: this.etapa6,
       etapa7: {
         ...this.etapa7,
@@ -518,7 +486,6 @@ export class ReporteRamPage implements OnInit {
       fechaUltimaModificacion: new Date().toISOString()
     };
 
-    console.log(datosReporteRAM);
     this.ramService.guardarReporte(datosReporteRAM).subscribe({
       next: async (res) => {
         loading.dismiss();

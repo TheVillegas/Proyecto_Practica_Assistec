@@ -39,7 +39,6 @@ export class LoginPage implements OnInit {
           this.router.navigate(['/home']);
         },
         error: async (error) => {
-          console.log(error);
           this.isLoading = false;
           const alert = await this.alertController.create({
             header: 'Error',
@@ -50,7 +49,6 @@ export class LoginPage implements OnInit {
         }
       })
     } else {
-      console.log("formulario invalido");
       this.loginForm.markAllAsTouched();
     }
   }

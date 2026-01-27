@@ -42,7 +42,6 @@ db.initialize().then(() => {
     app.use('/AsisTec', uploadRoutes);
 
     app.listen(port, () => {
-        console.log(`El servidor esta corriendo en el puerto ${port}`);
     });
 }).catch(err => {
     console.error("No se pudo iniciar la aplicación debido a un error:", err); // Mostrar el error real

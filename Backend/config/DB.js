@@ -33,7 +33,7 @@ async function initialize() {
             console.log(`🔄 Intento ${attempt}/${MAX_RETRIES} de conexión a PostgreSQL...`);
 
             const client = await pool.connect();
-            console.log("✅ Conexión a PostgreSQL exitosa");
+            console.log("✅ Conexión a PostgreSQL OK");
             client.release();
             return; // Salir si la conexión fue exitosa
 

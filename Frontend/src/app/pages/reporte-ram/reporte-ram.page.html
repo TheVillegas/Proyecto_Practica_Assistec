@@ -619,11 +619,17 @@
           <div class="ram-divider"></div>
 
           <!-- Calculo Checkboxes (Single Row) -->
+          <!-- Título Analista -->
           <ion-row>
             <ion-col size="12">
-              <div class="text-center font-bold text-slate-700 uppercase text-xs tracking-wider mb-3">Cálculo realizado
-                por Analista</div>
-              <div class="flex flex-wrap justify-center gap-3 mb-6">
+              <div class="calculo-title">Cálculo realizado por Analista</div>
+            </ion-col>
+          </ion-row>
+
+          <!-- Checkboxes Analista -->
+          <ion-row>
+            <ion-col size="12">
+              <div class="checkbox-container mb-6">
                 <div *ngFor="let formaCalculo of listaFormasCalculo">
                   <ion-checkbox [checked]="isFormaCalculoSelected(formaCalculo)"
                     (ionChange)="toggleFormaCalculo(formaCalculo, $event)" class="checkbox-item" labelPlacement="end"
@@ -632,10 +638,20 @@
                   </ion-checkbox>
                 </div>
               </div>
+            </ion-col>
+          </ion-row>
 
-              <div class="text-center font-bold text-slate-700 uppercase text-xs tracking-wider mb-3">Cálculo realizado
-                por Coordinadora</div>
-              <div class="flex flex-wrap justify-center gap-3">
+          <!-- Título Coordinadora -->
+          <ion-row>
+            <ion-col size="12">
+              <div class="calculo-title">Cálculo realizado por Coordinadora</div>
+            </ion-col>
+          </ion-row>
+
+          <!-- Checkboxes Coordinadora -->
+          <ion-row>
+            <ion-col size="12">
+              <div class="checkbox-container">
                 <div *ngFor="let formaCalculo of listaFormasCalculo">
                   <ion-checkbox [checked]="isFormaCalculoCoordinadorSelected(formaCalculo)"
                     (ionChange)="toggleFormaCalculoCoordinador(formaCalculo, $event)" class="checkbox-item"
