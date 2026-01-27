@@ -90,4 +90,14 @@ Analista.actualizarFoto = async (rut, urlFoto) => {
     return await db.execute(sql, [key, rut]);
 };
 
+Analista.actualizarCorreo = async (rut, nuevoCorreo) => {
+    const sql = 'UPDATE USUARIOS SET CORREO_ANALISTA = $1 WHERE RUT_ANALISTA = $2';
+    return await db.execute(sql, [nuevoCorreo, rut]);
+};
+
+Analista.actualizarPassword = async (rut, nuevaPassword) => {
+    const sql = 'UPDATE USUARIOS SET CONTRASENA_ANALISTA = $1 WHERE RUT_ANALISTA = $2';
+    return await db.execute(sql, [nuevaPassword, rut]);
+};
+
 module.exports = Analista;

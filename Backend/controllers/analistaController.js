@@ -139,3 +139,43 @@ exports.actualizarFotoPerfil = async (req, res) => {
         res.status(500).json({ mensaje: 'Error interno al actualizar foto' });
     }
 };
+
+exports.actualizarCorreo = async (req, res) => {
+    try {
+        const { rut } = req.params;
+        const { correo } = req.body;
+
+        if (!rut || !correo) {
+            return res.status(400).json({ mensaje: 'RUT y correo son obligatorios' });
+        }
+
+        // TODO: Validar si el correo ya existe en otro usuario (Opcional pero recomendado)
+
+        await Analista.actualizarCorreo(rut, correo);
+        res.status(200).json({ mensaje: 'Correo actualizado correctamente' });
+    } catch (error) {
+        console.error('Error al actualizar correo:', error);
+        res.status(500).json({ mensaje: 'Error interno al actualizar correo' });
+    }
+};
+
+exports.actualizarPassword = async (req, res) => {
+    try {
+        const { rut } = req.params;
+        const { password } = req.body;
+
+        if (!rut || !password) {
+            return res.status(400).json({ mensaje: 'RUT y contraseña son obligatorios' });
+        }
+
+        // Encriptar nueva contraseña
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        await Analista.actualizarPassword(rut, hashedPassword);
+        res.status(200).json({ mensaje: 'Contraseña actualizada correctamente' });
+    } catch (error) {
+        console.error('Error al actualizar contraseña:', error);
+        res.status(500).json({ mensaje: 'Error interno al actualizar contraseña' });
+    }
+};

@@ -417,10 +417,10 @@ class ExcelTPAService {
                         extension: 'png',
                     });
 
-                    // Insertar sobre la línea L-Q (aprox)
+                    // Insertar en columna N-O (Indices 13-15)
                     sheet.addImage(imageId, {
-                        tl: { col: 11, row: currentRow - 2 }, // L
-                        br: { col: 16.9, row: currentRow }  // Q
+                        tl: { col: 13, row: currentRow - 2 }, // N
+                        br: { col: 15, row: currentRow }      // O
                     });
                 }
             } catch (e) {
@@ -442,53 +442,64 @@ class ExcelTPAService {
 
         // --- ANEXOS VISUALES (IMAGENES) ---
         if (datos.imagenes && datos.imagenes.length > 0) {
-            currentRow += 2; // Espacio antes de los anexos
-            sheet.mergeCells(`A${currentRow}:Q${currentRow}`);
-            const titleAnexos = sheet.getCell(`A${currentRow}`);
-            titleAnexos.value = 'ANEXOS VISUALES';
-            titleAnexos.style = headerStyle;
-            titleAnexos.alignment = { horizontal: 'left', indent: 1 };
-            currentRow++;
+            // Filtrar duplicados por s3_key
+            const anexoKeysVistos = new Set();
+            const anexosUnicos = [];
+            for (const img of datos.imagenes) {
+                if (img.s3_key && !anexoKeysVistos.has(img.s3_key)) {
+                    anexoKeysVistos.add(img.s3_key);
+                    anexosUnicos.push(img);
+                }
+            }
 
-            for (const imgMeta of datos.imagenes) {
-                try {
-                    if (!imgMeta.s3_key) continue;
+            if (anexosUnicos.length > 0) {
+                currentRow += 2; // Espacio antes de los anexos
+                sheet.mergeCells(`A${currentRow}:Q${currentRow}`);
+                const titleAnexos = sheet.getCell(`A${currentRow}`);
+                titleAnexos.value = 'ANEXOS VISUALES';
+                titleAnexos.style = headerStyle;
+                titleAnexos.alignment = { horizontal: 'left', indent: 1 };
+                currentRow++;
 
-                    const buffer = await getObjectBuffer(imgMeta.s3_key);
+                for (const imgMeta of anexosUnicos) {
+                    try {
+                        if (!imgMeta.s3_key) continue;
 
-                    // Determinar extensión
-                    let ext = 'png';
-                    if (imgMeta.tipo_mime && imgMeta.tipo_mime.includes('jpeg')) ext = 'jpeg';
-                    else if (imgMeta.tipo_mime && imgMeta.tipo_mime.includes('jpg')) ext = 'jpeg';
-                    else if (imgMeta.tipo_mime && imgMeta.tipo_mime.includes('png')) ext = 'png';
+                        const buffer = await getObjectBuffer(imgMeta.s3_key);
 
-                    const imageId = workbook.addImage({
-                        buffer: buffer,
-                        extension: ext,
-                    });
+                        // Determinar extensión
+                        let ext = 'png';
+                        const mime = (imgMeta.tipo_mime || '').toLowerCase();
+                        if (mime.includes('jpeg') || mime.includes('jpg')) ext = 'jpeg';
 
-                    // Insertar imagen ocupando aprox 15 filas
-                    const startRow = currentRow;
-                    const endRow = currentRow + 15;
+                        const imageId = workbook.addImage({
+                            buffer: buffer,
+                            extension: ext,
+                        });
 
-                    // Ajustar filas para que no se superpongan
-                    sheet.addImage(imageId, {
-                        tl: { col: 0, row: startRow }, // Columna A
-                        br: { col: 16.9, row: endRow }   // Hasta fin de Q (aprox)
-                    });
+                        // Insertar imagen ocupando aprox 15 filas
+                        // Tamaño solicitado igual al RAM: tl:0, br:10.9
+                        const startRow = currentRow;
+                        const endRow = currentRow + 15;
 
-                    // Etiqueta abajo
-                    sheet.mergeCells(`A${endRow + 1}:Q${endRow + 1}`);
-                    const labelCell = sheet.getCell(`A${endRow + 1}`);
-                    labelCell.value = `Fig: ${imgMeta.nombre_archivo} (${formatearFecha(imgMeta.fecha_subida)})`;
-                    labelCell.alignment = { horizontal: 'center', vertical: 'top' };
-                    labelCell.font = { italic: true, size: 9 };
+                        sheet.addImage(imageId, {
+                            tl: { col: 0, row: startRow },
+                            br: { col: 10.9, row: endRow }
+                        });
 
-                    currentRow = endRow + 3; // Espacio para la siguiente imagen
-                } catch (error) {
-                    console.error('Error incrustando imagen en Excel (TPA):', error);
-                    sheet.getCell(`A${currentRow}`).value = `Error al cargar imagen: ${imgMeta.nombre_archivo}`;
-                    currentRow += 2;
+                        // Etiqueta abajo
+                        sheet.mergeCells(`A${endRow + 1}:Q${endRow + 1}`);
+                        const labelCell = sheet.getCell(`A${endRow + 1}`);
+                        labelCell.value = `Fig: ${imgMeta.nombre_archivo} (${formatearFecha(imgMeta.fecha_subida)})`;
+                        labelCell.alignment = { horizontal: 'center', vertical: 'top' };
+                        labelCell.font = { italic: true, size: 9 };
+
+                        currentRow = endRow + 3; // Espacio para la siguiente imagen
+                    } catch (error) {
+                        console.error('Error incrustando imagen en Excel (TPA):', error);
+                        // sheet.getCell(`A${currentRow}`).value = `Error al cargar imagen: ${imgMeta.nombre_archivo}`; // Silent fail
+                        // currentRow += 2; // Do not advance row if failed
+                    }
                 }
             }
         }
@@ -497,6 +508,15 @@ class ExcelTPAService {
 
         return await workbook.xlsx.writeBuffer();
     }
+}
+
+function formatearFecha(fecha) {
+    if (!fecha) return '';
+    const date = new Date(fecha);
+    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const y = date.getFullYear();
+    return `${d}-${m}-${y}`;
 }
 
 module.exports = ExcelTPAService;

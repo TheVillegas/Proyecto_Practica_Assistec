@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from 'src/app/services/auth-service';
-import { NavController, ToastController } from '@ionic/angular';
+import { NavController, ToastController, AlertController } from '@ionic/angular';
 import { ImagenUploadService } from 'src/app/services/imagen-upload';
 
 @Component({
@@ -23,7 +23,8 @@ export class ConfiguracionUsuarioPage implements OnInit {
     private authService: AuthService,
     private navCtrl: NavController,
     private toastController: ToastController,
-    private imagenUploadService: ImagenUploadService
+    private imagenUploadService: ImagenUploadService,
+    private alertController: AlertController
   ) { }
 
   ngOnInit() {
@@ -38,8 +39,8 @@ export class ConfiguracionUsuarioPage implements OnInit {
         nombreApellido: user.nombreApellido || user.nombre_analista,
         rut: user.rut || user.rut_analista,
         correo: user.correo || user.correo_analista,
-        rol: user.rol || user.rol_analista,
-        avatar: 'https://avatars.githubusercontent.com/u/127423201?v=4&size=64' // Hardcoded for now as in Header, eventually dynamic
+        rol: (user.rol === 1 || user.rol_analista === 1) ? 'Supervisor' : 'Analista',
+        avatar: user.url_foto || user.urlFoto || `https://ui-avatars.com/api/?name=${user.nombreApellido || user.nombre_analista || 'U'}&background=random`
       };
     }
   }
@@ -52,38 +53,13 @@ export class ConfiguracionUsuarioPage implements OnInit {
     });
 
     if (imagen && imagen.url) {
-      // Mostrar loading
       const toast = await this.toastController.create({
         message: 'Actualizando foto de perfil...',
         duration: 1000
       });
       toast.present();
 
-      // Guardar URL en Backend (usamos URL firmada para visualización inmediata, 
-      // pero idealmente deberíamos guardar la KEY o una URL pública si es pública.
-      // Como es foto perfil, asumamos URL temporal o Key. 
-      // Para simplificar ahora guardaremos la URL que nos devuelve el servicio (que es firmada). 
-      // OJO: Si la URL expira, la foto dejará de verse en el futuro. 
-      // FIX: Deberíamos guardar la S3_KEY y que el backend la firme al obtener el usuario.
-      // PERO: El usuario modelo authService recibe datos. 
-      // Por ahora, para cumplir la funcionalidad rápida, guardaremos la URL. 
-      // *Mejor*: Guardamos la URL tal cual. Si expira, el usuario sube otra. 
-      // *Correcto*: Guardar Key. Pero requiere cambiar Login para firmar URL.
-      // VOY A GUARDAR LA KEY EN EL CAMPO URL_FOTO, y modificar el login para firmarla.
-      // Espera, el frontend necesita mostrarla ahora.
-
-      this.usuario.avatar = imagen.url; // Mostrar inmediatamente
-
-      // Guardar en BD (Guardamos la Key para persistencia real, o la URL si queremos simplicidad temporal)
-      // El prompt pide "S3 Integration". Lo correcto es Key.
-      // Pero si guardo Key, el <img src="key"> fallará.
-      // Voy a guardar la URL completa por ahora para que funcione YA.
-      // El usuario pidió "posibilidad de adjuntar". 
-      // REVISIÓN: El servicio `subirImagenAS3` devuelve `{ key, url }`. 
-      // Si guardo `url`, funciona hasta que expire (15 min o 7 dias dependiendo config).
-      // Si guardo `key`, necesito cambiar el backend login.
-      // VOY A GUARDAR LA URL. Si el presigned url dura 7 días es suficiente para "demo".
-      // Si es producción, se debe refactorizar user controller login.
+      this.usuario.avatar = imagen.url;
 
       this.authService.actualizarFotoPerfil(this.usuario.rut, imagen.url).subscribe({
         next: () => {
@@ -97,14 +73,93 @@ export class ConfiguracionUsuarioPage implements OnInit {
     }
   }
 
-  cambiarPassword() {
-    // Logic for password change modal or alert
-    this.mostrarToast('Funcionalidad de cambiar contraseña pendiente');
+  async cambiarPassword() {
+    const alert = await this.alertController.create({
+      header: 'Cambiar Contraseña',
+      inputs: [
+        {
+          name: 'password',
+          type: 'password',
+          placeholder: 'Nueva contraseña',
+        },
+        {
+          name: 'confirmPassword',
+          type: 'password',
+          placeholder: 'Confirmar contraseña',
+        }
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Cambiar',
+          handler: (data) => {
+            if (!data.password || !data.confirmPassword) {
+              this.mostrarToast('Debe ingresar ambos campos');
+              return false;
+            }
+            if (data.password !== data.confirmPassword) {
+              this.mostrarToast('Las contraseñas no coinciden');
+              return false;
+            }
+            if (data.password.length < 4) {
+              this.mostrarToast('La contraseña es muy corta');
+              return false;
+            }
+
+            this.authService.actualizarPassword(this.usuario.rut, data.password).subscribe({
+              next: () => {
+                this.mostrarToast('Contraseña actualizada correctamente');
+              },
+              error: (err) => {
+                console.error(err);
+                this.mostrarToast('Error al actualizar contraseña');
+              }
+            });
+            return true;
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 
-  cambiarCorreo() {
-    // Logic for email change modal or alert
-    this.mostrarToast('Funcionalidad de cambiar correo pendiente');
+  async cambiarCorreo() {
+    const alert = await this.alertController.create({
+      header: 'Cambiar Correo',
+      inputs: [
+        {
+          name: 'correo',
+          type: 'email',
+          placeholder: 'Nuevo correo',
+          value: this.usuario.correo
+        }
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Guardar',
+          handler: (data) => {
+            if (!data.correo || !data.correo.includes('@')) {
+              this.mostrarToast('Ingrese un correo válido');
+              return false;
+            }
+
+            this.authService.actualizarCorreo(this.usuario.rut, data.correo).subscribe({
+              next: () => {
+                this.usuario.correo = data.correo;
+                this.mostrarToast('Correo actualizado correctamente');
+              },
+              error: (err) => {
+                console.error(err);
+                this.mostrarToast('Error al actualizar correo');
+              }
+            });
+            return true;
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 
   volver() {

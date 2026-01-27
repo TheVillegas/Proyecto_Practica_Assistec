@@ -13,6 +13,32 @@ exports.obtenerReporteTPA = async (req, res) => {
             return res.status(404).json({ mensaje: 'Reporte TPA no encontrado' });
         }
 
+        // --- FIRMAR URLS S3 PARA FRONTEND (TPA) ---
+        const { getObjectSignedUrl } = require('../utils/s3');
+
+        // 1. Firma Coordinador (Etapa 6 Cierre)
+        if (reporte.etapa6_cierre?.firma && reporte.etapa6_cierre.firma.startsWith('uploads/')) {
+            try {
+                reporte.etapa6_cierre.firma = await getObjectSignedUrl(reporte.etapa6_cierre.firma);
+            } catch (e) {
+                console.error('Error firmando firma coordinador TPA:', e);
+            }
+        }
+
+        // 2. Anexos Visuales
+        if (reporte.imagenes && Array.isArray(reporte.imagenes)) {
+            for (let img of reporte.imagenes) {
+                if (img.s3_key && img.s3_key.startsWith('uploads/')) {
+                    try {
+                        img.url = await getObjectSignedUrl(img.s3_key);
+                    } catch (e) {
+                        console.error(`Error firmando anexo TPA ${img.nombre_archivo}:`, e);
+                    }
+                }
+            }
+        }
+        // ------------------------------------
+
         res.status(200).json(reporte);
     } catch (error) {
         console.error('Error al obtener reporte TPA:', error);

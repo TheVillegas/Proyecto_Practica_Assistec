@@ -1,287 +1,165 @@
-.estiloTitulo {
-    margin: 0 !important;
-    width: 100%;
-    height: 100%;
-    border-radius: 0;
-    box-shadow: none;
-    text-align: center;
+// TPA Report Styles - Tailwind Refactor
 
-    ion-card-header {
-        padding: 10px;
-    }
-
-    ion-card-title {
-        font-size: 18px;
-        font-weight: bold;
-        color: white !important;
-    }
-
-    ion-card-subtitle {
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.8) !important;
-        margin-bottom: 2px;
-    }
-}
-
-.badge-azul {
-    background-color: #007cc0;
-    --background: #007cc0;
-}
-
-.badge-gris {
-    background-color: #7a7a7a;
-    --background: #7a7a7a;
-}
-
-.badge-rojo {
-    background-color: #d32f2f;
-    --background: #d32f2f;
-}
-
-
+// --- Base Layout ---
 ion-content {
-    --background: #f4f5f7;
+  --background: #f8fafc; // Slate-50 equivalent
 }
 
 ion-grid {
-    padding: 10px;
+  @apply p-4 max-w-7xl mx-auto;
 }
 
-.contenedor_label {
-    background: white;
-    margin-bottom: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e0e0e0;
-    overflow: hidden;
+// --- Card Containers (Acordeones) ---
+.tpa-card {
+  @apply bg-white mb-5 rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300;
+
+  &:hover {
+    @apply shadow-md border-slate-300;
+  }
 }
 
-/* Cabecera del acordeón */
+// Header del Acordeón (Ionic Override)
 ion-accordion ion-item[slot="header"] {
-    --background: #f9fafb;
-    /* Gris muy clarito, casi blanco */
-    --min-height: 55px;
-    --border-width: 0;
+  --background: #f1f5f9; // Slate-100
+  --min-height: 56px;
+  --border-width: 0;
+  --inner-padding-end: 16px;
 }
 
-/* Título de la etapa */
-.titulo_contenedor {
-    font-size: 15px;
-    font-weight: 700;
-    color: #333;
-    letter-spacing: 0.5px;
+.tpa-card-header-label {
+  @apply text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2;
 }
 
-.contenido_del_label {
-    background: white;
-    padding: 15px;
+.tpa-card-content {
+  @apply bg-slate-50 p-5;
 }
 
-ion-input,
-ion-select,
-ion-textarea {
-    --padding-start: 12px;
-    --padding-end: 12px;
-    --padding-top: 10px;
-    --padding-bottom: 10px;
-    --background: #ffffff;
-
-    /* Borde gris para que parezca caja */
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-
-    font-size: 14px;
-    color: #4b5563;
-    margin-top: 5px;
-    min-height: 45px;
+// --- Form Elements ---
+.form-group {
+  @apply flex flex-col gap-1.5 mb-4;
 }
 
-ion-label {
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    color: #374151 !important;
-    margin-bottom: 4px;
+.form-label {
+  @apply text-xs font-bold text-slate-600 uppercase tracking-tight ml-1;
 }
 
+.form-control {
+  // Selects, Inputs, Textareas
+  @apply w-full text-sm text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm transition-all duration-200;
 
+  // Ionic specific overrides
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  --background: #ffffff;
+  min-height: 42px;
 
-ion-datetime-button {
-    /* 1. Esto le dice al componente principal que se alinee al inicio (izquierda) */
-    display: flex;
-    justify-content: flex-start;
-    margin-left: 0;
-    /* Aseguramos que no tenga margen izquierdo */
+  &:focus-within {
+    @apply border-blue-500 ring-2 ring-blue-500/20;
+  }
 
-    /* 2. Esto entra al "Shadow DOM" (la parte interna del botón) */
-    &::part(native) {
-        /* Alinea el texto/números internamente a la izquierda */
-        justify-content: flex-start;
-        text-align: left;
-
-        /* Si quieres que el botón sea compacto (solo el tamaño del texto) */
-        width: fit-content;
-
-        /* O si prefieres que sea ancho completo pero con texto a la izquierda: */
-        /* width: 100%; 
-
-
-        /* Quita espacio extra a la izquierda si lo hay */
-    }
+  &[disabled] {
+    @apply bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed;
+    opacity: 0.8 !important;
+  }
 }
 
-.fila_dinamica {
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+// Specific adjustments
+ion-textarea.form-control {
+  min-height: 100px;
+  @apply p-2;
 }
 
-.contendor_doble {
-    display: flex;
-    width: 100%;
-    gap: 8px;
+// --- Dynamic Rows ---
+.dynamic-row {
+  @apply flex items-end gap-3 mb-3 p-3 bg-slate-50 rounded-lg border border-slate-200 border-dashed;
 }
 
-
-.contendor_input {
-    width: 30%;
+.action-btn {
+  @apply text-blue-600 font-semibold text-xs uppercase tracking-wide flex items-center gap-1 hover:text-blue-800 transition-colors cursor-pointer p-0;
+  --background: transparent;
+  --background-hover: transparent;
+  --box-shadow: none;
 }
 
-.linea_divisoria {
-    border: 0;
-    border-top: 1px solid #e5e7eb;
-    margin: 20px 0;
+// --- Dividers ---
+.tpa-divider {
+  @apply my-6 border-t border-slate-200;
 }
 
-.contenedor-radios {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    /* Los centra verticalmente */
-    gap: 30px;
-    /* Espacio entre "Retiro" y "Pesado" */
-    margin-top: 10px;
-    /* Un poco de aire arriba */
-    padding-left: 5px;
-    /* Ajuste leve */
+// --- Checkboxes & Radios ---
+.checkbox-list {
+  @apply flex flex-col gap-2;
+}
+
+.checkbox-item {
+  @apply text-sm text-slate-600;
+  --min-height: 32px;
+  --padding-start: 0;
+  --inner-padding-end: 0;
+}
+
+.radio-group-container {
+  @apply flex items-center gap-6 mt-2 px-2 bg-slate-50 rounded-lg py-2 border border-slate-100;
 }
 
 ion-radio {
-    font-size: 14px;
-    --color: #4b5563;
-    --color-checked: #2563eb;
-    z-index: 10;
+  @apply text-sm text-slate-600;
+  --color-checked: #2563eb; // Blue-600
 }
 
-/* Estilos Etapa 5 */
-.subtitulo {
-    font-size: 14px;
-    font-weight: 600;
-    color: #444;
-    margin-bottom: 10px;
-    display: block;
+// --- Signature & Upload ---
+.upload-zone-container {
+  @apply flex flex-col items-center justify-center p-6 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl transition-all duration-300 cursor-pointer;
+
+  &:hover:not(.bloqueado) {
+    @apply bg-blue-50 border-blue-400;
+  }
+
+  &.has-image {
+    @apply p-0 border-blue-500 border-solid overflow-hidden bg-white;
+  }
 }
 
-.selecionador_opciones_small,
-.contendor_input_small {
-    width: 100%;
-    margin: 0;
-    height: 40px;
-    font-size: 13px;
-    min-height: 40px;
-    --padding-top: 5px;
-    --padding-bottom: 5px;
+.upload-placeholder {
+  @apply flex flex-col items-center text-slate-400 gap-2;
+
+  ion-icon {
+    font-size: 40px;
+    @apply text-slate-300;
+  }
+
+  span {
+    @apply text-xs font-semibold;
+  }
 }
 
-.fila_material {
-    margin-bottom: 8px;
+.signature-preview {
+  @apply w-full h-32 object-contain bg-white;
 }
 
-.lista_equipos {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+.remove-overlay {
+  @apply absolute bottom-0 left-0 right-0 py-1 bg-red-500/90 text-white text-xs text-center font-bold uppercase tracking-wider opacity-0 transition-opacity;
+
+  .upload-zone-container:hover & {
+    @apply opacity-100;
+  }
 }
 
-.item_equipo ion-checkbox {
-    font-size: 13px;
-    --size: 18px;
+// Helpers
+.text-center {
+  text-align: center;
 }
 
-.boton_agregar_mas {
-    margin-top: 10px;
-    height: 35px;
-    width: 50px;
-    --border-radius: 6px;
+.mt-4 {
+  margin-top: 1rem;
 }
 
-.zona-firma-final {
-    padding: 0 10px;
-    background-color: white;
-    margin-top: 0;
+.mb-2 {
+  margin-bottom: 0.5rem;
 }
 
-.titulo-firma {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 10px;
-    display: block;
-}
-
-.caja-upload {
-    width: 100%;
-    height: 120px;
-    background-color: #f3f4f6;
-    border: 2px solid #8b5cf6;
-    border-radius: 8px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    overflow: hidden;
-    position: relative;
-    transition: all 0.3s ease;
-
-    &:active {
-        opacity: 0.8;
-        background-color: #e5e7eb;
-    }
-}
-
-.contenido-vacio {
-    text-align: center;
-    color: #4b5563;
-
-    .icono-upload {
-        font-size: 40px;
-        color: #8b5cf6;
-        margin-bottom: 5px;
-    }
-
-    p {
-        margin: 0;
-        font-size: 12px;
-        font-weight: 500;
-    }
-}
-
-.vista-previa {
-    width: 100%;
-    height: 100%;
-
-    img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-}
-
-.textarea_observaciones_final {
-    height: 120px !important;
-    --padding-top: 10px;
-    --padding-bottom: 10px;
-    border-radius: 8px;
-    margin-top: 0;
+.block {
+  display: block;
 }

@@ -70,6 +70,27 @@ export class AuthService {
     );
   }
 
+  // Actualizar Correo
+  actualizarCorreo(rut: string, correo: string): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/correo/${rut}`, { correo }).pipe(
+      tap(() => {
+        // Actualizar almacenamiento local
+        const currentUser = this.getUsuarioFromStorage();
+        if (currentUser) {
+          currentUser.correo = correo;
+          currentUser.correo_analista = correo; // Mantener consistencia
+          sessionStorage.setItem('usuario', JSON.stringify(currentUser));
+          this.currentUserSubject.next(currentUser);
+        }
+      })
+    );
+  }
+
+  // Actualizar Contraseña
+  actualizarPassword(rut: string, password: string): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/password/${rut}`, { password });
+  }
+
   getUsuario() {
     return this.currentUserSubject.value;
   }

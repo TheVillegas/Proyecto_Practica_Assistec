@@ -22,12 +22,46 @@ exports.obtenerEstadoRam = async (req, res) => {
 exports.obtenerReporteRAM = async (req, res) => {
     try {
         const { codigo_ali } = req.params;
+        const { getObjectSignedUrl } = require('../utils/s3'); // Importar aquí o arriba
 
         const reporte = await ReporteRAM.obtenerReporteRAM(codigo_ali);
 
         if (!reporte) {
             return res.status(404).json({ mensaje: 'Reporte RAM no encontrado' });
         }
+
+        // --- FIRMAR URLS S3 PARA FRONTEND ---
+        // 1. Firma Coordinador
+        if (reporte.etapa7?.firmaCoordinador && reporte.etapa7.firmaCoordinador.startsWith('uploads/')) {
+            try {
+                reporte.etapa7.firmaCoordinador = await getObjectSignedUrl(reporte.etapa7.firmaCoordinador);
+            } catch (e) {
+                console.error('Error firmando firma coordinador:', e);
+            }
+        }
+
+        // 2. Manual Inocuidad (Etapa 5) - Imagen
+        if (reporte.etapa5?.imagenManual && reporte.etapa5.imagenManual.startsWith('uploads/')) {
+            try {
+                reporte.etapa5.imagenManual = await getObjectSignedUrl(reporte.etapa5.imagenManual);
+            } catch (e) {
+                console.error('Error firmando imagen manual:', e);
+            }
+        }
+
+        // 3. Anexos Visuales
+        if (reporte.imagenes && Array.isArray(reporte.imagenes)) {
+            for (let img of reporte.imagenes) {
+                if (img.s3_key && img.s3_key.startsWith('uploads/')) {
+                    try {
+                        img.url = await getObjectSignedUrl(img.s3_key);
+                    } catch (e) {
+                        console.error(`Error firmando anexo ${img.nombre_archivo}:`, e);
+                    }
+                }
+            }
+        }
+        // ------------------------------------
 
         res.status(200).json(reporte);
 

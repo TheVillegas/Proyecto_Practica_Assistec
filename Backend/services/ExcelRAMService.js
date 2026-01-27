@@ -638,10 +638,12 @@ class ExcelRAMService {
                         extension: 'png', // Asumimos PNG por defecto si no podemos deducir
                     });
 
-                    // Insertar sobre la línea (aprox H-K)
+                    // AJUSTE DE POSICIÓN (Solicitud: Más arriba y a la derecha)
+                    // Antes: col 8.75 -> 10.25 | row -1 -> +1
+                    // Nuevo: col 9.2 -> 10.9 (Derecha) | row -1.3 -> +0.5 (Arriba)
                     sheet.addImage(imageId, {
-                        tl: { col: 7, row: currentRow - 1 }, // H
-                        br: { col: 11, row: currentRow + 1 }  // K
+                        tl: { col: 9.2, row: currentRow - 1.3 },
+                        br: { col: 10.9, row: currentRow + 0.5 }
                     });
                     firmaInsertada = true;
                 }
@@ -667,7 +669,7 @@ class ExcelRAMService {
 
         // --- MANUAL DE INOCUIDAD (Etapa 5) ---
         // Insertar imagen si existe
-        const manualUrl = datos.etapa5?.manualInocuidad;
+        const manualUrl = datos.etapa5?.manualInocuidad || datos.etapa5?.imagenManual; // Fix: usar imagenManual que es lo que viene del front
         if (manualUrl && typeof manualUrl === 'string' && manualUrl.includes('http')) {
             sheet.mergeCells(`A${currentRow}:K${currentRow}`);
             const titleManual = sheet.getCell(`A${currentRow}`);
@@ -706,53 +708,62 @@ class ExcelRAMService {
 
         // --- ANEXOS VISUALES (ALI_IMAGENES) ---
         if (datos.imagenes && datos.imagenes.length > 0) {
-            // currentRow += 2; // Ya sumado arriba
-            sheet.mergeCells(`A${currentRow}:K${currentRow}`);
-            const titleAnexos = sheet.getCell(`A${currentRow}`);
-            titleAnexos.value = 'ANEXOS VISUALES (Observaciones)';
-            titleAnexos.style = headerStyle;
-            titleAnexos.alignment = { horizontal: 'left', indent: 1 };
-            currentRow++;
+            // Filtrar duplicados por s3_key
+            const anexoKeysVistos = new Set();
+            const anexosUnicos = [];
+            for (const img of datos.imagenes) {
+                if (img.s3_key && !anexoKeysVistos.has(img.s3_key)) {
+                    anexoKeysVistos.add(img.s3_key);
+                    anexosUnicos.push(img);
+                }
+            }
 
-            for (const imgMeta of datos.imagenes) {
-                try {
-                    if (!imgMeta.s3_key) continue;
+            if (anexosUnicos.length > 0) {
+                sheet.mergeCells(`A${currentRow}:K${currentRow}`);
+                const titleAnexos = sheet.getCell(`A${currentRow}`);
+                titleAnexos.value = 'ANEXOS VISUALES (Observaciones)';
+                titleAnexos.style = headerStyle;
+                titleAnexos.alignment = { horizontal: 'left', indent: 1 };
+                currentRow++;
 
-                    const buffer = await getObjectBuffer(imgMeta.s3_key);
+                for (const imgMeta of anexosUnicos) {
+                    try {
+                        if (!imgMeta.s3_key) continue;
 
-                    // Determinar extensión
-                    let ext = 'png';
-                    if (imgMeta.tipo_mime && imgMeta.tipo_mime.includes('jpeg')) ext = 'jpeg';
-                    else if (imgMeta.tipo_mime && imgMeta.tipo_mime.includes('jpg')) ext = 'jpeg';
-                    else if (imgMeta.tipo_mime && imgMeta.tipo_mime.includes('png')) ext = 'png';
+                        const buffer = await getObjectBuffer(imgMeta.s3_key);
 
-                    const imageId = workbook.addImage({
-                        buffer: buffer,
-                        extension: ext,
-                    });
+                        // Determinar extensión simple
+                        let ext = 'png';
+                        const mime = (imgMeta.tipo_mime || '').toLowerCase();
+                        if (mime.includes('jpeg') || mime.includes('jpg')) ext = 'jpeg';
 
-                    // Insertar imagen ocupando aprox 15 filas
-                    const startRow = currentRow;
-                    const endRow = currentRow + 15;
+                        const imageId = workbook.addImage({
+                            buffer: buffer,
+                            extension: ext,
+                        });
 
-                    // Ajustar filas para que no se superpongan
-                    sheet.addImage(imageId, {
-                        tl: { col: 0, row: startRow }, // Columna A
-                        br: { col: 10.9, row: endRow }   // Hasta fin de K (aprox)
-                    });
+                        // Insertar imagen ocupando aprox 15 filas
+                        const startRow = currentRow;
+                        const endRow = currentRow + 15;
 
-                    // Etiqueta abajo
-                    sheet.mergeCells(`A${endRow + 1}:K${endRow + 1}`);
-                    const labelCell = sheet.getCell(`A${endRow + 1}`);
-                    labelCell.value = `Fig: ${imgMeta.nombre_archivo} (${formatearFecha(imgMeta.fecha_subida)})`;
-                    labelCell.alignment = { horizontal: 'center', vertical: 'top' };
-                    labelCell.font = { italic: true, size: 9 };
+                        sheet.addImage(imageId, {
+                            tl: { col: 0, row: startRow },
+                            br: { col: 10.9, row: endRow }
+                        });
 
-                    currentRow = endRow + 3; // Espacio para la siguiente imagen
-                } catch (error) {
-                    console.error('Error incrustando imagen en Excel:', error);
-                    sheet.getCell(`A${currentRow}`).value = `Error al cargar imagen: ${imgMeta.nombre_archivo}`;
-                    currentRow += 2;
+                        // Etiqueta abajo
+                        sheet.mergeCells(`A${endRow + 1}:K${endRow + 1}`);
+                        const labelCell = sheet.getCell(`A${endRow + 1}`);
+                        labelCell.value = `Fig: ${imgMeta.nombre_archivo} (${formatearFecha(imgMeta.fecha_subida)})`;
+                        labelCell.alignment = { horizontal: 'center', vertical: 'top' };
+                        labelCell.font = { italic: true, size: 9 };
+
+                        currentRow = endRow + 3; // Espacio para la siguiente imagen
+                    } catch (error) {
+                        console.error('Error incrustando imagen en Excel:', error);
+                        sheet.getCell(`A${currentRow}`).value = `Error al cargar imagen: ${imgMeta.nombre_archivo}`;
+                        currentRow += 2;
+                    }
                 }
             }
         }

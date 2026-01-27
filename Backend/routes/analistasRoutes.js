@@ -16,4 +16,10 @@ router.get('/analistas', authMiddleware.verifyToken, analistaController.listarAn
 // Actualizar foto perfil
 router.put('/foto-perfil/:rut', authMiddleware.verifyToken, analistaController.actualizarFotoPerfil);
 
+// Actualizar correo
+router.put('/correo/:rut', authMiddleware.verifyToken, analistaController.actualizarCorreo);
+
+// Actualizar contraseña
+router.put('/password/:rut', authMiddleware.verifyToken, analistaController.actualizarPassword);
+
 module.exports = router;

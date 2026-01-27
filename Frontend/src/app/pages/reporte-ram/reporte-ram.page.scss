@@ -1,204 +1,180 @@
+// RAM Report Styles - Tailwind Refactor (Replicated from TPA)
+
+// --- Base Layout ---
 ion-content {
-    --background: #f4f5f7;
+    --background: #f8fafc; // Slate-50 equivalent
 }
 
 ion-grid {
-    padding: 10px;
+    @apply p-4 max-w-7xl mx-auto;
 }
 
-.contenedor_label {
-    background: white;
-    margin-bottom: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e0e0e0;
-    overflow: hidden;
+// --- Card Containers (Acordeones) ---
+.ram-card {
+    @apply bg-white mb-5 rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300;
+
+    &:hover {
+        @apply shadow-md border-slate-300;
+    }
 }
 
-/* Cabecera del acordeón */
+// Header del Acordeón (Ionic Override)
 ion-accordion ion-item[slot="header"] {
-    --background: #f9fafb;
-    --min-height: 55px;
+    --background: #fff; // Header white
+    --min-height: 56px;
     --border-width: 0;
+    --inner-padding-end: 16px;
 }
 
-/* Título de la etapa */
-.titulo_contenedor {
-    font-size: 15px;
-    font-weight: 700;
-    color: #333;
-    letter-spacing: 0.5px;
+.ram-card-header-label {
+    @apply text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2;
 }
 
-.contenido_del_label {
-    background: white;
-    padding: 15px;
+.ram-card-content {
+    @apply bg-slate-50 p-5; // Gray content background
 }
 
-/* Estilos de Inputs para emular TPA - Modernizado */
-ion-input,
-ion-select,
-ion-textarea {
+// --- Form Elements ---
+.form-group {
+    @apply flex flex-col gap-1.5 mb-4;
+}
+
+.form-label {
+    @apply text-xs font-bold text-slate-600 uppercase tracking-tight ml-1;
+}
+
+.form-control {
+    // Selects, Inputs, Textareas
+    @apply w-full text-sm text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm transition-all duration-200;
+
+    // Ionic specific overrides
     --padding-start: 12px;
     --padding-end: 12px;
     --padding-top: 10px;
     --padding-bottom: 10px;
-    --background: #fdfdfd;
-    border: 1px solid #d1d5db;
-    /* Gris suave, mas moderno */
-    border-radius: 8px;
-    /* Bordes más redondeados */
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    /* Sombra sutil */
-    /* Más oscuro para mayor contraste */
-    border-radius: 6px;
-    font-size: 14px;
-    color: #4b5563;
-    margin-top: 5px;
-    min-height: 45px;
+    --background: #ffffff;
+    min-height: 42px;
+
+    &:focus-within {
+        @apply border-blue-500 ring-2 ring-blue-500/20;
+    }
+
+    &[disabled] {
+        @apply bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed;
+        opacity: 0.8 !important;
+    }
 }
 
-ion-label {
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    color: #374151 !important;
-    margin-bottom: 4px;
-    display: block;
-    /* Asegura que la etiqueta esté arriba */
+// Specific adjustments
+ion-textarea.form-control {
+    min-height: 100px;
+    @apply p-2;
 }
 
-.linea_divisoria {
-    border: 0;
-    border-top: 1px solid #e5e7eb;
-    margin: 20px 0;
+// --- Dynamic Rows ---
+.dynamic-row {
+    @apply flex items-end gap-3 mb-3 p-3 bg-white rounded-lg border border-slate-200 border-dashed;
 }
 
-.item-input-custom {
+.action-btn {
+    @apply text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1 hover:text-black transition-colors cursor-pointer p-0;
     --background: transparent;
+    --background-hover: transparent;
+    --box-shadow: none;
+}
+
+// --- Dividers ---
+.ram-divider {
+    @apply my-6 border-t border-slate-200;
+}
+
+// --- Checkboxes & Radios ---
+.checkbox-list {
+    @apply flex flex-col gap-2;
+}
+
+.checkbox-item {
+    @apply text-sm text-slate-700 font-medium;
+    --min-height: 36px;
     --padding-start: 0;
     --inner-padding-end: 0;
+    --background: transparent;
 }
 
-/* Clase auxiliar para inputs agrupados si los hay */
-.inputs_almedio {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    /* Espacio entre inputs verticales */
+.radio-group-container {
+    @apply flex items-center gap-6 mt-2 px-2 bg-white rounded-lg py-2 border border-slate-200;
 }
 
-/* Para los acordeones dentro del loop, quizás quieras margen */
-ion-accordion {
-    margin-bottom: 1px;
+ion-radio {
+    @apply text-sm text-slate-600;
+    --color-checked: #2563eb; // Blue-600
 }
 
-/* Estilo para los resultados que son más altos/grandes */
-.inputs_resultados {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    gap: 35px;
+// --- Signature & Upload ---
+.upload-zone-container {
+    @apply flex flex-col items-center justify-center p-6 bg-white border-2 border-dashed border-slate-300 rounded-xl transition-all duration-300 cursor-pointer;
+
+    &:hover:not(.bloqueado) {
+        @apply bg-blue-50 border-blue-400;
+    }
+
+    &.has-image {
+        @apply p-0 border-blue-500 border-solid overflow-hidden bg-white;
+    }
 }
 
-.titulo_resultado {
-    margin-bottom: 5px;
+.upload-placeholder {
+    @apply flex flex-col items-center text-slate-400 gap-2;
+
+    ion-icon {
+        font-size: 40px;
+        @apply text-slate-300;
+    }
+
+    span {
+        @apply text-xs font-semibold;
+    }
 }
 
-ion-row {
-    align-items: flex-start;
+.signature-preview {
+    @apply w-full h-32 object-contain bg-white;
 }
 
-/* Estilos para la zona de firma */
-.zona-firma-final {
-    display: flex;
-    flex-direction: column;
+.remove-overlay {
+    @apply absolute bottom-0 left-0 right-0 py-1 bg-red-500/90 text-white text-xs text-center font-bold uppercase tracking-wider opacity-0 transition-opacity;
+
+    .upload-zone-container:hover & {
+        @apply opacity-100;
+    }
 }
 
-.titulo-firma,
-.subtitulo {
-    margin-bottom: 8px;
+// --- Segments (Yes/No) ---
+ion-segment {
+    @apply bg-white p-1 rounded-lg border border-slate-200;
+    --background: white;
+}
+
+ion-segment-button {
+    --color: #64748b;
+    --color-checked: #2563eb;
+    --indicator-color: #eff6ff;
+    font-size: 12px;
     font-weight: 600;
-    color: #374151;
-    font-size: 16px !important;
 }
 
-.caja-upload {
-    border: 2px dashed #8b5cf6;
-    border-radius: 8px;
-    background-color: #f9fafb;
-    height: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    overflow: hidden;
-    position: relative;
-
-    &:hover {
-        background-color: #f3f4f6;
-        border-color: #7c3aed;
-    }
-
-    &.tiene-imagen {
-        border-style: solid;
-        padding: 0;
-    }
-
-    &.bloqueado {
-        opacity: 0.7;
-        pointer-events: none;
-        border-color: #d1d5db;
-    }
-}
-
-.contenido-vacio {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: #6b7280;
+// Helpers
+.text-center {
     text-align: center;
-
-    .icono-upload {
-        font-size: 32px;
-        margin-bottom: 8px;
-        color: #8b5cf6;
-    }
-
-    p {
-        margin: 0;
-        font-size: 13px;
-    }
 }
 
-.vista-previa {
-    width: 100%;
-    height: 100%;
-    position: relative;
+.mt-4 {
+    margin-top: 1rem;
+}
 
-    img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
 
-    .capa-eliminar {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: opacity 0.2s;
-        color: white;
-        font-weight: 500;
-
-        &:hover {
-            opacity: 1;
-        }
-    }
+.block {
+    display: block;
 }
