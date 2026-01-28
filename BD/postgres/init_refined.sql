@@ -328,7 +328,8 @@ VALUES ('Balanza 74-M', '74-M'),
     ('Homogenizador 12-m', '12-M'),
     ('Cuenta colonias 9-M', '9-M'),
     ('Cuenta Colonias 101-m', '101-M'),
-    ('pHmetro 93-m', '93-M');
+    ('pHmetro 93-m', '93-M'),
+    ('Pipetas desechables', 'Pip-Des');
 INSERT INTO INSTRUMENTOS (NOMBRE_INSTRUMENTO, CODIGO_INSTRUMENTO)
 VALUES ('Cuchara', 'cuchara'),
     ('Bisturí', 'bisturi'),
@@ -389,9 +390,9 @@ INSERT INTO USUARIOS (
         ROL_ANALISTA
     )
 VALUES (
-        '1-9',
-        'Administrador Asistec',
-        'admin@asistec.cl',
-        '$2b$10$abcdefghijklmnopqrstuvwxyz12345',
+        '21449676-3',
+        'Matias Villegas',
+        'mvlllgs2@gmail.com',
+        'admin123',
         1
     );
