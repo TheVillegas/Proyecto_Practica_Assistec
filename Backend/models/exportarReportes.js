@@ -237,7 +237,7 @@ async function generarReporteTPA(dataJson, outputName = 'Reporte_TPA') {
         // TODO: Implementar etapas 3, 4, 5 y 6 según requerimientos adicionales
 
         // Guardar el archivo
-        console.log(`Guardando archivo en: ${outputPath}`);
+        // console.log(`Guardando archivo en: ${outputPath}`);
         await workbook.xlsx.writeFile(outputPath);
 
         console.log('✓ Reporte TPA generado exitosamente');

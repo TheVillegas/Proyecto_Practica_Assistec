@@ -34,7 +34,7 @@ export class ConfiguracionUsuarioPage implements OnInit {
   cargarUsuario() {
     const user = this.authService.getUsuario();
     if (user) {
-      console.log('Usuario cargado:', user);
+      // console.log('Usuario cargado');
       this.usuario = {
         nombreApellido: user.nombreApellido || user.nombre_analista,
         rut: user.rut || user.rut_analista,

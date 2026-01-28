@@ -20,7 +20,7 @@ ReporteTPA.crearReporteTPAInicial = async (codigoALI, client = null) => {
             return await db.execute(sql, values);
         }
     } catch (err) {
-        console.error(`[ReporteTPA] Error al crear reporte inicial para ALI ${codigoALI}:`, err);
+        console.error(`[ReporteTPA] Error al crear reporte inicial para ALI ${codigoALI}:`, err.message);
         throw err;
     }
 };
@@ -44,7 +44,7 @@ ReporteTPA.obtenerEstadoReporte = async (codigoALI) => {
 
         return result.rows[0].estado_actual;
     } catch (error) {
-        console.error('Error al obtener estado del reporte:', error);
+        console.error('Error al obtener estado del reporte:', error.message);
         throw error;
     }
 };
@@ -293,7 +293,7 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
         return reporte;
 
     } catch (error) {
-        console.error('Error al obtener reporte TPA:', error);
+        console.error('Error al obtener reporte TPA:', error.message);
         throw error;
     } finally {
         if (client) {
@@ -674,27 +674,25 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                 }
             }
         }
-    }
-        }
 
-await client.query('COMMIT');
-return { success: true, mensaje: "Reporte TPA guardado exitosamente" };
+        await client.query('COMMIT');
+        return { success: true, mensaje: "Reporte TPA guardado exitosamente" };
 
     } catch (error) {
-    if (client) {
-        try {
-            await client.query('ROLLBACK');
-        } catch (rbError) {
-            console.error('Error al hacer rollback:', rbError);
+        if (client) {
+            try {
+                await client.query('ROLLBACK');
+            } catch (rbError) {
+                console.error('Error al hacer rollback:', rbError.message);
+            }
+        }
+        console.error('Error al guardar reporte TPA:', error.message);
+        throw error;
+    } finally {
+        if (client) {
+            client.release();
         }
     }
-    console.error('Error al guardar reporte TPA:', error);
-    throw error;
-} finally {
-    if (client) {
-        client.release();
-    }
-}
 };
 
 /**
@@ -721,7 +719,7 @@ ReporteTPA.verificarReporte = async (codigoALI, rutUsuario, observacionesFinales
 
         return { success: true, result };
     } catch (error) {
-        console.error('Error al verificar reporte:', error);
+        console.error('Error al verificar reporte:', error.message);
         throw error;
     }
 };

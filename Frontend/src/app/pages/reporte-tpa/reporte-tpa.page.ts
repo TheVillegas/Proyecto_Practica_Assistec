@@ -529,7 +529,7 @@ export class ReporteTPAPage implements OnInit {
       fechaUltimaModificacion: new Date().toISOString()
     };
 
-    console.log(datosParaGuardar);
+    // console.log(datosParaGuardar);
     this.tpaService.guardarReporte(datosParaGuardar).subscribe({
       next: async (resp) => {
         // Si es verificado, llamamos al endpoint de verificación para firmar/cerrar administrativamente

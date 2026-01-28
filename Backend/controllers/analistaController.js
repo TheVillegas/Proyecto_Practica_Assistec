@@ -39,7 +39,7 @@ exports.crearAnalista = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        console.error('Error crearAnalista:', error.message);
         res.status(500).json({ mensaje: 'Error interno del servidor' });
     }
 };
@@ -98,7 +98,7 @@ exports.loginAnalista = async (req, res) => {
             usuario: usuarioMapeado
         });
     } catch (bkError) {
-        console.error(bkError);
+        console.error('Error loginAnalista:', bkError.message);
         res.status(500).json({ mensaje: 'Error al validar credenciales' });
     }
 };
@@ -110,7 +110,7 @@ exports.listarAnalistas = async (req, res) => {
         const analistas = result.rows.map(mapAnalista);
         res.status(200).json(analistas);
     } catch (err) {
-        console.error(err);
+        console.error('Error listarAnalistas:', err.message);
         res.status(500).json({ mensaje: 'Error al obtener analistas' });
     }
 };
@@ -135,7 +135,7 @@ exports.actualizarFotoPerfil = async (req, res) => {
         await Analista.actualizarFoto(rut, url_foto);
         res.status(200).json({ mensaje: 'Foto de perfil actualizada correctamente' });
     } catch (error) {
-        console.error('Error al actualizar foto de perfil:', error);
+        console.error('Error al actualizar foto de perfil:', error.message);
         res.status(500).json({ mensaje: 'Error interno al actualizar foto' });
     }
 };
@@ -154,7 +154,7 @@ exports.actualizarCorreo = async (req, res) => {
         await Analista.actualizarCorreo(rut, correo);
         res.status(200).json({ mensaje: 'Correo actualizado correctamente' });
     } catch (error) {
-        console.error('Error al actualizar correo:', error);
+        console.error('Error al actualizar correo:', error.message);
         res.status(500).json({ mensaje: 'Error interno al actualizar correo' });
     }
 };
@@ -175,7 +175,7 @@ exports.actualizarPassword = async (req, res) => {
         await Analista.actualizarPassword(rut, hashedPassword);
         res.status(200).json({ mensaje: 'Contraseña actualizada correctamente' });
     } catch (error) {
-        console.error('Error al actualizar contraseña:', error);
+        console.error('Error al actualizar contraseña:', error.message);
         res.status(500).json({ mensaje: 'Error interno al actualizar contraseña' });
     }
 };
