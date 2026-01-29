@@ -381,18 +381,3 @@ VALUES ('Micropipeta 22-M', '22-M', '1 ML'),
     ('Micropipeta 94-M', '94-M', '10 ML'),
     ('Micropipeta 103-M', '103-M', '10 ML'),
     ('Micropipeta 106-M', '106-M', '10 ML');
--- Usuario Administrador por defecto (Contraseña: admin123 hash provisional)
-INSERT INTO USUARIOS (
-        RUT_ANALISTA,
-        NOMBRE_APELLIDO_ANALISTA,
-        CORREO_ANALISTA,
-        CONTRASENA_ANALISTA,
-        ROL_ANALISTA
-    )
-VALUES (
-        '21449676-3',
-        'Matias Villegas',
-        'mvlllgs2@gmail.com',
-        'admin123',
-        1
-    );
