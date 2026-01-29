@@ -10,6 +10,7 @@ if (!process.env.JWT_SECRET) {
 }
 
 app.use(express.json());
+const cors = require('cors');
 const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [];
 app.use(cors({
     origin: allowedOrigins,
