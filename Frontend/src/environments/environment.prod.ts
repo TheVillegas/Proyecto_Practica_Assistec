@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: '/AsisTec'
+  apiUrl: 'http://3.208.28.45:3000/AsisTec'
 };

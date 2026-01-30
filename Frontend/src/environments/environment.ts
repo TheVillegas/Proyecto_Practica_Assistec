@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiUrl: '/AsisTec'
+  apiUrl: 'http://localhost:3000/AsisTec'
 };
 
 /*

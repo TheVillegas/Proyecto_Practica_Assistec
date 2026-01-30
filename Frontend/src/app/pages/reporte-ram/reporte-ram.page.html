@@ -191,10 +191,16 @@
             <ion-row>
               <ion-col size="4"><ion-input type="number" class="form-control text-center"
                   [disabled]="formularioBloqueado" [(ngModel)]="etapa3.dil"></ion-input></ion-col>
-              <ion-col size="4"><ion-input type="number" class="form-control text-center"
-                  [disabled]="formularioBloqueado" [(ngModel)]="etapa3.numeroColonias01"></ion-input></ion-col>
-              <ion-col size="4"><ion-input type="number" class="form-control text-center"
-                  [disabled]="formularioBloqueado" [(ngModel)]="etapa3.numeroColonias02"></ion-input></ion-col>
+              <ion-col size="4">
+                <ion-input type="number" class="form-control text-center" [disabled]="formularioBloqueado"
+                  [(ngModel)]="etapa3.numeroColonias01"></ion-input>
+                <div class="text-[10px] text-slate-400 text-center mt-1">MNPC > 250</div>
+              </ion-col>
+              <ion-col size="4">
+                <ion-input type="number" class="form-control text-center" [disabled]="formularioBloqueado"
+                  [(ngModel)]="etapa3.numeroColonias02"></ion-input>
+                <div class="text-[10px] text-slate-400 text-center mt-1">SD = 0</div>
+              </ion-col>
             </ion-row>
 
             <ion-row>
@@ -219,7 +225,7 @@
             </ion-col>
             <ion-col size="6">
               <div class="form-group">
-                <ion-label class="form-label">Resultado RPES</ion-label>
+                <ion-label class="form-label">Resultado UFC (RPESCA)</ion-label>
                 <div class="p-2 bg-slate-100 rounded border border-slate-300 min-h-[42px] flex items-center">
                   <span class="text-sm font-bold text-slate-700">{{ etapa3.resultadoRPES01 || '-' }}</span>
                 </div>
