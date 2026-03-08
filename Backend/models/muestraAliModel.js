@@ -21,7 +21,6 @@ MuestraALI.crearMuestraALI = async (datos, callback) => {
 
         if (checkResult.rows && checkResult.rows.length > 0) {
             await client.query('ROLLBACK');
-            client.release();
             return callback(new Error(`El código ALI '${codigo_ali}' ya existe en el sistema.`));
         }
 
