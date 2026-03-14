@@ -34,3 +34,7 @@ yarn-error.log*
 test-local-db.js
 test-*.js
 nul
+
+# --- Carpetas de trabajo interno (auditorías, agentes) ---
+Auditoria/
+gentleman-guardian-angel/
