@@ -7,6 +7,7 @@
 
  */
 const jwt = require('jsonwebtoken');
+const logger = require('../utils/logger');
 const SECRET_KEY = process.env.JWT_SECRET;
 
 module.exports = {
@@ -27,7 +28,7 @@ module.exports = {
         }
 
         if (!process.env.JWT_SECRET) {
-            console.error('FATAL: JWT_SECRET no definido en entorno');
+            logger.error('FATAL: JWT_SECRET no definido en entorno');
             return res.status(500).json({ mensaje: 'Error de configuración del servidor' });
         }
 
@@ -37,7 +38,7 @@ module.exports = {
             }
             req.user = {
                 rut: decoded.id,
-                rol: decoded.role // Rol 1: Supervisor, Rol 2: Analista
+                rol: decoded.role // Rol 0: Analista, Rol 1: Supervisor
             };
             next();
         });

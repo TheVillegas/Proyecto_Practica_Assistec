@@ -2,6 +2,7 @@ const Analista = require('../models/analistaModel.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { mapAnalista } = require('../utils/mappers');
+const logger = require('../utils/logger');
 
 
 // Asegúrate de tener JWT_SECRET en tus variables de entorno
@@ -39,7 +40,7 @@ exports.crearAnalista = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error crearAnalista:', error.message);
+        logger.error('Error crearAnalista', { message: error.message });
         res.status(500).json({ mensaje: 'Error interno del servidor' });
     }
 };
@@ -98,7 +99,7 @@ exports.loginAnalista = async (req, res) => {
             usuario: usuarioMapeado
         });
     } catch (bkError) {
-        console.error('Error loginAnalista:', bkError.message);
+        logger.error('Error loginAnalista', { message: bkError.message });
         res.status(500).json({ mensaje: 'Error al validar credenciales' });
     }
 };
@@ -110,7 +111,7 @@ exports.listarAnalistas = async (req, res) => {
         const analistas = result.rows.map(mapAnalista);
         res.status(200).json(analistas);
     } catch (err) {
-        console.error('Error listarAnalistas:', err.message);
+        logger.error('Error listarAnalistas', { message: err.message });
         res.status(500).json({ mensaje: 'Error al obtener analistas' });
     }
 };
@@ -125,17 +126,16 @@ exports.actualizarFotoPerfil = async (req, res) => {
         }
 
         // Validar que el usuario que actualiza es el mismo del RUT (Seguridad básica)
-        // Ojo: req.user viene del middleware authMiddleware (decodificado del token)
-        /*
-        if (req.user.id !== rut && req.user.role !== 1) { // Asumiendo rol 1 es admin
-             return res.status(403).json({ mensaje: 'No tiene permisos para modificar este usuario' });
+        // req.user viene del middleware authMiddleware: { rut: decoded.id, rol: decoded.role }
+        // Roles: 0 = Analista, 1 = Supervisor
+        if (req.user.rut !== rut && req.user.rol !== 1) {
+            return res.status(403).json({ mensaje: 'No tiene permisos para modificar este usuario' });
         }
-        */
 
         await Analista.actualizarFoto(rut, url_foto);
         res.status(200).json({ mensaje: 'Foto de perfil actualizada correctamente' });
     } catch (error) {
-        console.error('Error al actualizar foto de perfil:', error.message);
+        logger.error('Error al actualizar foto de perfil', { message: error.message });
         res.status(500).json({ mensaje: 'Error interno al actualizar foto' });
     }
 };
@@ -154,7 +154,7 @@ exports.actualizarCorreo = async (req, res) => {
         await Analista.actualizarCorreo(rut, correo);
         res.status(200).json({ mensaje: 'Correo actualizado correctamente' });
     } catch (error) {
-        console.error('Error al actualizar correo:', error.message);
+        logger.error('Error al actualizar correo', { message: error.message });
         res.status(500).json({ mensaje: 'Error interno al actualizar correo' });
     }
 };
@@ -175,7 +175,7 @@ exports.actualizarPassword = async (req, res) => {
         await Analista.actualizarPassword(rut, hashedPassword);
         res.status(200).json({ mensaje: 'Contraseña actualizada correctamente' });
     } catch (error) {
-        console.error('Error al actualizar contraseña:', error.message);
+        logger.error('Error al actualizar contraseña', { message: error.message });
         res.status(500).json({ mensaje: 'Error interno al actualizar contraseña' });
     }
 };

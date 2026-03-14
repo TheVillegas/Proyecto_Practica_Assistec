@@ -1,11 +1,12 @@
 require('dotenv').config();
 const express = require("express");
 const app = express();
+const logger = require('./utils/logger');
 
 const port = process.env.PORT || 3000;
 
 if (!process.env.JWT_SECRET) {
-    console.error('FATAL ERROR: JWT_SECRET is not defined in .env');
+    logger.error('FATAL ERROR: JWT_SECRET is not defined in .env');
     process.exit(1);
 }
 
@@ -39,12 +40,25 @@ db.initialize().then(() => {
     app.use('/AsisTec/MuestraALI', muestraAliRoutes);
     app.use('/AsisTec/ReporteTPA', reporteTPARoutes);
     app.use('/AsisTec/ReporteRAM', reporteRAMRoutes);
-    app.use('/AsisTec/Exportar', exportarRoutes);
+    app.use('/AsisTec/exportar', exportarRoutes);
     app.use('/AsisTec', uploadRoutes);
+
+    // Global error handler — debe ir DESPUÉS de todas las rutas.
+    // Express lo identifica como error handler por tener exactamente 4 parámetros.
+    // eslint-disable-next-line no-unused-vars
+    app.use((err, req, res, next) => {
+        logger.error('[GlobalErrorHandler]', { message: err.message, stack: err.stack });
+        const status = err.status || err.statusCode || 500;
+        // En producción nunca exponer detalles internos al cliente
+        const mensaje = process.env.NODE_ENV === 'production'
+            ? 'Error interno del servidor'
+            : (err.message || 'Error interno del servidor');
+        res.status(status).json({ mensaje });
+    });
 
     app.listen(port, () => {
     });
 }).catch(err => {
-    console.error("No se pudo iniciar la aplicación debido a un error:", err); // Mostrar el error real
+    logger.error('No se pudo iniciar la aplicación', { message: err.message, stack: err.stack });
     process.exit(1);
 });
