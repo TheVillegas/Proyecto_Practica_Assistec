@@ -1,6 +1,7 @@
 const ExcelJS = require('exceljs');
 const path = require('path');
 const fs = require('fs').promises;
+const logger = require('../utils/logger');
 
 /**
  * Normaliza texto para comparaciones flexibles
@@ -228,10 +229,10 @@ async function generarReporteTPA(dataJson, outputName = 'Reporte_TPA') {
         }
 
         // Procesar cada etapa
-        console.log('Procesando Etapa 1: Almacenamiento...');
+        logger.info('Procesando Etapa 1: Almacenamiento...');
         procesarEtapa1(worksheet, dataJson.etapa1);
 
-        console.log('Procesando Etapa 2: Manipulación...');
+        logger.info('Procesando Etapa 2: Manipulación...');
         procesarEtapa2(worksheet, dataJson.etapa2_manipulacion);
 
         // TODO: Implementar etapas 3, 4, 5 y 6 según requerimientos adicionales
@@ -240,11 +241,11 @@ async function generarReporteTPA(dataJson, outputName = 'Reporte_TPA') {
         // console.log(`Guardando archivo en: ${outputPath}`);
         await workbook.xlsx.writeFile(outputPath);
 
-        console.log('✓ Reporte TPA generado exitosamente');
+        logger.info('Reporte TPA generado exitosamente');
         return outputPath;
 
     } catch (error) {
-        console.error('Error al generar reporte TPA:', error);
+        logger.error('Error al generar reporte TPA', { message: error.message });
         throw error;
     }
 }

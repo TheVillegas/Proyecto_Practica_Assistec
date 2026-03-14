@@ -1,5 +1,6 @@
 const db = require('../config/DB.js');
-const { getObjectSignedUrl } = require('../utils/s3'); // Para generar URLs al listar
+const { getObjectSignedUrl } = require('../utils/s3');
+const logger = require('../utils/logger');
 
 exports.agregarImagen = async (req, res) => {
     const { codigo_ali, s3_key, nombre_archivo, tipo_mime, tamanio } = req.body;
@@ -23,8 +24,8 @@ exports.agregarImagen = async (req, res) => {
             imagen: result.rows[0]
         });
     } catch (error) {
-        console.error('Error al registrar imagen ALI:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor', error: error.message });
+        logger.error('Error al registrar imagen ALI', { message: error.message });
+        res.status(500).json({ mensaje: 'Error interno del servidor' });
     }
 };
 
@@ -51,8 +52,8 @@ exports.obtenerImagenes = async (req, res) => {
 
         res.status(200).json(imagenes);
     } catch (error) {
-        console.error('Error al obtener imágenes ALI:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor', error: error.message });
+        logger.error('Error al obtener imágenes ALI', { message: error.message });
+        res.status(500).json({ mensaje: 'Error interno del servidor' });
     }
 };
 
@@ -70,7 +71,7 @@ exports.eliminarImagen = async (req, res) => {
 
         res.status(200).json({ mensaje: 'Imagen eliminada correctamente', imagenEliminada: result.rows[0] });
     } catch (error) {
-        console.error('Error al eliminar imagen ALI:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor', error: error.message });
+        logger.error('Error al eliminar imagen ALI', { message: error.message });
+        res.status(500).json({ mensaje: 'Error interno del servidor' });
     }
 };

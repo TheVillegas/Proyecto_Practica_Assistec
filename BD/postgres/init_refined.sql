@@ -333,7 +333,8 @@ VALUES ('Balanza 74-M', '74-M'),
 INSERT INTO INSTRUMENTOS (NOMBRE_INSTRUMENTO, CODIGO_INSTRUMENTO)
 VALUES ('Cuchara', 'cuchara'),
     ('Bisturí', 'bisturi'),
-    ('Pinzas', 'pinzas');
+    ('Pinzas', 'pinzas'),
+    ('Cuchillo', 'cuchillo');
 INSERT INTO LUGARES_ALMACENAMIENTO (NOMBRE_LUGAR, CODIGO_LUGAR)
 VALUES ('Freezer 33-M', 'FR-33M'),
     ('Refrigerador 33-M', 'RF-33M'),

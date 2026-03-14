@@ -1,5 +1,6 @@
 const ExcelJS = require('exceljs');
 const { getObjectBuffer } = require('../utils/s3');
+const logger = require('../utils/logger');
 
 class ExcelRAMService {
     static async generarBuffer(datos) {
@@ -384,7 +385,7 @@ class ExcelRAMService {
                     br: { col: 10.8, row: currentRow + 0.8 }     // Bottom-right: columna K
                 });
             } catch (error) {
-                console.error('Error al insertar imagen Manual de Inocuidad:', error);
+                logger.error('Error al insertar imagen Manual de Inocuidad en Excel', { message: error.message });
             }
         }
 
@@ -680,7 +681,7 @@ class ExcelRAMService {
                     firmaInsertada = true;
                 }
             } catch (e) {
-                console.error('Error insertando firma coordinador S3:', e);
+                logger.error('Error insertando firma coordinador S3 en Excel RAM', { message: e.message });
             }
         }
 
@@ -731,7 +732,7 @@ class ExcelRAMService {
                     currentRow = endRow + 1;
                 }
             } catch (e) {
-                console.error('Error insertando manual inocuidad S3:', e);
+                logger.error('Error insertando manual inocuidad S3 en Excel RAM', { message: e.message });
                 sheet.getCell(`A${currentRow}`).value = 'Error al cargar imagen del manual.';
                 currentRow++;
             }
@@ -792,7 +793,7 @@ class ExcelRAMService {
 
                         currentRow = endRow + 3; // Espacio para la siguiente imagen
                     } catch (error) {
-                        console.error('Error incrustando imagen en Excel:', error);
+                        logger.error('Error incrustando imagen en Excel RAM', { message: error.message });
                         sheet.getCell(`A${currentRow}`).value = `Error al cargar imagen: ${imgMeta.nombre_archivo}`;
                         currentRow += 2;
                     }

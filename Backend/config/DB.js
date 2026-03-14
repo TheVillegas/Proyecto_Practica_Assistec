@@ -1,11 +1,10 @@
 require('dotenv').config();
 const { Pool } = require('pg');
-
+const logger = require('../utils/logger');
 
 // Validar variables de entorno
 if (!process.env.DB_USER || !process.env.DB_HOST || !process.env.NOMBRE_DB || !process.env.MI_CLAVE_POSTGRES || !process.env.DB_PORT) {
-    console.error('🚨 ERROR: Faltan variables de entorno críticas para PostgreSQL');
-    console.error('Verifica tu archivo .env');
+    logger.error('Faltan variables de entorno críticas para PostgreSQL. Verifica tu archivo .env');
     process.exit(1);
 }
 
@@ -19,8 +18,9 @@ const pool = new Pool({
 });
 
 pool.on('error', (err, client) => {
-    console.error('Error inesperado en el pool de PostgreSQL:', err);
-    process.exit(-1);
+    // Loguear el error pero NO matar el proceso — un error esporádico de pool
+    // no debe derribar el servidor entero. Express seguirá sirviendo requests.
+    logger.error('Error inesperado en el pool de PostgreSQL', { message: err.message });
 });
 
 //añadir delay para esperar a la base de datos
@@ -30,21 +30,21 @@ async function initialize() {
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
-            console.log(`🔄 Intento ${attempt}/${MAX_RETRIES} de conexión a PostgreSQL...`);
+            logger.info(`Intento ${attempt}/${MAX_RETRIES} de conexión a PostgreSQL...`);
 
             const client = await pool.connect();
-            console.log("✅ Conexión a PostgreSQL OK");
+            logger.info('Conexión a PostgreSQL OK');
             client.release();
             return; // Salir si la conexión fue exitosa
 
         } catch (error) {
-            console.error(`❌ Intento ${attempt} falló:`, error.message);
+            logger.error(`Intento ${attempt} de conexión a PostgreSQL falló`, { message: error.message });
 
             if (attempt < MAX_RETRIES) {
-                console.log(`⏳ Reintentando en ${RETRY_DELAY / 1000}s...`);
+                logger.info(`Reintentando en ${RETRY_DELAY / 1000}s...`);
                 await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
             } else {
-                console.error("🚨 CRÍTICO: No se pudo conectar a PostgreSQL después de todos los intentos");
+                logger.error('CRÍTICO: No se pudo conectar a PostgreSQL después de todos los intentos');
                 throw error;
             }
         }
@@ -63,7 +63,7 @@ async function execute(text, params) {
         // Son compatibles en la propiedad .rows
         return res;
     } catch (err) {
-        console.error('Error ejecutando query', { text, err });
+        logger.error('Error ejecutando query', { text, message: err.message });
         throw err;
     }
 }

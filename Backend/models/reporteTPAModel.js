@@ -1,5 +1,6 @@
 const db = require('../config/DB.js');
 const { getObjectSignedUrl } = require('../utils/s3');
+const logger = require('../utils/logger');
 
 const ReporteTPA = {};
 
@@ -20,7 +21,7 @@ ReporteTPA.crearReporteTPAInicial = async (codigoALI, client = null) => {
             return await db.execute(sql, values);
         }
     } catch (err) {
-        console.error(`[ReporteTPA] Error al crear reporte inicial para ALI ${codigoALI}:`, err.message);
+        logger.error(`[ReporteTPA] Error al crear reporte inicial para ALI ${codigoALI}`, { message: err.message });
         throw err;
     }
 };
@@ -44,7 +45,7 @@ ReporteTPA.obtenerEstadoReporte = async (codigoALI) => {
 
         return result.rows[0].estado_actual;
     } catch (error) {
-        console.error('Error al obtener estado del reporte:', error.message);
+        logger.error('Error al obtener estado del reporte TPA', { message: error.message });
         throw error;
     }
 };
@@ -293,7 +294,7 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
         return reporte;
 
     } catch (error) {
-        console.error('Error al obtener reporte TPA:', error.message);
+        logger.error('Error al obtener reporte TPA', { message: error.message });
         throw error;
     } finally {
         if (client) {
@@ -683,10 +684,10 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
             try {
                 await client.query('ROLLBACK');
             } catch (rbError) {
-                console.error('Error al hacer rollback:', rbError.message);
+                logger.error('Error al hacer rollback en guardarReporteTPA', { message: rbError.message });
             }
         }
-        console.error('Error al guardar reporte TPA:', error.message);
+        logger.error('Error al guardar reporte TPA', { message: error.message });
         throw error;
     } finally {
         if (client) {
@@ -719,7 +720,7 @@ ReporteTPA.verificarReporte = async (codigoALI, rutUsuario, observacionesFinales
 
         return { success: true, result };
     } catch (error) {
-        console.error('Error al verificar reporte:', error.message);
+        logger.error('Error al verificar reporte TPA', { message: error.message });
         throw error;
     }
 };

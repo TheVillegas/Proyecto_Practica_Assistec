@@ -1,4 +1,5 @@
 const ReporteRAM = require('../models/reporteRAMModel');
+const logger = require('../utils/logger');
 
 exports.obtenerEstadoRam = async (req, res) => {
     try {
@@ -14,7 +15,7 @@ exports.obtenerEstadoRam = async (req, res) => {
         res.status(200).json({ estado });
 
     } catch (error) {
-        console.error('Error al obtener estado RAM:', error);
+        logger.error('Error al obtener estado RAM', { message: error.message });
         res.status(500).json({ mensaje: 'Error al obtener el estado del reporte RAM' });
     }
 };
@@ -22,7 +23,7 @@ exports.obtenerEstadoRam = async (req, res) => {
 exports.obtenerReporteRAM = async (req, res) => {
     try {
         const { codigo_ali } = req.params;
-        const { getObjectSignedUrl } = require('../utils/s3'); // Importar aquí o arriba
+        const { getObjectSignedUrl } = require('../utils/s3');
 
         const reporte = await ReporteRAM.obtenerReporteRAM(codigo_ali);
 
@@ -31,32 +32,17 @@ exports.obtenerReporteRAM = async (req, res) => {
         }
 
         // --- FIRMAR URLS S3 PARA FRONTEND ---
-        // 1. Firma Coordinador
-        if (reporte.etapa7?.firmaCoordinador && reporte.etapa7.firmaCoordinador.startsWith('uploads/')) {
-            try {
-                reporte.etapa7.firmaCoordinador = await getObjectSignedUrl(reporte.etapa7.firmaCoordinador);
-            } catch (e) {
-                console.error('Error firmando firma coordinador:', e);
-            }
-        }
+        // Nota: firmaCoordinador (etapa7) y manualInocuidad (etapa5) ya vienen
+        // firmados desde el model. Solo firmamos anexos visuales adicionales.
 
-        // 2. Manual Inocuidad (Etapa 5) - Imagen
-        if (reporte.etapa5?.imagenManual && reporte.etapa5.imagenManual.startsWith('uploads/')) {
-            try {
-                reporte.etapa5.imagenManual = await getObjectSignedUrl(reporte.etapa5.imagenManual);
-            } catch (e) {
-                console.error('Error firmando imagen manual:', e);
-            }
-        }
-
-        // 3. Anexos Visuales
+        // Anexos Visuales
         if (reporte.imagenes && Array.isArray(reporte.imagenes)) {
             for (let img of reporte.imagenes) {
                 if (img.s3_key && img.s3_key.startsWith('uploads/')) {
                     try {
                         img.url = await getObjectSignedUrl(img.s3_key);
                     } catch (e) {
-                        console.error(`Error firmando anexo ${img.nombre_archivo}:`, e);
+                        logger.error(`Error firmando anexo RAM ${img.nombre_archivo}`, { message: e.message });
                     }
                 }
             }
@@ -66,7 +52,7 @@ exports.obtenerReporteRAM = async (req, res) => {
         res.status(200).json(reporte);
 
     } catch (error) {
-        console.error('Error al obtener reporte RAM:', error);
+        logger.error('Error al obtener reporte RAM', { message: error.message });
         res.status(500).json({ mensaje: 'Error al obtener el reporte RAM' });
     }
 };
@@ -105,7 +91,7 @@ exports.guardarReporteRAM = async (req, res) => {
         // REGLA 3: Seguridad - Prevenir que Rol 0 (Analista) finalice el reporte arbitrariamente
         // Si el usuario es Rol 0 y envía estado VERIFICADO o FINALIZADO, forzamos PENDIENTE o BORRADOR
         if (rol == 0 && (datos.estado === 'VERIFICADO' || datos.estado === 'FINALIZADO')) {
-            console.warn(`Usuario Rol 0 intentó guardar RAM como '${datos.estado}'. Forzando a 'PENDIENTE'.`);
+            logger.warn(`Usuario Rol 0 intentó guardar RAM como '${datos.estado}'. Forzando a 'PENDIENTE'.`);
             datos.estado = 'PENDIENTE';
         }
 
@@ -114,8 +100,8 @@ exports.guardarReporteRAM = async (req, res) => {
         res.status(200).json(result);
 
     } catch (error) {
-        console.error('Error al guardar reporte RAM:', error);
-        res.status(500).json({ mensaje: 'Error al guardar el reporte RAM: ' + error.message, error: error.message });
+        logger.error('Error al guardar reporte RAM', { message: error.message });
+        res.status(500).json({ mensaje: 'Error al guardar el reporte RAM' });
     }
 
 
@@ -147,11 +133,8 @@ exports.previewCalculoRAM = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error al calcular preview RAM:', error);
-        res.status(500).json({
-            mensaje: 'Error al calcular resultados RAM',
-            error: error.message
-        });
+        logger.error('Error al calcular preview RAM', { message: error.message });
+        res.status(500).json({ mensaje: 'Error al calcular resultados RAM' });
     }
 }
 

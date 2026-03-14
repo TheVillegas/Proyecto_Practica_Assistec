@@ -1,4 +1,5 @@
 const ReporteTPA = require('../models/reporteTPAModel.js');
+const logger = require('../utils/logger');
 
 /**
  * Obtiene el reporte TPA completo por código ALI
@@ -21,7 +22,7 @@ exports.obtenerReporteTPA = async (req, res) => {
             try {
                 reporte.etapa6_cierre.firma = await getObjectSignedUrl(reporte.etapa6_cierre.firma);
             } catch (e) {
-                console.error('Error firmando firma coordinador TPA:', e);
+                logger.error('Error firmando firma coordinador TPA', { message: e.message });
             }
         }
 
@@ -32,7 +33,7 @@ exports.obtenerReporteTPA = async (req, res) => {
                     try {
                         img.url = await getObjectSignedUrl(img.s3_key);
                     } catch (e) {
-                        console.error(`Error firmando anexo TPA ${img.nombre_archivo}:`, e);
+                        logger.error(`Error firmando anexo TPA ${img.nombre_archivo}`, { message: e.message });
                     }
                 }
             }
@@ -41,7 +42,7 @@ exports.obtenerReporteTPA = async (req, res) => {
 
         res.status(200).json(reporte);
     } catch (error) {
-        console.error('Error al obtener reporte TPA:', error);
+        logger.error('Error al obtener reporte TPA', { message: error.message });
         res.status(500).json({ mensaje: 'Error al obtener el reporte TPA' });
     }
 };
@@ -88,7 +89,7 @@ exports.guardarReporteTPA = async (req, res) => {
 
         // REGLA 3: Seguridad - Prevenir que Rol 0 manipule el estado a VERIFICADO manual
         if (rol == 0 && (datos.estado === 'VERIFICADO')) {
-            console.warn(`Usuario Rol 0 intentó guardar TPA como 'VERIFICADO'. Forzando a 'PENDIENTE'.`);
+            logger.warn(`Usuario Rol 0 intentó guardar TPA como 'VERIFICADO'. Forzando a 'PENDIENTE'.`);
             datos.estado = 'PENDIENTE';
         }
 
@@ -96,7 +97,7 @@ exports.guardarReporteTPA = async (req, res) => {
 
         res.status(200).json(result);
     } catch (error) {
-        console.error('Error al guardar reporte TPA:', error);
+        logger.error('Error al guardar reporte TPA', { message: error.message });
         res.status(500).json({ mensaje: 'Error al guardar el reporte TPA' });
     }
 };
@@ -124,7 +125,7 @@ exports.verificarReporte = async (req, res) => {
             ...result
         });
     } catch (error) {
-        console.error('Error al verificar reporte:', error);
+        logger.error('Error al verificar reporte TPA', { message: error.message });
         res.status(500).json({ mensaje: 'Error al verificar el reporte' });
     }
 };
@@ -144,7 +145,7 @@ exports.obtenerEstadoReporte = async (req, res) => {
 
         res.status(200).json({ estado });
     } catch (error) {
-        console.error('Error al obtener estado:', error);
+        logger.error('Error al obtener estado reporte TPA', { message: error.message });
         res.status(500).json({ mensaje: 'Error al obtener el estado del reporte' });
     }
 };

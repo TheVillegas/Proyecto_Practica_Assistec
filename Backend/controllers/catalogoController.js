@@ -1,5 +1,6 @@
 const Catalogo = require('../models/catalogoModel.js');
 const { mapGeneric } = require('../utils/mappers');
+const logger = require('../utils/logger');
 
 // Helper para manejar respuestas genéricas
 const handleResponse = async (res, promise) => {
@@ -7,7 +8,7 @@ const handleResponse = async (res, promise) => {
         const result = await promise;
         res.status(200).json(result.rows.map(mapGeneric));
     } catch (err) {
-        console.error(err);
+        logger.error('Error al obtener datos del catálogo', { message: err.message });
         res.status(500).json({ mensaje: 'Error interno al obtener datos del catálogo' });
     }
 };
@@ -20,7 +21,7 @@ const handleResponseById = async (res, promise, notFoundMessage) => {
         }
         res.status(200).json(mapGeneric(result.rows[0]));
     } catch (err) {
-        console.error(err);
+        logger.error('Error al obtener elemento del catálogo', { message: err.message });
         res.status(500).json({ mensaje: 'Error interno al obtener elemento' });
     }
 };

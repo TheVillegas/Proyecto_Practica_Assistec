@@ -4,6 +4,7 @@ const ExcelRAMService = require('../services/ExcelRAMService');
 const ExcelTPAService = require('../services/ExcelTPAService');
 const path = require('path');
 const db = require('../config/DB.js');
+const logger = require('../utils/logger');
 
 /**
  * Controlador para exportar reporte RAM a Excel
@@ -40,8 +41,8 @@ const exportarReporteRAM = async (req, res) => {
         res.send(buffer);
 
     } catch (error) {
-        console.error('Error exportando RAM:', error);
-        res.status(500).json({ error: 'Error al generar excel RAM', detalle: error.message });
+        logger.error('Error exportando RAM', { message: error.message });
+        res.status(500).json({ error: 'Error al generar excel RAM' });
     }
 };
 
@@ -79,11 +80,8 @@ const exportarReporteTPA = async (req, res) => {
         res.send(buffer);
 
     } catch (error) {
-        console.error('Error en exportarReporteTPA:', error);
-        res.status(500).json({
-            error: 'Error al generar el reporte',
-            mensaje: error.message
-        });
+        logger.error('Error exportando TPA', { message: error.message });
+        res.status(500).json({ error: 'Error al generar el reporte' });
     }
 };
 

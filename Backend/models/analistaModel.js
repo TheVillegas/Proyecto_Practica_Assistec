@@ -1,5 +1,6 @@
 const db = require('../config/DB.js');
 const { getObjectSignedUrl } = require('../utils/s3');
+const logger = require('../utils/logger');
 
 const Analista = {};
 
@@ -70,7 +71,7 @@ Analista.obtenerPorCorreo = async (correo) => {
 
         return result.rows[0].rut_analista;
     } catch (error) {
-        console.error('Error al obtener rut por correo:', error);
+        logger.error('Error al obtener rut por correo', { message: error.message });
         throw error;
     }
 };

@@ -1,5 +1,6 @@
 const ExcelJS = require('exceljs');
 const { getObjectBuffer } = require('../utils/s3');
+const logger = require('../utils/logger');
 
 class ExcelTPAService {
     static async generarBuffer(datos) {
@@ -424,7 +425,7 @@ class ExcelTPAService {
                     });
                 }
             } catch (e) {
-                console.error('Error insertando firma coordinador TPA S3:', e);
+                logger.error('Error insertando firma coordinador TPA S3 en Excel', { message: e.message });
             }
         }
 
@@ -496,9 +497,7 @@ class ExcelTPAService {
 
                         currentRow = endRow + 3; // Espacio para la siguiente imagen
                     } catch (error) {
-                        console.error('Error incrustando imagen en Excel (TPA):', error);
-                        // sheet.getCell(`A${currentRow}`).value = `Error al cargar imagen: ${imgMeta.nombre_archivo}`; // Silent fail
-                        // currentRow += 2; // Do not advance row if failed
+                        logger.error('Error incrustando imagen en Excel TPA', { message: error.message });
                     }
                 }
             }

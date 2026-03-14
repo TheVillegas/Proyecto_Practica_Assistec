@@ -1,4 +1,5 @@
 const { uploadFile, getObjectSignedUrl } = require('../utils/s3');
+const logger = require('../utils/logger');
 
 exports.uploadImage = async (req, res) => {
     try {
@@ -20,10 +21,7 @@ exports.uploadImage = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en uploadImage controller:', error);
-        return res.status(500).json({
-            mensaje: 'Error interno al procesar la imagen',
-            error: error.message
-        });
+        logger.error('Error en uploadImage controller', { message: error.message });
+        return res.status(500).json({ mensaje: 'Error interno al procesar la imagen' });
     }
 };
