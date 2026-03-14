@@ -137,28 +137,41 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
         `;
         const resultEtapa2 = await client.query(sqlEtapa2, [codigoALI]);
 
-        for (const row of resultEtapa2.rows) {
-            const idSesion = row.id_sesion;
+        // --- FIX N+1: cargar equipos y materiales de TODAS las sesiones en 2 queries batch ---
+        // En vez de 1 query por sesión (N×2 queries), hacemos 2 queries totales
+        // y agrupamos en memoria con Map<id_sesion, []>
+        const idsSesiones = resultEtapa2.rows.map(r => r.id_sesion);
 
-            // Obtener equipos de esta sesión
-            const sqlEquipos = `
-                SELECT e.nombre_equipo
+        // Map equipos: id_sesion → [nombre_equipo, ...]
+        const equiposPorSesion = new Map();
+        // Map materiales: id_sesion → [{ tipoMaterial, codigoMaterial }, ...]
+        const materialesPorSesion = new Map();
+
+        if (idsSesiones.length > 0) {
+            const sqlEquiposBatch = `
+                SELECT eq.id_sesion, e.nombre_equipo
                 FROM TPA_ETAPA2_EQUIPOS eq
                 JOIN EQUIPOS_LAB e ON eq.id_equipo = e.id_equipo
-                WHERE eq.id_sesion = $1
+                WHERE eq.id_sesion = ANY($1)
             `;
-            const resultEquipos = await client.query(sqlEquipos, [idSesion]);
+            const resultEquiposBatch = await client.query(sqlEquiposBatch, [idsSesiones]);
+            for (const row of resultEquiposBatch.rows) {
+                if (!equiposPorSesion.has(row.id_sesion)) {
+                    equiposPorSesion.set(row.id_sesion, []);
+                }
+                equiposPorSesion.get(row.id_sesion).push(row.nombre_equipo);
+            }
 
-            // Obtener materiales de esta sesión
-            const sqlMateriales = `
+            const sqlMaterialesBatch = `
                 SELECT 
+                    m.id_sesion,
                     m.tipo_material,
                     m.codigo_manual,
                     COALESCE(
-                        p.nombre_pipeta, 
-                        i.nombre_instrumento, 
-                        p_code.nombre_pipeta, 
-                        i_code.nombre_instrumento, 
+                        p.nombre_pipeta,
+                        i.nombre_instrumento,
+                        p_code.nombre_pipeta,
+                        i_code.nombre_instrumento,
                         m.tipo_material
                     ) as nombre_material
                 FROM TPA_ETAPA2_MATERIALES m
@@ -166,9 +179,22 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 LEFT JOIN INSTRUMENTOS i ON m.id_instrumento = i.id_instrumento
                 LEFT JOIN MICROPIPETAS p_code ON m.tipo_material = p_code.codigo_pipeta
                 LEFT JOIN INSTRUMENTOS i_code ON m.tipo_material = i_code.codigo_instrumento
-                WHERE m.id_sesion = $1
+                WHERE m.id_sesion = ANY($1)
             `;
-            const resultMateriales = await client.query(sqlMateriales, [idSesion]);
+            const resultMaterialesBatch = await client.query(sqlMaterialesBatch, [idsSesiones]);
+            for (const row of resultMaterialesBatch.rows) {
+                if (!materialesPorSesion.has(row.id_sesion)) {
+                    materialesPorSesion.set(row.id_sesion, []);
+                }
+                materialesPorSesion.get(row.id_sesion).push(row);
+            }
+        }
+        // ---------------------------------------------------------------------------------
+
+        for (const row of resultEtapa2.rows) {
+            const idSesion = row.id_sesion;
+            const equiposDeSesion = equiposPorSesion.get(idSesion) ?? [];
+            const materialesDeSesion = materialesPorSesion.get(idSesion) ?? [];
 
             reporte.etapa2_manipulacion.push({
                 id: idSesion,
@@ -180,8 +206,8 @@ ReporteTPA.obtenerReporteTPA = async (codigoALI) => {
                 numeroMuestras: row.numero_muestras,
                 observacionesEtapa2: row.observaciones_sesion,
                 tipoAccion: row.retiro_pesado === 1 ? 'Pesado' : 'Retiro',
-                equiposSeleccionados: resultEquipos.rows.map(e => e.nombre_equipo),
-                listaMateriales: resultMateriales.rows.map((m, idx) => ({
+                equiposSeleccionados: equiposDeSesion,
+                listaMateriales: materialesDeSesion.map((m, idx) => ({
                     id: idx,
                     tipoMaterial: m.nombre_material || m.tipo_material || '',
                     codigoMaterial: m.codigo_manual || ''
@@ -313,6 +339,44 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
         client = await db.getConnection();
         await client.query('BEGIN');
 
+        // --- FIX N+1: pre-cargar todos los maestros en Maps antes de los loops ---
+        // Cada Map permite lookup O(1) en memoria en vez de 1 query por iteración.
+        // Claves en UPPERCASE para comparación case-insensitive consistente con los WHERE UPPER() anteriores.
+
+        const [
+            resUsuarios,
+            resEquiposLab,
+            resMicropipetas,
+            resInstrumentos,
+            resChecklist,
+            resDiluyentes,
+            resMaterialSiembra
+        ] = await Promise.all([
+            client.query('SELECT rut_analista, UPPER(nombre_apellido_analista) as nombre FROM USUARIOS'),
+            client.query('SELECT id_equipo, UPPER(nombre_equipo) as nombre FROM EQUIPOS_LAB'),
+            client.query('SELECT id_pipeta, codigo_pipeta FROM MICROPIPETAS'),
+            client.query('SELECT id_instrumento, codigo_instrumento FROM INSTRUMENTOS'),
+            client.query('SELECT id_item, UPPER(nombre_item) as nombre FROM MAESTRO_CHECKLIST_LIMPIEZA'),
+            client.query('SELECT id_diluyente, UPPER(nombre_diluyente) as nombre FROM DILUYENTES'),
+            client.query('SELECT id_material_siembra, UPPER(nombre_material) as nombre FROM MATERIAL_SIEMBRA')
+        ]);
+
+        // Map<NOMBRE_UPPER, rut_analista>
+        const usuariosMap = new Map(resUsuarios.rows.map(r => [r.nombre, r.rut_analista]));
+        // Map<NOMBRE_UPPER, id_equipo>
+        const equiposLabMap = new Map(resEquiposLab.rows.map(r => [r.nombre, r.id_equipo]));
+        // Map<codigo_pipeta, id_pipeta>
+        const micropipetasMap = new Map(resMicropipetas.rows.map(r => [r.codigo_pipeta, r.id_pipeta]));
+        // Map<codigo_instrumento, id_instrumento>
+        const instrumentosMap = new Map(resInstrumentos.rows.map(r => [r.codigo_instrumento, r.id_instrumento]));
+        // Map<NOMBRE_UPPER, id_item>
+        const checklistMap = new Map(resChecklist.rows.map(r => [r.nombre, r.id_item]));
+        // Map<NOMBRE_UPPER, id_diluyente>
+        const diluyentesMap = new Map(resDiluyentes.rows.map(r => [r.nombre, r.id_diluyente]));
+        // Map<NOMBRE_UPPER, id_material_siembra>
+        const materialSiembraMap = new Map(resMaterialSiembra.rows.map(r => [r.nombre, r.id_material_siembra]));
+        // -----------------------------------------------------------------------
+
         const sqlReporteGeneral = `
             UPDATE TPA_REPORTE SET
                 estado_actual = $1,
@@ -370,15 +434,10 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                         throw new Error(`El responsable es obligatorio en Etapa 2 para finalizar el reporte.`);
                     }
                 } else {
-                    const resAnalista = await client.query(
-                        'SELECT rut_analista FROM USUARIOS WHERE UPPER(nombre_apellido_analista) = UPPER($1)',
-                        [sesion.responsable]
-                    );
-
-                    if (resAnalista.rows.length === 0) {
+                    rutReal = usuariosMap.get(sesion.responsable.trim().toUpperCase()) ?? null;
+                    if (!rutReal) {
                         throw new Error(`Analista '${sesion.responsable}' no encontrado.`);
                     }
-                    rutReal = resAnalista.rows[0].rut_analista;
                 }
 
                 let fechaInicio = null;
@@ -444,14 +503,11 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
 
                 if (sesion.equiposSeleccionados && Array.isArray(sesion.equiposSeleccionados)) {
                     for (const nombreEquipo of sesion.equiposSeleccionados) {
-                        const resEq = await client.query(
-                            'SELECT id_equipo FROM EQUIPOS_LAB WHERE UPPER(nombre_equipo) = UPPER($1)',
-                            [nombreEquipo]
-                        );
-                        if (resEq.rows.length > 0) {
+                        const idEquipo = equiposLabMap.get(nombreEquipo.toUpperCase());
+                        if (idEquipo) {
                             await client.query(
                                 'INSERT INTO TPA_ETAPA2_EQUIPOS (id_equipo, id_sesion) VALUES ($1, $2)',
-                                [resEq.rows[0].id_equipo, idSesionReal]
+                                [idEquipo, idSesionReal]
                             );
                         }
                     }
@@ -466,25 +522,8 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                             continue;
                         }
 
-                        let idPipeta = null;
-                        let idInstrumento = null;
-
-                        const resPipeta = await client.query(
-                            'SELECT id_pipeta FROM MICROPIPETAS WHERE codigo_pipeta = $1',
-                            [mat.tipoMaterial]
-                        );
-
-                        if (resPipeta.rows.length > 0) {
-                            idPipeta = resPipeta.rows[0].id_pipeta;
-                        } else {
-                            const resInstr = await client.query(
-                                'SELECT id_instrumento FROM INSTRUMENTOS WHERE codigo_instrumento = $1',
-                                [mat.tipoMaterial]
-                            );
-                            if (resInstr.rows.length > 0) {
-                                idInstrumento = resInstr.rows[0].id_instrumento;
-                            }
-                        }
+                        const idPipeta = micropipetasMap.get(mat.tipoMaterial) ?? null;
+                        const idInstrumento = idPipeta ? null : (instrumentosMap.get(mat.tipoMaterial) ?? null);
 
                         await client.query(
                             `INSERT INTO TPA_ETAPA2_MATERIALES (id_sesion, tipo_material, codigo_manual, id_pipeta, id_instrumento) 
@@ -511,12 +550,9 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
 
             for (const item of datos.etapa3_limpieza.checklist) {
                 const nombreItem = item.nombre || item.nombreItem;
-                const resItem = await client.query(
-                    'SELECT id_item FROM MAESTRO_CHECKLIST_LIMPIEZA WHERE UPPER(nombre_item) = UPPER($1)',
-                    [nombreItem]
-                );
+                const idItem = checklistMap.get(nombreItem?.toUpperCase());
 
-                if (resItem.rows.length === 0) {
+                if (!idItem) {
                     throw new Error(`El item '${nombreItem}' no existe en el maestro de limpieza.`);
                 }
 
@@ -546,15 +582,10 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                         throw new Error(`El responsable es obligatorio en Etapa 4 para finalizar el reporte.`);
                     }
                 } else {
-                    const resAnalista = await client.query(
-                        'SELECT rut_analista FROM USUARIOS WHERE UPPER(nombre_apellido_analista) = UPPER($1)',
-                        [datosRetiro.responsable]
-                    );
-
-                    if (resAnalista.rows.length === 0) {
+                    rutReal = usuariosMap.get(datosRetiro.responsable.trim().toUpperCase()) ?? null;
+                    if (!rutReal) {
                         throw new Error(`El analista '${datosRetiro.responsable}' no existe en la base de datos.`);
                     }
-                    rutReal = resAnalista.rows[0].rut_analista;
                 }
 
                 // Validar fecha retiro
@@ -606,19 +637,12 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
         // DILUYENTES
         if (datos.etapa5_siembra.diluyentes && Array.isArray(datos.etapa5_siembra.diluyentes)) {
             for (const dil of datos.etapa5_siembra.diluyentes) {
-                const resMast = await client.query(
-                    'SELECT id_diluyente FROM DILUYENTES WHERE UPPER(nombre_diluyente) = UPPER($1)',
-                    [dil.nombre]
-                );
-                if (resMast.rows.length > 0) {
+                const idDiluyente = diluyentesMap.get(dil.nombre?.toUpperCase());
+                if (idDiluyente) {
                     await client.query(
                         `INSERT INTO TPA_ETAPA5_RECURSOS (id_siembra, categoria_recurso, id_diluyente, codigo_diluyente) 
                              VALUES ($1, 'DILUYENTE', $2, $3)`,
-                        [
-                            idSiembraReal,
-                            resMast.rows[0].id_diluyente,
-                            dil.codigoDiluyente
-                        ]
+                        [idSiembraReal, idDiluyente, dil.codigoDiluyente]
                     );
                 }
             }
@@ -636,20 +660,12 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
                     continue;
                 }
 
-                const equipoValido = await client.query(
-                    'SELECT id_equipo FROM EQUIPOS_LAB WHERE UPPER(nombre_equipo) = UPPER($1)',
-                    [nombreEquipo]
-                );
-
-                if (equipoValido.rows.length > 0) {
+                const idEquipo = equiposLabMap.get(nombreEquipo.toUpperCase());
+                if (idEquipo) {
                     await client.query(
                         `INSERT INTO TPA_ETAPA5_RECURSOS (id_siembra, categoria_recurso, id_equipo, seleccionado) 
                              VALUES ($1, 'EQUIPO', $2, $3)`,
-                        [
-                            idSiembraReal,
-                            equipoValido.rows[0].id_equipo,
-                            equipo.seleccionado ? 1 : 0
-                        ]
+                        [idSiembraReal, idEquipo, equipo.seleccionado ? 1 : 0]
                     );
                 }
             }
@@ -658,19 +674,12 @@ ReporteTPA.guardarReporteCompleto = async (datos, rutUsuario = null) => {
         // MATERIALES
         if (datos.etapa5_siembra.materiales && Array.isArray(datos.etapa5_siembra.materiales)) {
             for (const mat of datos.etapa5_siembra.materiales) {
-                const resMast = await client.query(
-                    'SELECT id_material_siembra FROM MATERIAL_SIEMBRA WHERE UPPER(nombre_material) = UPPER($1)',
-                    [mat.nombre]
-                );
-                if (resMast.rows.length > 0) {
+                const idMaterial = materialSiembraMap.get(mat.nombre?.toUpperCase());
+                if (idMaterial) {
                     await client.query(
                         `INSERT INTO TPA_ETAPA5_RECURSOS (id_siembra, categoria_recurso, id_material_siembra, codigo_material) 
                              VALUES ($1, 'MATERIAL', $2, $3)`,
-                        [
-                            idSiembraReal,
-                            resMast.rows[0].id_material_siembra,
-                            mat.codigoMaterialSiembra
-                        ]
+                        [idSiembraReal, idMaterial, mat.codigoMaterialSiembra]
                     );
                 }
             }

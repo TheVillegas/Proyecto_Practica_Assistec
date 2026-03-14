@@ -2,24 +2,25 @@ const express = require('express');
 const router = express.Router();
 const analistaController = require('../controllers/analistaController.js');
 const authMiddleware = require('../middleware/authMiddleware.js');
+const validators = require('../middleware/validators.js');
 
 // Rutas protegidas (Usuario debe ser admin o tener token válido para crear otros, asumo)
 // CAMBIO: Se deja pública por solicitud del usuario
-router.post('/crearAnalista', analistaController.crearAnalista);
+router.post('/crearAnalista', validators.crearAnalista, analistaController.crearAnalista);
 
 // Ruta pública para login
-router.post('/login', analistaController.loginAnalista);
+router.post('/login', validators.login, analistaController.loginAnalista);
 
 // Ruta protegida para listar
 router.get('/analistas', authMiddleware.verifyToken, analistaController.listarAnalistas);
 
 // Actualizar foto perfil
-router.put('/foto-perfil/:rut', authMiddleware.verifyToken, analistaController.actualizarFotoPerfil);
+router.put('/foto-perfil/:rut', authMiddleware.verifyToken, validators.actualizarFotoPerfil, analistaController.actualizarFotoPerfil);
 
 // Actualizar correo
-router.put('/correo/:rut', authMiddleware.verifyToken, analistaController.actualizarCorreo);
+router.put('/correo/:rut', authMiddleware.verifyToken, validators.actualizarCorreo, analistaController.actualizarCorreo);
 
 // Actualizar contraseña
-router.put('/password/:rut', authMiddleware.verifyToken, analistaController.actualizarPassword);
+router.put('/password/:rut', authMiddleware.verifyToken, validators.actualizarPassword, analistaController.actualizarPassword);
 
 module.exports = router;

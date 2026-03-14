@@ -29,3 +29,8 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# --- Scripts de prueba local (NO subir al repo) ---
+test-local-db.js
+test-*.js
+nul
