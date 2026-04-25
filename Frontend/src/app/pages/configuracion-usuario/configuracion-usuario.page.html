@@ -44,27 +44,27 @@
           <div class="fields-list">
 
             <!-- Nombre Completo (readonly) -->
-            <div class="asistec-form-group">
+            <div class="form-group">
               <ion-label class="field-label">Nombre Completo</ion-label>
-              <div class="asistec-input-wrapper input-wrapper--readonly">
+              <div class="form-input-wrapper input-wrapper--readonly">
                 <ion-input [value]="usuario.nombreApellido" readonly></ion-input>
                 <ion-icon name="lock-closed-outline" class="lock-icon"></ion-icon>
               </div>
             </div>
 
             <!-- RUT (readonly) -->
-            <div class="asistec-form-group">
+            <div class="form-group">
               <ion-label class="field-label">RUT</ion-label>
-              <div class="asistec-input-wrapper input-wrapper--readonly">
+              <div class="form-input-wrapper input-wrapper--readonly">
                 <ion-input [value]="usuario.rut" readonly></ion-input>
                 <ion-icon name="lock-closed-outline" class="lock-icon"></ion-icon>
               </div>
             </div>
 
             <!-- Correo (editable) -->
-            <div class="asistec-form-group">
+            <div class="form-group">
               <ion-label class="field-label">Correo Electrónico</ion-label>
-              <div class="asistec-input-wrapper input-wrapper--editable">
+              <div class="form-input-wrapper input-wrapper--editable">
                 <ion-input [value]="usuario.correo" readonly></ion-input>
                 <ion-button fill="clear" size="small" (click)="cambiarCorreo()">
                   Cambiar
@@ -73,9 +73,9 @@
             </div>
 
             <!-- Contraseña (editable) -->
-            <div class="asistec-form-group">
+            <div class="form-group">
               <ion-label class="field-label">Contraseña</ion-label>
-              <div class="asistec-input-wrapper input-wrapper--editable">
+              <div class="form-input-wrapper input-wrapper--editable">
                 <ion-input value="********" readonly type="password"></ion-input>
                 <ion-button fill="clear" size="small" (click)="cambiarPassword()">
                   Cambiar

@@ -45,18 +45,18 @@
 //Establecemos la tipografia global
 //Revisar debido a que no carga la tipografia original.
 :root {
-    --ion-font-family: 'Inclusive Sans', sans-serif;
+  --ion-font-family: 'Inclusive Sans', sans-serif;
 }
 
 /* Ocultar flechas en Chrome, Safari, Edge, Opera */
 ion-input input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 /* Ocultar flechas en Firefox */
 ion-input input[type=number] {
-    -moz-appearance: textfield;
+  -moz-appearance: textfield;
 }
 
 /* ============================================================
@@ -65,93 +65,208 @@ ion-input input[type=number] {
 
 /* Clase aplicada a ion-content en páginas con sidebar */
 ion-content.page-content {
-    --background: #F4F4F4;
-    position: absolute;
-    left: 256px;
-    width: calc(100% - 256px);
+  --background: #F4F4F4;
+  position: absolute;
+  left: 256px;
+  width: calc(100% - 256px);
+  --padding-start: 10px;
+  --padding-end: 10px;
+  --padding-top: 24px;
+  --padding-bottom: 32px;
 }
 
 /* Clase aplicada a los footers para que respeten el sidebar */
 .page-footer {
-    position: absolute;
-    bottom: 0;
-    left: 256px;
-    width: calc(100% - 256px);
-    z-index: 40; /* Menor que el sidebar (50) pero alto para estar sobre el contenido */
+  position: absolute;
+  bottom: 0;
+  left: 256px;
+  width: calc(100% - 256px);
+  z-index: 40;
+  /* Menor que el sidebar (50) pero alto para estar sobre el contenido */
 }
 
 /* ============================================================
    ASISTEC DESIGN SYSTEM - FORMULARIOS GLOBALES
    ============================================================ */
 
-/* Contenedor de un campo de formulario (label + input) */
-.asistec-form-group {
-    @apply flex flex-col gap-2 mb-4 w-full;
+/* Contenedor de cada campo (Label + Input) */
+.form-group {
+  @apply flex flex-col gap-2 mb-4 w-full;
 }
 
-/* Etiqueta de texto para los campos */
-.asistec-label {
-    @apply block text-sm font-semibold text-slate-700 mb-1;
-    font-family: 'Inter', sans-serif;
+/* Etiqueta del campo (Label) */
+.form-label {
+  @apply text-[#1e3a8a] font-medium text-[14px] leading-[1.2] mb-1;
+  font-family: 'Inter', sans-serif;
 }
 
 /* Contenedor relativo cuando un input lleva icono dentro */
-.asistec-input-wrapper {
-    @apply relative w-full;
+.form-input-wrapper {
+  @apply relative w-full;
 }
 
 /* Icono posicionado a la izquierda dentro del input */
-.asistec-input-icon {
-    @apply absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 z-10;
-    font-size: 20px;
+.form-input-icon {
+  @apply absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 z-10;
+  font-size: 20px;
 }
 
-/* 
- * Clase universal para campos de texto, números, contraseñas y selectores.
- * Funciona tanto para etiquetas <input> nativas como para componentes <ion-input> / <ion-select>.
- */
-.asistec-input {
-    @apply w-full text-sm text-slate-800 bg-white rounded-xl transition-all duration-200 outline-none;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+/* Inputs de texto, número, fecha y selects */
+.form-input,
+.form-select {
+  @apply w-full border border-[#94a3b8] text-sm text-[#111c2d] bg-white rounded px-3 py-2 outline-none transition-all;
+  border: 1px solid #94a3b8 !important;
+  /* Fuerza el borde incluso en componentes shadow DOM */
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  min-height: 48px;
 
-    /* Estilos base compartidos */
-    min-height: 48px;
-    padding: 12px 16px;
+  &.has-icon {
+    padding-left: 44px;
+  }
 
-    /* Cuando se usa junto a un icono, se da más padding a la izquierda */
-    &.has-icon {
-        padding-left: 44px;
-    }
+  /* Variables específicas de Ionic para que sobreescriban los componentes anidados */
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  --background: #ffffff;
+  --border-radius: 4px;
 
-    /* Variables específicas de Ionic para que sobreescriban los componentes anidados */
+  &::part(native) {
+    padding: 0 !important;
+  }
+
+  &.ion-focused,
+  &:focus,
+  &:focus-within {
+    @apply border-[#00558f];
+    box-shadow: 0 0 0 1px #00558f;
+  }
+
+  &[disabled],
+  &:disabled {
+    background: #f8fafc;
+    --background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    opacity: 1 !important;
+    cursor: not-allowed;
+  }
+}
+
+/* Textarea (mantiene estilos del input pero con ajustes de texto) */
+.form-textarea {
+  @extend .form-input;
+  @apply text-sm resize-y;
+  min-height: 80px;
+}
+
+/* Contenedor general para grupos de Radios o Checkboxes */
+.form-radio-group {
+  @apply flex items-center gap-4 py-2;
+}
+
+/* Contenedor/Label de un Radio o Checkbox individual */
+.form-check-label {
+  @apply flex items-center gap-2 cursor-pointer text-sm text-[#111c2d];
+}
+
+/* Inputs de tipo Radio y Checkbox */
+.form-radio,
+.form-checkbox {
+  @apply text-[#00558f] w-4 h-4;
+
+  &:focus {
+    @apply ring-[#00558f];
+  }
+}
+
+/* Inputs pequeños para tablas (ej: conteo en placas) */
+.form-input-sm {
+  @apply w-24 border border-[#94a3b8] rounded px-2 py-1 text-sm outline-none transition-all;
+  border: 1px solid #94a3b8 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  --padding-start: 8px;
+  --padding-end: 8px;
+  --padding-top: 4px;
+  --padding-bottom: 4px;
+  --background: #ffffff;
+  --border-radius: 4px;
+
+  &.ion-focused,
+  &:focus {
+    @apply border-[#00558f];
+    box-shadow: 0 0 0 1px #00558f;
+  }
+}
+
+/* ============================================================
+   ESTILOS DE CONTENEDORES DE FORMULARIO (CARDS / ACORDEONES)
+   ============================================================ */
+
+/* Estructura base de Tarjeta (si no se usa acordeón) */
+.form-card {
+  @apply bg-white rounded-xl border border-[#e5e7eb] overflow-hidden mb-6 block w-full;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.form-card-header {
+  @apply bg-[#29588C] p-4 flex items-center justify-between text-white w-full;
+}
+
+.form-card-title-group {
+  @apply flex items-center gap-3;
+}
+
+.form-card-title {
+  @apply text-[20px] font-semibold leading-[1.4] m-0;
+  font-family: 'Inter', sans-serif;
+}
+
+.form-card-body {
+  @apply p-6 bg-white w-full block;
+}
+
+/* Estilos específicos para <ion-accordion> */
+ion-accordion.form-accordion {
+  @apply bg-white rounded-xl border border-[#e5e7eb] overflow-hidden mb-6;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+
+  &::part(content) {
+    background: #ffffff;
+  }
+
+  ion-item[slot="header"] {
+    --background: #29588C;
+    --background-hover: #1e4066;
+    --color: #ffffff;
+    --min-height: 56px;
     --padding-start: 16px;
-    --padding-end: 16px;
-    --padding-top: 12px;
-    --padding-bottom: 12px;
-    --background: #ffffff;
-    --border-radius: 12px;
+    --inner-padding-end: 16px;
+    font-family: 'Inter', sans-serif;
 
-    /* Eliminar el padding interno que Ionic 7 pone por defecto */
     &::part(native) {
-        padding: 0 !important;
+      border: none;
     }
 
-    /* Estados de Focus (Natívos e Ionic) */
-    &.ion-focused,
-    &:focus,
-    &:focus-within {
-        border-color: #006EB6;
-        box-shadow: 0 0 0 3px rgba(0, 110, 182, 0.2);
+    ion-label {
+      @apply text-[16px] font-semibold leading-[1.4] flex items-center gap-3 m-0;
     }
 
-    /* Estados Deshabilitados */
-    &[disabled], &:disabled {
-        background: #f8fafc;
-        --background: #f8fafc;
-        border-color: #e2e8f0;
-        color: #94a3b8;
-        opacity: 1 !important;
-        cursor: not-allowed;
+    ion-icon[slot="end"] {
+      color: #ffffff;
     }
-}
+  }
+
+  .form-card-body {
+    @apply p-6 bg-white block w-full;
+  }
+}
+
+/* Separador horizontal */
+.form-divider {
+  @apply my-5;
+  height: 1px;
+  background: linear-gradient(to right, rgba(41, 88, 140, 0.2), transparent);
+}
