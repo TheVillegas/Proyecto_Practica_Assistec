@@ -26,12 +26,12 @@
 
           <div class="card-body">
             <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="space-y-5">
-              <div class="input-group">
+              <div class="asistec-form-group">
                 <label for="rut">Rut</label>
-                <div class="input-wrapper">
-                  <ion-icon name="id-card-outline" class="field-icon"></ion-icon>
+                <div class="asistec-input-wrapper">
+                  <ion-icon name="id-card-outline" class="asistec-input-icon"></ion-icon>
                   <input id="rut" type="text" formControlName="rut" placeholder="Ej. 12.345.678-9"
-                    class="input-field" />
+                    class="asistec-input has-icon" />
                 </div>
 
                 <div *ngIf="registerForm.get('rut')?.touched && registerForm.get('rut')?.invalid" class="error-msg">
@@ -40,12 +40,12 @@
                 </div>
               </div>
 
-              <div class="input-group">
+              <div class="asistec-form-group">
                 <label for="fullname">Nombre y Apellido</label>
-                <div class="input-wrapper">
-                  <ion-icon name="person-outline" class="field-icon"></ion-icon>
+                <div class="asistec-input-wrapper">
+                  <ion-icon name="person-outline" class="asistec-input-icon"></ion-icon>
                   <input id="fullname" type="text" formControlName="fullname" placeholder="Ej : Matias Villegas"
-                    class="input-field" />
+                    class="asistec-input has-icon" />
                 </div>
                 <div *ngIf="registerForm.get('fullname')?.touched && registerForm.get('fullname')?.invalid"
                   class="error-msg">
@@ -54,12 +54,12 @@
                     obligatorio.</span>
                 </div>
               </div>
-              <div class="input-group">
+              <div class="asistec-form-group">
                 <label for="email">Correo Electrónico</label>
-                <div class="input-wrapper">
-                  <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+                <div class="asistec-input-wrapper">
+                  <ion-icon name="mail-outline" class="asistec-input-icon"></ion-icon>
                   <input id="email" type="email" formControlName="email" placeholder="correo@asistec.cl"
-                    class="input-field" />
+                    class="asistec-input has-icon" />
                 </div>
                 <div *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.invalid" class="error-msg">
                   <ion-icon name="alert-circle-outline"></ion-icon>
@@ -67,12 +67,12 @@
                 </div>
               </div>
 
-              <div class="input-group">
+              <div class="asistec-form-group">
                 <label for="password">Contraseña</label>
-                <div class="input-wrapper">
-                  <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+                <div class="asistec-input-wrapper">
+                  <ion-icon name="lock-closed-outline" class="asistec-input-icon"></ion-icon>
                   <input id="password" type="password" formControlName="password" placeholder="••••••••"
-                    class="input-field" />
+                    class="asistec-input has-icon" />
                 </div>
                 <div *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.invalid"
                   class="error-msg">
@@ -81,12 +81,12 @@
                 </div>
               </div>
 
-              <div class="input-group">
+              <div class="asistec-form-group">
                 <label for="confirm-password">Confirmar Contraseña</label>
-                <div class="input-wrapper">
-                  <ion-icon name="checkmark-circle-outline" class="field-icon"></ion-icon>
+                <div class="asistec-input-wrapper">
+                  <ion-icon name="checkmark-circle-outline" class="asistec-input-icon"></ion-icon>
                   <input id="confirm-password" type="password" formControlName="confirmPassword" placeholder="••••••••"
-                    class="input-field" />
+                    class="asistec-input has-icon" />
                 </div>
               </div>
 

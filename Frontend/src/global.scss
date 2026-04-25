@@ -58,3 +58,100 @@ ion-input input::-webkit-inner-spin-button {
 ion-input input[type=number] {
     -moz-appearance: textfield;
 }
+
+/* ============================================================
+   LAYOUT GLOBAL: SIDEBAR + CONTENT
+   ============================================================ */
+
+/* Clase aplicada a ion-content en páginas con sidebar */
+ion-content.page-content {
+    --background: #F4F4F4;
+    position: absolute;
+    left: 256px;
+    width: calc(100% - 256px);
+}
+
+/* Clase aplicada a los footers para que respeten el sidebar */
+.page-footer {
+    position: absolute;
+    bottom: 0;
+    left: 256px;
+    width: calc(100% - 256px);
+    z-index: 40; /* Menor que el sidebar (50) pero alto para estar sobre el contenido */
+}
+
+/* ============================================================
+   ASISTEC DESIGN SYSTEM - FORMULARIOS GLOBALES
+   ============================================================ */
+
+/* Contenedor de un campo de formulario (label + input) */
+.asistec-form-group {
+    @apply flex flex-col gap-2 mb-4 w-full;
+}
+
+/* Etiqueta de texto para los campos */
+.asistec-label {
+    @apply block text-sm font-semibold text-slate-700 mb-1;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Contenedor relativo cuando un input lleva icono dentro */
+.asistec-input-wrapper {
+    @apply relative w-full;
+}
+
+/* Icono posicionado a la izquierda dentro del input */
+.asistec-input-icon {
+    @apply absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 z-10;
+    font-size: 20px;
+}
+
+/* 
+ * Clase universal para campos de texto, números, contraseñas y selectores.
+ * Funciona tanto para etiquetas <input> nativas como para componentes <ion-input> / <ion-select>.
+ */
+.asistec-input {
+    @apply w-full text-sm text-slate-800 bg-white rounded-xl transition-all duration-200 outline-none;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+    /* Estilos base compartidos */
+    min-height: 48px;
+    padding: 12px 16px;
+
+    /* Cuando se usa junto a un icono, se da más padding a la izquierda */
+    &.has-icon {
+        padding-left: 44px;
+    }
+
+    /* Variables específicas de Ionic para que sobreescriban los componentes anidados */
+    --padding-start: 16px;
+    --padding-end: 16px;
+    --padding-top: 12px;
+    --padding-bottom: 12px;
+    --background: #ffffff;
+    --border-radius: 12px;
+
+    /* Eliminar el padding interno que Ionic 7 pone por defecto */
+    &::part(native) {
+        padding: 0 !important;
+    }
+
+    /* Estados de Focus (Natívos e Ionic) */
+    &.ion-focused,
+    &:focus,
+    &:focus-within {
+        border-color: #006EB6;
+        box-shadow: 0 0 0 3px rgba(0, 110, 182, 0.2);
+    }
+
+    /* Estados Deshabilitados */
+    &[disabled], &:disabled {
+        background: #f8fafc;
+        --background: #f8fafc;
+        border-color: #e2e8f0;
+        color: #94a3b8;
+        opacity: 1 !important;
+        cursor: not-allowed;
+    }
+}

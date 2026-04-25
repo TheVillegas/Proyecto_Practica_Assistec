@@ -302,6 +302,10 @@ ORDER BY nombre ASC;
 -- --------------------------------------------------------
 -- 6. INSERCIÓN DE DATOS MAESTROS (Copiados de tu propusta)
 -- --------------------------------------------------------
+INSERT INTO USUARIOS (RUT_ANALISTA, NOMBRE_APELLIDO_ANALISTA, CORREO_ANALISTA, CONTRASENA_ANALISTA, ROL_ANALISTA)
+VALUES ('12345678-9', 'Demo Admin', 'admin@demo.com', '$2b$10$ayih5XtO3ZKkhnhy9SGxk.86nWOBpoNrZi0v6K7BEwQCB7GGJHUWm', 1);
+
+
 INSERT INTO DILUYENTES (NOMBRE_DILUYENTE, MILILITROS)
 VALUES ('AP 0,1 90ml', '90 ml'),
     ('AP 0,1 99ml', '99 ml'),

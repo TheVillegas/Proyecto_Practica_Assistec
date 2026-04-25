@@ -1,65 +1,93 @@
-<app-header></app-header>
+<ion-content [fullscreen]="true" class="page-content">
+  <div class="settings-layout">
 
-<ion-content [fullscreen]="true" class="main-content">
-  <div class="profile-container">
+    <!-- ===  SIDEBAR === -->
+    <aside class="settings-sidebar">
 
-    <!-- Tarjeta de Perfil -->
-    <div class="profile-card">
-
-      <!-- Sección Avatar -->
-      <div class="avatar-section">
+      <!-- Profile Header -->
+      <div class="sidebar-profile">
         <div class="avatar-wrapper" (click)="cambiarFoto()">
           <img [src]="usuario.avatar" alt="Avatar Usuario">
           <div class="avatar-overlay">
             <ion-icon name="camera-outline"></ion-icon>
           </div>
         </div>
-        <h2 class="user-name">{{ usuario.nombreApellido }}</h2>
-        <span class="user-role">{{ usuario.rol }}</span>
+        <h2 class="sidebar-user-name">{{ usuario.nombreApellido }}</h2>
+        <span class="sidebar-user-role">{{ usuario.rol }}</span>
       </div>
 
-      <!-- Sección Detalles -->
-      <div class="details-section">
-        <h3 class="section-title">Información Personal</h3>
+      <!-- Nav Links -->
+      <nav class="sidebar-nav">
+        <button class="sidebar-nav-item sidebar-nav-item--active">
+          <ion-icon name="person-outline"></ion-icon>
+          <span>Información Personal</span>
+        </button>
+        <button class="sidebar-nav-item sidebar-nav-item--inactive" disabled>
+          <ion-icon name="shield-outline"></ion-icon>
+          <span>Seguridad</span>
+        </button>
+      </nav>
 
-        <div class="input-group">
-          <ion-label>Nombre Completo</ion-label>
-          <div class="input-wrapper">
-            <ion-input [value]="usuario.nombreApellido" readonly></ion-input>
-            <ion-icon name="lock-closed-outline" class="lock-icon"></ion-icon>
+    </aside>
+
+    <!-- === MAIN CONTENT === -->
+    <main class="settings-content">
+
+      <!-- Content Card -->
+      <div class="content-card">
+        <div class="gradient-bar"></div>
+
+        <div class="content-body">
+          <h3 class="section-title">Información Personal</h3>
+          <p class="section-subtitle">Tus datos personales y de acceso al sistema.</p>
+
+          <div class="fields-list">
+
+            <!-- Nombre Completo (readonly) -->
+            <div class="asistec-form-group">
+              <ion-label class="field-label">Nombre Completo</ion-label>
+              <div class="asistec-input-wrapper input-wrapper--readonly">
+                <ion-input [value]="usuario.nombreApellido" readonly></ion-input>
+                <ion-icon name="lock-closed-outline" class="lock-icon"></ion-icon>
+              </div>
+            </div>
+
+            <!-- RUT (readonly) -->
+            <div class="asistec-form-group">
+              <ion-label class="field-label">RUT</ion-label>
+              <div class="asistec-input-wrapper input-wrapper--readonly">
+                <ion-input [value]="usuario.rut" readonly></ion-input>
+                <ion-icon name="lock-closed-outline" class="lock-icon"></ion-icon>
+              </div>
+            </div>
+
+            <!-- Correo (editable) -->
+            <div class="asistec-form-group">
+              <ion-label class="field-label">Correo Electrónico</ion-label>
+              <div class="asistec-input-wrapper input-wrapper--editable">
+                <ion-input [value]="usuario.correo" readonly></ion-input>
+                <ion-button fill="clear" size="small" (click)="cambiarCorreo()">
+                  Cambiar
+                </ion-button>
+              </div>
+            </div>
+
+            <!-- Contraseña (editable) -->
+            <div class="asistec-form-group">
+              <ion-label class="field-label">Contraseña</ion-label>
+              <div class="asistec-input-wrapper input-wrapper--editable">
+                <ion-input value="********" readonly type="password"></ion-input>
+                <ion-button fill="clear" size="small" (click)="cambiarPassword()">
+                  Cambiar
+                </ion-button>
+              </div>
+            </div>
+
           </div>
         </div>
-
-        <div class="input-group">
-          <ion-label>RUT</ion-label>
-          <div class="input-wrapper">
-            <ion-input [value]="usuario.rut" readonly></ion-input>
-            <ion-icon name="lock-closed-outline" class="lock-icon"></ion-icon>
-          </div>
-        </div>
-
-        <div class="input-group">
-          <ion-label>Correo Electrónico</ion-label>
-          <div class="input-wrapper editable">
-            <ion-input [value]="usuario.correo" readonly></ion-input>
-            <ion-button fill="clear" size="small" (click)="cambiarCorreo()">
-              Cambiar
-            </ion-button>
-          </div>
-        </div>
-
-        <div class="input-group">
-          <ion-label>Contraseña</ion-label>
-          <div class="input-wrapper editable">
-            <ion-input value="********" readonly type="password"></ion-input>
-            <ion-button fill="clear" size="small" (click)="cambiarPassword()">
-              Cambiar
-            </ion-button>
-          </div>
-        </div>
-
       </div>
 
-    </div>
+    </main>
+
   </div>
 </ion-content>

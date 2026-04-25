@@ -1,57 +1,96 @@
-<app-header activePage="home"></app-header>
-
-<ion-content [fullscreen]="true" class="bg-slate-50">
+<ion-content [fullscreen]="true" class="page-content">
   <div class="home-container">
 
-    <!-- Sección de Bienvenida Compacta -->
+    <!-- ===  HERO / WELCOME CARD === -->
     <div class="welcome-card">
+      <div class="welcome-bg-shape"></div>
       <div class="welcome-content">
-        <h1 class="welcome-title">Bienvenido a la nueva interfaz digital de AsisTec</h1>
+        <div class="welcome-badge">
+          <ion-icon name="flask-outline"></ion-icon>
+          <span>AsisTec Lab</span>
+        </div>
+        <h1 class="welcome-title">Bienvenido a la interfaz digital de AsisTec</h1>
         <p class="welcome-subtitle">
-          La pagina web creada para analistas del laboratorio AsisTec de la Pontificia Universidad Catolica de
-          Valparaiso.
+          Plataforma de gestión de muestras del laboratorio AsisTec —
+          Pontificia Universidad Católica de Valparaíso.
         </p>
+      </div>
+      <ion-icon name="flask-outline" class="welcome-watermark"></ion-icon>
+    </div>
+
+    <!-- === STAT CARDS === -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon-box stat-icon--blue">
+          <ion-icon name="layers-outline"></ion-icon>
+        </div>
+        <div class="stat-body">
+          <span class="stat-label">Muestras Activas</span>
+          <span class="stat-value">—</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-box stat-icon--green">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+        </div>
+        <div class="stat-body">
+          <span class="stat-label">Reportes Verificados</span>
+          <span class="stat-value">—</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-box stat-icon--amber">
+          <ion-icon name="time-outline"></ion-icon>
+        </div>
+        <div class="stat-body">
+          <span class="stat-label">Pendientes de Revisión</span>
+          <span class="stat-value">—</span>
+        </div>
       </div>
     </div>
 
-    <!-- Grid de Acciones (Diseño Rico) -->
+    <!-- === SECCIÓN DE TÍTULO === -->
+    <div class="section-header">
+      <h2 class="section-title">Acciones Rápidas</h2>
+      <p class="section-subtitle">Selecciona una acción para comenzar</p>
+    </div>
+
+    <!-- === ACTION CARDS (Bento Grid) === -->
     <div class="action-grid">
 
       <!-- Tarjeta: Búsqueda ALI -->
       <div class="action-card" (click)="busquedaALI()">
         <div class="card-main-content">
-          <div class="icon-badge">
+          <div class="icon-badge icon-badge--blue">
             <ion-icon name="search-outline"></ion-icon>
           </div>
           <div class="text-content">
             <h3>Búsqueda ALI</h3>
-            <p>Consultar registros, historial y reportes.</p>
+            <p>Consultar registros, historial y reportes de muestras ingresadas al sistema.</p>
           </div>
           <div class="cta-link">
             Consultar <span class="arrow">→</span>
           </div>
         </div>
-
-        <!-- Watermark Decorativo -->
         <ion-icon name="search-outline" class="watermark-icon"></ion-icon>
       </div>
 
       <!-- Tarjeta: Generar ALI -->
       <div class="action-card" (click)="generarALI()">
         <div class="card-main-content">
-          <div class="icon-badge">
+          <div class="icon-badge icon-badge--navy">
             <ion-icon name="add-circle-outline"></ion-icon>
           </div>
           <div class="text-content">
             <h3>Generar ALI Básico</h3>
-            <p>Crear nuevo registro de ingreso de muestras.</p>
+            <p>Crear un nuevo registro de ingreso de muestras con datos esenciales.</p>
           </div>
           <div class="cta-link">
             Iniciar <span class="arrow">→</span>
           </div>
         </div>
-
-        <!-- Watermark Decorativo -->
         <ion-icon name="add-circle-outline" class="watermark-icon"></ion-icon>
       </div>
 

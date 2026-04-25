@@ -1,58 +1,86 @@
-<nav class="header-container">
+<!-- Sidebar Navigation -->
+<aside class="sidebar">
 
-  <!-- Izquierda: Branding -->
-  <div class="logo-section" (click)="goToHome()">
-    <div class="icon-box">
+  <!-- ===  BRANDING === -->
+  <div class="sidebar-brand" (click)="goToHome()">
+    <div class="sidebar-brand-icon">
       <ion-icon name="flask-outline"></ion-icon>
     </div>
-    <div class="brand-group">
-      <span class="brand-name">AsisTec</span>
-      <span class="brand-subtitle">Lab Management</span>
+    <div class="sidebar-brand-text">
+      <span class="sidebar-brand-name">AsisTec</span>
+      <span class="sidebar-brand-subtitle">Lab Management</span>
     </div>
   </div>
 
-  <!-- Centro: Navegación (Píldora) -->
-  <div class="nav-pill-container">
+  <!-- === SEPARADOR === -->
+  <div class="sidebar-divider"></div>
+
+  <!-- === NAVEGACIÓN === -->
+  <nav class="sidebar-nav">
+    <p class="sidebar-nav-label">Menú</p>
 
     <!-- Home -->
-    <button (click)="goToHome()" [ngClass]="{'active': activeSegment === 'home', 'inactive': activeSegment !== 'home'}"
-      class="nav-btn">
-      Home
+    <button
+      (click)="goToHome()"
+      [ngClass]="{'sidebar-nav-item--active': activeSegment === 'home', 'sidebar-nav-item--inactive': activeSegment !== 'home'}"
+      class="sidebar-nav-item">
+      <span class="sidebar-nav-icon">
+        <ion-icon name="home-outline"></ion-icon>
+      </span>
+      <span class="sidebar-nav-text">Home</span>
+      <span *ngIf="activeSegment === 'home'" class="sidebar-nav-indicator"></span>
     </button>
 
     <!-- Búsqueda ALI -->
-    <button (click)="busquedaALI()"
-      [ngClass]="{'active': activeSegment === 'busqueda', 'inactive': activeSegment !== 'busqueda'}" class="nav-btn">
-      Búsqueda ALI
+    <button
+      (click)="busquedaALI()"
+      [ngClass]="{'sidebar-nav-item--active': activeSegment === 'busqueda', 'sidebar-nav-item--inactive': activeSegment !== 'busqueda'}"
+      class="sidebar-nav-item">
+      <span class="sidebar-nav-icon">
+        <ion-icon name="search-outline"></ion-icon>
+      </span>
+      <span class="sidebar-nav-text">Búsqueda ALI</span>
+      <span *ngIf="activeSegment === 'busqueda'" class="sidebar-nav-indicator"></span>
     </button>
 
     <!-- Generar ALI -->
-    <button (click)="generarALI()"
-      [ngClass]="{'active': activeSegment === 'generar', 'inactive': activeSegment !== 'generar'}" class="nav-btn">
-      Generar ALI
+    <button
+      (click)="generarALI()"
+      [ngClass]="{'sidebar-nav-item--active': activeSegment === 'generar', 'sidebar-nav-item--inactive': activeSegment !== 'generar'}"
+      class="sidebar-nav-item">
+      <span class="sidebar-nav-icon">
+        <ion-icon name="add-circle-outline"></ion-icon>
+      </span>
+      <span class="sidebar-nav-text">Generar ALI</span>
+      <span *ngIf="activeSegment === 'generar'" class="sidebar-nav-indicator"></span>
     </button>
-  </div>
+  </nav>
 
-  <!-- Derecha: Perfil -->
-  <div class="user-section">
-    <!-- Info Usuario -->
-    <div class="user-info">
-      <div class="user-name">{{ userName }}</div>
-      <div class="user-role">{{ userRole }}</div>
+  <!-- === ESPACIADOR === -->
+  <div class="sidebar-spacer"></div>
+
+  <!-- === SEPARADOR === -->
+  <div class="sidebar-divider"></div>
+
+  <!-- === PERFIL DE USUARIO === -->
+  <div class="sidebar-user">
+
+    <!-- Avatar clicable -->
+    <div class="sidebar-user-avatar" (click)="goToProfile()">
+      <img [src]="userPhoto" alt="Avatar" />
     </div>
 
-    <!-- Avatar -->
-    <div class="avatar-box group" (click)="goToProfile()" style="cursor: pointer;">
-      <img [src]="userPhoto" alt="Avatar" class="w-full h-full object-cover">
+    <!-- Info -->
+    <div class="sidebar-user-info" (click)="goToProfile()">
+      <span class="sidebar-user-name">{{ userName }}</span>
+      <span class="sidebar-user-role">{{ userRole }}</span>
     </div>
 
-    <!-- Separador -->
-    <div class="separator"></div>
-
-    <!-- Botón Salir -->
-    <button (click)="goToLogin()" class="logout-btn" title="Cerrar Sesión">
+    <!-- Logout -->
+    <button class="sidebar-logout-btn" (click)="goToLogin()" title="Cerrar Sesión">
       <ion-icon name="log-out-outline"></ion-icon>
     </button>
+
   </div>
 
-</nav>
+</aside>

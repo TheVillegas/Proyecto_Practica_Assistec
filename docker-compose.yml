@@ -41,5 +41,17 @@ services:
     depends_on:
       - BD_AsisTec
 
+  frontend_asistec:
+    build: ./Frontend
+    container_name: contenedor_asistec_frontend
+    restart: always
+    ports:
+      - "8100:8100"
+    volumes:
+      - ./Frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend_asistec
+
 volumes:
   pgdata:

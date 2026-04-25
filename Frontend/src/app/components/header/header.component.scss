@@ -1,79 +1,189 @@
-.header-container {
-    @apply w-full h-20 bg-ion-azul-oscuro px-6 flex items-center justify-between shadow-lg relative z-50;
+/* header.component.scss — Sidebar Version */
+
+.sidebar {
+    @apply fixed left-0 top-0 h-screen flex flex-col z-50;
+    width: 256px;
+    background: linear-gradient(180deg, #1e3a5f 0%, #29588C 45%, #006EB6 100%);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
 }
 
-.logo-section {
-    @apply flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/20 select-none cursor-pointer;
-
-    .icon-box {
-        @apply text-white text-2xl flex items-center justify-center;
-    }
-
-    .brand-group {
-        @apply flex flex-col leading-none;
-
-        .brand-name {
-            @apply text-white font-bold text-lg tracking-wide;
-        }
-
-        .brand-subtitle {
-            @apply text-blue-200 text-xs font-light uppercase tracking-wider;
-        }
-    }
-}
-
-.nav-pill-container {
-    @apply absolute left-1/2 transform -translate-x-1/2 bg-transparent rounded-full border border-white/20 flex items-center p-1 gap-1;
-}
-
-.nav-btn {
-    @apply px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 flex items-center gap-2 focus:outline-none;
-
-    &.active {
-        @apply bg-white text-ion-azul-oscuro font-bold shadow-md;
-    }
-
-    &.inactive {
-        @apply text-white bg-transparent hover:bg-white/10;
-    }
-}
-
-.user-section {
-    @apply flex items-center gap-4;
-
-    .user-info {
-        @apply text-right hidden md:block leading-tight;
-
-        .user-name {
-            @apply text-white font-bold text-sm;
-        }
-
-        .user-role {
-            @apply text-blue-200 text-xs font-medium;
-        }
-    }
-
-    .avatar-box {
-        @apply h-10 w-10 rounded-full bg-slate-200 border-2 border-white/30 overflow-hidden flex items-center justify-center shadow-md relative;
-
-        img {
-            @apply h-full w-full object-cover;
-        }
-    }
-
-    .separator {
-        @apply h-6 w-px bg-white/20 mx-1;
-    }
-}
-
-.logout-btn {
-    @apply bg-white text-ion-azul-oscuro shadow-md transition-all p-2 rounded-full flex items-center justify-center;
-
-    ion-icon {
-        @apply text-2xl;
-    }
+// ============================================================
+// BRANDING
+// ============================================================
+.sidebar-brand {
+    @apply flex items-center gap-3 px-5 py-5 cursor-pointer select-none;
+    @apply transition-all duration-200;
 
     &:hover {
-        @apply scale-110 shadow-lg;
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    .sidebar-brand-icon {
+        @apply w-10 h-10 rounded-xl flex items-center justify-center shrink-0;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+
+        ion-icon {
+            @apply text-white text-xl;
+        }
+    }
+
+    .sidebar-brand-text {
+        @apply flex flex-col leading-none;
+
+        .sidebar-brand-name {
+            @apply text-white font-bold text-base tracking-wide;
+            font-family: 'Inclusive Sans', sans-serif;
+        }
+
+        .sidebar-brand-subtitle {
+            @apply text-blue-200 text-xs font-light uppercase tracking-widest mt-0.5;
+            font-family: 'Inter', sans-serif;
+        }
+    }
+}
+
+// ============================================================
+// DIVIDER
+// ============================================================
+.sidebar-divider {
+    @apply mx-4 my-1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+.sidebar-nav {
+    @apply flex flex-col px-3 pt-4 gap-1;
+
+    .sidebar-nav-label {
+        @apply text-xs font-semibold uppercase tracking-widest text-blue-300 px-3 mb-2;
+        font-family: 'Inter', sans-serif;
+    }
+}
+
+.sidebar-nav-item {
+    @apply relative w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium;
+    @apply transition-all duration-200 text-left cursor-pointer;
+    font-family: 'Inter', sans-serif;
+    border: none;
+    background: transparent;
+
+    .sidebar-nav-icon {
+        @apply w-8 h-8 rounded-lg flex items-center justify-center shrink-0;
+        @apply transition-all duration-200;
+
+        ion-icon {
+            @apply text-lg;
+        }
+    }
+
+    .sidebar-nav-text {
+        @apply transition-all duration-200;
+    }
+
+    .sidebar-nav-indicator {
+        @apply absolute right-3 top-1/2 -translate-y-1/2;
+        @apply w-1.5 h-1.5 rounded-full bg-white;
+        box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+    }
+
+    // Estado: ACTIVO
+    &.sidebar-nav-item--active {
+        background: rgba(255, 255, 255, 0.15);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+
+        .sidebar-nav-icon {
+            background: rgba(255, 255, 255, 0.2);
+            ion-icon {
+                @apply text-white;
+            }
+        }
+
+        .sidebar-nav-text {
+            @apply text-white font-semibold;
+        }
+    }
+
+    // Estado: INACTIVO
+    &.sidebar-nav-item--inactive {
+        .sidebar-nav-icon {
+            background: transparent;
+            ion-icon {
+                @apply text-blue-200;
+            }
+        }
+
+        .sidebar-nav-text {
+            @apply text-blue-100;
+        }
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.07);
+
+            .sidebar-nav-icon {
+                background: rgba(255, 255, 255, 0.1);
+                ion-icon {
+                    @apply text-white;
+                }
+            }
+
+            .sidebar-nav-text {
+                @apply text-white;
+            }
+        }
+    }
+}
+
+// ============================================================
+// SPACER
+// ============================================================
+.sidebar-spacer {
+    @apply flex-1;
+}
+
+// ============================================================
+// USER PROFILE
+// ============================================================
+.sidebar-user {
+    @apply flex items-center gap-2 px-4 py-4;
+    background: rgba(0, 0, 0, 0.15);
+
+    .sidebar-user-avatar {
+        @apply w-9 h-9 rounded-full overflow-hidden shrink-0 cursor-pointer;
+        @apply border-2 border-white/30 shadow-md;
+        @apply transition-transform duration-200 hover:scale-105;
+
+        img {
+            @apply w-full h-full object-cover;
+        }
+    }
+
+    .sidebar-user-info {
+        @apply flex flex-col leading-tight flex-1 cursor-pointer min-w-0;
+
+        .sidebar-user-name {
+            @apply text-white text-xs font-semibold truncate;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .sidebar-user-role {
+            @apply text-blue-200 text-xs truncate;
+            font-family: 'Inter', sans-serif;
+        }
+    }
+}
+
+.sidebar-logout-btn {
+    @apply w-8 h-8 rounded-lg flex items-center justify-center shrink-0;
+    @apply bg-white/10 border border-white/15 text-white;
+    @apply transition-all duration-200 hover:bg-white hover:text-[#29588C] cursor-pointer;
+
+    ion-icon {
+        @apply text-base;
     }
 }

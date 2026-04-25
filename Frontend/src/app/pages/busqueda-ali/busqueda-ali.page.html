@@ -1,37 +1,57 @@
-<app-header activePage="busqueda"></app-header>
+<ion-content [fullscreen]="true" class="page-content">
+  <div class="search-page-container">
 
-<ion-content [fullscreen]="true" class="bg-slate-50">
-  <div class="flex-grow max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
-    <!-- Search Section -->
-    <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-      <div class="relative w-full group">
-        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <ion-icon name="search-outline"
-            class="text-xl text-brand-primary group-focus-within:text-brand-primary transition-colors"></ion-icon>
+    <!-- === PAGE TITLE === -->
+    <div class="page-title-section">
+      <h1 class="page-title">Búsqueda ALI</h1>
+      <p class="page-subtitle">Consulte registros, historial y reportes de muestras.</p>
+    </div>
+
+    <!-- === SEARCH HEADER === -->
+    <div class="search-header">
+      <!-- Barra de búsqueda principal -->
+      <div class="search-bar-wrapper">
+        <div class="search-icon">
+          <ion-icon name="search-outline"></ion-icon>
         </div>
         <input
-          class="block w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-xl leading-5 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 shadow-md transition-all"
-          placeholder="Ingrese el código de la muestra ALI..." type="text" (input)="buscarALI($event)" />
+          class="search-input"
+          placeholder="Ingrese el código de la muestra ALI..."
+          type="text"
+          (input)="buscarALI($event)"
+        />
       </div>
     </div>
-    <!-- Results Section -->
-    <div class="space-y-6">
-      <div class="flex items-end justify-between px-1">
-        <h2 class="text-2xl font-bold text-gray-800 tracking-tight">Resultados de Búsqueda</h2>
-        <span
-          class="text-sm font-medium text-gray-600 bg-white px-3 py-1 rounded-full shadow-md border border-gray-200">
-          {{listaFiltrada.length}} resultados encontrados
+
+    <!-- === RESULTS SECTION === -->
+    <div class="results-section">
+
+      <!-- Results Header -->
+      <div class="results-header">
+        <h2 class="results-title">Resultados de Búsqueda</h2>
+        <span class="results-badge">
+          {{ listaFiltrada.length }} encontrados
         </span>
       </div>
 
       <!-- Results List -->
-      <app-ali-item-accordeon *ngFor="let muestra of listaFiltrada" [muestra]="muestra" (onDelete)="cargarMuestras()"></app-ali-item-accordeon>
+      <div class="results-list">
+        <app-ali-item-accordeon
+          *ngFor="let muestra of listaFiltrada"
+          [muestra]="muestra"
+          (onDelete)="cargarMuestras()">
+        </app-ali-item-accordeon>
+      </div>
 
       <!-- Empty State -->
-      <div *ngIf="listaFiltrada.length === 0" class="text-center py-12 text-slate-400">
-        <ion-icon name="search-outline" class="text-4xl mb-2"></ion-icon>
-        <p>No se encontraron resultados</p>
+      <div *ngIf="listaFiltrada.length === 0" class="empty-state">
+        <div class="empty-icon-box">
+          <ion-icon name="search-outline"></ion-icon>
+        </div>
+        <h3 class="empty-title">Sin resultados</h3>
+        <p class="empty-subtitle">No se encontraron muestras para el código ingresado.</p>
       </div>
+
     </div>
   </div>
 </ion-content>

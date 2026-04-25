@@ -1,14 +1,30 @@
-<app-header activePage="generar-ali-basico"></app-header>
-<ion-content [fullscreen]="true" class="bg-background-light dark:bg-background-dark">
+<ion-content [fullscreen]="true" class="page-content">
   <div class="page-container">
     <main class="main-content">
-      <div class="max-w-5xl mx-auto">
+      <div class="max-w-3xl mx-auto">
+
+        <!-- === PAGE TITLE === -->
         <div class="header-section">
-          <h2>Generar ALI Básico</h2>
-          <p>Ingrese los datos de la muestra y observaciones para generar el reporte inicial.</p>
+          <h1 class="page-main-title">Generar ALI Básico</h1>
+          <p class="page-main-subtitle">Ingrese los datos de la muestra para generar el registro inicial.</p>
         </div>
 
+        <!-- === STEP INDICATOR === -->
+        <div class="step-indicator">
+          <div class="step step--active">
+            <div class="step-circle step-circle--active">1</div>
+            <span class="step-label step-label--active">Datos Básicos</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step step--inactive">
+            <div class="step-circle step-circle--inactive">2</div>
+            <span class="step-label step-label--inactive">Confirmación</span>
+          </div>
+        </div>
+
+        <!-- === FORM CARD === -->
         <div class="form-card">
+          <!-- Barra de color brand superior -->
           <div class="gradient-bar"></div>
 
           <form [formGroup]="formularioIngresoALI">
@@ -16,21 +32,25 @@
               <div class="input-grid">
 
                 <!-- ALI Muestra -->
-                <div class="input-group">
-                  <label class="label-text" for="ali-muestra">
+                <div class="asistec-form-group">
+                  <label class="asistec-label" for="ali-muestra">
                     Ingrese ALI de Muestra
                   </label>
-                  <div class="input-wrapper">
-                    <div class="input-icon">
+                  <div class="asistec-input-wrapper">
+                    <div class="asistec-input-icon">
                       <ion-icon name="qr-code-outline"></ion-icon>
                     </div>
-                    <input formControlName="aliMuestra" class="custom-input" id="ali-muestra"
-                      placeholder="Ej: ALI-2023-001" type="text" />
+                    <input
+                      formControlName="aliMuestra"
+                      class="asistec-input has-icon"
+                      id="ali-muestra"
+                      placeholder="Ej: ALI-2023-001"
+                      type="text"
+                    />
                     <div class="validation-indicator" title="Campo requerido"
                       *ngIf="formularioIngresoALI.get('aliMuestra')?.invalid && (formularioIngresoALI.get('aliMuestra')?.dirty || formularioIngresoALI.get('aliMuestra')?.touched)">
                       <span class="flex h-2 w-2 relative">
-                        <span
-                          class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                       </span>
                     </div>
@@ -39,57 +59,66 @@
                 </div>
 
                 <!-- Código Sernapesca -->
-                <div class="input-group">
-                  <label class="label-text" for="codigo-sernapesca">
+                <div class="asistec-form-group">
+                  <label class="asistec-label" for="codigo-sernapesca">
                     Ingrese Código SernaPesca u Otro
                   </label>
-                  <div class="input-wrapper">
-                    <div class="input-icon">
+                  <div class="asistec-input-wrapper">
+                    <div class="asistec-input-icon">
                       <ion-icon name="pricetag-outline"></ion-icon>
                     </div>
-                    <input formControlName="codigoSerna" class="custom-input" id="codigo-sernapesca"
-                      placeholder="Ej: SP-8842X" type="text" />
+                    <input
+                      formControlName="codigoSerna"
+                      class="asistec-input has-icon"
+                      id="codigo-sernapesca"
+                      placeholder="Ej: SP-8842X"
+                      type="text"
+                    />
                   </div>
                   <p class="helper-text">Código oficial o referencia externa.</p>
                 </div>
+
               </div>
 
               <!-- Observaciones -->
               <div class="w-full">
-                <label class="label-text flex items-center gap-2" for="observaciones-cyliente">
+                <label class="asistec-label" for="observaciones-cliente">
                   Observaciones del cliente
-                  <span class="new-badge"></span>
                 </label>
-                <div class="mt-1 relative rounded-md shadow-sm">
-                  <textarea formControlName="observacionesCliente" class="custom-textarea" id="observaciones-cliente"
+                <div class="textarea-wrapper">
+                  <textarea
+                    formControlName="observacionesCliente"
+                    class="custom-textarea"
+                    id="observaciones-cliente"
                     placeholder="Ingrese notas específicas del cliente, condiciones especiales o requerimientos adicionales..."
-                    rows="4"></textarea>
+                    rows="4">
+                  </textarea>
                   <div class="textarea-icon">
                     <ion-icon name="create-outline"></ion-icon>
                   </div>
                 </div>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  <ion-icon name="information-circle-outline" class="text-sm align-middle mr-1"></ion-icon>
+                <p class="helper-text-info">
+                  <ion-icon name="information-circle-outline"></ion-icon>
                   Estas notas serán visibles en los resultados de búsqueda ALI.
                 </p>
               </div>
             </div>
 
-            <!-- Botones -->
+            <!-- === BOTONES === -->
             <div class="footer-actions">
               <button (click)="confirmarCancelar()" class="btn-cancel" type="button">
-                <ion-icon name="close-outline" class="text-sm mr-2"></ion-icon>
+                <ion-icon name="close-outline"></ion-icon>
                 Cancelar
               </button>
               <button (click)="intentarEnviar()" class="btn-action" type="button">
                 Siguiente
-                <ion-icon name="arrow-forward-outline" class="text-sm ml-2"></ion-icon>
+                <ion-icon name="arrow-forward-outline"></ion-icon>
               </button>
             </div>
           </form>
         </div>
 
-        <!-- Validación Info -->
+        <!-- === VALIDACIÓN INFO === -->
         <div class="validation-info-grid">
           <div class="validation-card-item">
             <ion-icon name="checkmark-circle-outline" class="icon-wrapper"></ion-icon>
@@ -99,6 +128,7 @@
             </div>
           </div>
         </div>
+
       </div>
     </main>
   </div>

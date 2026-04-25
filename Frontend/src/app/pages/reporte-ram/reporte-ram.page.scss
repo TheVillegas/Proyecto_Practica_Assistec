@@ -1,8 +1,8 @@
-// RAM Report Styles - Tailwind Refactor (Replicated from TPA)
+// RAM Report Styles - Design System Refactor
 
 // --- Base Layout ---
 ion-content {
-    --background: #f8fafc; // Slate-50 equivalent
+    --background: #F4F4F4;
 }
 
 ion-grid {
@@ -11,58 +11,86 @@ ion-grid {
 
 // --- Card Containers (Acordeones) ---
 .ram-card {
-    @apply bg-white mb-5 rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300;
+    @apply bg-white mb-4 rounded-2xl overflow-hidden transition-all duration-300;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.06), 0 1px 3px -1px rgba(0, 0, 0, 0.04);
 
     &:hover {
-        @apply shadow-md border-slate-300;
+        box-shadow: 0 4px 16px -4px rgba(41, 88, 140, 0.12), 0 2px 6px -2px rgba(0, 0, 0, 0.06);
+        border-color: #c7d9ee;
     }
 }
 
 // Header del Acordeón (Ionic Override)
 ion-accordion ion-item[slot="header"] {
-    --background: #fff; // Header white
+    --background: #ffffff;
     --min-height: 56px;
     --border-width: 0;
     --inner-padding-end: 16px;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .ram-card-header-label {
-    @apply text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2;
+    @apply text-sm font-bold text-slate-700 flex items-center gap-2;
+    font-family: 'Inter', sans-serif;
+
+    &::before {
+        content: '';
+        display: inline-block;
+        width: 3px;
+        height: 16px;
+        border-radius: 2px;
+        background: linear-gradient(to bottom, #29588C, #006EB6);
+        flex-shrink: 0;
+    }
 }
 
 .ram-card-content {
-    @apply bg-slate-50 p-5; // Gray content background
+    @apply p-5;
+    background: #f8fafc;
 }
 
 // --- Form Elements ---
 .form-group {
-    @apply flex flex-col gap-1.5 mb-4;
+  @apply flex flex-col gap-2 mb-4;
 }
 
 .form-label {
-    @apply text-xs font-bold text-slate-600 uppercase tracking-tight ml-1;
+  @apply block text-sm font-semibold text-slate-700 mb-1;
+  font-family: 'Inter', sans-serif;
 }
 
 .form-control {
-    // Selects, Inputs, Textareas
-    @apply w-full text-sm text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm transition-all duration-200;
+  @apply w-full text-sm text-slate-800 bg-white rounded-xl transition-all duration-200 outline-none;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
-    // Ionic specific overrides
-    --padding-start: 12px;
-    --padding-end: 12px;
-    --padding-top: 10px;
-    --padding-bottom: 10px;
-    --background: #ffffff;
-    min-height: 42px;
+  // Ionic specific overrides for ion-input and ion-select
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  --background: #ffffff;
+  --border-radius: 12px;
+  min-height: 48px;
 
-    &:focus-within {
-        @apply border-blue-500 ring-2 ring-blue-500/20;
-    }
+  &::part(native) {
+    padding: 0 !important;
+  }
 
-    &[disabled] {
-        @apply bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed;
-        opacity: 0.8 !important;
-    }
+  &.ion-focused,
+  &:focus-within {
+    border-color: #006EB6;
+    box-shadow: 0 0 0 3px rgba(0, 110, 182, 0.2);
+  }
+
+  &[disabled] {
+    background: #f8fafc;
+    --background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    opacity: 1 !important;
+  }
 }
 
 // Specific adjustments
@@ -73,11 +101,13 @@ ion-textarea.form-control {
 
 // --- Dynamic Rows ---
 .dynamic-row {
-    @apply flex items-end gap-3 mb-3 p-3 bg-white rounded-lg border border-slate-200 border-dashed;
+    @apply flex items-end gap-3 mb-3 p-3 bg-white rounded-xl;
+    border: 1px dashed #cbd5e1;
 }
 
 .action-btn {
-    @apply text-slate-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1 hover:text-black transition-colors cursor-pointer p-0;
+    @apply font-semibold text-xs flex items-center gap-1 hover:text-[#006EB6] transition-colors cursor-pointer p-0;
+    color: #29588C;
     --background: transparent;
     --background-hover: transparent;
     --box-shadow: none;
@@ -85,7 +115,9 @@ ion-textarea.form-control {
 
 // --- Dividers ---
 .ram-divider {
-    @apply my-6 border-t border-slate-200;
+    @apply my-5;
+    height: 1px;
+    background: linear-gradient(to right, rgba(41, 88, 140, 0.2), transparent);
 }
 
 // --- Checkboxes & Radios ---
@@ -99,36 +131,44 @@ ion-textarea.form-control {
     --padding-start: 0;
     --inner-padding-end: 0;
     --background: transparent;
+    font-family: 'Inter', sans-serif;
 }
 
 .radio-group-container {
-    @apply flex items-center gap-6 mt-2 px-2 bg-white rounded-lg py-2 border border-slate-200;
+    @apply flex items-center gap-6 mt-2 px-3 py-2.5 rounded-xl;
+    background: #f0f5fb;
+    border: 1px solid #dde8f5;
 }
 
 ion-radio {
     @apply text-sm text-slate-600;
-    --color-checked: #2563eb; // Blue-600
+    --color-checked: #006EB6;
 }
 
 // --- Signature & Upload ---
 .upload-zone-container {
-    @apply flex flex-col items-center justify-center p-6 bg-white border-2 border-dashed border-slate-300 rounded-xl transition-all duration-300 cursor-pointer;
+    @apply flex flex-col items-center justify-center p-6 bg-white rounded-xl transition-all duration-300 cursor-pointer;
+    border: 2px dashed #c7d9ee;
 
     &:hover:not(.bloqueado) {
-        @apply bg-blue-50 border-blue-400;
+        background: #f0f7ff;
+        border-color: #006EB6;
     }
 
-    &.has-image {
-        @apply p-0 border-blue-500 border-solid overflow-hidden bg-white;
+    &.has-image, &.tiene-imagen {
+        @apply p-0 overflow-hidden bg-white;
+        border: 2px solid #006EB6;
+        border-style: solid;
     }
 }
 
 .upload-placeholder {
-    @apply flex flex-col items-center text-slate-400 gap-2;
+    @apply flex flex-col items-center gap-2;
+    color: #94a3b8;
 
     ion-icon {
-        font-size: 40px;
-        @apply text-slate-300;
+        font-size: 36px;
+        color: #c7d9ee;
     }
 
     span {
@@ -141,7 +181,8 @@ ion-radio {
 }
 
 .remove-overlay {
-    @apply absolute bottom-0 left-0 right-0 py-1 bg-red-500/90 text-white text-xs text-center font-bold uppercase tracking-wider opacity-0 transition-opacity;
+    @apply absolute bottom-0 left-0 right-0 py-1 text-white text-xs text-center font-bold uppercase tracking-wider opacity-0 transition-opacity;
+    background: rgba(0, 110, 182, 0.85);
 
     .upload-zone-container:hover & {
         @apply opacity-100;
@@ -150,41 +191,41 @@ ion-radio {
 
 // --- Segments (Yes/No) ---
 ion-segment {
-    @apply bg-white p-1 rounded-lg border border-slate-200;
+    @apply bg-white p-1 rounded-xl;
+    border: 1px solid #dde3ed;
     --background: white;
 }
 
 ion-segment-button {
     --color: #64748b;
-    --color-checked: #2563eb;
+    --color-checked: #006EB6;
     --indicator-color: #eff6ff;
+    --border-radius: 8px;
     font-size: 12px;
     font-weight: 600;
-}
-
-// Helpers
-.text-center {
-    text-align: center;
-}
-
-.mt-4 {
-    margin-top: 1rem;
-}
-
-.mb-2 {
-    margin-bottom: 0.5rem;
-}
-
-.block {
-    display: block;
+    font-family: 'Inter', sans-serif;
 }
 
 // --- Calculation Titles ---
 .calculo-title {
-    @apply text-center font-bold text-slate-700 uppercase text-xs tracking-wider;
+    @apply text-center font-bold uppercase text-xs tracking-wider mb-2;
+    color: #29588C;
+    font-family: 'Inter', sans-serif;
 }
 
 // --- Checkbox Container ---
 .checkbox-container {
     @apply flex flex-wrap justify-center gap-3;
+}
+
+// Helpers
+.text-center { text-align: center; }
+.mt-4 { margin-top: 1rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.block { display: block; }
+
+// --- Tabla de inputs (cálculos) ---
+.inputs_almedio {
+    @apply bg-white rounded-xl p-3;
+    border: 1px solid #e2e8f0;
 }

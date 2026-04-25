@@ -1,84 +1,172 @@
-.main-content {
-  --background: #f3f4f6; // gray-100
+/* configuracion-usuario.page.scss */
+
+ion-content {
+    --background: #F4F4F4;
 }
 
-.profile-container {
-  @apply flex justify-center py-10 px-4;
+// ============================================================
+// SPLIT LAYOUT
+// ============================================================
+.settings-layout {
+    @apply flex flex-col md:flex-row gap-6 max-w-5xl mx-auto px-6 py-10 pb-20;
 }
 
-.profile-card {
-  @apply bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden;
-  border: 1px solid rgba(0,0,0,0.05);
+// ============================================================
+// SIDEBAR
+// ============================================================
+.settings-sidebar {
+    @apply w-full md:w-72 shrink-0 flex flex-col gap-4;
 }
 
-.avatar-section {
-  @apply flex flex-col items-center pt-8 pb-6 bg-gradient-to-b from-blue-50 to-white;
-  
-  .avatar-wrapper {
-    @apply relative w-32 h-32 rounded-full border-4 border-white shadow-md cursor-pointer overflow-hidden;
-    
+// Profile header del sidebar
+.sidebar-profile {
+    @apply bg-white rounded-2xl overflow-hidden border border-slate-200;
+    @apply flex flex-col items-center pb-6;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+
+    // Franja de gradiente brand-navy arriba del avatar
+    &::before {
+        content: '';
+        @apply block w-full h-20;
+        background: linear-gradient(135deg, #29588C 0%, #006EB6 100%);
+    }
+}
+
+.avatar-wrapper {
+    @apply relative w-24 h-24 rounded-full overflow-hidden cursor-pointer;
+    @apply border-4 border-white shadow-lg;
+    // Posicionamos a mitad de la franja
+    margin-top: -48px;
+
     img {
-      @apply w-full h-full object-cover;
+        @apply w-full h-full object-cover;
     }
 
     .avatar-overlay {
-      @apply absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 transition-opacity duration-200;
-      
-      ion-icon {
-        @apply text-white text-3xl;
-      }
+        @apply absolute inset-0 flex items-center justify-center;
+        @apply bg-black/40 opacity-0 transition-opacity duration-200;
+
+        ion-icon {
+            @apply text-white text-2xl;
+        }
     }
 
     &:hover .avatar-overlay {
-      @apply opacity-100;
+        @apply opacity-100;
     }
-  }
-
-  .user-name {
-    @apply mt-4 text-xl font-bold text-gray-800;
-  }
-
-  .user-role {
-    @apply text-sm text-blue-600 font-medium bg-blue-100 px-3 py-1 rounded-full mt-2;
-  }
 }
 
-.details-section {
-  @apply p-6 space-y-6;
+.sidebar-user-name {
+    @apply text-lg font-bold text-slate-800 mt-3;
+    font-family: 'Inter', sans-serif;
+}
 
-  .section-title {
-    @apply text-sm uppercase tracking-wider text-gray-500 font-semibold mb-4 border-b pb-2;
-  }
+.sidebar-user-role {
+    @apply text-xs font-semibold text-brand-primary bg-blue-50 border border-brand-primary/20 px-3 py-1 rounded-full mt-1;
+    font-family: 'Inter', sans-serif;
+}
+
+// Navegación del sidebar
+.sidebar-nav {
+    @apply bg-white rounded-2xl border border-slate-200 p-2 flex flex-col gap-1;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.sidebar-nav-item {
+    @apply w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium;
+    @apply transition-all duration-200 text-left;
+    font-family: 'Inter', sans-serif;
+
+    ion-icon {
+        @apply text-lg shrink-0;
+    }
+
+    &.sidebar-nav-item--active {
+        @apply bg-brand-primary/10 text-brand-primary font-semibold;
+    }
+
+    &.sidebar-nav-item--inactive {
+        @apply text-slate-400 cursor-not-allowed;
+    }
+}
+
+// ============================================================
+// MAIN CONTENT
+// ============================================================
+.settings-content {
+    @apply flex-1 flex flex-col gap-4;
+}
+
+.content-card {
+    @apply bg-white rounded-2xl overflow-hidden border border-slate-200;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.gradient-bar {
+    @apply h-1 w-full;
+    background: linear-gradient(to right, #29588C, #006EB6);
+}
+
+.content-body {
+    @apply p-6 sm:p-8;
+}
+
+.section-title {
+    @apply text-xl font-bold text-slate-800 mb-1;
+    font-family: 'Inter', sans-serif;
+}
+
+.section-subtitle {
+    @apply text-sm text-slate-500 mb-6 pb-6 border-b border-slate-200;
+    font-family: 'Inter', sans-serif;
+}
+
+// ============================================================
+// FORM FIELDS
+// ============================================================
+.fields-list {
+    @apply flex flex-col gap-5;
 }
 
 .input-group {
-  @apply flex flex-col gap-1;
+    @apply flex flex-col gap-1.5;
+}
 
-  ion-label {
-    @apply text-sm font-medium text-gray-600;
-  }
+.field-label {
+    @apply text-sm font-semibold text-slate-600 !important;
+    font-family: 'Inter', sans-serif;
+}
 
-  .input-wrapper {
-    @apply flex items-center bg-gray-50 rounded-lg border border-gray-200 px-3 py-1 transition-colors;
-
-    &.editable:hover {
-      @apply border-blue-300 ring-1 ring-blue-100;
-    }
+.input-wrapper {
+    @apply flex items-center rounded-xl border px-3 py-1 transition-colors duration-200;
 
     ion-input {
-      --padding-start: 0;
-      --color: #374151; // gray-700
-      font-size: 0.95rem;
+        --padding-start: 0;
+        --color: #374151;
+        font-size: 0.95rem;
+        font-family: 'Inter', sans-serif;
+    }
+
+    &.input-wrapper--readonly {
+        @apply bg-slate-50 border-slate-200;
+    }
+
+    &.input-wrapper--editable {
+        @apply bg-white border-slate-200 hover:border-brand-primary/50;
+        @apply focus-within:border-brand-primary focus-within:ring-2 focus-within:ring-brand-primary/10;
     }
 
     .lock-icon {
-      @apply text-gray-400 text-lg;
+        @apply text-slate-300 text-lg shrink-0;
     }
-    
+
     ion-button {
-      @apply m-0 lowercase font-medium text-blue-600 h-8;
-      --padding-start: 8px;
-      --padding-end: 8px;
+        @apply m-0 shrink-0;
+        --color: #006EB6;
+        --padding-start: 8px;
+        --padding-end: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        font-family: 'Inter', sans-serif;
     }
-  }
 }
