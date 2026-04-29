@@ -2,19 +2,19 @@
 
 Este documento explica cómo ejecutar el proyecto "Asistec" en cualquier computador, de forma sencilla y automatizada.
 
-El proyecto está diseñado para funcionar en "contenedores" (Docker), lo que significa que **no necesitas instalar Node, Angular ni PostgreSQL** en tu equipo. Todo eso viene incluido y pre-configurado.
+El proyecto ha sido migrado a un modelo **Híbrido**. Utilizamos **Docker únicamente para la Base de Datos** (PostgreSQL), mientras que el Backend (`AssisTec API`) y Frontend (`Frontend`) se ejecutan localmente para aprovechar las herramientas de desarrollo modernas (como Prisma Studio y recargas en caliente).
 
 ---
 
 ## 🛠️ ¿Qué necesitas tener instalado?
 
-Solo necesitas dos cosas:
-1.  **Docker Desktop**: El programa que hace funcionar el sistema. (Debe estar abierto).
-2.  **Git Bash** (o cualquier terminal): Para descargar y arrancar el proyecto.
+1.  **Docker Desktop**: El programa que alojará la base de datos PostgreSQL.
+2.  **Node.js** (v18 o superior): Para ejecutar el código del Backend y Frontend.
+3.  **Git Bash** (o cualquier terminal): Para descargar y arrancar el proyecto.
 
 ---
 
-## ▶️ Cómo ejecutar el proyecto
+## ▶️ Cómo ejecutar el proyecto paso a paso
 
 ### 1. Descargar el código
 Abre tu terminal y ejecuta:
@@ -24,78 +24,99 @@ git clone <URL_DEL_REPO>
 cd Proyecto_Practica
 ```
 
-### 2. Configuración "Llave en mano" (.env)
-El sistema necesita unas credenciales para funcionar.
-1.  Entra a la carpeta `Backend`.
-2.  Crea un archivo nuevo llamado `.env`.
-3.  Pega el siguiente contenido:
-
-```env
-# --- Configuración Básica ---
-PORT=3000
-JWT_SECRET=secreto_lab_pucv_2024
-
-# --- Base de Datos (Automática) ---
-# No cambies esto, ya está coordinado con Docker
-DB_USER=postgres
-MI_CLAVE_POSTGRES=admin123
-NOMBRE_DB=asistectest
-DB_PORT=5432
-DB_HOST=BD_AsisTec
-
-# --- Fotos en la Nube (AWS S3) ---
-# Si no tienes estas claves, el sistema funciona igual
-# pero no podrás subir fotos nuevas.
-AWS_REGION=us-east-1
-AWS_BUCKET_NAME=nombre-de-tu-bucket
-AWS_ACCESS_KEY_ID=PON_AQUI_TU_ACCESS_KEY
-AWS_SECRET_ACCESS_KEY=PON_AQUI_TU_SECRET_KEY
-```
-
-### 3. ¡Arrancar!
-Vuelve a la carpeta principal (donde está el archivo `docker-compose.yml`) y escribe:
+### 2. Levantar la Base de Datos (Docker)
+Asegúrate de tener Docker Desktop abierto. En la carpeta raíz (donde está el `docker-compose.yml`), ejecuta:
 
 ```bash
-docker compose up --build
+docker compose up -d
 ```
+*(Esto descargará y ejecutará PostgreSQL en el puerto 5432 de forma silenciosa en el fondo).*
 
-**¿Qué está pasando?**
-*   El sistema descargará automáticamente la Base de Datos correcta (PostgreSQL).
-*   Configurará el Servidor (Backend).
-*   Preparará la Pantalla (Frontend).
+### 3. Configurar y Levantar el Backend (AssisTec API)
+El backend ahora está construido con Node.js y **Prisma ORM**.
 
-Cuando veas un mensaje verde que dice `✔ Compiled successfully` (o similar), ¡está listo!
+1. Abre una nueva terminal y entra a la carpeta del backend:
+   ```bash
+   cd "AssisTec API"
+   ```
+2. Instala las dependencias:
+   ```bash
+   npm install
+   ```
+3. Crea un archivo `.env` en la carpeta `AssisTec API` con el siguiente contenido:
+   ```env
+   # Conexión a la base de datos PostgreSQL en Docker
+   DATABASE_URL="postgresql://postgres:admin123@localhost:5432/asistectest?schema=public"
+   
+   # JWT Secret para autenticación
+   JWT_SECRET="secreto_lab_pucv_2024"
+   ```
+4. Sincroniza la Base de Datos y carga los datos semilla (Diluyentes, Equipos, Usuarios base):
+   ```bash
+   npx prisma db push
+   node run-seeds.js
+   ```
+5. ¡Arranca el servidor!
+   ```bash
+   npm run dev
+   ```
+*(Verás un mensaje: "🚀 AssisTec API corriendo en puerto 3001")*
+
+### 4. Configurar y Levantar el Frontend (Angular/Ionic)
+1. Abre OTRA pestaña en tu terminal y entra a la carpeta Frontend:
+   ```bash
+   cd Frontend
+   ```
+2. Instala las dependencias:
+   ```bash
+   npm install
+   ```
+3. ¡Arranca la aplicación!
+   ```bash
+   npm start
+   ```
 
 ---
 
-## 🌐 Cómo usar la plataforma
+## 🚀 Despliegue a Producción (EC2)
+
+Si estás subiendo este proyecto a un servidor **EC2 en AWS** u otro VPS, el `docker-compose.yml` está preparado para levantar **toda la infraestructura del Backend** (Base de Datos + API Node.js).
+
+En tu servidor de producción, simplemente sube el código y ejecuta:
+```bash
+docker compose up -d --build
+```
+Esto hará lo siguiente:
+1. Levantará el contenedor `contenedor_asistec_bd` con PostgreSQL.
+2. Levantará el contenedor `contenedor_asistec_backend` (La API en Node).
+3. **Automáticamente** sincronizará las tablas de Prisma y ejecutará los seeds mediante el archivo `docker-entrypoint.sh`.
+4. El backend quedará expuesto y listo en el puerto `3001`.
+
+*(Nota: En producción, el Frontend de Angular generalmente se compila con `npm run build` y se sirve usando NGINX o Amazon S3).*
+
+---
+
+## 🌐 Cómo usar la plataforma (Desarrollo)
 
 Abre tu navegador (Chrome, Edge, etc.) y entra a:
 
-👉 **[http://localhost:8100](http://localhost:8100)**
+👉 **[http://localhost:4200](http://localhost:4200)**
 
-(La API del sistema estará corriendo en segundo plano en [http://localhost:3000](http://localhost:3000)).
-
----
-
-## � Sobre la Base de Datos (Opcional)
-
-**No necesitas hacer nada aquí.** El sistema crea la base de datos, las tablas y maneja la información por ti de forma segura dentro del contenedor `contenedor_asistec_bd`.
-
-Si por alguna razón técnica deseas "mirar" dentro de la base de datos cruda, puedes usar **PgAdmin** con los siguientes datos:
-*   **Host**: `localhost`
-*   **Puerto**: `5432`
-*   **Usuario**: `postgres`
-*   **Contraseña**: La que pusiste en el archivo `.env` (donde dice `MI_CLAVE_POSTGRES`). Por defecto es `admin123`.
-
-*Pero recuerda: Toda la gestión se hace desde la página web (Agregar usuarios, ver reportes, etc).*
+Para iniciar sesión y probar los roles, utiliza los correos precargados:
+- **Analista**: `analista@lab.cl`
+- **Coordinadora**: `coord@lab.cl`
+- **Jefe de Área**: `jefe@lab.cl`
+- **Ingreso**: `ingreso@lab.cl`
+*(La contraseña de todos es: `123456`)*
 
 ---
 
-## ❓ Dudas frecuentes
+## 💾 Sobre la Base de Datos (PgAdmin o Prisma Studio)
 
-**Las fotos no cargan / no se suben**
-Revise que las credenciales de `AWS (AWS_ACCESS_KEY...)` en el archivo `.env` sean las correctas y recientes.
+Si necesitas ver los datos crudos, ya no necesitas PgAdmin. Gracias a Prisma, puedes ver tu base de datos directamente en el navegador.
+Solo abre una terminal en `AssisTec API` y ejecuta:
 
-**El sistema no parte**
-Asegúrese de que **Docker Desktop** esté abierto y con el ícono en verde antes de escribir el comando.
+```bash
+npx prisma studio
+```
+Se abrirá una interfaz gráfica en `http://localhost:5555` donde podrás ver y editar todas las tablas fácilmente.

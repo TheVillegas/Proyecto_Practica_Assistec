@@ -38,3 +38,4 @@ nul
 # --- Carpetas de trabajo interno (auditorías, agentes) ---
 Auditoria/
 gentleman-guardian-angel/
+.atl/

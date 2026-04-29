@@ -2,42 +2,35 @@ version: '3.8'
 
 services:
 
-  #Base de datos
+  # Base de Datos (PostgreSQL 16)
   BD_AsisTec:
-    image: postgres:17 # Usar una versión estable (16). La 18 no existe oficialmente aún.
+    image: postgres:16
     container_name: contenedor_asistec_bd
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_PASSWORD=${MI_CLAVE_POSTGRES}
-      - POSTGRES_DB=${NOMBRE_DB}
+      - POSTGRES_PASSWORD=${MI_CLAVE_POSTGRES:-admin123}
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_DB=${NOMBRE_DB:-asistectest}
       - TZ=America/Santiago
       - PGTZ=America/Santiago
     volumes:
-      - ./BD/postgres/init_refined.sql:/docker-entrypoint-initdb.d/init.sql
-      - pgdata:/var/lib/postgresql/data # Ruta estándar para evitar el error de "data in /var/lib/postgresql"
+      # Ya no necesitamos init_refined.sql, Prisma se encarga de estructurar la BD.
+      - pgdata:/var/lib/postgresql/data
 
+  # Backend (Node.js + Prisma)
   backend_asistec:
-    build: ./Backend
-    volumes:
-      - ./Backend:/app
-      - /app/node_modules
-      - ./.env:/app/.env
-    container_name: "contenedor_asistec_backend"
+    build:
+      context: "./AssisTec API"
+      dockerfile: Dockerfile
+    container_name: contenedor_asistec_backend
     restart: always
     ports:
-      - "3000:3000"
+      - "3001:3001"
     environment:
-      - DB_USER=postgres
-      - DB_PASSWORD=${MI_CLAVE_POSTGRES}
-      - DB_HOST=BD_AsisTec # Nombre del servicio de arriba
-      - DB_NAME=${NOMBRE_DB}
-      - DB_PORT=${DB_PORT}
-      - JWT_SECRET=${JWT_SECRET}
-      - AWS_REGION=${AWS_REGION}
-      - AWS_BUCKET_NAME=${AWS_BUCKET_NAME}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${MI_CLAVE_POSTGRES:-admin123}@BD_AsisTec:5432/${NOMBRE_DB:-asistectest}?schema=public
+      - JWT_SECRET=${JWT_SECRET:-secreto_lab_pucv_2024}
+      - PORT=3001
     depends_on:
       - BD_AsisTec
 

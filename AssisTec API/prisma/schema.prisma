@@ -1,0 +1,354 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// TABLAS BASE (NUEVAS)
+// ============================================================
+
+model Cliente {
+  idCliente         Int                 @id @default(autoincrement()) @map("id_cliente")
+  rut               String              @db.VarChar(255)
+  nombre            String              @db.VarChar(255)
+  email             String              @db.VarChar(255)
+  telefono          String              @db.VarChar(255)
+  activo            String              @db.VarChar(255)
+  
+  direcciones       DireccionCliente[]
+  solicitudes       SolicitudIngreso[]
+
+  @@map("clientes")
+}
+
+model Usuario {
+  rutUsuario             String              @id @map("rut_usuario") @db.VarChar(255)
+  nombreApellidoUsuario  String              @map("nombre_apellido_usuario") @db.VarChar(255)
+  correoUsuario          String              @map("correo_usuario") @db.VarChar(255)
+  contrasenaUsuario      String              @map("contrasena_usuario") @db.VarChar(255)
+  rolUsuario             Int                 @map("rol_usuario")
+  urlFoto                String              @map("url_foto") @db.VarChar(255)
+
+  solicitudesResponsable SolicitudIngreso[]  @relation("ResponsableIngreso")
+  solicitudesJefaArea    SolicitudIngreso[]  @relation("JefaArea")
+  solicitudesCoord       SolicitudIngreso[]  @relation("CoordinadoraRecepcion")
+  solicitudesCreadas     SolicitudIngreso[]  @relation("CreadoPor")
+
+  @@map("usuarios")
+}
+
+model EquipoLab {
+  idEquipo     Int                @id @default(autoincrement()) @map("id_equipo")
+  nombreEquipo String             @map("nombre_equipo") @db.VarChar(100)
+  codigoEquipo String?            @map("codigo_equipo") @db.VarChar(50)
+  
+  solicitudes  SolicitudIngreso[]
+
+  @@map("equipos_lab")
+}
+
+model LugarAlmacenamiento {
+  idLugar      Int                @id @default(autoincrement()) @map("id_lugar")
+  nombreLugar  String             @map("nombre_lugar") @db.VarChar(100)
+  codigoLugar  String?            @map("codigo_lugar") @db.VarChar(20)
+  
+  solicitudes  SolicitudIngreso[]
+
+  @@map("lugares_almacenamiento")
+}
+
+model CategoriaProducto {
+  idCategoria   BigInt                  @id @default(autoincrement()) @map("id_categoria")
+  nombre        String                  @db.VarChar(255)
+  
+  alcances      AlcanceAcreditacion[]
+  tiempos       TiempoPorCategoria[]
+  solicitudes   SolicitudIngreso[]
+
+  @@map("categorias_producto")
+}
+
+model AcreditacionInn {
+  idAcreditacion     BigInt                 @id @map("id_acreditacion")
+  codigo             String                 @unique @db.VarChar
+  area               String                 @db.VarChar(255)
+  subarea            String                 @db.VarChar(255)
+  fechaVigenciaDesde DateTime               @map("fecha_vigencia_desde") @db.Date
+  fechaVigenteHasta  DateTime               @map("fecha_vigente_hasta") @db.Date
+  urlCertificado     String                 @map("url_certificado") @db.VarChar(255)
+  
+  alcances           AlcanceAcreditacion[]
+
+  @@map("accreditaciones_inn")
+}
+
+model FormularioAnalisis {
+  idFormularioAnalisis  BigInt                  @id @default(autoincrement()) @map("id_formularios_analisis")
+  codigo                String                  @db.VarChar(255)
+  nombreAnalisis        String                  @map("nombre_analisis") @db.VarChar(255)
+  area                  String                  @db.VarChar(255)
+  generaTpaDefault      Boolean                 @default(false) @map("genera_tpa_default")
+  
+  alcances              AlcanceAcreditacion[]
+  tiempos               TiempoPorCategoria[]
+  solicitudAnalisis     SolicitudAnalisis[]
+
+  @@map("formularios_analisis")
+}
+
+// ============================================================
+// TABLAS CON DEPENDENCIAS DE PRIMER NIVEL
+// ============================================================
+
+model DireccionCliente {
+  idDireccion           Int                @id @default(autoincrement()) @map("id_direccion")
+  idCliente             Int                @map("id_cliente")
+  alias                 String             @db.VarChar(255)
+  direccion             String
+  solicitadoPorDefault  String             @map("solicitado_por_default") @db.VarChar(255)
+  activo                Boolean
+  
+  cliente               Cliente            @relation(fields: [idCliente], references: [idCliente])
+  solicitudes           SolicitudIngreso[]
+
+  @@map("direcciones_cliente")
+}
+
+model AlcanceAcreditacion {
+  idAlcanceAcreditacion Int                @id @default(autoincrement()) @map("id_alcance_acreditacion")
+  idAcreditacion        BigInt             @map("id_acreditacion") // Corrected from INT to match AcreditacionInn PK
+  idFormularioAnalisis  BigInt             @map("id_formulario_analisis")
+  idCategoriaProducto   BigInt             @map("id_categoria_producto")
+  normaEspecifica       String             @map("norma_especifica") @db.VarChar(255)
+  textoAlcanceOriginal  String             @map("texto_alcance_original")
+  excepciones           String             @db.VarChar(255)
+  
+  acreditacion          AcreditacionInn    @relation(fields: [idAcreditacion], references: [idAcreditacion])
+  formulario            FormularioAnalisis @relation(fields: [idFormularioAnalisis], references: [idFormularioAnalisis])
+  categoria             CategoriaProducto  @relation(fields: [idCategoriaProducto], references: [idCategoria])
+  solicitudAnalisis     SolicitudAnalisis[]
+
+  @@map("alcance_acreditacion")
+}
+
+model TiempoPorCategoria {
+  idTiempoAnalisis      BigInt             @id @default(autoincrement()) @map("id_tiempo_analisis")
+  idCategoriaProducto   BigInt             @map("id_categoria_producto")
+  idFormularioAnalisis  BigInt             @map("id_formulario_analisis")
+  metodologiaNorma      Int                @map("metodologia_norma")
+  diasNegativo          Int                @map("dias_negativo")
+  diasConfirmacion      Int                @map("dias_confirmacion")
+  
+  categoria             CategoriaProducto  @relation(fields: [idCategoriaProducto], references: [idCategoria])
+  formulario            FormularioAnalisis @relation(fields: [idFormularioAnalisis], references: [idFormularioAnalisis])
+
+  @@map("tiempos_por_categoria")
+}
+
+// ============================================================
+// SOLICITUD DE INGRESO
+// ============================================================
+
+model SolicitudIngreso {
+  idSolicitud                         BigInt             @id @default(autoincrement()) @map("id_solicitud")
+  anioIngreso                         Int                @map("anio_ingreso") @db.SmallInt
+  numeroAli                           Int                @map("numero_ali")
+  numeroActa                          String             @map("numero_acta")
+  codigoExterno                       String             @map("codigo_externo")
+  categoriaId                         BigInt             @map("categoria")
+  idCliente                           Int                @map("id_cliente")
+  idDireccion                         Int                @map("id_direccion")
+  fechaRecepcion                      DateTime           @map("fecha_recepcion") @db.Timestamp()
+  temperaturaRecepcion                Decimal            @map("temperatura_recepcion") @db.Decimal(5,2)
+  idTermometro                        Int                @map("id_termometro")
+  fechaInicioMuestreo                 DateTime           @map("fecha_inicio_muestreo") @db.Timestamp()
+  fechaTerminoMuestreo                DateTime           @map("fecha_termino_muestreo") @db.Timestamp()
+  cantidadMuestras                    Int                @map("cantidad_muestras") @db.SmallInt
+  cantEnvases                         Int                @map("cant_envases") @db.SmallInt
+  responsableMuestreo                 String             @map("responsable_muestreo") @db.VarChar(255)
+  lugarMuestreo                       String             @map("lugar_muestreo") @db.VarChar(255)
+  instructivoMuestreo                 String             @map("instructivo_muestreo") @db.VarChar(255)
+  envasesSuministradosPor             String             @map("envases_suministrados_por") @db.VarChar(255)
+  idLugar                             Int                @map("id_lugar")
+  muestraCompartidaQuimica            Boolean            @default(false) @map("muestra_compartida_quimica")
+  observacionesGenerales              String             @map("observaciones_generales")
+  observacionesCliente                String             @map("observaciones_cliente")
+  notasDelCliente                     String             @map("notas_del_cliente")
+  estado                              String             @db.VarChar(255)
+  rutResponsableIngreso               String             @map("rut_responsable_ingreso") @db.VarChar(255)
+  rutJefaArea                         String             @map("rut_jefa_area") @db.VarChar(255)
+  rutCoordinaroraRecepcion            String             @map("rut_coordinarora_recepcion") @db.VarChar(255)
+  fechaEnvioValidacion                DateTime           @map("fecha_envio_validacion") @db.Timestamp()
+  fechaEntregaRevisionJefeLab         DateTime           @map("fecha_entrega_revision_jefe_lab") @db.Timestamp()
+  motivoDevolucion                    String             @map("motivo_devolucion")
+  fechaHoraRecepcionCoordinadora      DateTime           @map("fecha_hora_recepcion_coordinadora") @db.Timestamp()
+  fechaEntregaResultadoNegativoMicro  DateTime           @map("fecha_entrega_resultado_negativo_micro") @db.Timestamp()
+  diasHabilesResultadoNegativo        Int                @map("dias_habiles_resultado_negativo") @db.SmallInt
+  fechaEntregaResultadoPositivoMicro  DateTime           @map("fecha_entrega_resultado_positivo_micro") @db.Timestamp()
+  diasHabilesResultadoPositivo        Int                @map("dias_habiles_resultado_positivo") @db.SmallInt
+  fechaHoraRetiroMuestrasSala         DateTime           @map("fecha_hora_retiro_muestras_sala") @db.Timestamp()
+  fechaRecepcionAnalista              DateTime           @map("fecha_recepcion_analista") @db.Date
+  fechaSolicitadaEntregaAnalista      DateTime           @map("fecha_solicitada_entrega_analista") @db.Date
+  fechaEnvioInformePositivo           DateTime           @map("fecha_envio_informe_positivo") @db.Date
+  fechaEnvioInformeNegativo           DateTime           @map("fecha_envio_informe_negativo") @db.Date
+  createdAt                           DateTime           @map("created_at") @db.Date
+  updatedAt                           DateTime           @map("updated_at") @db.Date
+  createdBy                           String             @map("created_by") @db.VarChar(255)
+
+  categoria                           CategoriaProducto  @relation(fields: [categoriaId], references: [idCategoria])
+  cliente                             Cliente            @relation(fields: [idCliente], references: [idCliente])
+  direccion                           DireccionCliente   @relation(fields: [idDireccion], references: [idDireccion])
+  termometro                          EquipoLab          @relation(fields: [idTermometro], references: [idEquipo])
+  lugar                               LugarAlmacenamiento @relation(fields: [idLugar], references: [idLugar])
+  responsableIngreso                  Usuario            @relation("ResponsableIngreso", fields: [rutResponsableIngreso], references: [rutUsuario])
+  jefaArea                            Usuario            @relation("JefaArea", fields: [rutJefaArea], references: [rutUsuario])
+  coordinadora                        Usuario            @relation("CoordinadoraRecepcion", fields: [rutCoordinaroraRecepcion], references: [rutUsuario])
+  creadoPor                           Usuario            @relation("CreadoPor", fields: [createdBy], references: [rutUsuario])
+  
+  muestras                            SolicitudMuestra[]
+
+  @@map("solicitud_ingreso")
+}
+
+// ============================================================
+// SOLICITUD MUESTRA
+// ============================================================
+
+model SolicitudMuestra {
+  idSolicitudMuestra BigInt             @id @default(autoincrement()) @map("id_solicitud_muestra")
+  idSolicitud        BigInt             @map("id_solicitud")
+  
+  solicitud          SolicitudIngreso   @relation(fields: [idSolicitud], references: [idSolicitud])
+  analisis           SolicitudAnalisis[]
+
+  @@map("solicitud_muestra")
+}
+
+// ============================================================
+// SOLICITUD ANÁLISIS
+// ============================================================
+
+model SolicitudAnalisis {
+  idSolicitudAnalisis   BigInt              @id @map("id_solicitud_analisis") // Removed autoincrement as per schema
+  idSolicitudMuestra    BigInt              @map("id_solicitud_muestra")
+  idAlcanceAcreditacion Int                 @map("id_alcance_acreditacion")
+  idFormularioAnalisis  BigInt              @map("id_formulario_analisis")
+  acreditado            Boolean             @default(false)
+  metodologiaNorma      String              @map("metodologia_norma") @db.VarChar(255)
+  
+  muestra               SolicitudMuestra    @relation(fields: [idSolicitudMuestra], references: [idSolicitudMuestra])
+  alcance               AlcanceAcreditacion @relation(fields: [idAlcanceAcreditacion], references: [idAlcanceAcreditacion])
+  formulario            FormularioAnalisis  @relation(fields: [idFormularioAnalisis], references: [idFormularioAnalisis])
+
+  @@map("solicitud_analisis")
+}
+
+// ============================================================
+// TABLAS MAESTRAS (Catálogos adicionales)
+// ============================================================
+
+model Diluyente {
+  idDiluyente     Int     @id @default(autoincrement()) @map("id_diluyente")
+  nombreDiluyente String  @map("nombre_diluyente") @db.VarChar(100)
+  mililitros      String  @db.VarChar(50)
+
+  @@map("diluyentes")
+}
+
+model EquipoIncubacion {
+  idIncubacion    Int     @id @default(autoincrement()) @map("id_incubacion")
+  nombreEquipo    String  @map("nombre_equipo") @db.VarChar(100)
+  temperaturaRef  String? @map("temperatura_ref") @db.VarChar(50)
+
+  @@map("equipos_incubacion")
+}
+
+model Instrumento {
+  idInstrumento     Int     @id @default(autoincrement()) @map("id_instrumento")
+  nombreInstrumento String  @map("nombre_instrumento") @db.VarChar(100)
+  codigoInstrumento String? @map("codigo_instrumento") @db.VarChar(50)
+
+  @@map("instrumentos")
+}
+
+model MaestroChecklistLimpieza {
+  idItem          Int     @id @map("id_item")
+  nombreItem      String  @map("nombre_item") @db.VarChar(100)
+  defSeleccionado Int?    @default(0) @map("def_seleccionado")
+  defBloqueado    Int?    @default(0) @map("def_bloqueado")
+
+  @@map("maestro_checklist_limpieza")
+}
+
+model MaestroFormasCalculo {
+  idForma         Int     @id @map("id_forma")
+  nombreForma     String  @map("nombre_forma") @db.VarChar(100)
+  defSeleccionado Int?    @default(0) @map("def_seleccionado")
+
+  @@map("maestro_formas_calculo")
+}
+
+model MaestroTiposAnalisis {
+  idTipoAnalisis  Int     @id @default(autoincrement()) @map("id_tipo_analisis")
+  nombreAnalisis  String  @map("nombre_analisis") @db.VarChar(100)
+
+  @@map("maestro_tipos_analisis")
+}
+
+model MaterialSiembra {
+  idMaterialSiembra Int     @id @default(autoincrement()) @map("id_material_siembra")
+  nombreMaterial    String  @map("nombre_material") @db.VarChar(100)
+  detalleMedida     String? @map("detalle_medida") @db.VarChar(100)
+
+  @@map("material_siembra")
+}
+
+model Micropipeta {
+  idPipeta      Int     @id @default(autoincrement()) @map("id_pipeta")
+  nombrePipeta  String  @map("nombre_pipeta") @db.VarChar(100)
+  codigoPipeta  String  @map("codigo_pipeta") @db.VarChar(50)
+  capacidad     String? @db.VarChar(20)
+
+  @@map("micropipetas")
+}
+
+// ============================================================
+// TABLAS LEGACY (Solo lectura/escritura puente)
+// ============================================================
+
+model MuestraAli {
+  codigoAli              Int       @id @map("codigo_ali")
+  codigoOtros            String?   @map("codigo_otros") @db.VarChar(255)
+  observacionesCliente   String?   @map("observaciones_cliente")
+  observacionesGenerales String?   @map("observaciones_generales")
+  
+  // Relations to bridge reports
+  tpaReportes            TpaReporte[]
+  ramReportes            RamReporte[]
+
+  @@map("muestras_ali")
+}
+
+model TpaReporte {
+  id           Int        @id @default(autoincrement()) // Assuming an auto-inc PK
+  codigoAli    Int        @map("codigo_ali")
+  estadoActual String?    @map("estado_actual") @db.VarChar(50)
+  
+  muestra      MuestraAli @relation(fields: [codigoAli], references: [codigoAli])
+
+  @@map("tpa_reporte")
+}
+
+model RamReporte {
+  id           Int        @id @default(autoincrement()) // Assuming an auto-inc PK
+  codigoAli    Int        @map("codigo_ali")
+  estadoRam    String?    @map("estado_ram") @db.VarChar(50)
+  
+  muestra      MuestraAli @relation(fields: [codigoAli], references: [codigoAli])
+
+  @@map("ram_reporte")
+}
