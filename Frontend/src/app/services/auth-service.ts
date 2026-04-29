@@ -7,7 +7,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root',
 })
 export class AuthService {
-  private apiUrl = environment.apiUrl + '/Usuarios';
+  private apiUrl = environment.apiUrl + '/auth';
 
   // Subject para notificar cambios en el usuario
   private currentUserSubject = new BehaviorSubject<any>(this.getUsuarioFromStorage());
@@ -24,7 +24,7 @@ export class AuthService {
   login(correo: string, contrasena: string): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/login`, {
       correo: correo,
-      contrasena_analista: contrasena
+      contrasena: contrasena
     }).pipe(
       tap(response => {
         if (response && response.token) {

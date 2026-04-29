@@ -21,41 +21,37 @@ import {
 })
 export class CatalogosService {
 
-    private apiUrl = environment.apiUrl + '/Catalogos';
-    private usuariosUrl = environment.apiUrl + '/Usuarios';
+    private apiUrl = environment.apiUrl + '/catalogo';
+    private usuariosUrl = environment.apiUrl + '/catalogo/usuarios';
 
     constructor(private http: HttpClient) { }
 
     getMaterialesPesados(): Observable<MaterialPesado[]> {
-        return this.http.get<MaterialPesado[]>(`${this.apiUrl}/materiales-pesado`);
+        return this.http.get<MaterialPesado[]>(`${this.apiUrl}/instrumentos`);
     }
 
     getLugaresAlmacenamiento(): Observable<LugarAlmacenamiento[]> {
-        return this.http.get<LugarAlmacenamiento[]>(`${this.apiUrl}/lugares-almacenamiento`);
+        return this.http.get<LugarAlmacenamiento[]>(`${this.apiUrl}/lugares`);
     }
 
     getResponsables(): Observable<Responsable[]> {
-        return this.http.get<Responsable[]>(`${this.usuariosUrl}/analistas`);
+        return this.http.get<Responsable[]>(this.usuariosUrl);
     }
 
     getEquiposInstrumentos(): Observable<EquipoLaboratorio[]> {
-        // En el backend 'instrumentos' y 'equipos-lab' están separados.
-        // Basado en los datos estáticos (Balanzas), esto parece ser 'equipos-lab'.
-        return this.http.get<EquipoLaboratorio[]>(`${this.apiUrl}/equipos-lab`);
+        return this.http.get<EquipoLaboratorio[]>(`${this.apiUrl}/equipos_lab`);
     }
 
     getChecklistLimpieza(): Observable<ItemChecklistLimpieza[]> {
-        return this.http.get<ItemChecklistLimpieza[]>(`${this.apiUrl}/checklist-limpieza`);
+        return this.http.get<ItemChecklistLimpieza[]>(`${this.apiUrl}/checklist_limpieza`);
     }
 
     getMaterialSiembra(): Observable<MaterialSiembra[]> {
-        return this.http.get<MaterialSiembra[]>(`${this.apiUrl}/material-siembra`);
+        return this.http.get<MaterialSiembra[]>(`${this.apiUrl}/material_siembra`);
     }
 
     getEquiposSiembra(): Observable<EquipoLaboratorio[]> {
-        // Asumiendo que también son equipos de laboratorio, o si hay un endpoint específico.
-        // Por ahora obtendremos equipos-lab. Considerar filtrar en el componente o backend si es necesario.
-        return this.http.get<EquipoLaboratorio[]>(`${this.apiUrl}/equipos-lab`);
+        return this.http.get<EquipoLaboratorio[]>(`${this.apiUrl}/equipos_lab`);
     }
 
     getDiluyentes(): Observable<Diluyente[]> {
@@ -63,7 +59,7 @@ export class CatalogosService {
     }
 
     getEquiposIncubacion(): Observable<EquipoIncubacion[]> {
-        return this.http.get<EquipoIncubacion[]>(`${this.apiUrl}/equipos-incubacion`);
+        return this.http.get<EquipoIncubacion[]>(`${this.apiUrl}/equipos_incubacion`);
     }
 
     getMicroPipetas(): Observable<Micropipeta[]> {
@@ -71,10 +67,10 @@ export class CatalogosService {
     }
 
     getControlAnalisis(): Observable<TipoAnalisis[]> {
-        return this.http.get<TipoAnalisis[]>(`${this.apiUrl}/tipos-analisis`);
+        return this.http.get<TipoAnalisis[]>(`${this.apiUrl}/tipos_analisis`);
     }
 
     getFormasCalculo(): Observable<FormaCalculo[]> {
-        return this.http.get<FormaCalculo[]>(`${this.apiUrl}/formas-calculo`);
+        return this.http.get<FormaCalculo[]>(`${this.apiUrl}/formas_calculo`);
     }
 }
