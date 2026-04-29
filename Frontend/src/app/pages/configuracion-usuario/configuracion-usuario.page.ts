@@ -35,11 +35,28 @@ export class ConfiguracionUsuarioPage implements OnInit {
     const user = this.authService.getUsuario();
     if (user) {
       // console.log('Usuario cargado');
+      let mappedRole = 'Analista';
+      const rolInt = user.rol !== undefined ? user.rol : user.rol_analista;
+      
+      switch (rolInt) {
+        case 1:
+          mappedRole = 'Coordinadora de Área';
+          break;
+        case 2:
+          mappedRole = 'Jefe de Área';
+          break;
+        case 3:
+          mappedRole = 'Ingreso';
+          break;
+        default:
+          mappedRole = 'Analista';
+      }
+
       this.usuario = {
         nombreApellido: user.nombreApellido || user.nombre_analista,
         rut: user.rut || user.rut_analista,
         correo: user.correo || user.correo_analista,
-        rol: (user.rol === 1 || user.rol_analista === 1) ? 'Supervisor' : 'Analista',
+        rol: mappedRole,
         avatar: user.url_foto || user.urlFoto || `https://ui-avatars.com/api/?name=${user.nombreApellido || user.nombre_analista || 'U'}&background=random`
       };
     }

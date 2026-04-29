@@ -33,8 +33,24 @@ export class HeaderComponent implements OnInit {
     // Suscribirse a cambios del usuario para actualización en tiempo real
     this.authService.currentUser$.subscribe(user => {
       if (user) {
-        this.userName = user.nombreApellido || 'Usuario';
-        this.userRole = user.rol === 1 ? 'Supervisor' : 'Analista';
+        this.userName = user.nombreApellido || user.nombre || 'Usuario';
+        
+        const rolInt = user.rol !== undefined ? user.rol : user.rol_analista;
+        
+        switch (rolInt) {
+          case 1:
+            this.userRole = 'Coordinadora de Área';
+            break;
+          case 2:
+            this.userRole = 'Jefe de Área';
+            break;
+          case 3:
+            this.userRole = 'Ingreso';
+            break;
+          default:
+            this.userRole = 'Analista';
+        }
+
         this.userPhoto = user.url_foto || user.urlFoto || 'https://ui-avatars.com/api/?name=' + (this.userName || 'U') + '&background=random';
       } else {
         this.userName = 'Usuario';
