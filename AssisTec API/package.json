@@ -9,7 +9,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@prisma/client": "^6.0.0",
+    "@prisma/client": "^6.19.3",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "jest": "^30.3.0",
-    "prisma": "^6.0.0",
+    "prisma": "^6.19.3",
     "supertest": "^7.2.2"
   }
 }

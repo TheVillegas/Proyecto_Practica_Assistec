@@ -40,11 +40,16 @@ const routes: Routes = [
   {
     path: 'register',
     loadChildren: () => import('./pages/register/register.module').then(m => m.RegisterPageModule)
-  },  {
-    path: 'configuracion-usuario',
-    loadChildren: () => import('./pages/configuracion-usuario/configuracion-usuario.module').then( m => m.ConfiguracionUsuarioPageModule)
   },
-
+  {
+    path: 'configuracion-usuario',
+    loadChildren: () => import('./pages/configuracion-usuario/configuracion-usuario.module').then(m => m.ConfiguracionUsuarioPageModule)
+  },
+  {
+    path: 'solicitud-ingreso',
+    loadChildren: () => import('./pages/solicitud-ingreso/solicitud-ingreso.module').then(m => m.SolicitudIngresoPageModule),
+    canActivate: [AuthGuard]
+  },
 ];
 
 @NgModule({
