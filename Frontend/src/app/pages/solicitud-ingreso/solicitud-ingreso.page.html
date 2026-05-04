@@ -27,11 +27,8 @@
         <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
       </div>
       <div class="stepper-steps">
-        <button
-          *ngFor="let nombre of NOMBRES_ETAPAS; let i = index"
-          class="step-btn"
-          [class.step-btn--active]="etapaActual === i + 1"
-          [class.step-btn--done]="etapaActual > i + 1"
+        <button *ngFor="let nombre of NOMBRES_ETAPAS; let i = index" class="step-btn"
+          [class.step-btn--active]="etapaActual === i + 1" [class.step-btn--done]="etapaActual > i + 1"
           (click)="irAEtapa(i + 1)">
           <span class="step-circle">{{ i + 1 }}</span>
           <span class="step-label">{{ nombre }}</span>
@@ -74,13 +71,15 @@
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Código Externo</label>
-                  <input type="text" class="form-input" formControlName="codigoExterno" placeholder="Ej: EXT-2025-001" />
+                  <input type="text" class="form-input" formControlName="codigoExterno"
+                    placeholder="Ej: EXT-2025-001" />
                 </div>
               </ion-col>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Categoría <span class="req">*</span></label>
-                  <select class="form-select" formControlName="categoria" [class.form-input--error]="campoInvalido('categoria')">
+                  <select class="form-select" formControlName="categoria"
+                    [class.form-input--error]="campoInvalido('categoria')">
                     <option value="" disabled>Seleccione categoría</option>
                     <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
                   </select>
@@ -106,28 +105,33 @@
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Nombre del cliente <span class="req">*</span></label>
-                  <input type="text" class="form-input" formControlName="nombreCliente" placeholder="Razón social o nombre" [class.form-input--error]="campoInvalido('nombreCliente')" />
+                  <input type="text" class="form-input" formControlName="nombreCliente"
+                    placeholder="Razón social o nombre" [class.form-input--error]="campoInvalido('nombreCliente')" />
                   <span class="error-msg" *ngIf="campoInvalido('nombreCliente')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Nombre del solicitante <span class="req">*</span></label>
-                  <input type="text" class="form-input" formControlName="nombreSolicitante" placeholder="Nombre del responsable" [class.form-input--error]="campoInvalido('nombreSolicitante')" />
+                  <input type="text" class="form-input" formControlName="nombreSolicitante"
+                    placeholder="Nombre del responsable"
+                    [class.form-input--error]="campoInvalido('nombreSolicitante')" />
                   <span class="error-msg" *ngIf="campoInvalido('nombreSolicitante')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12">
                 <div class="form-group">
                   <label class="form-label">Dirección <span class="req">*</span></label>
-                  <input type="text" class="form-input" formControlName="direccion" placeholder="Dirección del cliente" [class.form-input--error]="campoInvalido('direccion')" />
+                  <input type="text" class="form-input" formControlName="direccion" placeholder="Dirección del cliente"
+                    [class.form-input--error]="campoInvalido('direccion')" />
                   <span class="error-msg" *ngIf="campoInvalido('direccion')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12">
                 <div class="form-group">
                   <label class="form-label">Notas del cliente</label>
-                  <textarea class="form-textarea" formControlName="notasCliente" rows="3" placeholder="Requerimientos especiales, condiciones..."></textarea>
+                  <textarea class="form-textarea" formControlName="notasCliente" rows="3"
+                    placeholder="Requerimientos especiales, condiciones..."></textarea>
                 </div>
               </ion-col>
             </ion-row>
@@ -149,14 +153,16 @@
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Fecha de recepción <span class="req">*</span></label>
-                  <input type="datetime-local" class="form-input" formControlName="fechaRecepcion" [class.form-input--error]="campoInvalido('fechaRecepcion')" />
+                  <input type="datetime-local" class="form-input" formControlName="fechaRecepcion"
+                    [class.form-input--error]="campoInvalido('fechaRecepcion')" />
                   <span class="error-msg" *ngIf="campoInvalido('fechaRecepcion')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Temperatura de recepción (°C) <span class="req">*</span></label>
-                  <input type="number" class="form-input" formControlName="temperatura" placeholder="Ej: 4" [class.form-input--error]="campoInvalido('temperatura')" />
+                  <input type="number" class="form-input" formControlName="temperatura" placeholder="Ej: 4"
+                    [class.form-input--error]="campoInvalido('temperatura')" />
                   <span class="error-msg" *ngIf="campoInvalido('temperatura')">Ingrese un valor numérico válido.</span>
                 </div>
               </ion-col>
@@ -179,49 +185,57 @@
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Fecha inicio muestreo <span class="req">*</span></label>
-                  <input type="datetime-local" class="form-input" formControlName="fechaInicioMuestreo" [class.form-input--error]="campoInvalido('fechaInicioMuestreo')" />
+                  <input type="datetime-local" class="form-input" formControlName="fechaInicioMuestreo"
+                    [class.form-input--error]="campoInvalido('fechaInicioMuestreo')" />
                   <span class="error-msg" *ngIf="campoInvalido('fechaInicioMuestreo')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Fecha término muestreo <span class="req">*</span></label>
-                  <input type="datetime-local" class="form-input" formControlName="fechaTerminoMuestreo" [class.form-input--error]="campoInvalido('fechaTerminoMuestreo')" />
+                  <input type="datetime-local" class="form-input" formControlName="fechaTerminoMuestreo"
+                    [class.form-input--error]="campoInvalido('fechaTerminoMuestreo')" />
                   <span class="error-msg" *ngIf="campoInvalido('fechaTerminoMuestreo')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="4">
                 <div class="form-group">
                   <label class="form-label">N° de muestras <span class="req">*</span></label>
-                  <input type="number" class="form-input" formControlName="numeroMuestras" min="1" [class.form-input--error]="campoInvalido('numeroMuestras')" />
+                  <input type="number" class="form-input" formControlName="numeroMuestras" min="1"
+                    [class.form-input--error]="campoInvalido('numeroMuestras')" />
                   <span class="error-msg" *ngIf="campoInvalido('numeroMuestras')">Mínimo 1.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="4">
                 <div class="form-group">
                   <label class="form-label">N° de envases <span class="req">*</span></label>
-                  <input type="number" class="form-input" formControlName="numeroEnvases" min="1" [class.form-input--error]="campoInvalido('numeroEnvases')" />
+                  <input type="number" class="form-input" formControlName="numeroEnvases" min="1"
+                    [class.form-input--error]="campoInvalido('numeroEnvases')" />
                   <span class="error-msg" *ngIf="campoInvalido('numeroEnvases')">Mínimo 1.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="4">
                 <div class="form-group">
                   <label class="form-label">Analista responsable <span class="req">*</span></label>
-                  <input type="text" class="form-input" formControlName="analistaResponsable" placeholder="Nombre del analista" [class.form-input--error]="campoInvalido('analistaResponsable')" />
+                  <input type="text" class="form-input" formControlName="analistaResponsable"
+                    placeholder="Nombre del analista"
+                    [class.form-input--error]="campoInvalido('analistaResponsable')" />
                   <span class="error-msg" *ngIf="campoInvalido('analistaResponsable')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Lugar de muestreo <span class="req">*</span></label>
-                  <input type="text" class="form-input" formControlName="lugarMuestreo" placeholder="Ej: Planta principal" [class.form-input--error]="campoInvalido('lugarMuestreo')" />
+                  <input type="text" class="form-input" formControlName="lugarMuestreo"
+                    placeholder="Ej: Planta principal" [class.form-input--error]="campoInvalido('lugarMuestreo')" />
                   <span class="error-msg" *ngIf="campoInvalido('lugarMuestreo')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Instructivo de muestreo</label>
-                  <input type="text" class="form-input" formControlName="instructivoMuestreo" placeholder="Ej: P-LAB-004" />
+                  <input type="text" class="form-input" formControlName="instructivoMuestreo"
+                    placeholder="Ej: P-LAB-004" />
                 </div>
               </ion-col>
             </ion-row>
@@ -240,7 +254,8 @@
         <div class="form-card-body">
           <div class="form-group">
             <label class="form-label">Tipo de análisis <span class="req">*</span></label>
-            <select class="form-select" formControlName="tipoAnalisis" [class.form-input--error]="campoInvalido('tipoAnalisis')">
+            <select class="form-select" formControlName="tipoAnalisis"
+              [class.form-input--error]="campoInvalido('tipoAnalisis')">
               <option value="" disabled>Seleccione tipo de análisis</option>
               <option *ngFor="let t of tiposAnalisis" [value]="t.value">{{ t.label }}</option>
             </select>
@@ -254,8 +269,10 @@
               Formularios asociados al análisis
             </h3>
             <div class="checklist-grid">
-              <label class="checklist-item" *ngFor="let f of formulariosCatalogo" [class.checklist-item--obligatorio]="f.obligatorio">
-                <input type="checkbox" class="form-checkbox" [checked]="f.seleccionado" [disabled]="f.obligatorio" (change)="toggleFormulario(f)" />
+              <label class="checklist-item" *ngFor="let f of formulariosCatalogo"
+                [class.checklist-item--obligatorio]="f.obligatorio">
+                <input type="checkbox" class="form-checkbox" [checked]="f.seleccionado" [disabled]="f.obligatorio"
+                  (change)="toggleFormulario(f)" />
                 <span class="checklist-item__name">{{ f.nombre }}</span>
                 <span class="tpa-badge" *ngIf="f.obligatorio">Obligatorio</span>
               </label>
@@ -288,8 +305,10 @@
               <div class="muestra-card__body">
                 <p class="muestra-hint">Formularios asociados a esta muestra:</p>
                 <div class="checklist-grid">
-                  <label class="checklist-item" *ngFor="let f of m.formularios" [class.checklist-item--obligatorio]="f.obligatorio">
-                    <input type="checkbox" class="form-checkbox" [checked]="f.seleccionado" [disabled]="f.obligatorio" (change)="toggleFormularioMuestra(m, f)" />
+                  <label class="checklist-item" *ngFor="let f of m.formularios"
+                    [class.checklist-item--obligatorio]="f.obligatorio">
+                    <input type="checkbox" class="form-checkbox" [checked]="f.seleccionado" [disabled]="f.obligatorio"
+                      (change)="toggleFormularioMuestra(m, f)" />
                     <span class="checklist-item__name">{{ f.nombre }}</span>
                   </label>
                 </div>
@@ -318,7 +337,8 @@
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Equipo de almacenamiento <span class="req">*</span></label>
-                  <select class="form-select" formControlName="equipoAlmacenamiento" [class.form-input--error]="campoInvalido('equipoAlmacenamiento')">
+                  <select class="form-select" formControlName="equipoAlmacenamiento"
+                    [class.form-input--error]="campoInvalido('equipoAlmacenamiento')">
                     <option value="" disabled>Seleccione equipo</option>
                     <option *ngFor="let e of equiposAlmacenamiento" [value]="e">{{ e }}</option>
                   </select>
@@ -350,7 +370,8 @@
         <div class="form-card-body">
           <div class="form-group">
             <label class="form-label">Observaciones de laboratorio</label>
-            <textarea class="form-textarea" formControlName="observacionesLaboratorio" rows="5" placeholder="Ingrese observaciones, condiciones especiales, notas internas del laboratorio..."></textarea>
+            <textarea class="form-textarea" formControlName="observacionesLaboratorio" rows="5"
+              placeholder="Ingrese observaciones, condiciones especiales, notas internas del laboratorio..."></textarea>
           </div>
         </div>
       </div>
@@ -371,11 +392,13 @@
             </div>
             <div class="flujo-fecha" *ngIf="fechaEnvioValidacion">
               <ion-icon name="time-outline"></ion-icon>
-              <span>Enviado a validación el: <strong>{{ fechaEnvioValidacion | date:'dd/MM/yyyy HH:mm:ss' }}</strong></span>
+              <span>Enviado a validación el: <strong>{{ fechaEnvioValidacion | date:'dd/MM/yyyy HH:mm:ss'
+                  }}</strong></span>
             </div>
             <div class="flujo-info" *ngIf="!fechaEnvioValidacion">
               <ion-icon name="information-circle-outline"></ion-icon>
-              <p>La solicitud aún no ha sido enviada a validación. Guarde la solicitud y use el botón <strong>"Enviar a validación"</strong>.</p>
+              <p>La solicitud aún no ha sido enviada a validación. Continue al paso N°10 para guardar la solicitud y
+                use el botón <strong>"Enviar a validación"</strong>.</p>
             </div>
           </div>
         </div>
