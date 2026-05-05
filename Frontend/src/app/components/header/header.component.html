@@ -15,15 +15,31 @@
   <div class="nav-pill-container">
 
     <!-- Home -->
-    <button (click)="goToHome()" [ngClass]="{'active': activeSegment === 'home', 'inactive': activeSegment !== 'home'}"
+    <button (click)="goToHome()" 
+      [ngClass]="{'active': activeSegment === 'home', 'inactive': activeSegment !== 'home'}"
       class="nav-btn">
       Home
     </button>
 
-    <!-- Búsqueda ALI -->
-    <button (click)="busquedaALI()"
-      [ngClass]="{'active': activeSegment === 'busqueda', 'inactive': activeSegment !== 'busqueda'}" class="nav-btn">
-      Búsqueda ALI
+    <!-- Menú Desplegable Búsquedas -->
+    <div class="relative group">
+      <button [ngClass]="{'active': activeSegment === 'busqueda', 'inactive': activeSegment !== 'busqueda'}" class="nav-btn flex items-center gap-1">
+        Búsquedas <ion-icon name="chevron-down-outline" class="text-xs transition-transform group-hover:rotate-180"></ion-icon>
+      </button>
+      
+      <!-- Dropdown Content -->
+      <div class="dropdown-menu absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 transform origin-top-left scale-95 group-hover:scale-100">
+        <div class="py-1" role="menu" aria-orientation="vertical">
+          <a (click)="busquedaALI()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-primary/10 hover:text-brand-primary cursor-pointer transition-colors" role="menuitem">Búsqueda ALI</a>
+          <a (click)="busquedaSolicitudIngreso()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-primary/10 hover:text-brand-primary cursor-pointer transition-colors border-t border-gray-100" role="menuitem">Búsqueda Solicitud de Ingreso</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solicitud Ingreso -->
+    <button (click)="solicitudIngreso()"
+      [ngClass]="{'active': activeSegment === 'solicitud', 'inactive': activeSegment !== 'solicitud'}" class="nav-btn">
+      Solicitud Ingreso
     </button>
 
     <!-- Generar ALI -->

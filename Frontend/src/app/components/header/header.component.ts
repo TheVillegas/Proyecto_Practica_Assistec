@@ -30,7 +30,7 @@ export class HeaderComponent implements OnInit {
   ngOnInit() {
     this.updateActiveSegment(this.router.url);
 
-    // Suscribirse a cambios del usuario para actualización en tiempo real
+    // Suscribirse a cambios del usuario para actualización de nombre y foto
     this.authService.currentUser$.subscribe(user => {
       if (user) {
         this.userName = user.nombreApellido || user.nombre || 'Usuario';
@@ -63,23 +63,37 @@ export class HeaderComponent implements OnInit {
   private updateActiveSegment(url: string) {
     if (url.includes('/home')) {
       this.activeSegment = 'home';
-    } else if (url.includes('/busqueda-ali')) {
+    } else if (url.includes('/busqueda-ali') || url.includes('/busqueda-solicitud-ingreso')) {
       this.activeSegment = 'busqueda';
     } else if (url.includes('/generar-ali-basico')) {
       this.activeSegment = 'generar';
+    } else if (url.includes('/solicitud-ingreso')) {
+      this.activeSegment = 'solicitud';
     } else if (url === '/') {
       this.activeSegment = 'home';
     }
   }
+
+
 
   busquedaALI() {
     console.log("Redirigiendo a Busqueda ALI");
     this.router.navigate(["/busqueda-ali"]);
   }
 
+  busquedaSolicitudIngreso() {
+    console.log("Redirigiendo a Búsqueda Solicitud Ingreso");
+    this.router.navigate(["/busqueda-solicitud-ingreso"]);
+  }
+
   generarALI() {
     console.log("Redirigiendo a Generar ALI");
     this.router.navigate(["/generar-ali-basico"]);
+  }
+
+  solicitudIngreso() {
+    console.log("Redirigiendo a Solicitud de Ingreso");
+    this.router.navigate(["/solicitud-ingreso"]);
   }
 
   goToHome() {
