@@ -1,0 +1,429 @@
+/* solicitud-ingreso.page.scss */
+
+$brand-navy: #29588C;
+$brand-blue: #006EB6;
+$brand-blue-focus: #00558f;
+$bg-global: #F4F4F4;
+$surface-white: #FFFFFF;
+$text-primary: #1E293B;
+$text-label: #1e3a8a;
+$border-subtle: #E5E7EB;
+$error-color: #DC2626;
+$success-color: #16A34A;
+$warning-color: #D97706;
+
+.sdi-content {
+  --background: #{$bg-global};
+}
+
+.page-container {
+  @apply max-w-4xl mx-auto py-8 px-4;
+}
+
+.page-header {
+  @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8;
+
+  &__text {
+    h1 {
+      @apply text-2xl font-bold mb-1;
+      color: $text-primary;
+      font-family: 'Inter', sans-serif;
+    }
+
+    p {
+      @apply text-sm;
+      color: #64748B;
+    }
+  }
+
+  &__codes {
+    @apply flex gap-2 flex-wrap;
+  }
+}
+
+.code-pill {
+  @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold;
+  background: $brand-navy;
+  color: white;
+
+  &--secondary {
+    background: $brand-blue;
+  }
+}
+
+.stepper-wrapper {
+  @apply mb-8;
+}
+
+.stepper-bar {
+  @apply relative h-1 rounded-full mb-4;
+  background: $border-subtle;
+}
+
+.stepper-progress {
+  @apply absolute left-0 top-0 h-full rounded-full transition-all duration-500;
+  background: linear-gradient(90deg, $brand-navy, $brand-blue);
+}
+
+.stepper-steps {
+  @apply flex flex-wrap gap-1 justify-between;
+}
+
+.step-btn {
+  @apply flex flex-col items-center gap-1 cursor-pointer border-none bg-transparent p-1 transition-all duration-200;
+  min-width: 56px;
+
+  .step-circle {
+    @apply flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold border-2 transition-all duration-200;
+    border-color: $border-subtle;
+    color: #94A3B8;
+    background: $surface-white;
+  }
+
+  .step-label {
+    @apply text-[10px] font-medium text-center leading-tight hidden sm:block;
+    color: #94A3B8;
+  }
+
+  &--active {
+    .step-circle {
+      background: $brand-blue;
+      border-color: $brand-blue;
+      color: white;
+      box-shadow: 0 0 0 4px rgba($brand-blue, 0.15);
+    }
+
+    .step-label {
+      color: $brand-blue;
+      font-weight: 700;
+    }
+  }
+
+  &--done {
+    .step-circle {
+      background: $brand-navy;
+      border-color: $brand-navy;
+      color: white;
+    }
+
+    .step-label {
+      color: $brand-navy;
+    }
+  }
+}
+
+.form-card {
+  @apply bg-white rounded-xl border overflow-hidden mb-6;
+  border-color: $border-subtle;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.form-card-header {
+  @apply p-4 flex items-center justify-between text-white;
+  background: $brand-navy;
+}
+
+.form-card-title-group {
+  @apply flex items-center gap-3 text-xl;
+}
+
+.form-card-title {
+  @apply text-lg font-semibold m-0;
+}
+
+.form-card-body {
+  @apply p-6;
+}
+
+.form-group {
+  @apply flex flex-col gap-1 mb-4;
+
+  &--checkbox-row {
+    @apply justify-center pt-4;
+  }
+}
+
+.form-label {
+  @apply font-medium text-sm;
+  color: $text-label;
+
+  .req {
+    color: $error-color;
+  }
+}
+
+.form-input,
+.form-select {
+  @apply w-full border rounded-lg px-3 py-2.5 text-sm outline-none transition-all;
+  border-color: $border-subtle;
+  color: $text-primary;
+
+  &:focus {
+    border-color: $brand-blue-focus;
+    box-shadow: 0 0 0 3px rgba($brand-blue-focus, 0.12);
+  }
+
+  &--readonly {
+    background: #F8FAFC;
+    color: #64748B;
+  }
+
+  &--error {
+    border-color: $error-color !important;
+  }
+}
+
+.form-textarea {
+  @apply w-full border rounded-lg px-3 py-2.5 text-sm outline-none transition-all resize-y;
+  border-color: $border-subtle;
+  color: $text-primary;
+
+  &:focus {
+    border-color: $brand-blue-focus;
+    box-shadow: 0 0 0 3px rgba($brand-blue-focus, 0.12);
+  }
+}
+
+.error-msg {
+  @apply text-xs mt-0.5;
+  color: $error-color;
+}
+
+.toggle-label {
+  @apply flex items-center gap-2 cursor-pointer text-sm;
+  color: $text-primary;
+
+  .form-checkbox {
+    @apply w-4 h-4 rounded cursor-pointer;
+    accent-color: $brand-blue;
+  }
+}
+
+.checklist-section {
+  @apply mt-6;
+}
+
+.checklist-title {
+  @apply flex items-center gap-2 text-sm font-semibold mb-3;
+  color: $brand-navy;
+}
+
+.checklist-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-2;
+}
+
+.checklist-item {
+  @apply flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all text-sm;
+  border-color: $border-subtle;
+
+  &--obligatorio {
+    background: #EFF6FF;
+    border-color: $brand-blue;
+  }
+
+  .form-checkbox {
+    @apply w-4 h-4 rounded;
+    accent-color: $brand-blue;
+  }
+
+  &__name {
+    @apply flex-1;
+  }
+}
+
+.tpa-badge {
+  @apply text-[10px] font-bold px-1.5 py-0.5 rounded;
+  background: $brand-navy;
+  color: white;
+}
+
+.muestras-section {
+  @apply mt-8;
+}
+
+.muestras-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.btn-add-muestra {
+  @apply flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all;
+  border-color: $brand-blue;
+  color: $brand-blue;
+  background: transparent;
+}
+
+.muestra-card {
+  @apply border rounded-xl overflow-hidden mb-4;
+  border-color: $border-subtle;
+
+  &__header {
+    @apply flex items-center justify-between px-4 py-3;
+    background: #F8FAFC;
+    border-bottom: 1px solid $border-subtle;
+  }
+
+  &__title {
+    @apply flex items-center gap-2 text-sm font-semibold;
+    color: $brand-navy;
+  }
+
+  &__body {
+    @apply p-4;
+  }
+}
+
+.btn-remove-muestra {
+  @apply flex items-center justify-center w-7 h-7 rounded-lg transition-all border-none;
+  color: $error-color;
+  background: #FEF2F2;
+}
+
+.muestra-hint {
+  @apply text-xs mb-3;
+  color: #64748B;
+}
+
+.flujo-section {
+  @apply flex flex-col gap-4;
+}
+
+.flujo-estado {
+  @apply flex items-center gap-3;
+}
+
+.flujo-fecha {
+  @apply flex items-center gap-2 p-3 rounded-lg text-sm;
+  background: #EFF6FF;
+  color: $brand-navy;
+}
+
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold;
+}
+
+.badge-draft {
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.badge-pending {
+  background: #FEF3C7;
+  color: $warning-color;
+}
+
+.badge-success {
+  background: #DCFCE7;
+  color: $success-color;
+}
+
+.badge-danger {
+  background: #FEE2E2;
+  color: $error-color;
+}
+
+.entrega-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6;
+}
+
+.entrega-card {
+  @apply flex flex-col items-center gap-1 p-6 rounded-xl text-center;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+
+  ion-icon {
+    @apply text-3xl;
+    color: $brand-blue;
+  }
+
+  &__value {
+    @apply text-2xl font-bold;
+    color: $brand-navy;
+  }
+
+  &__label {
+    @apply text-xs;
+    color: #64748B;
+  }
+}
+
+.resumen-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6;
+}
+
+.resumen-item {
+  @apply flex flex-col gap-1 p-4 rounded-lg border;
+  border-color: $border-subtle;
+  background: #FAFAFA;
+
+  &__label {
+    @apply text-[11px] font-semibold uppercase tracking-wide;
+    color: #94A3B8;
+  }
+
+  &__value {
+    @apply text-sm font-medium;
+    color: $text-primary;
+  }
+}
+
+.code-text {
+  font-family: 'Courier New', monospace;
+  color: $brand-blue;
+  font-weight: 700;
+}
+
+.formularios-list {
+  @apply flex flex-wrap gap-2;
+}
+
+.formulario-tag {
+  @apply flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold;
+  background: #DCFCE7;
+  color: $success-color;
+}
+
+.resumen-acciones {
+  @apply flex justify-end pt-4 border-t;
+  border-color: $border-subtle;
+}
+
+.nav-footer {
+  @apply flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-4;
+}
+
+.nav-footer__actions {
+  @apply flex items-center gap-3;
+}
+
+.btn-primary {
+  @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all;
+  background: $brand-blue;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold border-2 transition-all;
+  border-color: $brand-navy;
+  color: $brand-navy;
+  background: transparent;
+}
+
+.btn-cancel {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-all;
+  border-color: #df0c0ce1;
+  color: #ffffff;
+  background: #e70101;
+}
+
+.btn-save {
+  @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all;
+  background: $success-color;
+}
+
+.btn-validar {
+  @apply inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all;
+  background: linear-gradient(135deg, $brand-navy, $brand-blue);
+}
+
+.form-wrapper {
+  @apply flex flex-col;
+}

@@ -19,12 +19,9 @@ export class HomePage implements OnInit {
     this.router.navigate(["/busqueda-ali"]);
   }
 
-  generarALI() {
-    console.log("Redirigiendo a Generar ALI");
-    this.router.navigate(["/generar-ali-basico"]);
+  solicitudIngreso() {
+    console.log("Redirigiendo a Solicitud de Ingreso");
+    this.router.navigate(["/solicitud-ingreso"]);
   }
-
-
-
 
 }

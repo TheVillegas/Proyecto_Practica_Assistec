@@ -10,33 +10,28 @@ import { AuthService } from '../../services/auth-service';
   standalone: false
 })
 export class HeaderComponent implements OnInit {
+  @Input() activeSegment: string = 'home';
 
-  userName: string = 'Usuario';
-  userRole: string = 'Analista';
-  userPhoto: string = '';
+  userName = 'Usuario';
+  userRole = 'Analista';
+  userPhoto = '';
 
   constructor(private router: Router, private authService: AuthService) {
-    // Escuchar cambios de ruta para actualizar el segmento activo
     this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
+      filter((event) => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
       this.updateActiveSegment(event.urlAfterRedirects);
     });
   }
 
-  // Variable para saber qué botón pintar como activo ('home', 'busqueda', 'generar')
-  @Input() activeSegment: string = 'home';
-
   ngOnInit() {
     this.updateActiveSegment(this.router.url);
 
-    // Suscribirse a cambios del usuario para actualización en tiempo real
-    this.authService.currentUser$.subscribe(user => {
+    this.authService.currentUser$.subscribe((user) => {
       if (user) {
         this.userName = user.nombreApellido || user.nombre || 'Usuario';
-        
+
         const rolInt = user.rol !== undefined ? user.rol : user.rol_analista;
-        
         switch (rolInt) {
           case 1:
             this.userRole = 'Coordinadora de Área';
@@ -51,7 +46,7 @@ export class HeaderComponent implements OnInit {
             this.userRole = 'Analista';
         }
 
-        this.userPhoto = user.url_foto || user.urlFoto || 'https://ui-avatars.com/api/?name=' + (this.userName || 'U') + '&background=random';
+        this.userPhoto = user.url_foto || user.urlFoto || `https://ui-avatars.com/api/?name=${this.userName || 'U'}&background=random`;
       } else {
         this.userName = 'Usuario';
         this.userRole = 'Analista';
@@ -65,7 +60,7 @@ export class HeaderComponent implements OnInit {
       this.activeSegment = 'home';
     } else if (url.includes('/busqueda-ali')) {
       this.activeSegment = 'busqueda';
-    } else if (url.includes('/generar-ali-basico')) {
+    } else if (url.includes('/solicitud-ingreso') || url.includes('/generar-ali-basico')) {
       this.activeSegment = 'generar';
     } else if (url === '/') {
       this.activeSegment = 'home';
@@ -73,29 +68,23 @@ export class HeaderComponent implements OnInit {
   }
 
   busquedaALI() {
-    console.log("Redirigiendo a Busqueda ALI");
-    this.router.navigate(["/busqueda-ali"]);
+    this.router.navigate(['/busqueda-ali']);
   }
 
   generarALI() {
-    console.log("Redirigiendo a Generar ALI");
-    this.router.navigate(["/generar-ali-basico"]);
+    this.router.navigate(['/solicitud-ingreso']);
   }
 
   goToHome() {
-    console.log("Redirigiendo a Home");
-    this.router.navigate(["/home"]);
+    this.router.navigate(['/home']);
   }
 
   goToLogin() {
-    console.log("Cerrando sesión...");
-    this.authService.logout(); // Limpiar token y usuario
-    this.router.navigate(["/login"]);
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 
   goToProfile() {
-    console.log("Redirigiendo a Configuración de Usuario");
-    this.router.navigate(["/configuracion-usuario"]);
+    this.router.navigate(['/configuracion-usuario']);
   }
-
 }

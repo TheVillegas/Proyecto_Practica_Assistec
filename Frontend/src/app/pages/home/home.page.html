@@ -2,22 +2,16 @@
 
 <ion-content [fullscreen]="true" class="bg-slate-50">
   <div class="home-container">
-
-    <!-- Sección de Bienvenida Compacta -->
     <div class="welcome-card">
       <div class="welcome-content">
         <h1 class="welcome-title">Bienvenido a la nueva interfaz digital de AsisTec</h1>
         <p class="welcome-subtitle">
-          La pagina web creada para analistas del laboratorio AsisTec de la Pontificia Universidad Catolica de
-          Valparaiso.
+          La plataforma de trabajo para el flujo de ingreso, búsqueda ALI y reportes del laboratorio AsisTec.
         </p>
       </div>
     </div>
 
-    <!-- Grid de Acciones (Diseño Rico) -->
     <div class="action-grid">
-
-      <!-- Tarjeta: Búsqueda ALI -->
       <div class="action-card" (click)="busquedaALI()">
         <div class="card-main-content">
           <div class="icon-badge">
@@ -31,31 +25,24 @@
             Consultar <span class="arrow">→</span>
           </div>
         </div>
-
-        <!-- Watermark Decorativo -->
         <ion-icon name="search-outline" class="watermark-icon"></ion-icon>
       </div>
 
-      <!-- Tarjeta: Generar ALI -->
-      <div class="action-card" (click)="generarALI()">
+      <div class="action-card" (click)="solicitudIngreso()">
         <div class="card-main-content">
           <div class="icon-badge">
             <ion-icon name="add-circle-outline"></ion-icon>
           </div>
           <div class="text-content">
-            <h3>Generar ALI Básico</h3>
-            <p>Crear nuevo registro de ingreso de muestras.</p>
+            <h3>Solicitud de Ingreso</h3>
+            <p>Crear, guardar y enviar a validación el nuevo flujo completo de ingreso.</p>
           </div>
           <div class="cta-link">
             Iniciar <span class="arrow">→</span>
           </div>
         </div>
-
-        <!-- Watermark Decorativo -->
         <ion-icon name="add-circle-outline" class="watermark-icon"></ion-icon>
       </div>
-
     </div>
-
   </div>
 </ion-content>

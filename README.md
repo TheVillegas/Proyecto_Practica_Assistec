@@ -78,19 +78,28 @@ El backend ahora está construido con Node.js y **Prisma ORM**.
 
 ---
 
-## 🚀 Despliegue a Producción (EC2)
+## 🚀 Levantar todo con Docker (BD + Backend)
 
-Si estás subiendo este proyecto a un servidor **EC2 en AWS** u otro VPS, el `docker-compose.yml` está preparado para levantar **toda la infraestructura del Backend** (Base de Datos + API Node.js).
+El `docker-compose.yml` levanta **BD + Backend juntos**. Útil tanto en desarrollo como en producción (EC2 u otro VPS).
 
-En tu servidor de producción, simplemente sube el código y ejecuta:
+### Primera vez o cuando querés resetear la BD desde cero:
 ```bash
-docker compose up -d --build
+docker compose down -v
+docker compose up --build
 ```
-Esto hará lo siguiente:
-1. Levantará el contenedor `contenedor_asistec_bd` con PostgreSQL.
-2. Levantará el contenedor `contenedor_asistec_backend` (La API en Node).
-3. **Automáticamente** sincronizará las tablas de Prisma y ejecutará los seeds mediante el archivo `docker-entrypoint.sh`.
-4. El backend quedará expuesto y listo en el puerto `3001`.
+
+### Reinicios posteriores (sin borrar datos):
+```bash
+docker compose up
+```
+
+Esto hace automáticamente:
+1. Levanta PostgreSQL 16 en el puerto `5432`
+2. Sincroniza el esquema con `prisma db push`
+3. Carga los seeds (usuarios, diluyentes, equipos) — usa `upsert`, es idempotente
+4. Inicia el backend en `http://localhost:3001`
+
+> **Usuarios Windows:** el `Dockerfile` incluye `dos2unix` para convertir los line endings del `docker-entrypoint.sh` automáticamente. No se requiere configuración extra.
 
 *(Nota: En producción, el Frontend de Angular generalmente se compila con `npm run build` y se sirve usando NGINX o Amazon S3).*
 

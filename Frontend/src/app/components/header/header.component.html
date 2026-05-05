@@ -1,6 +1,4 @@
 <nav class="header-container">
-
-  <!-- Izquierda: Branding -->
   <div class="logo-section" (click)="goToHome()">
     <div class="icon-box">
       <ion-icon name="flask-outline"></ion-icon>
@@ -11,48 +9,34 @@
     </div>
   </div>
 
-  <!-- Centro: Navegación (Píldora) -->
   <div class="nav-pill-container">
-
-    <!-- Home -->
-    <button (click)="goToHome()" [ngClass]="{'active': activeSegment === 'home', 'inactive': activeSegment !== 'home'}"
-      class="nav-btn">
+    <button (click)="goToHome()" [ngClass]="{'active': activeSegment === 'home', 'inactive': activeSegment !== 'home'}" class="nav-btn">
       Home
     </button>
 
-    <!-- Búsqueda ALI -->
-    <button (click)="busquedaALI()"
-      [ngClass]="{'active': activeSegment === 'busqueda', 'inactive': activeSegment !== 'busqueda'}" class="nav-btn">
+    <button (click)="busquedaALI()" [ngClass]="{'active': activeSegment === 'busqueda', 'inactive': activeSegment !== 'busqueda'}" class="nav-btn">
       Búsqueda ALI
     </button>
 
-    <!-- Generar ALI -->
-    <button (click)="generarALI()"
-      [ngClass]="{'active': activeSegment === 'generar', 'inactive': activeSegment !== 'generar'}" class="nav-btn">
-      Generar ALI
+    <button (click)="generarALI()" [ngClass]="{'active': activeSegment === 'generar', 'inactive': activeSegment !== 'generar'}" class="nav-btn">
+      Solicitud Ingreso
     </button>
   </div>
 
-  <!-- Derecha: Perfil -->
   <div class="user-section">
-    <!-- Info Usuario -->
     <div class="user-info">
       <div class="user-name">{{ userName }}</div>
       <div class="user-role">{{ userRole }}</div>
     </div>
 
-    <!-- Avatar -->
     <div class="avatar-box group" (click)="goToProfile()" style="cursor: pointer;">
       <img [src]="userPhoto" alt="Avatar" class="w-full h-full object-cover">
     </div>
 
-    <!-- Separador -->
     <div class="separator"></div>
 
-    <!-- Botón Salir -->
     <button (click)="goToLogin()" class="logout-btn" title="Cerrar Sesión">
       <ion-icon name="log-out-outline"></ion-icon>
     </button>
   </div>
-
 </nav>

@@ -1,7 +1,7 @@
 FROM node:20-alpine
 
 # Instalar dependencias necesarias para Prisma en Alpine
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl dos2unix
 
 WORKDIR /app
 
@@ -18,8 +18,11 @@ RUN npx prisma generate
 # Copiar el resto del código
 COPY . .
 
+# Regenerar Prisma Client para Linux (evita binarios de Windows cacheados)
+RUN npx prisma generate
+
 # Dar permisos de ejecución al entrypoint
-RUN chmod +x docker-entrypoint.sh
+RUN dos2unix docker-entrypoint.sh && chmod +x docker-entrypoint.sh
 
 # Exponer el puerto
 EXPOSE 3001

@@ -1,8 +1,34 @@
 const prisma = require('../config/prisma');
 
 class ReporteRepository {
-    async crearBridge(numeroAli, reqTpa, reqRam, observacionesCliente, observacionesGenerales) {
+    async crearBridge({
+        idSolicitud,
+        numeroAli,
+        reqTpa,
+        reqRam,
+        observacionesCliente,
+        observacionesGenerales,
+        expectedUpdatedAt,
+        actualizarSolicitud
+    }) {
         return await prisma.$transaction(async (tx) => {
+            let solicitud = null;
+
+            if (idSolicitud && actualizarSolicitud) {
+                const actual = await tx.solicitudIngreso.findUnique({
+                    where: { idSolicitud: BigInt(idSolicitud) },
+                    select: { updatedAt: true }
+                });
+
+                if (!actual) {
+                    throw new Error('NOT_FOUND');
+                }
+
+                if (expectedUpdatedAt && actual.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+                    throw new Error('CONCURRENCY_ERROR');
+                }
+            }
+
             // 1. MuestraAli
             const muestraAli = await tx.muestraAli.create({
                 data: {
@@ -34,7 +60,17 @@ class ReporteRepository {
                 });
             }
 
-            return { muestraAli, tpa, ram };
+            if (idSolicitud && actualizarSolicitud) {
+                solicitud = await tx.solicitudIngreso.update({
+                    where: { idSolicitud: BigInt(idSolicitud) },
+                    data: {
+                        ...actualizarSolicitud,
+                        updatedAt: new Date()
+                    }
+                });
+            }
+
+            return { muestraAli, tpa, ram, solicitud };
         });
     }
 

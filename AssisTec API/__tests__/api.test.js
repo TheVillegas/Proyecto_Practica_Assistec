@@ -10,6 +10,29 @@ jest.mock('../src/config/prisma', () => ({
         findFirst: jest.fn(),
         findUnique: jest.fn()
     },
+    categoriaProducto: {
+        findUnique: jest.fn(),
+        findFirst: jest.fn(),
+        create: jest.fn()
+    },
+    cliente: {
+        findUnique: jest.fn(),
+        findFirst: jest.fn(),
+        create: jest.fn()
+    },
+    direccionCliente: {
+        findUnique: jest.fn(),
+        findFirst: jest.fn(),
+        create: jest.fn()
+    },
+    equipoLab: {
+        findUnique: jest.fn(),
+        findFirst: jest.fn()
+    },
+    lugarAlmacenamiento: {
+        findUnique: jest.fn(),
+        findFirst: jest.fn()
+    },
     solicitudIngreso: {
         create: jest.fn(),
         findMany: jest.fn(),
@@ -27,7 +50,14 @@ jest.mock('../src/config/prisma', () => ({
     },
     $transaction: jest.fn(),
     muestraAli: {
-        findUnique: jest.fn()
+        findUnique: jest.fn(),
+        create: jest.fn()
+    },
+    tpaReporte: {
+        create: jest.fn()
+    },
+    ramReporte: {
+        create: jest.fn()
     }
 }));
 
@@ -84,12 +114,85 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
         it('SC-02.1: Crear solicitud (Rol Ingreso)', async () => {
             const token = mockToken(3); // Rol Ingreso = 3
             prisma.solicitudIngreso.aggregate.mockResolvedValue({ _max: { numeroAli: 10 } });
-            prisma.solicitudIngreso.create.mockResolvedValue({ idSolicitud: 1n, numeroAli: 11 });
+            prisma.categoriaProducto.findUnique.mockResolvedValue({ idCategoria: 1n, nombre: 'Agua' });
+            prisma.cliente.findFirst.mockResolvedValue(null);
+            prisma.cliente.create.mockResolvedValue({
+                idCliente: 1,
+                nombre: 'Cliente Demo',
+                rut: 'SIN-RUT',
+                email: 'sin-correo@asistec.local',
+                telefono: 'Sin teléfono',
+                activo: 'S'
+            });
+            prisma.direccionCliente.findFirst.mockResolvedValue(null);
+            prisma.direccionCliente.create.mockResolvedValue({
+                idDireccion: 1,
+                idCliente: 1,
+                alias: 'Principal',
+                direccion: 'Av. Demo 123'
+            });
+            prisma.equipoLab.findFirst.mockResolvedValue({ idEquipo: 1, nombreEquipo: 'Equipo Demo' });
+            prisma.lugarAlmacenamiento.findFirst.mockResolvedValue({ idLugar: 1, nombreLugar: 'Lugar Demo' });
+            prisma.$transaction.mockImplementation(async (callback) => callback({
+                solicitudIngreso: {
+                    create: jest.fn().mockResolvedValue({ idSolicitud: 1n }),
+                    findUnique: jest.fn().mockResolvedValue({
+                        idSolicitud: 1n,
+                        anioIngreso: 2024,
+                        numeroAli: 11,
+                        numeroActa: 'ACTA-2024-0011',
+                        codigoExterno: 'EXT-001',
+                        categoria: { idCategoria: 1n, nombre: 'Agua' },
+                        cliente: { idCliente: 1, nombre: 'Cliente Demo', rut: 'SIN-RUT' },
+                        direccion: { idDireccion: 1, direccion: 'Av. Demo 123', alias: 'Principal' },
+                        fechaRecepcion: new Date('2024-01-01T00:00:00.000Z'),
+                        fechaInicioMuestreo: new Date('2024-01-01T00:00:00.000Z'),
+                        fechaTerminoMuestreo: new Date('2024-01-01T00:00:00.000Z'),
+                        temperaturaRecepcion: 4,
+                        termometro: { idEquipo: 1 },
+                        lugar: { idLugar: 1 },
+                        cantidadMuestras: 1,
+                        cantEnvases: 1,
+                        responsableMuestreo: 'Analista Demo',
+                        lugarMuestreo: 'Planta',
+                        instructivoMuestreo: 'No informado',
+                        envasesSuministradosPor: 'Cliente',
+                        muestraCompartidaQuimica: false,
+                        notasDelCliente: '',
+                        observacionesGenerales: JSON.stringify({ nombreSolicitante: 'Solicitante Demo', observacionesLaboratorio: '', formularios: [] }),
+                        estado: 'borrador',
+                        rutResponsableIngreso: '3-3',
+                        rutJefaArea: '2-2',
+                        rutCoordinaroraRecepcion: '1-1',
+                        fechaEnvioValidacion: new Date('2024-01-01T00:00:00.000Z'),
+                        updatedAt: new Date('2024-01-01T00:00:00.000Z'),
+                        muestras: []
+                    })
+                },
+                solicitudMuestra: {
+                    createMany: jest.fn().mockResolvedValue({ count: 1 })
+                }
+            }));
 
             const res = await request(app)
                 .post('/api/solicitud')
                 .set('Authorization', `Bearer ${token}`)
-                .send({ categoriaId: 1, idCliente: 1 });
+                .send({
+                    categoriaId: 1,
+                    nombreCliente: 'Cliente Demo',
+                    direccion: 'Av. Demo 123',
+                    nombreSolicitante: 'Solicitante Demo',
+                    fechaRecepcion: '2024-01-01T00:00:00.000Z',
+                    temperatura: 4,
+                    fechaInicioMuestreo: '2024-01-01T00:00:00.000Z',
+                    fechaTerminoMuestreo: '2024-01-01T00:00:00.000Z',
+                    numeroMuestras: 1,
+                    numeroEnvases: 1,
+                    analistaResponsable: 'Analista Demo',
+                    lugarMuestreo: 'Planta',
+                    rutJefaArea: '2-2',
+                    rutCoordinadoraRecepcion: '1-1'
+                });
 
             expect(res.status).toBe(201);
             expect(res.body.id_solicitud).toBe('1');
@@ -161,7 +264,9 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
             prisma.solicitudIngreso.findUnique.mockResolvedValue({
                 idSolicitud: 5n,
                 numeroAli: 1001,
-                muestras: [{ analisis: [{ formulario: { generaTpaDefault: true } }] }]
+                observacionesCliente: '',
+                observacionesGenerales: JSON.stringify({ formularios: [{ codigo: 'TPA', genera_tpa_default: true }, { codigo: 'RAM', genera_tpa_default: false }] }),
+                muestras: []
             });
             prisma.muestraAli.findUnique.mockResolvedValue(null);
             
@@ -192,14 +297,73 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
             
             prisma.solicitudIngreso.findUnique.mockResolvedValue({ 
                 idSolicitud: 5n, 
-                estado: 'pendiente',
-                updatedAt: mockDate
+                numeroAli: 1001,
+                estado: 'enviada',
+                updatedAt: mockDate,
+                observacionesCliente: '',
+                observacionesGenerales: JSON.stringify({ formularios: [{ codigo: 'TPA', genera_tpa_default: true }] }),
+                rutJefaArea: '2-2',
+                rutCoordinaroraRecepcion: '1-1',
+                muestras: []
             });
-            prisma.solicitudIngreso.update.mockResolvedValue({ 
-                idSolicitud: 5n, 
-                estado: 'validada',
-                categoriaId: 1n
-            });
+            prisma.muestraAli.findUnique.mockResolvedValue(null);
+            prisma.$transaction.mockImplementation(async (callback) => callback({
+                solicitudIngreso: {
+                    findUnique: jest.fn().mockResolvedValue({ updatedAt: mockDate }),
+                    update: jest.fn().mockResolvedValue({
+                        idSolicitud: 5n,
+                        estado: 'reportes_generados',
+                        updatedAt: new Date('2024-01-02T00:00:00.000Z')
+                    })
+                },
+                muestraAli: { create: jest.fn().mockResolvedValue({ codigoAli: 1001 }) },
+                tpaReporte: { create: jest.fn().mockResolvedValue({ id: 1 }) },
+                ramReporte: { create: jest.fn().mockResolvedValue(null) }
+            }));
+            prisma.solicitudIngreso.findUnique
+                .mockResolvedValueOnce({
+                    idSolicitud: 5n,
+                    numeroAli: 1001,
+                    estado: 'enviada',
+                    updatedAt: mockDate,
+                    observacionesCliente: '',
+                    observacionesGenerales: JSON.stringify({ formularios: [{ codigo: 'TPA', genera_tpa_default: true }] }),
+                    rutJefaArea: '2-2',
+                    rutCoordinaroraRecepcion: '1-1',
+                    muestras: []
+                })
+                .mockResolvedValueOnce({
+                    idSolicitud: 5n,
+                    anioIngreso: 2024,
+                    numeroAli: 1001,
+                    numeroActa: 'ACTA-2024-1001',
+                    codigoExterno: 'EXT-001',
+                    categoria: { idCategoria: 1n, nombre: 'Agua' },
+                    cliente: { idCliente: 1, nombre: 'Cliente Demo', rut: 'SIN-RUT' },
+                    direccion: { idDireccion: 1, direccion: 'Av. Demo 123', alias: 'Principal' },
+                    fechaRecepcion: mockDate,
+                    fechaInicioMuestreo: mockDate,
+                    fechaTerminoMuestreo: mockDate,
+                    temperaturaRecepcion: 4,
+                    termometro: { idEquipo: 1 },
+                    lugar: { idLugar: 1 },
+                    cantidadMuestras: 1,
+                    cantEnvases: 1,
+                    responsableMuestreo: 'Analista Demo',
+                    lugarMuestreo: 'Planta',
+                    instructivoMuestreo: 'No informado',
+                    envasesSuministradosPor: 'Cliente',
+                    muestraCompartidaQuimica: false,
+                    notasDelCliente: '',
+                    observacionesGenerales: JSON.stringify({ nombreSolicitante: 'Solicitante Demo', observacionesLaboratorio: '', formularios: [{ codigo: 'TPA', genera_tpa_default: true }] }),
+                    estado: 'reportes_generados',
+                    rutResponsableIngreso: '3-3',
+                    rutJefaArea: '2-2',
+                    rutCoordinaroraRecepcion: '1-1',
+                    fechaEnvioValidacion: mockDate,
+                    updatedAt: new Date('2024-01-02T00:00:00.000Z'),
+                    muestras: []
+                });
 
             const res = await request(app)
                 .post('/api/solicitud/5/validar')
@@ -207,8 +371,8 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
                 .send({ updated_at: '2024-01-01T00:00:00.000Z' });
 
             expect(res.status).toBe(200);
-            expect(res.body.estado).toBe('validada');
-            expect(prisma.solicitudIngreso.update).toHaveBeenCalled();
+            expect(res.body.estado).toBe('reportes_generados');
+            expect(res.body.tpa_generado).toBe(true);
         });
     });
 });

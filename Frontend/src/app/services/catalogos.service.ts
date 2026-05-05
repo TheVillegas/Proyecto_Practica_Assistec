@@ -3,9 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
+    CategoriaProducto,
     Diluyente,
     EquipoIncubacion,
     EquipoLaboratorio,
+    FormularioAnalisisCatalogo,
     FormaCalculo,
     ItemChecklistLimpieza,
     LugarAlmacenamiento,
@@ -36,6 +38,14 @@ export class CatalogosService {
 
     getResponsables(): Observable<Responsable[]> {
         return this.http.get<Responsable[]>(this.usuariosUrl);
+    }
+
+    getCategorias(): Observable<CategoriaProducto[]> {
+        return this.http.get<CategoriaProducto[]>(`${this.apiUrl}/categorias`);
+    }
+
+    getFormulariosAnalisis(): Observable<FormularioAnalisisCatalogo[]> {
+        return this.http.get<FormularioAnalisisCatalogo[]>(`${this.apiUrl}/formularios`);
     }
 
     getEquiposInstrumentos(): Observable<EquipoLaboratorio[]> {
