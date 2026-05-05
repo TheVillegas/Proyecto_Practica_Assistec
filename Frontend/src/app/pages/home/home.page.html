@@ -1,80 +1,93 @@
 <app-header activePage="home"></app-header>
 
-<ion-content [fullscreen]="true" class="bg-slate-50">
+<ion-content [fullscreen]="true" class="with-sidebar">
   <div class="home-container">
 
-    <!-- Sección de Bienvenida Compacta -->
-    <div class="welcome-card">
-      <div class="welcome-content">
-        <h1 class="welcome-title">Bienvenido a la nueva interfaz digital de AsisTec</h1>
-        <p class="welcome-subtitle">
-          La pagina web creada para analistas del laboratorio AsisTec de la Pontificia Universidad Catolica de
-          Valparaiso.
-        </p>
+    <!-- ── Banner de Bienvenida ── -->
+    <div class="welcome-banner">
+      <div class="banner-badge">
+        <ion-icon name="flask-outline"></ion-icon>
+        AsisTec Lab
+      </div>
+      <h1>Bienvenido a la interfaz digital de AsisTec</h1>
+      <p>Plataforma de gestión de muestras del laboratorio AsisTec — Pontificia Universidad Católica de Valparaíso.</p>
+      <div class="banner-circle"></div>
+    </div>
+
+    <!-- ── Stats Cards ── -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <ion-icon name="layers-outline"></ion-icon>
+        </div>
+        <div>
+          <span class="stat-label">Muestras Activas</span>
+          <span class="stat-value">—</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+        </div>
+        <div>
+          <span class="stat-label">Reportes Verificados</span>
+          <span class="stat-value">—</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon amber">
+          <ion-icon name="time-outline"></ion-icon>
+        </div>
+        <div>
+          <span class="stat-label">Pendientes de Revisión</span>
+          <span class="stat-value">—</span>
+        </div>
       </div>
     </div>
 
-    <!-- Grid de Acciones (Diseño Rico) -->
-    <div class="action-grid">
+    <!-- ── Acciones Rápidas ── -->
+    <div class="quick-actions">
+      <div class="section-header">
+        <h2>Acciones Rápidas</h2>
+        <p>Selecciona una acción para comenzar</p>
+      </div>
+      <div class="actions-grid">
 
-      <!-- Tarjeta: Búsqueda ALI -->
-      <div class="action-card" (click)="busquedaALI()">
-        <div class="card-main-content">
-          <div class="icon-badge">
+        <!-- Búsqueda ALI -->
+        <div class="action-card" (click)="busquedaALI()">
+          <div class="action-icon">
             <ion-icon name="search-outline"></ion-icon>
           </div>
-          <div class="text-content">
-            <h3>Búsqueda ALI</h3>
-            <p>Consultar registros, historial y reportes.</p>
-          </div>
-          <div class="cta-link">
-            Consultar <span class="arrow">→</span>
-          </div>
+          <h3>Búsqueda ALI</h3>
+          <p>Consultar registros, historial y reportes de muestras ingresadas al sistema.</p>
+          <span class="action-link">Consultar →</span>
+          <div class="action-circle"></div>
         </div>
 
-        <!-- Watermark Decorativo -->
-        <ion-icon name="search-outline" class="watermark-icon"></ion-icon>
-      </div>
-
-      <!-- Tarjeta: Generar ALI -->
-      <div class="action-card" (click)="generarALI()">
-        <div class="card-main-content">
-          <div class="icon-badge">
+        <!-- Generar ALI -->
+        <div class="action-card" (click)="generarALI()">
+          <div class="action-icon">
             <ion-icon name="add-circle-outline"></ion-icon>
           </div>
-          <div class="text-content">
-            <h3>Generar ALI Básico</h3>
-            <p>Crear nuevo registro de ingreso de muestras.</p>
-          </div>
-          <div class="cta-link">
-            Iniciar <span class="arrow">→</span>
-          </div>
+          <h3>Generar ALI Básico</h3>
+          <p>Crear un nuevo registro de ingreso de muestras con datos esenciales.</p>
+          <span class="action-link">Iniciar →</span>
+          <div class="action-circle"></div>
         </div>
 
-        <!-- Watermark Decorativo -->
-        <ion-icon name="add-circle-outline" class="watermark-icon"></ion-icon>
-      </div>
-
-      <!-- Tarjeta: Realizar solicitud de ingreso -->
-      <div class="action-card" (click)="solicitudIngreso()">
-        <div class="card-main-content">
-          <div class="icon-badge">
-            <ion-icon name="add-circle-outline"></ion-icon>
+        <!-- Solicitud de Ingreso -->
+        <div class="action-card" (click)="solicitudIngreso()">
+          <div class="action-icon">
+            <ion-icon name="document-text-outline"></ion-icon>
           </div>
-          <div class="text-content">
-            <h3>Solicitud de Ingreso</h3>
-            <p>Iniciar una nueva solicitud de ingreso de muestras.</p>
-          </div>
-          <div class="cta-link">
-            Iniciar solicitud <span class="arrow">→</span>
-          </div>
+          <h3>Solicitud de Ingreso</h3>
+          <p>Iniciar una nueva solicitud de ingreso de muestras con todos los datos requeridos.</p>
+          <span class="action-link">Iniciar solicitud →</span>
+          <div class="action-circle"></div>
         </div>
 
-        <!-- Watermark Decorativo -->
-        <ion-icon name="add-circle-outline" class="watermark-icon"></ion-icon>
       </div>
-
     </div>
 
   </div>
-</ion-content>
+</ion-content>

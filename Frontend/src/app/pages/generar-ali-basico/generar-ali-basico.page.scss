@@ -1,40 +1,66 @@
-/* generar-ali-basico.page.scss */
+/* generar-ali-basico.page.scss — Light mode forzado */
 
+// ── Variables locales (design tokens AsisTec) ──────────────────
+$page-bg:      #F1F3F7;
+$card-bg:      #ffffff;
+$border-color: #E5E7EB;
+$input-border: #D1D5DB;
+$text-primary: #1A2340;
+$text-label:   #374151;
+$text-muted:   #6B7280;
+$brand-blue:   #2563EB;
+$brand-red:    #DC2626;
+$focus-color:  #378ADD;
+
+// ── Page container ───────────────────────────────────────────────
 .page-container {
-    @apply min-h-screen flex flex-col bg-background-light dark:bg-background-dark transition-colors duration-300;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: $page-bg;
 }
 
 .main-content {
     @apply flex-grow py-10 px-4 sm:px-6 lg:px-8;
 }
 
-/* Header Section (Title & Subtitle) */
+// ── Header Section (Title & Subtitle) ───────────────────────────
 .header-section {
     @apply mb-8;
 
     h2 {
-        @apply text-3xl font-bold text-gray-900 dark:text-white mb-2;
+        font-size: 24px;
+        font-weight: 600;
+        color: $text-primary;
+        margin-bottom: 4px;
     }
 
     p {
-        @apply text-gray-500 dark:text-gray-400 text-sm;
+        font-size: 14px;
+        color: $text-muted;
     }
 }
 
-/* Form Card */
+// ── Form Card ────────────────────────────────────────────────────
 .form-card {
-    @apply bg-surface-light dark:bg-surface-dark rounded-xl shadow-soft border border-border-light dark:border-border-dark overflow-hidden;
+    background: $card-bg;
+    border: 1px solid $border-color;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
 }
 
 .gradient-bar {
-    @apply h-1 bg-gradient-to-r from-primary to-blue-400 w-full;
+    height: 4px;
+    background: linear-gradient(90deg, #1A4B9C, #378ADD);
+    width: 100%;
 }
 
 .form-body {
     @apply p-6 sm:p-8 space-y-8;
 }
 
-/* Input Styles */
+// ── Input grid ──────────────────────────────────────────────────
 .input-grid {
     @apply grid grid-cols-1 md:grid-cols-2 gap-8;
 }
@@ -47,10 +73,16 @@
     }
 }
 
+// ── Labels ──────────────────────────────────────────────────────
 .label-text {
-    @apply block text-sm font-semibold text-label-light dark:text-label-dark mb-2;
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: $text-label;
+    margin-bottom: 6px;
 }
 
+// ── Input wrappers ──────────────────────────────────────────────
 .input-wrapper {
     @apply relative rounded-md shadow-sm;
 }
@@ -59,24 +91,65 @@
     @apply absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none;
 
     ion-icon {
-        @apply text-gray-400 dark:text-gray-500 text-lg;
+        color: #9CA3AF;
+        font-size: 18px;
     }
 }
 
+// ── Inputs ──────────────────────────────────────────────────────
 .custom-input {
-    @apply focus:ring-primary focus:border-primary block w-full pl-10 pr-10 sm:text-sm border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white py-3 transition-shadow duration-200;
+    display: block;
+    width: 100%;
+    padding: 10px 40px 10px 40px;
+    background-color: #ffffff;
+    border: 1px solid $input-border;
+    border-radius: 8px;
+    color: $text-primary;
+    font-size: 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+
+    &::placeholder {
+        color: #9CA3AF;
+    }
+
+    &:focus {
+        outline: none;
+        border-color: $focus-color;
+        box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.12);
+    }
 }
 
-/* Specific for textarea which might differ slightly (padding etc) */
+// ── Textarea ────────────────────────────────────────────────────
 .custom-textarea {
-    @apply shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white p-3 transition-all duration-200 resize-y;
+    display: block;
+    width: 100%;
+    padding: 10px 40px 10px 12px;
+    background-color: #ffffff;
+    border: 1px solid $input-border;
+    border-radius: 8px;
+    color: $text-primary;
+    font-size: 14px;
+    resize: vertical;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+
+    &::placeholder {
+        color: #9CA3AF;
+    }
+
+    &:focus {
+        outline: none;
+        border-color: $focus-color;
+        box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.12);
+    }
 }
 
 .textarea-icon {
     @apply absolute top-3 right-3 pointer-events-none;
 
     ion-icon {
-        @apply text-gray-300 dark:text-gray-600 text-xl;
+        color: #D1D5DB;
+        font-size: 20px;
     }
 }
 
@@ -85,43 +158,100 @@
 }
 
 .helper-text {
-    @apply mt-1 text-xs text-gray-500 dark:text-gray-400 invisible transition-opacity;
+    margin-top: 4px;
+    font-size: 12px;
+    color: $text-muted;
+    visibility: hidden;
+    transition: opacity 0.2s;
 }
 
 .new-badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200;
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800;
 }
 
-/* Buttons */
+// ── Botones ─────────────────────────────────────────────────────
 .footer-actions {
-    @apply bg-gray-50 dark:bg-gray-800/50 px-6 py-4 sm:px-8 border-t border-border-light dark:border-border-dark flex flex-col-reverse sm:flex-row justify-end gap-3;
+    background: #F9FAFB;
+    padding: 16px 24px;
+    border-top: 1px solid $border-color;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 12px;
+
+    @media (max-width: 640px) {
+        flex-direction: column-reverse;
+    }
 }
 
 .btn-cancel {
-    @apply w-full sm:w-auto inline-flex justify-center items-center px-6 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-secondary hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 uppercase tracking-wide;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+    background: $brand-red;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+
+    &:hover { opacity: 0.88; }
+    &:active { transform: scale(0.98); }
 }
 
 .btn-action {
-    @apply w-full sm:w-auto inline-flex justify-center items-center px-6 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200 uppercase tracking-wide;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+    background: $brand-blue;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+
+    &:hover { opacity: 0.88; }
+    &:active { transform: scale(0.98); }
 }
 
-/* Validation Message Card */
+// ── Validation info card ─────────────────────────────────────────
 .validation-info-grid {
     @apply mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-center md:text-left;
 }
 
 .validation-card-item {
-    @apply flex items-start p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-radius: 12px;
 
     .icon-wrapper {
-        @apply text-primary mr-3 mt-0.5 text-xl;
+        color: $brand-blue;
+        font-size: 20px;
+        flex-shrink: 0;
     }
 
     h4 {
-        @apply text-sm font-medium text-blue-900 dark:text-blue-100;
+        font-size: 13px;
+        font-weight: 500;
+        color: #1E40AF;
+        margin-bottom: 2px;
     }
 
     p {
-        @apply text-xs text-blue-700 dark:text-blue-300 mt-1;
+        font-size: 12px;
+        color: #3B82F6;
+        margin: 0;
     }
 }

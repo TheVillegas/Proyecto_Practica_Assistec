@@ -1,74 +1,69 @@
-<nav class="header-container">
+<aside class="sidebar">
 
-  <!-- Izquierda: Branding -->
-  <div class="logo-section" (click)="goToHome()">
-    <div class="icon-box">
+  <!-- ── ZONA SUPERIOR: Logo ── -->
+  <div class="sidebar-logo" (click)="goToHome()">
+    <div class="sidebar-logo__icon">
       <ion-icon name="flask-outline"></ion-icon>
     </div>
-    <div class="brand-group">
-      <span class="brand-name">AsisTec</span>
-      <span class="brand-subtitle">Lab Management</span>
+    <div>
+      <span class="logo-title">AsisTec</span>
+      <span class="logo-sub">LAB MANAGEMENT</span>
     </div>
   </div>
 
-  <!-- Centro: Navegación (Píldora) -->
-  <div class="nav-pill-container">
+  <!-- ── ZONA MEDIA: Navegación ── -->
+  <nav class="sidebar-nav">
+    <span class="nav-section-label">Menú</span>
+    <ul>
 
-    <!-- Home -->
-    <button (click)="goToHome()" 
-      [ngClass]="{'active': activeSegment === 'home', 'inactive': activeSegment !== 'home'}"
-      class="nav-btn">
-      Home
-    </button>
+      <!-- Home -->
+      <li class="nav-item" [class.active]="activeSegment === 'home'" (click)="goToHome()" data-label="Home">
+        <ion-icon name="home-outline"></ion-icon>
+        <span class="nav-item-text">Home</span>
+        <span class="nav-dot" *ngIf="activeSegment === 'home'">•</span>
+      </li>
 
-    <!-- Menú Desplegable Búsquedas -->
-    <div class="relative group">
-      <button [ngClass]="{'active': activeSegment === 'busqueda', 'inactive': activeSegment !== 'busqueda'}" class="nav-btn flex items-center gap-1">
-        Búsquedas <ion-icon name="chevron-down-outline" class="text-xs transition-transform group-hover:rotate-180"></ion-icon>
-      </button>
-      
-      <!-- Dropdown Content -->
-      <div class="dropdown-menu absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 transform origin-top-left scale-95 group-hover:scale-100">
-        <div class="py-1" role="menu" aria-orientation="vertical">
-          <a (click)="busquedaALI()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-primary/10 hover:text-brand-primary cursor-pointer transition-colors" role="menuitem">Búsqueda ALI</a>
-          <a (click)="busquedaSolicitudIngreso()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-primary/10 hover:text-brand-primary cursor-pointer transition-colors border-t border-gray-100" role="menuitem">Búsqueda Solicitud de Ingreso</a>
-        </div>
-      </div>
+      <!-- Búsqueda ALI -->
+      <li class="nav-item" [class.active]="activeSegment === 'busqueda'" (click)="busquedaALI()" data-label="Búsqueda ALI">
+        <ion-icon name="search-outline"></ion-icon>
+        <span class="nav-item-text">Búsqueda ALI</span>
+        <span class="nav-dot" *ngIf="activeSegment === 'busqueda'">•</span>
+      </li>
+
+      <!-- Búsqueda Solicitud Ingreso -->
+      <li class="nav-item" [class.active]="activeSegment === 'busqueda-solicitud'" (click)="busquedaSolicitudIngreso()" data-label="Búsqueda Solicitud">
+        <ion-icon name="document-text-outline"></ion-icon>
+        <span class="nav-item-text">Búsqueda Solicitud</span>
+        <span class="nav-dot" *ngIf="activeSegment === 'busqueda-solicitud'">•</span>
+      </li>
+
+      <!-- Solicitud Ingreso -->
+      <li class="nav-item" [class.active]="activeSegment === 'solicitud'" (click)="solicitudIngreso()" data-label="Solicitud Ingreso">
+        <ion-icon name="add-circle-outline"></ion-icon>
+        <span class="nav-item-text">Solicitud Ingreso</span>
+        <span class="nav-dot" *ngIf="activeSegment === 'solicitud'">•</span>
+      </li>
+
+      <!-- Generar ALI -->
+      <li class="nav-item" [class.active]="activeSegment === 'generar'" (click)="generarALI()" data-label="Generar ALI">
+        <ion-icon name="time-outline"></ion-icon>
+        <span class="nav-item-text">Generar ALI</span>
+        <span class="nav-dot" *ngIf="activeSegment === 'generar'">•</span>
+      </li>
+
+    </ul>
+  </nav>
+
+  <!-- ── ZONA INFERIOR: Perfil de usuario ── -->
+  <div class="sidebar-user">
+    <div class="user-avatar" (click)="goToProfile()">{{ userInitials }}</div>
+    <div class="user-info-block">
+      <span class="user-name-text">{{ userName }}</span>
+      <span class="user-role-text">{{ userRole }}</span>
     </div>
-
-    <!-- Solicitud Ingreso -->
-    <button (click)="solicitudIngreso()"
-      [ngClass]="{'active': activeSegment === 'solicitud', 'inactive': activeSegment !== 'solicitud'}" class="nav-btn">
-      Solicitud Ingreso
-    </button>
-
-    <!-- Generar ALI -->
-    <button (click)="generarALI()"
-      [ngClass]="{'active': activeSegment === 'generar', 'inactive': activeSegment !== 'generar'}" class="nav-btn">
-      Generar ALI
-    </button>
-  </div>
-
-  <!-- Derecha: Perfil -->
-  <div class="user-section">
-    <!-- Info Usuario -->
-    <div class="user-info">
-      <div class="user-name">{{ userName }}</div>
-      <div class="user-role">{{ userRole }}</div>
-    </div>
-
-    <!-- Avatar -->
-    <div class="avatar-box group" (click)="goToProfile()" style="cursor: pointer;">
-      <img [src]="userPhoto" alt="Avatar" class="w-full h-full object-cover">
-    </div>
-
-    <!-- Separador -->
-    <div class="separator"></div>
-
-    <!-- Botón Salir -->
-    <button (click)="goToLogin()" class="logout-btn" title="Cerrar Sesión">
+    <button class="sidebar-logout-btn" (click)="goToLogin()" title="Cerrar Sesión">
       <ion-icon name="log-out-outline"></ion-icon>
     </button>
   </div>
 
-</nav>
+</aside>

@@ -12,7 +12,7 @@ import { ComponentsModule } from './components/components-module/components.modu
 
 @NgModule({
   declarations: [AppComponent],
-  imports: [BrowserModule, IonicModule.forRoot(), AppRoutingModule, HttpClientModule, ComponentsModule],
+  imports: [BrowserModule, IonicModule.forRoot({ animated: false }), AppRoutingModule, HttpClientModule, ComponentsModule],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }

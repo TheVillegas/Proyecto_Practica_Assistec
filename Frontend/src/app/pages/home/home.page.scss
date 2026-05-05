@@ -1,90 +1,208 @@
 ion-content {
-    --background: #f4f5f7;
+    --background: #F1F3F7;
 }
 
 .home-container {
-    @apply max-w-5xl mx-auto px-6 pt-8 pb-20;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 32px;
 }
 
-// === Welcome Section (Compact & Branded) ===
-.welcome-card {
-    @apply bg-white rounded-lg shadow-sm p-6 mb-8 border border-slate-200 border-l-4 border-l-[#006EB6]; // Brand stripe on left
+// ── Welcome Banner ───────────────────────────────────────────────
+.welcome-banner {
+    background: linear-gradient(135deg, #1A4B9C 0%, #2860C0 100%);
+    border-radius: 16px;
+    padding: 32px 36px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
 
-    .welcome-title {
-        @apply text-2xl font-bold text-slate-800 mb-1 tracking-tight;
-        font-family: 'Inter', sans-serif;
-    }
+.banner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 14px;
 
-    .welcome-subtitle {
-        @apply text-slate-500 text-base;
-        font-family: 'Inter', sans-serif;
+    ion-icon {
+        font-size: 14px;
     }
 }
 
-// === Action Cards Grid ===
-.action-grid {
-    @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+.welcome-banner h1 {
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    margin-top: 0;
+}
+
+.welcome-banner p {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 520px;
+    margin: 0;
+}
+
+.banner-circle {
+    position: absolute;
+    right: -40px;
+    top: -40px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    pointer-events: none;
+}
+
+// ── Stats Grid ───────────────────────────────────────────────────
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+
+.stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    ion-icon {
+        font-size: 20px;
+    }
+
+    &.blue  { background: rgba(55, 138, 221, 0.12); color: #378ADD; }
+    &.green { background: rgba(29, 158, 117, 0.12); color: #1D9E75; }
+    &.amber { background: rgba(245, 158, 11,  0.12); color: #F59E0B; }
+}
+
+.stat-label {
+    color: #8A8F9C;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    color: #1A2340;
+    font-size: 22px;
+    font-weight: 600;
+    display: block;
+}
+
+// ── Quick Actions ────────────────────────────────────────────────
+.section-header {
+    margin-bottom: 16px;
+
+    h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1A2340;
+        margin-bottom: 4px;
+        margin-top: 0;
+    }
+
+    p {
+        font-size: 13px;
+        color: #8A8F9C;
+        margin: 0;
+    }
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
 }
 
 .action-card {
-    // Base Card Style
-    @apply bg-white rounded-xl relative overflow-hidden cursor-pointer border border-slate-200 shadow-sm transition-all duration-300 ease-out;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 28px 28px 24px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.2s;
 
-    // Hover Effects (Scale, Shadow, Border Blue)
     &:hover {
-        @apply shadow-lg border-blue-400 -translate-y-1;
-
-        .watermark-icon {
-            @apply scale-110 opacity-10;
-        }
-
-        .cta-link {
-            @apply text-[#006EB6];
-
-            .arrow {
-                @apply translate-x-1;
-            }
-        }
-    }
-
-    // Inner Layout (z-index higher to stay above watermark)
-    .card-main-content {
-        @apply relative z-10 p-6 flex flex-col h-full items-start;
-    }
-
-    // Icon Badge (Top Left)
-    .icon-badge {
-        @apply w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mb-4 text-[#006EB6];
-
-        ion-icon {
-            @apply text-2xl;
-        }
-    }
-
-    // Text Content
-    .text-content {
-        @apply mb-6;
-
-        h3 {
-            @apply text-xl font-bold text-slate-800 mb-2 leading-tight;
-        }
-
-        p {
-            @apply text-slate-500 text-sm leading-relaxed;
-        }
-    }
-
-    // Call To Action (Bottom Left)
-    .cta-link {
-        @apply mt-auto font-bold text-blue-600 text-sm flex items-center gap-1 transition-colors;
-
-        .arrow {
-            @apply transition-transform duration-300;
-        }
-    }
-
-    // Watermark Icon (Absolute Bottom Right)
-    .watermark-icon {
-        @apply absolute -bottom-6 -right-6 text-9xl text-slate-900 opacity-[0.03] transform -rotate-12 transition-all duration-500 pointer-events-none;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
     }
 }
+
+.action-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #F1F3F7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    color: #378ADD;
+
+    ion-icon {
+        font-size: 22px;
+    }
+}
+
+.action-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1A2340;
+    margin-bottom: 8px;
+    margin-top: 0;
+}
+
+.action-card p {
+    font-size: 13px;
+    color: #8A8F9C;
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.action-link {
+    font-size: 13px;
+    color: #378ADD;
+    font-weight: 500;
+    text-decoration: none;
+    display: block;
+}
+
+.action-circle {
+    position: absolute;
+    bottom: -30px;
+    right: -30px;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: #F1F3F7;
+    pointer-events: none;
+}

@@ -43,9 +43,43 @@
 //Tipografia global del proyecto
 
 //Establecemos la tipografia global
-//Revisar debido a que no carga la tipografia original.
 :root {
     --ion-font-family: 'Inclusive Sans', sans-serif;
+
+    // ── AsisTec Design Tokens ──────────────────────────────────────
+    // Layout
+    --color-page-bg:          #F1F3F7;
+    --color-sidebar-bg:       #1E3A5F;
+    --color-card-bg:          #ffffff;
+
+    // Texto
+    --color-text-primary:     #1A2340;
+    --color-text-secondary:   #6B7280;
+    --color-text-muted:       #9CA3AF;
+    --color-text-label:       #374151;
+
+    // Bordes
+    --color-border:           #E5E7EB;
+    --color-border-focus:     #378ADD;
+
+    // Inputs
+    --color-input-bg:         #ffffff;
+    --color-input-border:     #D1D5DB;
+    --color-input-text:       #1A2340;
+    --color-input-placeholder: #9CA3AF;
+
+    // Botones
+    --color-btn-primary-bg:   #2563EB;
+    --color-btn-primary-text: #ffffff;
+    --color-btn-danger-bg:    #DC2626;
+    --color-btn-danger-text:  #ffffff;
+    --color-btn-secondary-bg: #F3F4F6;
+    --color-btn-secondary-text: #374151;
+
+    // Sidebar
+    --color-sidebar-active:   rgba(255, 255, 255, 0.12);
+    --color-sidebar-text:     rgba(255, 255, 255, 0.65);
+    --sidebar-width:          230px;
 }
 
 /* Ocultar flechas en Chrome, Safari, Edge, Opera */
@@ -58,3 +92,11 @@ ion-input input::-webkit-inner-spin-button {
 ion-input input[type=number] {
     -moz-appearance: textfield;
 }
+
+// ── SIDEBAR LAYOUT OFFSET ────────────────────────────────────────
+// Aplica offset izquierdo a todas las páginas que usan el sidebar
+// No afecta a login ni register (no usan <app-header>)
+ion-content.with-sidebar {
+    --offset-bottom: 0px;
+    margin-left: 230px;
+}

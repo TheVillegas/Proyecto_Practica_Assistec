@@ -14,6 +14,7 @@ export class HeaderComponent implements OnInit {
   userName: string = 'Usuario';
   userRole: string = 'Analista';
   userPhoto: string = '';
+  userInitials: string = 'U';
 
   constructor(private router: Router, private authService: AuthService) {
     // Escuchar cambios de ruta para actualizar el segmento activo
@@ -30,7 +31,6 @@ export class HeaderComponent implements OnInit {
   ngOnInit() {
     this.updateActiveSegment(this.router.url);
 
-    // Suscribirse a cambios del usuario para actualización de nombre y foto
     this.authService.currentUser$.subscribe(user => {
       if (user) {
         this.userName = user.nombreApellido || user.nombre || 'Usuario';
@@ -52,10 +52,12 @@ export class HeaderComponent implements OnInit {
         }
 
         this.userPhoto = user.url_foto || user.urlFoto || 'https://ui-avatars.com/api/?name=' + (this.userName || 'U') + '&background=random';
+        this.userInitials = this.getInitials(this.userName);
       } else {
         this.userName = 'Usuario';
         this.userRole = 'Analista';
         this.userPhoto = 'https://ui-avatars.com/api/?name=Usuario&background=random';
+        this.userInitials = 'U';
       }
     });
   }
@@ -63,7 +65,9 @@ export class HeaderComponent implements OnInit {
   private updateActiveSegment(url: string) {
     if (url.includes('/home')) {
       this.activeSegment = 'home';
-    } else if (url.includes('/busqueda-ali') || url.includes('/busqueda-solicitud-ingreso')) {
+    } else if (url.includes('/busqueda-solicitud-ingreso')) {
+      this.activeSegment = 'busqueda-solicitud';
+    } else if (url.includes('/busqueda-ali')) {
       this.activeSegment = 'busqueda';
     } else if (url.includes('/generar-ali-basico')) {
       this.activeSegment = 'generar';
@@ -74,6 +78,12 @@ export class HeaderComponent implements OnInit {
     }
   }
 
+  private getInitials(name: string): string {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
 
 
   busquedaALI() {
