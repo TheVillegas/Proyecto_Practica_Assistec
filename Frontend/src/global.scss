@@ -98,5 +98,5 @@ ion-input input[type=number] {
 // No afecta a login ni register (no usan <app-header>)
 ion-content.with-sidebar {
     --offset-bottom: 0px;
-    margin-left: 230px;
+    --padding-start: 230px;
 }
