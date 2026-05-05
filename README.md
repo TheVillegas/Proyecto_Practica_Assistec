@@ -1,131 +1,66 @@
-# Asistec - Plataforma de Gestión de Laboratorio
+# AssisTec — Plataforma de Gestion de Laboratorio
 
-Este documento explica cómo ejecutar el proyecto "Asistec" en cualquier computador, de forma sencilla y automatizada.
-
-El proyecto ha sido migrado a un modelo **Híbrido**. Utilizamos **Docker únicamente para la Base de Datos** (PostgreSQL), mientras que el Backend (`AssisTec API`) y Frontend (`Frontend`) se ejecutan localmente para aprovechar las herramientas de desarrollo modernas (como Prisma Studio y recargas en caliente).
+Sistema de registro y gestion de analisis microbiologicos de alimentos (RAM y TPA) para laboratorios universitarios.
 
 ---
 
-## 🛠️ ¿Qué necesitas tener instalado?
+## Stack
 
-1.  **Docker Desktop**: El programa que alojará la base de datos PostgreSQL.
-2.  **Node.js** (v18 o superior): Para ejecutar el código del Backend y Frontend.
-3.  **Git Bash** (o cualquier terminal): Para descargar y arrancar el proyecto.
-
----
-
-## ▶️ Cómo ejecutar el proyecto paso a paso
-
-### 1. Descargar el código
-Abre tu terminal y ejecuta:
-
-```bash
-git clone <URL_DEL_REPO>
-cd Proyecto_Practica
-```
-
-### 2. Levantar la Base de Datos (Docker)
-Asegúrate de tener Docker Desktop abierto. En la carpeta raíz (donde está el `docker-compose.yml`), ejecuta:
-
-```bash
-docker compose up -d
-```
-*(Esto descargará y ejecutará PostgreSQL en el puerto 5432 de forma silenciosa en el fondo).*
-
-### 3. Configurar y Levantar el Backend (AssisTec API)
-El backend ahora está construido con Node.js y **Prisma ORM**.
-
-1. Abre una nueva terminal y entra a la carpeta del backend:
-   ```bash
-   cd "AssisTec API"
-   ```
-2. Instala las dependencias:
-   ```bash
-   npm install
-   ```
-3. Crea un archivo `.env` en la carpeta `AssisTec API` con el siguiente contenido:
-   ```env
-   # Conexión a la base de datos PostgreSQL en Docker
-   DATABASE_URL="postgresql://postgres:admin123@localhost:5432/asistectest?schema=public"
-   
-   # JWT Secret para autenticación
-   JWT_SECRET="secreto_lab_pucv_2024"
-   ```
-4. Sincroniza la Base de Datos y carga los datos semilla (Diluyentes, Equipos, Usuarios base):
-   ```bash
-   npx prisma db push
-   node run-seeds.js
-   ```
-5. ¡Arranca el servidor!
-   ```bash
-   npm run dev
-   ```
-*(Verás un mensaje: "🚀 AssisTec API corriendo en puerto 3001")*
-
-### 4. Configurar y Levantar el Frontend (Angular/Ionic)
-1. Abre OTRA pestaña en tu terminal y entra a la carpeta Frontend:
-   ```bash
-   cd Frontend
-   ```
-2. Instala las dependencias:
-   ```bash
-   npm install
-   ```
-3. ¡Arranca la aplicación!
-   ```bash
-   npm start
-   ```
+| Capa | Tecnologia |
+|---|---|
+| Frontend | Angular 20 + Ionic |
+| Backend | Node.js + Express 5 + Prisma 6 (`AssisTec API/`) |
+| Base de datos | PostgreSQL 16 (Docker) |
 
 ---
 
-## 🚀 Levantar todo con Docker (BD + Backend)
+## Arranque rapido
 
-El `docker-compose.yml` levanta **BD + Backend juntos**. Útil tanto en desarrollo como en producción (EC2 u otro VPS).
+Prerequisitos: Docker Desktop, Node.js v18+.
 
-### Primera vez o cuando querés resetear la BD desde cero:
 ```bash
-docker compose down -v
-docker compose up --build
+# 1. BD + Backend (todo junto con Docker)
+docker compose up -d        # http://localhost:3001
+
+# 2. Frontend (otra terminal)
+cd Frontend && npm install && npm start   # http://localhost:4200
 ```
 
-### Reinicios posteriores (sin borrar datos):
-```bash
-docker compose up
-```
+Docker levanta PostgreSQL, sincroniza el schema con Prisma, carga los seeds y arranca el backend automaticamente.
 
-Esto hace automáticamente:
-1. Levanta PostgreSQL 16 en el puerto `5432`
-2. Sincroniza el esquema con `prisma db push`
-3. Carga los seeds (usuarios, diluyentes, equipos) — usa `upsert`, es idempotente
-4. Inicia el backend en `http://localhost:3001`
-
-> **Usuarios Windows:** el `Dockerfile` incluye `dos2unix` para convertir los line endings del `docker-entrypoint.sh` automáticamente. No se requiere configuración extra.
-
-*(Nota: En producción, el Frontend de Angular generalmente se compila con `npm run build` y se sirve usando NGINX o Amazon S3).*
+Para el detalle completo (variables de entorno, usuarios de prueba, modo desarrollo sin Docker), ver la guia de configuracion.
 
 ---
 
-## 🌐 Cómo usar la plataforma (Desarrollo)
+## Documentacion
 
-Abre tu navegador (Chrome, Edge, etc.) y entra a:
-
-👉 **[http://localhost:4200](http://localhost:4200)**
-
-Para iniciar sesión y probar los roles, utiliza los correos precargados:
-- **Analista**: `analista@lab.cl`
-- **Coordinadora**: `coord@lab.cl`
-- **Jefe de Área**: `jefe@lab.cl`
-- **Ingreso**: `ingreso@lab.cl`
-*(La contraseña de todos es: `123456`)*
+| Documento | Contenido |
+|---|---|
+| [`docs/environment-setup.md`](docs/environment-setup.md) | Como levantar el entorno, variables de entorno, problemas comunes |
+| [`docs/architecture.md`](docs/architecture.md) | Arquitectura del sistema, flujos, decisiones de diseno |
+| [`docs/database.md`](docs/database.md) | Esquema de base de datos, tablas, ciclo de vida de una muestra |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Ramas, commits, PRs, flujo de trabajo del equipo |
 
 ---
 
-## 💾 Sobre la Base de Datos (PgAdmin o Prisma Studio)
+## Estado del CI
 
-Si necesitas ver los datos crudos, ya no necesitas PgAdmin. Gracias a Prisma, puedes ver tu base de datos directamente en el navegador.
-Solo abre una terminal en `AssisTec API` y ejecuta:
+Los workflows de GitHub Actions corren automaticamente en cada push o PR que toque `AssisTec API/` o `Frontend/`.
 
-```bash
-npx prisma studio
+---
+
+## Estructura del repositorio
+
 ```
-Se abrirá una interfaz gráfica en `http://localhost:5555` donde podrás ver y editar todas las tablas fácilmente.
+Proyecto_Practica_Assistec/
+├── AssisTec API/    # Backend activo (Prisma + Node.js)
+├── Frontend/        # Angular + Ionic
+├── BD/              # Scripts de base de datos
+├── Backend/         # LEGACY — ver Backend/README_LEGACY.md
+├── docs/            # Documentacion tecnica
+├── .github/         # Workflows de CI y templates de PR/issues
+└── docker-compose.yml
+```
+
+> `Backend/` es el backend original (deprecated). No usar para desarrollo nuevo.
+> Ver `Backend/README_LEGACY.md` para el detalle.
