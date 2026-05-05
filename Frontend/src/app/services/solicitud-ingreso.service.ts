@@ -8,9 +8,36 @@ export interface FormularioSeleccionadoPayload {
   codigo: string;
   nombre: string;
   genera_tpa_default: boolean;
+  acreditado?: boolean;
+  codigo_le?: string | null;
+  metodologia_norma?: string | null;
+  dias_negativo?: number | null;
+  dias_confirmacion?: number | null;
+}
+
+export interface AnalisisResolucionResponse {
+  id_formulario_analisis: string;
+  codigo_formulario: string;
+  nombre_formulario: string;
+  id_alcance_acreditacion: number | null;
+  codigo_le: string | null;
+  acreditado: boolean;
+  metodologia_norma: string;
+  dias_negativo: number | null;
+  dias_confirmacion: number | null;
+}
+
+export interface PlazoEstimadoResponse {
+  dias_negativo: number | null;
+  dias_confirmacion: number | null;
+  fecha_entrega_neg: string | null;
+  fecha_entrega_pos: string | null;
 }
 
 export interface SolicitudIngresoPayload {
+  codigoALI: number;
+  numeroActa: string;
+  categoriaId: string;
   codigoExterno: string;
   categoria: string;
   nombreCliente: string;
@@ -29,6 +56,7 @@ export interface SolicitudIngresoPayload {
   instructivoMuestreo: string;
   formularios: FormularioSeleccionadoPayload[];
   idLugar: number | null;
+  idEquipoAlmacenamiento?: number | null;
   muestraCompartida: boolean;
   envasesSuministradosPor: string;
   observacionesLaboratorio: string;
@@ -95,5 +123,18 @@ export class SolicitudIngresoService {
     return this.http.post<SolicitudIngresoResponse>(`${this.apiUrl}/${idSolicitud}/enviar-validacion`, {
       updated_at: updatedAt
     });
+  }
+
+  resolverAnalisis(idCategoriaProducto: string, idFormularioAnalisis: string): Observable<AnalisisResolucionResponse> {
+    return this.http.get<AnalisisResolucionResponse>(`${this.apiUrl}/analisis/resolver`, {
+      params: {
+        id_categoria_producto: idCategoriaProducto,
+        id_formulario_analisis: idFormularioAnalisis
+      }
+    });
+  }
+
+  obtenerPlazoEstimado(codigoAli: number | string): Observable<PlazoEstimadoResponse> {
+    return this.http.get<PlazoEstimadoResponse>(`${this.apiUrl}/${codigoAli}/plazo-estimado`);
   }
 }

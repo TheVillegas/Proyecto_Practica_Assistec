@@ -8,6 +8,7 @@ class AnalisisController {
             res.status(201).json(result);
         } catch (error) {
             if (error.message === 'UNAUTHORIZED_ROLE') return res.status(401).json({ mensaje: 'Rol no autorizado' });
+            if (error.message === 'MUESTRA_NOT_FOUND') return res.status(404).json({ mensaje: 'Muestra no encontrada' });
             
             console.error(error);
             res.status(500).json({ mensaje: 'Error interno del servidor' });

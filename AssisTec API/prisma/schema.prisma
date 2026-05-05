@@ -235,13 +235,15 @@ model SolicitudMuestra {
 model SolicitudAnalisis {
   idSolicitudAnalisis   BigInt              @id @map("id_solicitud_analisis") // Removed autoincrement as per schema
   idSolicitudMuestra    BigInt              @map("id_solicitud_muestra")
-  idAlcanceAcreditacion Int                 @map("id_alcance_acreditacion")
+  idAlcanceAcreditacion Int?                @map("id_alcance_acreditacion")
   idFormularioAnalisis  BigInt              @map("id_formulario_analisis")
   acreditado            Boolean             @default(false)
   metodologiaNorma      String              @map("metodologia_norma") @db.VarChar(255)
+  diasNegativoSnapshot  Int?                @map("dias_negativo_snapshot")
+  diasConfirmacionSnapshot Int?             @map("dias_confirmacion_snapshot")
   
   muestra               SolicitudMuestra    @relation(fields: [idSolicitudMuestra], references: [idSolicitudMuestra])
-  alcance               AlcanceAcreditacion @relation(fields: [idAlcanceAcreditacion], references: [idAlcanceAcreditacion])
+  alcance               AlcanceAcreditacion? @relation(fields: [idAlcanceAcreditacion], references: [idAlcanceAcreditacion])
   formulario            FormularioAnalisis  @relation(fields: [idFormularioAnalisis], references: [idFormularioAnalisis])
 
   @@map("solicitud_analisis")

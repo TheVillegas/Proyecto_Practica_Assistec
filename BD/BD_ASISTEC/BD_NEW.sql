@@ -154,10 +154,12 @@ CREATE TABLE solicitud_muestra (
 CREATE TABLE solicitud_analisis (
     id_solicitud_analisis       BIGINT PRIMARY KEY,
     id_solicitud_muestra        BIGINT NOT NULL REFERENCES solicitud_muestra(id_solicitud_muestra),
-    id_alcance_acreditacion     INT NOT NULL REFERENCES alcance_acreditacion(id_alcance_acreditacion),
+    id_alcance_acreditacion     INT REFERENCES alcance_acreditacion(id_alcance_acreditacion),
     id_formulario_analisis      BIGINT NOT NULL REFERENCES formularios_analisis(id_formularios_analisis),
     acreditado                  BOOLEAN DEFAULT FALSE NOT NULL,
-    metodologia_norma           VARCHAR(255) NOT NULL
+    metodologia_norma           VARCHAR(255) NOT NULL,
+    dias_negativo_snapshot      INT,
+    dias_confirmacion_snapshot  INT
 );
 
 

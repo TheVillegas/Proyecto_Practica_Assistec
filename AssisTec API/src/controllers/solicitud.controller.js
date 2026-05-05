@@ -6,6 +6,12 @@ class SolicitudController {
             const result = await solicitudService.crear(req.body, req.user);
             res.status(201).json(result);
         } catch (error) {
+            if (error.message === 'MISSING_CODIGO_ALI') {
+                return res.status(400).json({ mensaje: 'Debe ingresar un codigo ALI manual valido' });
+            }
+            if (error.message === 'MISSING_NUMERO_ACTA') {
+                return res.status(400).json({ mensaje: 'Debe ingresar el Numero de la solicitud' });
+            }
             if (error.message === 'UNAUTHORIZED_ROLE') {
                 return res.status(401).json({ mensaje: 'Rol no autorizado' });
             }
@@ -74,6 +80,43 @@ class SolicitudController {
             if (error.message === 'ALREADY_VALIDATED') return res.status(409).json({ mensaje: 'Ya validada' });
             if (error.message === 'CONCURRENCY_ERROR') return res.status(409).json({ mensaje: 'El registro fue modificado por otro usuario' });
             if (error.message === 'NO_ANALYSIS') return res.status(400).json({ mensaje: 'No hay formularios o análisis asignados' });
+            console.error(error);
+            res.status(500).json({ mensaje: 'Error interno del servidor' });
+        }
+    }
+
+    async rechazar(req, res) {
+        try {
+            const result = await solicitudService.rechazar(req.params.id, req.body, req.expectedUpdatedAt, req.user);
+            res.status(200).json(result);
+        } catch (error) {
+            if (error.message === 'UNAUTHORIZED_ROLE') return res.status(401).json({ mensaje: 'Rol no autorizado' });
+            if (error.message === 'NOT_FOUND') return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
+            if (error.message === 'CONCURRENCY_ERROR') return res.status(409).json({ mensaje: 'El registro fue modificado por otro usuario' });
+            if (error.message === 'MISSING_REJECTION_REASON') return res.status(400).json({ mensaje: 'El motivo de devolucion es obligatorio' });
+            console.error(error);
+            res.status(500).json({ mensaje: 'Error interno del servidor' });
+        }
+    }
+
+    async resolverAnalisis(req, res) {
+        try {
+            const result = await solicitudService.resolverAnalisis(req.query);
+            res.status(200).json(result);
+        } catch (error) {
+            if (error.message === 'MISSING_PARAMS') return res.status(400).json({ mensaje: 'Debe indicar categoria y formulario' });
+            if (error.message === 'FORMULARIO_NOT_FOUND') return res.status(404).json({ mensaje: 'Formulario no encontrado' });
+            console.error(error);
+            res.status(500).json({ mensaje: 'Error interno del servidor' });
+        }
+    }
+
+    async plazoEstimado(req, res) {
+        try {
+            const result = await solicitudService.plazoEstimado(req.params.codigoAli);
+            res.status(200).json(result);
+        } catch (error) {
+            if (error.message === 'NOT_FOUND') return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
             console.error(error);
             res.status(500).json({ mensaje: 'Error interno del servidor' });
         }

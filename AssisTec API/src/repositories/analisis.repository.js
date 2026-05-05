@@ -20,6 +20,32 @@ class AnalisisRepository {
         });
     }
 
+    async findMuestraWithSolicitud(idMuestra) {
+        return prisma.solicitudMuestra.findUnique({
+            where: { idSolicitudMuestra: BigInt(idMuestra) },
+            include: { solicitud: true }
+        });
+    }
+
+    async findTiempoPorCategoria(idCategoriaProducto, idFormularioAnalisis) {
+        return prisma.tiempoPorCategoria.findFirst({
+            where: {
+                idCategoriaProducto: BigInt(idCategoriaProducto),
+                idFormularioAnalisis: BigInt(idFormularioAnalisis)
+            }
+        });
+    }
+
+    async findAlcancePorCategoriaFormulario(idCategoriaProducto, idFormularioAnalisis) {
+        return prisma.alcanceAcreditacion.findFirst({
+            where: {
+                idCategoriaProducto: BigInt(idCategoriaProducto),
+                idFormularioAnalisis: BigInt(idFormularioAnalisis)
+            },
+            include: { acreditacion: true }
+        });
+    }
+
     async findByMuestra(idMuestra) {
         return await prisma.solicitudAnalisis.findMany({
             where: { idSolicitudMuestra: BigInt(idMuestra) },

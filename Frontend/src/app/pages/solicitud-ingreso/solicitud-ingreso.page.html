@@ -16,6 +16,10 @@
           <ion-icon name="document-text-outline"></ion-icon>
           {{ numeroActa }}
         </span>
+        <button type="button" class="btn-secondary" *ngIf="solicitudId" (click)="nuevaSolicitud()">
+          <ion-icon name="add-circle-outline"></ion-icon>
+          Nueva solicitud
+        </button>
       </div>
     </div>
 
@@ -52,14 +56,16 @@
               </ion-col>
               <ion-col size="12" size-md="4">
                 <div class="form-group">
-                  <label class="form-label">Código ALI</label>
-                  <input type="text" class="form-input form-input--readonly" [value]="codigoALI" readonly />
+                  <label class="form-label">Codigo ALI <span class="req">*</span></label>
+                  <input type="number" class="form-input" formControlName="codigoALI" [class.form-input--error]="campoInvalido('codigoALI')" />
+                  <span class="error-msg" *ngIf="campoInvalido('codigoALI')">Ingrese un ALI valido.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="4">
                 <div class="form-group">
-                  <label class="form-label">Número de Acta</label>
-                  <input type="text" class="form-input form-input--readonly" [value]="numeroActa" readonly />
+                  <label class="form-label">Numero <span class="req">*</span></label>
+                  <input type="text" class="form-input" formControlName="numeroActa" [class.form-input--error]="campoInvalido('numeroActa')" />
+                  <span class="error-msg" *ngIf="campoInvalido('numeroActa')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="6">
@@ -254,6 +260,9 @@
                   [disabled]="formulario.obligatorio" (change)="toggleFormulario(formulario)" />
                 <span class="checklist-item__name">{{ formulario.nombre }}</span>
                 <span class="tpa-badge" *ngIf="formulario.obligatorio">TPA requerido</span>
+                <span class="muestra-hint" *ngIf="formulario.seleccionado">
+                  LE: {{ formulario.codigoLe || 'No acreditado' }} - Norma: {{ formulario.metodologiaNorma || 'Sin norma' }} - Dias: {{ formulario.diasNegativo ?? '--' }}/{{ formulario.diasConfirmacion ?? '--' }}
+                </span>
               </label>
             </div>
           </div>
@@ -288,6 +297,9 @@
                     <input type="checkbox" class="form-checkbox" [checked]="formulario.seleccionado"
                       [disabled]="formulario.obligatorio" (change)="toggleFormularioMuestra(muestra, formulario)" />
                     <span class="checklist-item__name">{{ formulario.nombre }}</span>
+                    <span class="muestra-hint" *ngIf="formulario.seleccionado">
+                      LE: {{ formulario.codigoLe || 'No acreditado' }} - Norma: {{ formulario.metodologiaNorma || 'Sin norma' }} - Dias: {{ formulario.diasNegativo ?? '--' }}/{{ formulario.diasConfirmacion ?? '--' }}
+                    </span>
                   </label>
                 </div>
               </div>
@@ -311,7 +323,7 @@
                   <label class="form-label">Lugar de almacenamiento <span class="req">*</span></label>
                   <select class="form-select" formControlName="idLugar" [class.form-input--error]="campoInvalido('idLugar')">
                     <option [ngValue]="null" disabled>Seleccione lugar</option>
-                    <option *ngFor="let lugar of lugaresAlmacenamiento" [ngValue]="lugar.idLugar">{{ lugar.nombreLugar }}</option>
+                    <option *ngFor="let equipo of equiposAlmacenamiento" [ngValue]="equipo.idEquipo">{{ equipo.nombreEquipo }}</option>
                   </select>
                 </div>
               </ion-col>
@@ -397,20 +409,30 @@
         <div class="form-card-header">
           <div class="form-card-title-group">
             <ion-icon name="timer-outline"></ion-icon>
-            <h2 class="form-card-title">Etapa 9 — Tiempo estimado de entrega</h2>
+            <h2 class="form-card-title">Etapa 9 — Resultado negativo de entrega</h2>
           </div>
         </div>
         <div class="form-card-body">
           <div class="entrega-grid">
             <div class="entrega-card">
               <ion-icon name="hourglass-outline"></ion-icon>
-              <span class="entrega-card__value">{{ tiempoEntregaDias }} días</span>
-              <span class="entrega-card__label">Tiempo estimado</span>
+              <span class="entrega-card__value">{{ tiempoEntregaNegativoDias ?? '--' }} días</span>
+              <span class="entrega-card__label">Resultado negativo</span>
             </div>
             <div class="entrega-card">
               <ion-icon name="calendar-outline"></ion-icon>
-              <span class="entrega-card__value">{{ fechaEstimadaEntrega ? (fechaEstimadaEntrega | date:'dd/MM/yyyy') : '—' }}</span>
-              <span class="entrega-card__label">Fecha estimada</span>
+              <span class="entrega-card__value">{{ fechaEstimadaEntregaNegativa ? (fechaEstimadaEntregaNegativa | date:'dd/MM/yyyy') : '--' }}</span>
+              <span class="entrega-card__label">Fecha negativa</span>
+            </div>
+            <div class="entrega-card">
+              <ion-icon name="hourglass-outline"></ion-icon>
+              <span class="entrega-card__value">{{ tiempoEntregaConfirmacionDias ?? '--' }} dias</span>
+              <span class="entrega-card__label">Con confirmacion</span>
+            </div>
+            <div class="entrega-card">
+              <ion-icon name="calendar-outline"></ion-icon>
+              <span class="entrega-card__value">{{ fechaEstimadaEntregaConfirmacion ? (fechaEstimadaEntregaConfirmacion | date:'dd/MM/yyyy') : '--' }}</span>
+              <span class="entrega-card__label">Fecha confirmacion</span>
             </div>
           </div>
         </div>

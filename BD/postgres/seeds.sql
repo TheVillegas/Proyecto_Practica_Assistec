@@ -34,7 +34,9 @@ INSERT INTO equipos_lab (nombre_equipo, codigo_equipo) VALUES
 ('Cuenta colonias 9-M', '9-M'),
 ('Cuenta Colonias 101-m', '101-M'),
 ('pHmetro 93-m', '93-M'),
-('Pipetas desechables', 'Pip-Des');
+('Pipetas desechables', 'Pip-Des'),
+('Termometro', '10-T-I'),
+('Refrigerador 2-I', '2-I');
 
 -- 4. Instrumentos
 INSERT INTO instrumentos (nombre_instrumento, codigo_instrumento) VALUES 
@@ -47,6 +49,7 @@ INSERT INTO instrumentos (nombre_instrumento, codigo_instrumento) VALUES
 INSERT INTO lugares_almacenamiento (nombre_lugar, codigo_lugar) VALUES 
 ('Freezer 33-M', 'FR-33M'),
 ('Refrigerador 33-M', 'RF-33M'),
+('Refrigerador 2-I', '2-I'),
 ('Mesón Siembra', 'MES-SIEM'),
 ('Gabinete sala Transpaso', 'GAB-TRANS');
 

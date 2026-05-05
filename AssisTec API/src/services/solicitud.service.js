@@ -4,10 +4,14 @@ const ROLES = require('../config/roles');
 
 const ESTADOS = {
     BORRADOR: 'borrador',
-    ENVIADA: 'enviada',
-    DEVUELTA: 'devuelta',
-    VALIDADA: 'validada',
-    REPORTES_GENERADOS: 'reportes_generados'
+    ENVIADO: 'enviado',
+    RECHAZADO: 'rechazado',
+    VALIDADO: 'validado',
+    CONVERTIDO_MUESTRAS: 'convertido_muestras',
+    ENVIADA_LEGACY: 'enviada',
+    DEVUELTA_LEGACY: 'devuelta',
+    VALIDADA_LEGACY: 'validada',
+    REPORTES_GENERADOS_LEGACY: 'reportes_generados'
 };
 
 class SolicitudService {
@@ -16,11 +20,15 @@ class SolicitudService {
             throw new Error('UNAUTHORIZED_ROLE');
         }
 
-        const numeroAli = await solicitudRepository.getNextNumeroAli();
+        const numeroAli = this.resolveNumeroAliManual(data);
+        if (!String(data.numeroActa ?? data.numero_acta ?? '').trim()) {
+            throw new Error('MISSING_NUMERO_ACTA');
+        }
         const solicitudData = await this.buildSolicitudData(data, usuario, numeroAli);
         const cantidadMuestras = Number(data.cantidad_muestras ?? data.numeroMuestras ?? 0);
+        const formulariosDefault = await this.buildFormulariosDefault(solicitudData.categoriaId);
 
-        const creada = await solicitudRepository.create(solicitudData, cantidadMuestras);
+        const creada = await solicitudRepository.createWithAnalisisDefault(solicitudData, cantidadMuestras, formulariosDefault);
         return this.serializeSolicitud(creada);
     }
 
@@ -51,7 +59,7 @@ class SolicitudService {
             throw new Error('NOT_FOUND');
         }
 
-        if ([ESTADOS.VALIDADA, ESTADOS.REPORTES_GENERADOS].includes(solicitud.estado) && usuario.role === ROLES.INGRESO) {
+        if ([ESTADOS.VALIDADO, ESTADOS.CONVERTIDO_MUESTRAS, ESTADOS.VALIDADA_LEGACY, ESTADOS.REPORTES_GENERADOS_LEGACY].includes(solicitud.estado) && usuario.role === ROLES.INGRESO) {
             throw new Error('ALREADY_VALIDATED');
         }
 
@@ -78,9 +86,9 @@ class SolicitudService {
 
         const now = new Date();
         const updated = await solicitudRepository.update(id, {
-            estado: ESTADOS.ENVIADA,
+            estado: ESTADOS.ENVIADO,
             fechaEnvioValidacion: now,
-            fechaHoraRecepcionCoordinadora: now
+            rutResponsableIngreso: usuario.id
         }, expectedUpdatedAt);
 
         return this.serializeSolicitud(updated);
@@ -96,20 +104,72 @@ class SolicitudService {
             throw new Error('NOT_FOUND');
         }
 
-        if (solicitud.estado === ESTADOS.REPORTES_GENERADOS) {
+        if (solicitud.estado === ESTADOS.CONVERTIDO_MUESTRAS || solicitud.estado === ESTADOS.REPORTES_GENERADOS_LEGACY) {
             throw new Error('ALREADY_VALIDATED');
         }
 
-        const resultado = await reporteService.generarDesdeValidacion(
-            solicitud,
-            expectedUpdatedAt,
-            usuario
-        );
+        const now = new Date();
+        const updated = await solicitudRepository.update(id, {
+            estado: ESTADOS.VALIDADO,
+            rutJefaArea: usuario.role === ROLES.JEFE_AREA ? usuario.id : solicitud.rutJefaArea,
+            rutCoordinaroraRecepcion: usuario.role === ROLES.COORDINADORA ? usuario.id : solicitud.rutCoordinaroraRecepcion,
+            fechaEntregaRevisionJefeLab: now,
+            fechaHoraRecepcionCoordinadora: usuario.role === ROLES.COORDINADORA ? now : solicitud.fechaHoraRecepcionCoordinadora
+        }, expectedUpdatedAt);
 
-        return this.serializeSolicitud(resultado.solicitudActualizada, {
-            tpa_generado: resultado.tpa_generado,
-            ram_generado: resultado.ram_generado
-        });
+        return this.serializeSolicitud(updated);
+    }
+
+    async rechazar(id, data, expectedUpdatedAt, usuario) {
+        if (usuario.role !== ROLES.COORDINADORA && usuario.role !== ROLES.JEFE_AREA) {
+            throw new Error('UNAUTHORIZED_ROLE');
+        }
+
+        const motivo = data.motivoDevolucion ?? data.motivo_devolucion ?? '';
+        if (!String(motivo).trim()) {
+            throw new Error('MISSING_REJECTION_REASON');
+        }
+
+        const solicitud = await solicitudRepository.findById(id);
+        if (!solicitud) {
+            throw new Error('NOT_FOUND');
+        }
+
+        const updated = await solicitudRepository.update(id, {
+            estado: ESTADOS.RECHAZADO,
+            motivoDevolucion: motivo,
+            rutJefaArea: usuario.role === ROLES.JEFE_AREA ? usuario.id : solicitud.rutJefaArea,
+            rutCoordinaroraRecepcion: usuario.role === ROLES.COORDINADORA ? usuario.id : solicitud.rutCoordinaroraRecepcion,
+            fechaEntregaRevisionJefeLab: new Date()
+        }, expectedUpdatedAt);
+
+        return this.serializeSolicitud(updated);
+    }
+
+    async resolverAnalisis(query) {
+        const idCategoria = query.id_categoria_producto ?? query.categoriaId ?? query.categoria_id;
+        const idFormulario = query.id_formulario_analisis ?? query.formularioId ?? query.formulario_id;
+        if (!idCategoria || !idFormulario) {
+            throw new Error('MISSING_PARAMS');
+        }
+
+        return this.resolverAnalisisPorCategoriaFormulario(idCategoria, idFormulario);
+    }
+
+    async plazoEstimado(codigoAli) {
+        const solicitud = await solicitudRepository.findByNumeroAli(codigoAli);
+        if (!solicitud) {
+            throw new Error('NOT_FOUND');
+        }
+
+        const analisis = await solicitudRepository.findAnalisisByCodigoAli(codigoAli);
+        const plazo = this.calcularPlazoDesdeAnalisis(analisis);
+        return {
+            dias_negativo: plazo.diasNegativo,
+            dias_confirmacion: plazo.diasConfirmacion,
+            fecha_entrega_neg: plazo.diasNegativo == null ? null : this.sumarDias(solicitud.fechaRecepcion, plazo.diasNegativo).toISOString(),
+            fecha_entrega_pos: plazo.diasConfirmacion == null ? null : this.sumarDias(solicitud.fechaRecepcion, plazo.diasConfirmacion).toISOString()
+        };
     }
 
     async buildSolicitudData(data, usuario, numeroAli, existing = null) {
@@ -130,7 +190,7 @@ class SolicitudService {
         const fechaRecepcion = new Date(data.fechaRecepcion ?? data.fecha_recepcion ?? existing?.fechaRecepcion ?? now);
         const fechaInicioMuestreo = new Date(data.fechaInicioMuestreo ?? data.fecha_inicio_muestreo ?? existing?.fechaInicioMuestreo ?? fechaRecepcion);
         const fechaTerminoMuestreo = new Date(data.fechaTerminoMuestreo ?? data.fecha_termino_muestreo ?? existing?.fechaTerminoMuestreo ?? fechaRecepcion);
-        const diasBase = this.calcularDiasEntrega(cantidadMuestras);
+        const diasBase = this.calcularDiasEntrega(formulariosSeleccionados);
         const fechaNegativa = this.sumarDias(fechaRecepcion, diasBase);
         const fechaPositiva = this.sumarDias(fechaRecepcion, diasBase + 2);
         const fechaAnalista = new Date(data.fechaRecepcionAnalista ?? data.fecha_recepcion_analista ?? existing?.fechaRecepcionAnalista ?? fechaRecepcion);
@@ -148,7 +208,7 @@ class SolicitudService {
         return {
             anioIngreso,
             numeroAli,
-            numeroActa: this.generarNumeroActa(anioIngreso, numeroAli),
+            numeroActa: data.numeroActa ?? data.numero_acta ?? existing?.numeroActa ?? '',
             codigoExterno: data.codigoExterno ?? data.codigo_externo ?? existing?.codigoExterno ?? `EXT-${anioIngreso}-${numeroAli}`,
             categoriaId: categoria.idCategoria,
             idCliente: cliente.idCliente,
@@ -266,10 +326,23 @@ class SolicitudService {
     }
 
     async resolveLugar(data, existing) {
+        const idEquipoAlmacenamiento = data.idEquipoAlmacenamiento ?? data.id_equipo_almacenamiento;
+        if (idEquipoAlmacenamiento) {
+            const equipo = await solicitudRepository.findEquipoById(idEquipoAlmacenamiento);
+            if (equipo) {
+                return this.resolveLugarDesdeEquipo(equipo);
+            }
+        }
+
         const idLugar = data.idLugar ?? data.id_lugar ?? data.equipoAlmacenamiento ?? data.equipo_almacenamiento;
         if (idLugar) {
             const lugar = await solicitudRepository.findLugarById(idLugar);
             if (lugar) return lugar;
+
+            const equipo = await solicitudRepository.findEquipoById(idLugar);
+            if (equipo) {
+                return this.resolveLugarDesdeEquipo(equipo);
+            }
         }
 
         if (existing?.lugar) return existing.lugar;
@@ -279,6 +352,22 @@ class SolicitudService {
             throw new Error('MISSING_LUGAR');
         }
         return primero;
+    }
+
+    async resolveLugarDesdeEquipo(equipo) {
+        const codigo = equipo.codigoEquipo || null;
+        if (codigo) {
+            const byCode = await solicitudRepository.findLugarByCodigo(codigo);
+            if (byCode) return byCode;
+        }
+
+        const byName = await solicitudRepository.findLugarByNombre(equipo.nombreEquipo);
+        if (byName) return byName;
+
+        return solicitudRepository.createLugar({
+            nombreLugar: equipo.nombreEquipo,
+            codigoLugar: codigo
+        });
     }
 
     normalizeFormularios(formularios = []) {
@@ -292,6 +381,69 @@ class SolicitudService {
             nombre: formulario.nombre ?? formulario.nombreAnalisis ?? '',
             genera_tpa_default: Boolean(formulario.generaTpaDefault ?? formulario.genera_tpa_default ?? false)
         }));
+    }
+
+    resolveNumeroAliManual(data) {
+        const numeroAli = data.codigoALI ?? data.codigo_ali ?? data.numeroAli ?? data.numero_ali;
+        const parsed = Number(numeroAli);
+        if (!Number.isInteger(parsed) || parsed <= 0) {
+            throw new Error('MISSING_CODIGO_ALI');
+        }
+        return parsed;
+    }
+
+    async buildFormulariosDefault(idCategoriaProducto) {
+        const tpa = await solicitudRepository.findFormularioTpaDefault();
+        if (!tpa) return [];
+        const snapshot = await this.resolverAnalisisPorCategoriaFormulario(idCategoriaProducto, tpa.idFormularioAnalisis);
+        return [{
+            idFormularioAnalisis: tpa.idFormularioAnalisis,
+            idAlcanceAcreditacion: snapshot.id_alcance_acreditacion,
+            acreditado: snapshot.acreditado,
+            metodologiaNorma: snapshot.metodologia_norma,
+            diasNegativoSnapshot: snapshot.dias_negativo,
+            diasConfirmacionSnapshot: snapshot.dias_confirmacion
+        }];
+    }
+
+    async resolverAnalisisPorCategoriaFormulario(idCategoriaProducto, idFormularioAnalisis) {
+        const [formulario, tiempo, alcance] = await Promise.all([
+            solicitudRepository.findFormularioById(idFormularioAnalisis),
+            solicitudRepository.findTiempoPorCategoria(idCategoriaProducto, idFormularioAnalisis),
+            solicitudRepository.findAlcancePorCategoriaFormulario(idCategoriaProducto, idFormularioAnalisis)
+        ]);
+
+        if (!formulario) {
+            throw new Error('FORMULARIO_NOT_FOUND');
+        }
+
+        return {
+            id_formulario_analisis: formulario.idFormularioAnalisis.toString(),
+            codigo_formulario: formulario.codigo,
+            nombre_formulario: formulario.nombreAnalisis,
+            id_alcance_acreditacion: alcance?.idAlcanceAcreditacion ?? null,
+            codigo_le: alcance?.acreditacion?.codigo ?? null,
+            acreditado: Boolean(alcance),
+            metodologia_norma: alcance?.normaEspecifica ?? (tiempo?.metodologiaNorma != null ? String(tiempo.metodologiaNorma) : ''),
+            dias_negativo: tiempo?.diasNegativo ?? null,
+            dias_confirmacion: tiempo?.diasConfirmacion ?? null
+        };
+    }
+
+    calcularPlazoDesdeAnalisis(analisis = []) {
+        const negativos = analisis
+            .map((item) => item.diasNegativoSnapshot ?? null)
+            .filter((dias) => dias !== null && dias !== undefined)
+            .map(Number);
+        const confirmaciones = analisis
+            .map((item) => item.diasConfirmacionSnapshot ?? null)
+            .filter((dias) => dias !== null && dias !== undefined)
+            .map(Number);
+
+        return {
+            diasNegativo: negativos.length ? Math.max(...negativos) + 1 : null,
+            diasConfirmacion: confirmaciones.length ? Math.max(...confirmaciones) + 1 : null
+        };
     }
 
     serializeSolicitud(solicitud, extra = {}) {
@@ -341,6 +493,12 @@ class SolicitudService {
                     id_formulario_analisis: analisis.idFormularioAnalisis.toString(),
                     codigo_formulario: analisis.formulario?.codigo ?? null,
                     nombre_formulario: analisis.formulario?.nombreAnalisis ?? null
+                    ,
+                    metodologia_norma: analisis.metodologiaNorma ?? null,
+                    acreditado: Boolean(analisis.acreditado),
+                    codigo_le: analisis.alcance?.acreditacion?.codigo ?? null,
+                    dias_negativo_snapshot: analisis.diasNegativoSnapshot ?? null,
+                    dias_confirmacion_snapshot: analisis.diasConfirmacionSnapshot ?? null
                 }))
             })),
             ...extra
@@ -369,8 +527,13 @@ class SolicitudService {
         return `ACTA-${anio}-${String(numeroAli).padStart(4, '0')}`;
     }
 
-    calcularDiasEntrega(cantidadMuestras) {
-        return 5 + Math.ceil((cantidadMuestras || 1) / 5);
+    calcularDiasEntrega(formularios = []) {
+        const negativos = formularios
+            .map((formulario) => formulario.dias_negativo ?? formulario.diasNegativoSnapshot)
+            .filter((dias) => dias !== null && dias !== undefined)
+            .map(Number);
+        if (negativos.length === 0) return 1;
+        return Math.max(...negativos) + 1;
     }
 
     sumarDias(fecha, dias) {
