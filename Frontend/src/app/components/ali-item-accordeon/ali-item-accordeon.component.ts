@@ -1,9 +1,8 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter, inject } from '@angular/core';
 import { ALI } from '../../interfaces/ali';
 import { AliService } from '../../services/ali-service';
 import { ImagenUploadService } from '../../services/imagen-upload';
 import { Router } from '@angular/router';
-import { query } from '@angular/animations';
 import { AlertController, ActionSheetController } from '@ionic/angular';
 import { AuthService } from '../../services/auth-service';
 import { RamService } from 'src/app/services/ram-service';
@@ -17,21 +16,19 @@ import { TpaService } from 'src/app/services/tpa-service';
 })
 export class ALIItemAccordeonComponent implements OnInit {
 
+  private router = inject(Router);
+  private aliService = inject(AliService);
+  private alertController = inject(AlertController);
+  private imagenUploadService = inject(ImagenUploadService);
+  private authService = inject(AuthService);
+  private actionSheetController = inject(ActionSheetController);
+  private ramService = inject(RamService);
+  private tpaService = inject(TpaService);
+
   currentUser: any = null;
   @Input() muestra!: ALI;
-  @Output() onDelete = new EventEmitter<void>();
+  @Output() deleted = new EventEmitter<void>();
   isExpanded: boolean = false;
-
-  constructor(
-    private router: Router,
-    private aliService: AliService,
-    private alertController: AlertController,
-    private imagenUploadService: ImagenUploadService,
-    private authService: AuthService,
-    private actionSheetController: ActionSheetController,
-    private ramService: RamService,
-    private tpaService: TpaService
-  ) { }
 
   ngOnInit() {
     this.currentUser = this.authService.getUsuario();
@@ -182,7 +179,7 @@ export class ALIItemAccordeonComponent implements OnInit {
                   buttons: ['OK']
                 });
                 await successAlert.present();
-                this.onDelete.emit(); // Notificar al padre para recargar lista
+                this.deleted.emit(); // Notificar al padre para recargar lista
               },
               error: async (err) => {
                 console.error('Error al eliminar muestra', err);
