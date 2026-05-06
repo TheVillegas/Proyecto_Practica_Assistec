@@ -14,6 +14,26 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'dashboard-ingreso',
+    loadChildren: () => import('./pages/dashboard-ingreso/dashboard-ingreso.module').then((m) => m.DashboardIngresoPageModule),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'dashboard-jefe',
+    loadChildren: () => import('./pages/dashboard-jefe/dashboard-jefe.module').then((m) => m.DashboardJefePageModule),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'dashboard-coordinadora',
+    loadChildren: () => import('./pages/dashboard-coordinadora/dashboard-coordinadora.module').then((m) => m.DashboardCoordinadoraPageModule),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'dashboard-analista',
+    loadChildren: () => import('./pages/dashboard-analista/dashboard-analista.module').then((m) => m.DashboardAnalistaPageModule),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'solicitud-ingreso',
     loadChildren: () => import('./pages/solicitud-ingreso/solicitud-ingreso.module').then((m) => m.SolicitudIngresoPageModule),
     canActivate: [AuthGuard]

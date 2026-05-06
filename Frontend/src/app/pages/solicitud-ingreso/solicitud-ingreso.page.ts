@@ -616,7 +616,7 @@ export class SolicitudIngresoPage implements OnInit {
         {
           text: 'Sí, salir',
           role: 'destructive',
-          handler: () => this.router.navigate(['/home'])
+          handler: () => { this.router.navigate(['/home']); }
         }
       ]
     });

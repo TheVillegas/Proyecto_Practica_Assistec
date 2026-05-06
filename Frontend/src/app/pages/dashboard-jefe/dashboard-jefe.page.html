@@ -1,0 +1,87 @@
+<app-header></app-header>
+
+<ion-content [fullscreen]="true" class="with-sidebar">
+  <div class="home-container">
+
+    <div class="welcome-banner">
+      <div class="banner-badge">
+        <ion-icon name="flask-outline"></ion-icon>
+        AsisTec Lab
+      </div>
+      <h1>Bienvenido a la interfaz digital de AsisTec</h1>
+      <p>Plataforma de gestión de muestras del laboratorio AsisTec — Pontificia Universidad Católica de Valparaíso.</p>
+      <div class="banner-circle"></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <ion-icon name="layers-outline"></ion-icon>
+        </div>
+        <div>
+          <span class="stat-label">Muestras Activas</span>
+          <span class="stat-value">—</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+        </div>
+        <div>
+          <span class="stat-label">Reportes Verificados</span>
+          <span class="stat-value">—</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon amber">
+          <ion-icon name="time-outline"></ion-icon>
+        </div>
+        <div>
+          <span class="stat-label">Pendientes de Revisión</span>
+          <span class="stat-value">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <div class="section-header">
+        <h2>Acciones Rápidas</h2>
+        <p>Selecciona una acción para comenzar</p>
+      </div>
+      <div class="actions-grid">
+
+        <div class="action-card" (click)="busquedaSolicitud()">
+          <div class="action-icon">
+            <ion-icon name="document-text-outline"></ion-icon>
+          </div>
+          <h3>Búsqueda de Solicitudes</h3>
+          <p>Consultar y validar solicitudes de ingreso pendientes de revisión.</p>
+          <span class="action-link">Revisar →</span>
+          <div class="action-circle"></div>
+        </div>
+
+        <div class="action-card" (click)="busquedaALI()">
+          <div class="action-icon">
+            <ion-icon name="search-outline"></ion-icon>
+          </div>
+          <h3>Búsqueda ALI</h3>
+          <p>Consultar registros, historial y reportes de muestras ingresadas al sistema.</p>
+          <span class="action-link">Consultar →</span>
+          <div class="action-circle"></div>
+        </div>
+
+        <div class="action-card action-card--disabled">
+          <div class="action-icon">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+          </div>
+          <h3>Validar Solicitudes</h3>
+          <p>Revisión y aprobación de solicitudes de ingreso pendientes de validación. Próximamente disponible.</p>
+          <span class="action-link action-link--disabled">Próximamente</span>
+          <div class="action-circle"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</ion-content>

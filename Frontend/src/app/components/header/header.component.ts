@@ -13,6 +13,7 @@ export class HeaderComponent implements OnInit {
 
   userName: string = 'Usuario';
   userRole: string = 'Analista';
+  userRolNum: number = 0;
   userPhoto: string = '';
   userInitials: string = 'U';
 
@@ -35,8 +36,9 @@ export class HeaderComponent implements OnInit {
       if (user) {
         this.userName = user.nombreApellido || user.nombre || 'Usuario';
         
-        const rolInt = user.rol !== undefined ? user.rol : user.rol_analista;
-        
+        const rolInt = user.rol !== undefined ? user.rol : (user.rol_analista ?? 0);
+        this.userRolNum = rolInt;
+
         switch (rolInt) {
           case 1:
             this.userRole = 'Coordinadora de Área';
@@ -48,6 +50,7 @@ export class HeaderComponent implements OnInit {
             this.userRole = 'Ingreso';
             break;
           default:
+            this.userRolNum = 0;
             this.userRole = 'Analista';
         }
 
@@ -63,7 +66,7 @@ export class HeaderComponent implements OnInit {
   }
 
   private updateActiveSegment(url: string) {
-    if (url.includes('/home')) {
+    if (url.includes('/home') || url.includes('/dashboard-')) {
       this.activeSegment = 'home';
     } else if (url.includes('/busqueda-solicitud-ingreso')) {
       this.activeSegment = 'busqueda-solicitud';

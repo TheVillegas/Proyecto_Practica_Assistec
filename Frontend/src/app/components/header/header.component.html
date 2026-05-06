@@ -23,22 +23,25 @@
         <span class="nav-dot" *ngIf="activeSegment === 'home'">•</span>
       </li>
 
-      <!-- Búsqueda ALI -->
-      <li class="nav-item" [class.active]="activeSegment === 'busqueda'" (click)="busquedaALI()" data-label="Búsqueda ALI">
+      <!-- Búsqueda ALI — visible para Analista (0), Coordinadora (1) y Jefe (2) -->
+      <li *ngIf="userRolNum === 0 || userRolNum === 1 || userRolNum === 2"
+          class="nav-item" [class.active]="activeSegment === 'busqueda'" (click)="busquedaALI()" data-label="Búsqueda ALI">
         <ion-icon name="search-outline"></ion-icon>
         <span class="nav-item-text">Búsqueda ALI</span>
         <span class="nav-dot" *ngIf="activeSegment === 'busqueda'">•</span>
       </li>
 
-      <!-- Búsqueda Solicitud Ingreso -->
-      <li class="nav-item" [class.active]="activeSegment === 'busqueda-solicitud'" (click)="busquedaSolicitudIngreso()" data-label="Búsqueda Solicitud">
+      <!-- Búsqueda Solicitud Ingreso — visible para Ingreso (3), Coordinadora (1) y Jefe (2) -->
+      <li *ngIf="userRolNum === 3 || userRolNum === 1 || userRolNum === 2"
+          class="nav-item" [class.active]="activeSegment === 'busqueda-solicitud'" (click)="busquedaSolicitudIngreso()" data-label="Búsqueda Solicitud">
         <ion-icon name="document-text-outline"></ion-icon>
         <span class="nav-item-text">Búsqueda Solicitud</span>
         <span class="nav-dot" *ngIf="activeSegment === 'busqueda-solicitud'">•</span>
       </li>
 
-      <!-- Solicitud Ingreso -->
-      <li class="nav-item" [class.active]="activeSegment === 'solicitud'" (click)="solicitudIngreso()" data-label="Solicitud Ingreso">
+      <!-- Solicitud Ingreso — visible solo para Ingreso (3) -->
+      <li *ngIf="userRolNum === 3"
+          class="nav-item" [class.active]="activeSegment === 'solicitud'" (click)="solicitudIngreso()" data-label="Solicitud Ingreso">
         <ion-icon name="add-circle-outline"></ion-icon>
         <span class="nav-item-text">Solicitud Ingreso</span>
         <span class="nav-dot" *ngIf="activeSegment === 'solicitud'">•</span>
