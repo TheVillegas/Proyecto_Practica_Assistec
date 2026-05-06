@@ -14,13 +14,13 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'generar-ali-basico',
-    redirectTo: 'solicitud-ingreso',
-    pathMatch: 'full'
-  },
-  {
     path: 'solicitud-ingreso',
     loadChildren: () => import('./pages/solicitud-ingreso/solicitud-ingreso.module').then((m) => m.SolicitudIngresoPageModule),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'busqueda-solicitud-ingreso',
+    loadChildren: () => import('./pages/busqueda-solicitud-ingreso/busqueda-solicitud-ingreso.module').then((m) => m.BusquedaSolicitudIngresoPageModule),
     canActivate: [AuthGuard]
   },
   {
