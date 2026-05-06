@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth-service';
 
@@ -9,8 +9,9 @@ import { AuthService } from 'src/app/services/auth-service';
   standalone: false
 })
 export class HomePage implements OnInit {
+  private router = inject(Router);
+  private authService = inject(AuthService);
 
-  constructor(private router: Router, private authService: AuthService) {}
 
   ngOnInit() {
     const user = this.authService.getUsuario();

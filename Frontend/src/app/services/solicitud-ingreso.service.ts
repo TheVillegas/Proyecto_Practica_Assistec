@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -100,9 +100,9 @@ export interface SolicitudIngresoResponse {
   providedIn: 'root'
 })
 export class SolicitudIngresoService {
-  private readonly apiUrl = `${environment.apiUrl}/solicitud`;
+  private http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
+  private readonly apiUrl = `${environment.apiUrl}/solicitud`;
 
   listar(): Observable<SolicitudIngresoResponse[]> {
     return this.http.get<SolicitudIngresoResponse[]>(this.apiUrl);

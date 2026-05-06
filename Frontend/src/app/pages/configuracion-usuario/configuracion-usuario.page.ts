@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { AuthService } from 'src/app/services/auth-service';
 import { NavController, ToastController, AlertController } from '@ionic/angular';
 import { ImagenUploadService } from 'src/app/services/imagen-upload';
@@ -10,6 +10,12 @@ import { ImagenUploadService } from 'src/app/services/imagen-upload';
   standalone: false
 })
 export class ConfiguracionUsuarioPage implements OnInit {
+  private authService = inject(AuthService);
+  private navCtrl = inject(NavController);
+  private toastController = inject(ToastController);
+  private imagenUploadService = inject(ImagenUploadService);
+  private alertController = inject(AlertController);
+
 
   usuario: any = {
     nombreApellido: '',
@@ -18,14 +24,6 @@ export class ConfiguracionUsuarioPage implements OnInit {
     rol: '',
     avatar: 'assets/avatar-placeholder.png' // Default placeholder if null
   };
-
-  constructor(
-    private authService: AuthService,
-    private navCtrl: NavController,
-    private toastController: ToastController,
-    private imagenUploadService: ImagenUploadService,
-    private alertController: AlertController
-  ) { }
 
   ngOnInit() {
     this.cargarUsuario();

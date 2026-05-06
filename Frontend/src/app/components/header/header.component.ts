@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, inject } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../services/auth-service';
@@ -10,6 +10,9 @@ import { AuthService } from '../../services/auth-service';
   standalone: false
 })
 export class HeaderComponent implements OnInit {
+  private router = inject(Router);
+  private authService = inject(AuthService);
+
 
   userName: string = 'Usuario';
   userRole: string = 'Analista';
@@ -17,7 +20,7 @@ export class HeaderComponent implements OnInit {
   userPhoto: string = '';
   userInitials: string = 'U';
 
-  constructor(private router: Router, private authService: AuthService) {
+  constructor() {
     // Escuchar cambios de ruta para actualizar el segmento activo
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)

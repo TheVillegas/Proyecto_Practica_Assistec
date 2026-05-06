@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -22,11 +22,11 @@ import {
     providedIn: 'root',
 })
 export class CatalogosService {
+    private http = inject(HttpClient);
+
 
     private apiUrl = environment.apiUrl + '/catalogo';
     private usuariosUrl = environment.apiUrl + '/catalogo/usuarios';
-
-    constructor(private http: HttpClient) { }
 
     getMaterialesPesados(): Observable<MaterialPesado[]> {
         return this.http.get<MaterialPesado[]>(`${this.apiUrl}/instrumentos`);

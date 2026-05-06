@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ALI } from '../../interfaces/ali';
 import { AliService } from '../../services/ali-service';
 
@@ -10,11 +10,11 @@ import { AliService } from '../../services/ali-service';
   standalone: false
 })
 export class BusquedaALIPage implements OnInit {
+  private aliService = inject(AliService);
+
   listaMuestras: ALI[] = [];
 
   listaFiltrada: ALI[] = [];
-
-  constructor(private aliService: AliService) { }
 
   ngOnInit() {
     this.cargarMuestras();

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlertController, ToastController } from '@ionic/angular';
@@ -125,6 +125,14 @@ const NOMBRES_FORMULARIOS_UI: Record<string, string> = {
   standalone: false,
 })
 export class SolicitudIngresoPage implements OnInit {
+  private fb = inject(FormBuilder);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private alertCtrl = inject(AlertController);
+  private toastCtrl = inject(ToastController);
+  private catalogosService = inject(CatalogosService);
+  private solicitudIngresoService = inject(SolicitudIngresoService);
+
   readonly TOTAL_ETAPAS = 10;
   readonly NOMBRES_ETAPAS = [
     'Identificación',
@@ -162,16 +170,6 @@ export class SolicitudIngresoPage implements OnInit {
   areasAnalisis: string[] = [];
   muestras: Muestra[] = [];
   private muestraCounter = 1;
-
-  constructor(
-    private fb: FormBuilder,
-    private router: Router,
-    private route: ActivatedRoute,
-    private alertCtrl: AlertController,
-    private toastCtrl: ToastController,
-    private catalogosService: CatalogosService,
-    private solicitudIngresoService: SolicitudIngresoService,
-  ) {}
 
   ngOnInit(): void {
     this.inicializarFormulario();

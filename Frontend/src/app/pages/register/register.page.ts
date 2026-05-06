@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth-service';
 import { Router } from '@angular/router';
@@ -11,17 +11,17 @@ import { AlertController } from '@ionic/angular';
   styleUrls: ['./register.page.scss'],
   standalone: false
 })
-export class RegisterPage implements OnInit {
+export class RegisterPage {
+  private formBuilder = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private alertController = inject(AlertController);
+
 
   registerForm: FormGroup;
   isLoading = false;
 
-  constructor(
-    private formBuilder: FormBuilder,
-    private authService: AuthService,
-    private router: Router,
-    private alertController: AlertController
-  ) {
+  constructor() {
     this.registerForm = this.formBuilder.group({
       fullname: ['', [Validators.required]],
       rut: ['', [Validators.required]],
@@ -29,9 +29,6 @@ export class RegisterPage implements OnInit {
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]],
     });
-  }
-
-  ngOnInit() {
   }
 
   gotologin() {

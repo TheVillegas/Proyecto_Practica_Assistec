@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
@@ -8,8 +8,8 @@ import { Router } from '@angular/router';
   standalone: false
 })
 export class DashboardJefePage {
+  private router = inject(Router);
 
-  constructor(private router: Router) {}
 
   busquedaSolicitud() {
     this.router.navigate(['/busqueda-solicitud-ingreso']);

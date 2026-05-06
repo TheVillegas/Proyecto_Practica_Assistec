@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, BehaviorSubject } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -7,13 +7,13 @@ import { environment } from '../../environments/environment';
   providedIn: 'root',
 })
 export class AuthService {
+  private http = inject(HttpClient);
+
   private apiUrl = environment.apiUrl + '/auth';
 
   // Subject para notificar cambios en el usuario
   private currentUserSubject = new BehaviorSubject<any>(this.getUsuarioFromStorage());
   public currentUser$ = this.currentUserSubject.asObservable();
-
-  constructor(private http: HttpClient) { }
 
   private getUsuarioFromStorage() {
     const usuario = sessionStorage.getItem('usuario');

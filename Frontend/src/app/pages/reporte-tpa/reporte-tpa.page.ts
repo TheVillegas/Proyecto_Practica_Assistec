@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AliService } from 'src/app/services/ali-service';
 import { CatalogosService } from 'src/app/services/catalogos.service';
@@ -25,6 +25,17 @@ import {
   standalone: false
 })
 export class ReporteTPAPage implements OnInit {
+  private route = inject(ActivatedRoute);
+  private aliService = inject(AliService);
+  private catalogosService = inject(CatalogosService);
+  private tpaService = inject(TpaService);
+  private authService = inject(AuthService);
+  private navCtrl = inject(NavController);
+  private alertController = inject(AlertController);
+  private loadingController = inject(LoadingController);
+  private router = inject(Router);
+  private imagenUploadService = inject(ImagenUploadService);
+
 
   seccionActual: String = '';
   codigoALI: string = '';
@@ -76,19 +87,6 @@ export class ReporteTPAPage implements OnInit {
   firmaCoordinador: string | null = null;
   observacionesFinales: string = ''; // Etapa 6
   formularioBloqueado: boolean = false;
-
-  constructor(
-    private route: ActivatedRoute,
-    private aliService: AliService,
-    private catalogosService: CatalogosService,
-    private tpaService: TpaService,
-    private authService: AuthService,
-    private navCtrl: NavController,
-    private alertController: AlertController,
-    private loadingController: LoadingController,
-    private router: Router,
-    private imagenUploadService: ImagenUploadService
-  ) { }
 
   ngOnInit() {
     this.codigoALI = this.route.snapshot.paramMap.get('codigoALI')!;

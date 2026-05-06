@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'app-titulos-reportes',
@@ -6,7 +6,7 @@ import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
   styleUrls: ['./titulos-reportes.component.scss'],
   standalone: false
 })
-export class TitulosReportesComponent implements OnInit {
+export class TitulosReportesComponent {
 
   @Input() codigoALI: string = '';
   @Input() estadoTPA: string = '';
@@ -14,12 +14,8 @@ export class TitulosReportesComponent implements OnInit {
   @Input() tipoReporte: 'TPA' | 'RAM' | '' = '';
   @Input() ultimaActualizacion: string = '';
   @Input() responsable: string = '';
-  @Output() onExportar = new EventEmitter<void>();
+  @Output() exportar = new EventEmitter<void>();
 
-  constructor() { }
-
-
-  ngOnInit() { }
 
   getColorID(id: string): string {
     return 'primary';

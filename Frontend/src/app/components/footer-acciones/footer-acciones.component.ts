@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
     selector: 'app-footer-acciones',
@@ -6,7 +6,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
     styleUrls: ['./footer-acciones.component.scss'],
     standalone: false
 })
-export class FooterAccionesComponent implements OnInit {
+export class FooterAccionesComponent {
 
     @Input() formularioBloqueado: boolean = false;
     @Input() cargando: boolean = false;
@@ -18,9 +18,6 @@ export class FooterAccionesComponent implements OnInit {
     @Output() salir = new EventEmitter<void>();
     @Output() revertir = new EventEmitter<void>();
 
-    constructor() { }
-
-    ngOnInit() { }
 
     onCancelar() {
         this.cancelar.emit();

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { SolicitudIngresoResponse, SolicitudIngresoService } from 'src/app/services/solicitud-ingreso.service';
 
@@ -9,16 +9,14 @@ import { SolicitudIngresoResponse, SolicitudIngresoService } from 'src/app/servi
   standalone: false
 })
 export class BusquedaSolicitudIngresoPage implements OnInit {
+  private router = inject(Router);
+  private solicitudService = inject(SolicitudIngresoService);
+
 
   listaSolicitudes: SolicitudIngresoResponse[] = [];
   listaFiltrada: SolicitudIngresoResponse[] = [];
   cargando = false;
   error = false;
-
-  constructor(
-    private router: Router,
-    private solicitudService: SolicitudIngresoService
-  ) {}
 
   ngOnInit() {
     this.cargarSolicitudes();
