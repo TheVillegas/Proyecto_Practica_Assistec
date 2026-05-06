@@ -165,15 +165,19 @@ router.post('/solicitud/:id/validar', verifyToken, authorize([ROLES.COORDINADORA
 ## Estados de una Solicitud
 
 ```
-borrador -> enviada -> validada -> reportes_generados
-                   -> devuelta -> borrador (Ingreso corrige)
+borrador -> enviada -> [Jefa de Area]  -> devuelta -> borrador (Ingreso corrige)
+                                       -> validada_jefe -> [Coordinadora] -> reportes_generados
 ```
+
+El flujo de validacion es secuencial: primero Jefa de Area, luego Coordinadora.
+No se puede saltar etapas. La devolucion siempre regresa a `borrador` para que Ingreso corrija.
 
 Reglas de escritura:
 - `borrador`: Ingreso puede editar todo
-- `enviada`: Nadie edita (en revision)
-- `validada`: Coordinadora edita campos parciales, Ingreso solo lee
-- `devuelta`: Ingreso puede editar (corregir)
+- `enviada`: Nadie edita (en revision por Jefa)
+- `validada_jefe`: En revision por Coordinadora, Ingreso solo lee
+- `devuelta`: Ingreso puede editar (corregir y re-enviar)
+- `reportes_generados`: Formularios de analisis creados, aparecen en busqueda-ali para Analistas
 
 ---
 

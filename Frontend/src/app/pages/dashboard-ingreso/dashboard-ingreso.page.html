@@ -1,0 +1,47 @@
+<app-header></app-header>
+
+<ion-content [fullscreen]="true" class="with-sidebar">
+  <div class="home-container">
+
+    <div class="welcome-banner">
+      <div class="banner-badge">
+        <ion-icon name="flask-outline"></ion-icon>
+        AsisTec Lab
+      </div>
+      <h1>Bienvenido a la interfaz digital de AsisTec</h1>
+      <p>Plataforma de gestión de muestras del laboratorio AsisTec — Pontificia Universidad Católica de Valparaíso.</p>
+      <div class="banner-circle"></div>
+    </div>
+
+    <div class="quick-actions">
+      <div class="section-header">
+        <h2>Acciones Rápidas</h2>
+        <p>Selecciona una acción para comenzar</p>
+      </div>
+      <div class="actions-grid">
+
+        <div class="action-card" (click)="solicitudIngreso()">
+          <div class="action-icon">
+            <ion-icon name="add-circle-outline"></ion-icon>
+          </div>
+          <h3>Nueva Solicitud de Ingreso</h3>
+          <p>Crear un nuevo registro de ingreso de muestras al sistema.</p>
+          <span class="action-link">Iniciar →</span>
+          <div class="action-circle"></div>
+        </div>
+
+        <div class="action-card" (click)="busquedaSolicitud()">
+          <div class="action-icon">
+            <ion-icon name="document-text-outline"></ion-icon>
+          </div>
+          <h3>Búsqueda de Solicitudes</h3>
+          <p>Consultar y hacer seguimiento de solicitudes de ingreso existentes.</p>
+          <span class="action-link">Consultar →</span>
+          <div class="action-circle"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</ion-content>

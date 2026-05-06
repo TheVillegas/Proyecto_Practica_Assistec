@@ -104,6 +104,10 @@ export class SolicitudIngresoService {
 
   constructor(private http: HttpClient) {}
 
+  listar(): Observable<SolicitudIngresoResponse[]> {
+    return this.http.get<SolicitudIngresoResponse[]>(this.apiUrl);
+  }
+
   crear(payload: SolicitudIngresoPayload): Observable<SolicitudIngresoResponse> {
     return this.http.post<SolicitudIngresoResponse>(this.apiUrl, payload);
   }

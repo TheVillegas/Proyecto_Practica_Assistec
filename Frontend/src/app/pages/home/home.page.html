@@ -1,48 +1,5 @@
-<app-header activePage="home"></app-header>
-
-<ion-content [fullscreen]="true" class="bg-slate-50">
-  <div class="home-container">
-    <div class="welcome-card">
-      <div class="welcome-content">
-        <h1 class="welcome-title">Bienvenido a la nueva interfaz digital de AsisTec</h1>
-        <p class="welcome-subtitle">
-          La plataforma de trabajo para el flujo de ingreso, búsqueda ALI y reportes del laboratorio AsisTec.
-        </p>
-      </div>
-    </div>
-
-    <div class="action-grid">
-      <div class="action-card" (click)="busquedaALI()">
-        <div class="card-main-content">
-          <div class="icon-badge">
-            <ion-icon name="search-outline"></ion-icon>
-          </div>
-          <div class="text-content">
-            <h3>Búsqueda ALI</h3>
-            <p>Consultar registros, historial y reportes.</p>
-          </div>
-          <div class="cta-link">
-            Consultar <span class="arrow">→</span>
-          </div>
-        </div>
-        <ion-icon name="search-outline" class="watermark-icon"></ion-icon>
-      </div>
-
-      <div class="action-card" (click)="solicitudIngreso()">
-        <div class="card-main-content">
-          <div class="icon-badge">
-            <ion-icon name="add-circle-outline"></ion-icon>
-          </div>
-          <div class="text-content">
-            <h3>Solicitud de Ingreso</h3>
-            <p>Crear, guardar y enviar a validación el nuevo flujo completo de ingreso.</p>
-          </div>
-          <div class="cta-link">
-            Iniciar <span class="arrow">→</span>
-          </div>
-        </div>
-        <ion-icon name="add-circle-outline" class="watermark-icon"></ion-icon>
-      </div>
-    </div>
+<ion-content>
+  <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+    <ion-spinner name="crescent"></ion-spinner>
   </div>
 </ion-content>
