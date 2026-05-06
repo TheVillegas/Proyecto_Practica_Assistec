@@ -19,10 +19,13 @@ Sistema de registro y gestion de analisis microbiologicos de alimentos (RAM y TP
 Prerequisitos: Docker Desktop, Node.js v18+.
 
 ```bash
-# 1. BD + Backend (todo junto con Docker)
+# 1. Copiar variables de entorno (OBLIGATORIO - de lo contrario Docker fallara)
+cp "AssisTec API/.env_example" "AssisTec API/.env"
+
+# 2. Levantar la aplicacion
 docker compose up -d        # http://localhost:3001
 
-# 2. Frontend (otra terminal)
+# 3. Frontend (otra terminal)
 cd Frontend && npm install && npm start   # http://localhost:4200
 ```
 
