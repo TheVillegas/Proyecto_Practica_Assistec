@@ -176,6 +176,13 @@ export class FormColiformesPage implements OnInit {
   }
 
   irAEtapa(n: number): void {
+    if (n > this.etapaActual) {
+      if (!this.validarEtapaActual()) return;
+      if (n > this.etapaActual + 1) {
+        this.mostrarToast('Debe avanzar paso a paso.', 'warning');
+        return;
+      }
+    }
     if (n >= 1 && n <= this.TOTAL_ETAPAS) this.etapaActual = n;
   }
 

@@ -23,16 +23,12 @@
          ════════════════════════════════════════ -->
     <div class="stepper-wrapper">
       <div class="stepper-bar">
-        <div class="stepper-fill" [style.width.%]="progresoPorcentaje"></div>
+        <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
       </div>
       <div class="stepper-steps">
-        <button
-          *ngFor="let nombre of NOMBRES_ETAPAS; let i = index"
-          class="step-btn"
-          [class.active]="etapaActual === i + 1"
-          [class.done]="etapaActual > i + 1"
-          (click)="irAEtapa(i + 1)"
-        >
+        <button *ngFor="let nombre of NOMBRES_ETAPAS; let i = index" class="step-btn"
+          [class.step-btn--active]="etapaActual === i + 1" [class.step-btn--done]="etapaActual > i + 1"
+          (click)="irAEtapa(i + 1)">
           <span class="step-circle">{{ i + 1 }}</span>
           <span class="step-label">{{ nombre }}</span>
         </button>
@@ -54,28 +50,32 @@
           </div>
           <div class="form-card-body">
 
-            <!-- Datos importados (no editables) -->
+            <!-- Código ALI importado -->
             <div class="seccion-importada">
-              <p class="seccion-tag">
-                <ion-icon name="lock-closed-outline"></ion-icon>
-                Datos importados automáticamente – No editables
-              </p>
+
               <div class="grid-2col">
                 <div class="form-group">
                   <label class="form-label">Código del Alimento</label>
-                  <input type="text" class="form-input input-locked" [value]="datosImportados.codigoAlimento" disabled />
+                  <input type="text" class="form-input input-locked" [value]="datosImportados.codigoAlimento"
+                    disabled />
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Fecha de Inicio Incubación</label>
-                  <input type="text" class="form-input input-locked" [value]="datosImportados.fechaIncubacion" disabled />
+                  <label class="form-label">Fecha inicio incubación <span class="req">*</span></label>
+                  <input type="datetime-local" class="form-input" formControlName="fechaInicioIncubacion"
+                    [class.form-input--error]="campoInvalido('fechaInicioIncubacion')" />
+                  <span class="error-msg" *ngIf="campoInvalido('fechaInicioIncubacion')">Campo obligatorio.</span>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Hora de Inicio Incubación</label>
-                  <input type="text" class="form-input input-locked" [value]="datosImportados.horaIncubacion" disabled />
+                  <label class="form-label">Hora de inicio incubación <span class="req">*</span></label>
+                  <input type="time" class="form-input" formControlName="horaInicioIncubacion"
+                    [class.form-input--error]="campoInvalido('horaInicioIncubacion')" />
+                  <span class="error-msg" *ngIf="campoInvalido('horaInicioIncubacion')">Campo obligatorio.</span>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Analista Responsable de Incubación</label>
-                  <input type="text" class="form-input input-locked" [value]="datosImportados.analistaIncubacion" disabled />
+                  <label class="form-label">Analista Responsable de Incubación <span class="req">*</span></label>
+                  <input type="text" class="form-input" formControlName="analistaIncubacion"
+                    [class.form-input--error]="campoInvalido('analistaIncubacion')" />
+                  <span class="error-msg" *ngIf="campoInvalido('analistaIncubacion')">Campo obligatorio.</span>
                 </div>
               </div>
             </div>
@@ -86,27 +86,16 @@
             <div class="grid-2col">
               <div class="form-group">
                 <label class="form-label">Fecha de Término Análisis <span class="required-star">*</span></label>
-                <input
-                  type="text"
-                  class="form-input"
-                  [class.input-error]="campoInvalido('fechaTerminoAnalisis')"
-                  formControlName="fechaTerminoAnalisis"
-                  placeholder="DD/MM"
-                  maxlength="5"
-                />
+                <input type="text" class="form-input" [class.input-error]="campoInvalido('fechaTerminoAnalisis')"
+                  formControlName="fechaTerminoAnalisis" placeholder="DD/MM" maxlength="5" />
                 <span class="error-msg" *ngIf="campoInvalido('fechaTerminoAnalisis')">
                   La fecha debe tener formato DD/MM.
                 </span>
               </div>
               <div class="form-group">
                 <label class="form-label">Analista Responsable de Término <span class="required-star">*</span></label>
-                <input
-                  type="text"
-                  class="form-input"
-                  [class.input-error]="campoInvalido('analistaTerminoAnalisis')"
-                  formControlName="analistaTerminoAnalisis"
-                  placeholder="Nombre del analista"
-                />
+                <input type="text" class="form-input" [class.input-error]="campoInvalido('analistaTerminoAnalisis')"
+                  formControlName="analistaTerminoAnalisis" placeholder="Nombre del analista" />
                 <span class="error-msg" *ngIf="campoInvalido('analistaTerminoAnalisis')">
                   Este campo es obligatorio.
                 </span>
@@ -132,25 +121,16 @@
             <div class="grid-2col">
               <div class="form-group">
                 <label class="form-label">Código Medio de Homogeneización <span class="required-star">*</span></label>
-                <input
-                  type="text"
-                  class="form-input"
-                  [class.input-error]="campoInvalido('codigoMedioHomogeneizacion')"
-                  formControlName="codigoMedioHomogeneizacion"
-                  placeholder="Ej: MH-001"
-                />
-                <span class="error-msg" *ngIf="campoInvalido('codigoMedioHomogeneizacion')">Este campo es obligatorio.</span>
+                <input type="text" class="form-input" [class.input-error]="campoInvalido('codigoMedioHomogeneizacion')"
+                  formControlName="codigoMedioHomogeneizacion" placeholder="Ej: MH-001" />
+                <span class="error-msg" *ngIf="campoInvalido('codigoMedioHomogeneizacion')">Este campo es
+                  obligatorio.</span>
               </div>
 
               <div class="form-group">
                 <label class="form-label">Caldo Lauril <span class="required-star">*</span></label>
-                <input
-                  type="text"
-                  class="form-input"
-                  [class.input-error]="campoInvalido('caldoLauril')"
-                  formControlName="caldoLauril"
-                  placeholder="Ej: CL-045"
-                />
+                <input type="text" class="form-input" [class.input-error]="campoInvalido('caldoLauril')"
+                  formControlName="caldoLauril" placeholder="Ej: CL-045" />
                 <span class="error-msg" *ngIf="campoInvalido('caldoLauril')">Este campo es obligatorio.</span>
               </div>
 
@@ -160,17 +140,16 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label">Código de Muestra según Naturaleza <span class="required-star">*</span></label>
-                <select
-                  class="form-select"
-                  [class.input-error]="campoInvalido('codigoMuestraNaturaleza')"
-                  formControlName="codigoMuestraNaturaleza"
-                >
+                <label class="form-label">Código de Muestra según Naturaleza <span
+                    class="required-star">*</span></label>
+                <select class="form-select" [class.input-error]="campoInvalido('codigoMuestraNaturaleza')"
+                  formControlName="codigoMuestraNaturaleza">
                   <option value="">-- Seleccione --</option>
                   <option value="homogeneo">Homogéneo</option>
                   <option value="mezcla">Mezcla</option>
                 </select>
-                <span class="error-msg" *ngIf="campoInvalido('codigoMuestraNaturaleza')">Este campo es obligatorio.</span>
+                <span class="error-msg" *ngIf="campoInvalido('codigoMuestraNaturaleza')">Este campo es
+                  obligatorio.</span>
               </div>
 
               <div class="form-group">
@@ -188,8 +167,10 @@
             <div class="form-group mt-4">
               <label class="form-label">Estufa Utilizada <span class="required-star">*</span></label>
               <div class="form-radio-group">
-                <label class="form-check-label" *ngFor="let estufa of ['EST-01 (Principal)', 'EST-02 (Respaldo)', 'EST-03 (Auxiliar)']">
-                  <input type="radio" class="form-radio" name="estufa" [value]="estufa" formControlName="estufaUtilizada" />
+                <label class="form-check-label"
+                  *ngFor="let estufa of ['EST-01 (Principal)', 'EST-02 (Respaldo)', 'EST-03 (Auxiliar)']">
+                  <input type="radio" class="form-radio" name="estufa" [value]="estufa"
+                    formControlName="estufaUtilizada" />
                   <span>{{ estufa }}</span>
                 </label>
               </div>
@@ -201,12 +182,8 @@
               <label class="form-label">Micropipeta Utilizada <span class="required-star">*</span></label>
               <div class="form-radio-group">
                 <label class="form-check-label" *ngFor="let opcion of OPCIONES_MICROPIPETA">
-                  <input
-                    type="checkbox"
-                    class="form-checkbox"
-                    [checked]="esMicropipetaSeleccionada(opcion)"
-                    (change)="toggleMicropipeta(opcion)"
-                  />
+                  <input type="checkbox" class="form-checkbox" [checked]="esMicropipetaSeleccionada(opcion)"
+                    (change)="toggleMicropipeta(opcion)" />
                   <span>{{ opcion }}</span>
                 </label>
               </div>
@@ -232,27 +209,26 @@
             <div class="grid-2col mb-4">
               <div class="form-group">
                 <label class="form-label">Fecha de Lectura 24 h <span class="required-star">*</span></label>
-                <input type="text" class="form-input" [(ngModel)]="tabla24h.fechaLectura" [ngModelOptions]="{standalone: true}" placeholder="DD/MM" maxlength="5" />
+                <input type="text" class="form-input" [(ngModel)]="tabla24h.fechaLectura"
+                  [ngModelOptions]="{standalone: true}" placeholder="DD/MM" maxlength="5" />
               </div>
               <div class="form-group">
                 <label class="form-label">Hora de Lectura 24 h <span class="required-star">*</span></label>
-                <input
-                  type="time"
-                  class="form-input"
-                  [class.input-error]="errorHora24h"
-                  [(ngModel)]="tabla24h.horaLectura"
-                  [ngModelOptions]="{standalone: true}"
-                  (ngModelChange)="onHora24hChange()"
-                />
+                <input type="time" class="form-input" [class.input-error]="errorHora24h"
+                  [(ngModel)]="tabla24h.horaLectura" [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="onHora24hChange()" />
                 <span class="error-msg" *ngIf="errorHora24h">{{ errorHora24h }}</span>
               </div>
               <div class="form-group">
                 <label class="form-label">Analista Responsable 24 h <span class="required-star">*</span></label>
-                <input type="text" class="form-input" [(ngModel)]="tabla24h.analistaResponsable" [ngModelOptions]="{standalone: true}" placeholder="Nombre del analista" />
+                <input type="text" class="form-input" [(ngModel)]="tabla24h.analistaResponsable"
+                  [ngModelOptions]="{standalone: true}" placeholder="Nombre del analista" />
               </div>
               <div class="form-group">
-                <label class="form-label">N° Muestra 24 h (incluye duplicado) <span class="required-star">*</span></label>
-                <input type="text" class="form-input" [(ngModel)]="tabla24h.numeroMuestraIncluyeDuplicado" [ngModelOptions]="{standalone: true}" placeholder="Ej: 7" />
+                <label class="form-label">N° Muestra 24 h (incluye duplicado) <span
+                    class="required-star">*</span></label>
+                <input type="text" class="form-input" [(ngModel)]="tabla24h.numeroMuestraIncluyeDuplicado"
+                  [ngModelOptions]="{standalone: true}" placeholder="Ej: 7" />
               </div>
             </div>
 
@@ -281,16 +257,13 @@
                   <tr *ngFor="let dil of DILUCIONES">
                     <td class="td-dilucion">{{ dil }}</td>
                     <ng-container *ngFor="let entrada of tabla24h.entradas">
-                      <td
-                        *ngFor="let idx of [0, 1, 2]"
-                        class="td-celda"
+                      <td *ngFor="let idx of [0, 1, 2]" class="td-celda"
                         [class.celda-pos]="entrada.submuestras[dil][idx] === 'positivo'"
                         [class.celda-neg]="entrada.submuestras[dil][idx] === 'negativo'"
-                        (click)="ciclarResultado(entrada, dil, idx)"
-                      >
+                        (click)="ciclarResultado(entrada, dil, idx)">
                         <span class="celda-badge">
                           {{ entrada.submuestras[dil][idx] === 'positivo' ? 'POS' :
-                             entrada.submuestras[dil][idx] === 'negativo' ? 'NEG' : '–' }}
+                          entrada.submuestras[dil][idx] === 'negativo' ? 'NEG' : '–' }}
                         </span>
                       </td>
                     </ng-container>
@@ -317,27 +290,26 @@
             <div class="grid-2col mb-4">
               <div class="form-group">
                 <label class="form-label">Fecha de Lectura 48 h <span class="required-star">*</span></label>
-                <input type="text" class="form-input" [(ngModel)]="tabla48h.fechaLectura" [ngModelOptions]="{standalone: true}" placeholder="DD/MM" maxlength="5" />
+                <input type="text" class="form-input" [(ngModel)]="tabla48h.fechaLectura"
+                  [ngModelOptions]="{standalone: true}" placeholder="DD/MM" maxlength="5" />
               </div>
               <div class="form-group">
                 <label class="form-label">Hora de Lectura 48 h <span class="required-star">*</span></label>
-                <input
-                  type="time"
-                  class="form-input"
-                  [class.input-error]="errorHora48h"
-                  [(ngModel)]="tabla48h.horaLectura"
-                  [ngModelOptions]="{standalone: true}"
-                  (ngModelChange)="onHora48hChange()"
-                />
+                <input type="time" class="form-input" [class.input-error]="errorHora48h"
+                  [(ngModel)]="tabla48h.horaLectura" [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="onHora48hChange()" />
                 <span class="error-msg" *ngIf="errorHora48h">{{ errorHora48h }}</span>
               </div>
               <div class="form-group">
                 <label class="form-label">Analista Responsable 48 h <span class="required-star">*</span></label>
-                <input type="text" class="form-input" [(ngModel)]="tabla48h.analistaResponsable" [ngModelOptions]="{standalone: true}" placeholder="Nombre del analista" />
+                <input type="text" class="form-input" [(ngModel)]="tabla48h.analistaResponsable"
+                  [ngModelOptions]="{standalone: true}" placeholder="Nombre del analista" />
               </div>
               <div class="form-group">
-                <label class="form-label">N° Muestra 48 h (incluye duplicado) <span class="required-star">*</span></label>
-                <input type="text" class="form-input" [(ngModel)]="tabla48h.numeroMuestraIncluyeDuplicado" [ngModelOptions]="{standalone: true}" placeholder="Ej: 7" />
+                <label class="form-label">N° Muestra 48 h (incluye duplicado) <span
+                    class="required-star">*</span></label>
+                <input type="text" class="form-input" [(ngModel)]="tabla48h.numeroMuestraIncluyeDuplicado"
+                  [ngModelOptions]="{standalone: true}" placeholder="Ej: 7" />
               </div>
             </div>
 
@@ -366,16 +338,13 @@
                   <tr *ngFor="let dil of DILUCIONES">
                     <td class="td-dilucion">{{ dil }}</td>
                     <ng-container *ngFor="let entrada of tabla48h.entradas">
-                      <td
-                        *ngFor="let idx of [0, 1, 2]"
-                        class="td-celda"
+                      <td *ngFor="let idx of [0, 1, 2]" class="td-celda"
                         [class.celda-pos]="entrada.submuestras[dil][idx] === 'positivo'"
                         [class.celda-neg]="entrada.submuestras[dil][idx] === 'negativo'"
-                        (click)="ciclarResultado(entrada, dil, idx)"
-                      >
+                        (click)="ciclarResultado(entrada, dil, idx)">
                         <span class="celda-badge">
                           {{ entrada.submuestras[dil][idx] === 'positivo' ? 'POS' :
-                             entrada.submuestras[dil][idx] === 'negativo' ? 'NEG' : '–' }}
+                          entrada.submuestras[dil][idx] === 'negativo' ? 'NEG' : '–' }}
                         </span>
                       </td>
                     </ng-container>
@@ -411,11 +380,13 @@
                 <p class="control-title">Control K. aerogenes</p>
                 <div class="form-radio-group">
                   <label class="form-check-label">
-                    <input type="radio" class="form-radio" [(ngModel)]="controlKAerogenes" [ngModelOptions]="{standalone: true}" value="presencia" />
+                    <input type="radio" class="form-radio" [(ngModel)]="controlKAerogenes"
+                      [ngModelOptions]="{standalone: true}" value="presencia" />
                     <span class="badge-presencia">Presencia</span>
                   </label>
                   <label class="form-check-label">
-                    <input type="radio" class="form-radio" [(ngModel)]="controlKAerogenes" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                    <input type="radio" class="form-radio" [(ngModel)]="controlKAerogenes"
+                      [ngModelOptions]="{standalone: true}" value="ausencia" />
                     <span class="badge-ausencia">Ausencia</span>
                   </label>
                 </div>
@@ -426,11 +397,13 @@
                 <p class="control-title">Control S. aureus</p>
                 <div class="form-radio-group">
                   <label class="form-check-label">
-                    <input type="radio" class="form-radio" [(ngModel)]="controlSAureus" [ngModelOptions]="{standalone: true}" value="presencia" />
+                    <input type="radio" class="form-radio" [(ngModel)]="controlSAureus"
+                      [ngModelOptions]="{standalone: true}" value="presencia" />
                     <span class="badge-presencia">Presencia</span>
                   </label>
                   <label class="form-check-label">
-                    <input type="radio" class="form-radio" [(ngModel)]="controlSAureus" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                    <input type="radio" class="form-radio" [(ngModel)]="controlSAureus"
+                      [ngModelOptions]="{standalone: true}" value="ausencia" />
                     <span class="badge-ausencia">Ausencia</span>
                   </label>
                 </div>
@@ -441,11 +414,13 @@
                 <p class="control-title">Control E. coli</p>
                 <div class="form-radio-group">
                   <label class="form-check-label">
-                    <input type="radio" class="form-radio" [(ngModel)]="controlEColi" [ngModelOptions]="{standalone: true}" value="presencia" />
+                    <input type="radio" class="form-radio" [(ngModel)]="controlEColi"
+                      [ngModelOptions]="{standalone: true}" value="presencia" />
                     <span class="badge-presencia">Presencia</span>
                   </label>
                   <label class="form-check-label">
-                    <input type="radio" class="form-radio" [(ngModel)]="controlEColi" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                    <input type="radio" class="form-radio" [(ngModel)]="controlEColi"
+                      [ngModelOptions]="{standalone: true}" value="ausencia" />
                     <span class="badge-ausencia">Ausencia</span>
                   </label>
                 </div>
@@ -454,13 +429,8 @@
               <!-- Control blanco -->
               <div class="control-card">
                 <p class="control-title">Control Blanco <span class="required-star">*</span></p>
-                <textarea
-                  class="form-textarea"
-                  rows="2"
-                  placeholder="Descripción del control blanco..."
-                  [(ngModel)]="controlBlanco"
-                  [ngModelOptions]="{standalone: true}"
-                ></textarea>
+                <textarea class="form-textarea" rows="2" placeholder="Descripción del control blanco..."
+                  [(ngModel)]="controlBlanco" [ngModelOptions]="{standalone: true}"></textarea>
               </div>
 
             </div>
@@ -483,36 +453,31 @@
 
             <div class="form-group mb-6">
               <label class="form-label">N° Muestra <span class="required-star">*</span></label>
-              <input type="text" class="form-input" [(ngModel)]="datosFinalNumeroMuestra" [ngModelOptions]="{standalone: true}" placeholder="Identificador de muestra final" />
-            </div>
-
-            <div class="nmp-banner">
-              <ion-icon name="information-circle-outline" class="nmp-icon"></ion-icon>
-              <p>
-                <strong>Función NMP (placeholder)</strong> — La fórmula oficial de cálculo NMP
-                (tabla FDA/APHA) debe conectarse en el método <code>calcularNMP()</code>.
-                Ingrese los resultados manualmente o presione «Calcular NMP» para usar el placeholder.
-              </p>
+              <input type="text" class="form-input" [(ngModel)]="datosFinalNumeroMuestra"
+                [ngModelOptions]="{standalone: true}" placeholder="Identificador de muestra final" />
             </div>
 
             <div class="nmp-grid">
               <div class="nmp-card">
                 <p class="nmp-label">Coliformes Totales</p>
-                <input type="text" class="form-input" [(ngModel)]="resultadoColiformesTotales" [ngModelOptions]="{standalone: true}" placeholder="NMP / 25 g" />
+                <input type="text" class="form-input" [(ngModel)]="resultadoColiformesTotales"
+                  [ngModelOptions]="{standalone: true}" placeholder="NMP / 25 g" />
               </div>
               <div class="nmp-card">
                 <p class="nmp-label">Coliformes Fecales</p>
-                <input type="text" class="form-input" [(ngModel)]="resultadoColiformesFecales" [ngModelOptions]="{standalone: true}" placeholder="NMP / 25 g" />
+                <input type="text" class="form-input" [(ngModel)]="resultadoColiformesFecales"
+                  [ngModelOptions]="{standalone: true}" placeholder="NMP / 25 g" />
               </div>
               <div class="nmp-card">
                 <p class="nmp-label">E. coli</p>
-                <input type="text" class="form-input" [(ngModel)]="resultadoEColi" [ngModelOptions]="{standalone: true}" placeholder="NMP / 25 g" />
+                <input type="text" class="form-input" [(ngModel)]="resultadoEColi" [ngModelOptions]="{standalone: true}"
+                  placeholder="NMP / 25 g" />
               </div>
             </div>
 
             <ion-button expand="block" fill="outline" color="medium" (click)="calcularNMP()" class="btn-calcular-nmp">
               <ion-icon name="calculator-outline" slot="start"></ion-icon>
-              Calcular NMP (Placeholder)
+              Calcular NMP
             </ion-button>
 
           </div>
@@ -524,50 +489,26 @@
     <!-- ════════════════════════════════════════
          BARRA DE NAVEGACIÓN INFERIOR
          ════════════════════════════════════════ -->
+
     <div class="nav-footer">
-      <ion-button
-        fill="outline"
-        color="medium"
-        (click)="retrocederEtapa()"
-        *ngIf="etapaActual > 1"
-        class="btn-nav"
-      >
-        <ion-icon name="chevron-back-outline" slot="start"></ion-icon>
-        Anterior
-      </ion-button>
-
-      <ion-button
-        fill="outline"
-        color="danger"
-        (click)="confirmarCancelar()"
-        class="btn-nav btn-cancelar"
-      >
-        <ion-icon name="close-outline" slot="start"></ion-icon>
+      <button type="button" class="btn-cancel" (click)="confirmarCancelar()">
+        <ion-icon name="close-outline"></ion-icon>
         Cancelar
-      </ion-button>
-
-      <ion-button
-        *ngIf="etapaActual < TOTAL_ETAPAS"
-        fill="solid"
-        color="primary"
-        (click)="avanzarEtapa()"
-        class="btn-nav btn-primario"
-      >
-        Siguiente
-        <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
-      </ion-button>
-
-      <ion-button
-        *ngIf="etapaActual === TOTAL_ETAPAS"
-        fill="solid"
-        color="success"
-        (click)="enviarFormulario()"
-        class="btn-nav btn-primario"
-      >
-        <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-        Enviar Registro
-      </ion-button>
+      </button>
+      <div class="nav-footer__actions">
+        <button type="button" class="btn-secondary" (click)="retrocederEtapa()" *ngIf="etapaActual > 1">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+          Anterior
+        </button>
+        <button type="button" class="btn-save" (click)="enviarFormulario()" *ngIf="etapaActual === TOTAL_ETAPAS">
+          <ion-icon name="save-outline"></ion-icon>
+          Enviar Registro
+        </button>
+        <button type="button" class="btn-primary" (click)="avanzarEtapa()" *ngIf="etapaActual < TOTAL_ETAPAS">
+          Siguiente
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+      </div>
     </div>
-
   </div>
 </ion-content>
