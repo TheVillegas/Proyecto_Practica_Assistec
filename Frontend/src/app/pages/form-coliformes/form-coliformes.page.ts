@@ -249,7 +249,7 @@ export class FormColiformesPage implements OnInit {
   // ══════════════════════════════════════════════════════════════════════════════
   // TABLA DE SUBMUESTRAS
   // ══════════════════════════════════════════════════════════════════════════════
-  ciclarResultado(entrada: EntradaMuestra, dilucion: Dilucion, idx: 0 | 1 | 2): void {
+  ciclarResultado(entrada: EntradaMuestra, dilucion: Dilucion, idx: number): void {
     const orden: ResultadoSubmuestra[] = ['sin_registrar', 'positivo', 'negativo'];
     const actual = entrada.submuestras[dilucion][idx];
     const siguiente = orden[(orden.indexOf(actual) + 1) % orden.length];
