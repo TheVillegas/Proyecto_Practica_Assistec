@@ -7,11 +7,13 @@ import { SolicitudIngresoPage } from './solicitud-ingreso.page';
 import { CatalogosService } from 'src/app/services/catalogos.service';
 import { SolicitudIngresoService } from 'src/app/services/solicitud-ingreso.service';
 import { AlertController, ToastController } from '@ionic/angular';
+import { resolveSolicitudStateMeta } from './solicitud-estado-families';
 
 describe('SolicitudIngresoPage', () => {
   let fixture: ComponentFixture<SolicitudIngresoPage>;
   let component: SolicitudIngresoPage;
   let solicitudService: jasmine.SpyObj<SolicitudIngresoService>;
+  let alertController: jasmine.SpyObj<AlertController>;
 
   beforeEach(async () => {
     solicitudService = jasmine.createSpyObj<SolicitudIngresoService>('SolicitudIngresoService', [
@@ -40,6 +42,9 @@ describe('SolicitudIngresoPage', () => {
       fecha_entrega_neg: '2026-05-09T00:00:00.000Z',
       fecha_entrega_pos: '2026-05-12T00:00:00.000Z'
     }));
+
+    alertController = jasmine.createSpyObj<AlertController>('AlertController', ['create']);
+    alertController.create.and.returnValue(Promise.resolve({ present: () => Promise.resolve() } as any));
 
     await TestBed.configureTestingModule({
       declarations: [SolicitudIngresoPage],
@@ -72,7 +77,7 @@ describe('SolicitudIngresoPage', () => {
         { provide: SolicitudIngresoService, useValue: solicitudService },
         { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } } } },
-        { provide: AlertController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve() }) } },
+        { provide: AlertController, useValue: alertController },
         { provide: ToastController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve() }) } }
       ]
     }).compileComponents();
@@ -125,6 +130,118 @@ describe('SolicitudIngresoPage', () => {
 
   it('usa equipos_lab tambien para lugar de almacenamiento', () => {
     expect(component.equiposAlmacenamiento.map((equipo) => equipo.codigoEquipo)).toContain('2-I');
+  });
+
+  it('resuelve familias de estado legadas y canónicas para el resumen', () => {
+    expect(resolveSolicitudStateMeta('enviada')).toEqual({ label: 'En validación', css: 'badge-pending', family: 'under_review' });
+    expect(resolveSolicitudStateMeta('devuelta')).toEqual({ label: 'Devuelta', css: 'badge-danger', family: 'resubmittable' });
+    expect(resolveSolicitudStateMeta('validada')).toEqual({ label: 'Validada', css: 'badge-success', family: 'post_validation' });
+  });
+
+  it('habilita enviar a validacion solo con formulario completo, formularios consolidados y estado reenviable', () => {
+    component.form.patchValue({
+      codigoALI: 1001,
+      numeroActa: '15',
+      categoria: 'Productos Hidrobiologicos',
+      nombreCliente: 'Cliente prueba',
+      direccion: 'Direccion prueba',
+      nombreSolicitante: 'Solicitante prueba',
+      fechaRecepcion: '2026-05-06T12:00',
+      temperatura: 4,
+      idTermometro: 2,
+      fechaInicioMuestreo: '2026-05-06T12:00',
+      fechaTerminoMuestreo: '2026-05-06T13:00',
+      numeroMuestras: 1,
+      numeroEnvases: 1,
+      analistaResponsable: 'Analista',
+      lugarMuestreo: 'Planta',
+      instructivoMuestreo: 'No informado',
+      idLugar: 3,
+      envasesSuministradosPor: 'Cliente',
+      rutCoordinadoraRecepcion: '1-1',
+      rutJefaArea: '2-2'
+    });
+
+    const formulario = component.formulariosCatalogo.find((item) => item.codigo === 'SALMONELLA_ISO')!;
+    component.toggleFormulario(formulario);
+
+    component.estadoFlujo = 'borrador';
+    component.solicitudId = '123';
+    component.updatedAt = '2026-05-06T12:30:00.000Z';
+
+    expect(component.requiredFieldsComplete).toBeTrue();
+    expect(component.hasConsolidatedForms).toBeTrue();
+    expect(component.canSendToValidation).toBeTrue();
+  });
+
+  it('bloquea enviar a validacion cuando la solicitud ya esta en revision aunque el formulario este completo', () => {
+    component.form.patchValue({
+      codigoALI: 1001,
+      numeroActa: '15',
+      categoria: 'Productos Hidrobiologicos',
+      nombreCliente: 'Cliente prueba',
+      direccion: 'Direccion prueba',
+      nombreSolicitante: 'Solicitante prueba',
+      fechaRecepcion: '2026-05-06T12:00',
+      temperatura: 4,
+      idTermometro: 2,
+      fechaInicioMuestreo: '2026-05-06T12:00',
+      fechaTerminoMuestreo: '2026-05-06T13:00',
+      numeroMuestras: 1,
+      numeroEnvases: 1,
+      analistaResponsable: 'Analista',
+      lugarMuestreo: 'Planta',
+      instructivoMuestreo: 'No informado',
+      idLugar: 3,
+      envasesSuministradosPor: 'Cliente',
+      rutCoordinadoraRecepcion: '1-1',
+      rutJefaArea: '2-2'
+    });
+
+    const formulario = component.formulariosCatalogo.find((item) => item.codigo === 'SALMONELLA_ISO')!;
+    component.toggleFormulario(formulario);
+
+    component.estadoFlujo = 'enviado';
+    component.solicitudId = '123';
+    component.updatedAt = '2026-05-06T12:30:00.000Z';
+
+    expect(component.canSendToValidation).toBeFalse();
+  });
+
+  it('bloquea ejecutar el envio cuando faltan prerequisitos tecnicos', async () => {
+    component.form.patchValue({
+      codigoALI: 1001,
+      numeroActa: '15',
+      categoria: 'Productos Hidrobiologicos',
+      nombreCliente: 'Cliente prueba',
+      direccion: 'Direccion prueba',
+      nombreSolicitante: 'Solicitante prueba',
+      fechaRecepcion: '2026-05-06T12:00',
+      temperatura: 4,
+      idTermometro: 2,
+      fechaInicioMuestreo: '2026-05-06T12:00',
+      fechaTerminoMuestreo: '2026-05-06T13:00',
+      numeroMuestras: 1,
+      numeroEnvases: 1,
+      analistaResponsable: 'Analista',
+      lugarMuestreo: 'Planta',
+      instructivoMuestreo: 'No informado',
+      idLugar: 3,
+      envasesSuministradosPor: 'Cliente',
+      rutCoordinadoraRecepcion: '1-1',
+      rutJefaArea: '2-2'
+    });
+
+    const formulario = component.formulariosCatalogo.find((item) => item.codigo === 'SALMONELLA_ISO')!;
+    component.toggleFormulario(formulario);
+
+    component.solicitudId = null;
+    component.updatedAt = null;
+
+    await component.enviarAValidacion();
+
+    expect(alertController.create).toHaveBeenCalled();
+    expect(solicitudService.enviarValidacion).not.toHaveBeenCalled();
   });
 
   it('filtra formularios al alcance digitalizado e incluye RAM existente', () => {
@@ -186,5 +303,11 @@ describe('SolicitudIngresoPage', () => {
     expect(component.formulariosCatalogo.find((formulario) => formulario.codigo === 'TPA')?.seleccionado).toBeTrue();
     expect(component.equiposLaboratorio.map((equipo) => equipo.codigoEquipo)).toContain('10-T-I');
     expect(component.equiposAlmacenamiento.map((equipo) => equipo.codigoEquipo)).toContain('2-I');
+  });
+
+  it('muestra estado legible para envio y validacion en el resumen', () => {
+    component.estadoFlujo = 'enviada';
+
+    expect(component.badgeEstado).toEqual({ label: 'En validación', css: 'badge-pending', family: 'under_review' });
   });
 });

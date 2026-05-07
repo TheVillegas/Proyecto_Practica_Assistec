@@ -476,7 +476,7 @@
           </div>
 
           <div class="resumen-acciones">
-            <button type="button" class="btn-validar" (click)="enviarAValidacion()" [disabled]="!solicitudGuardada || !updatedAt">
+            <button type="button" class="btn-validar" (click)="enviarAValidacion()" [disabled]="!canSendToValidation">
               <ion-icon name="send-outline"></ion-icon>
               Enviar a validación
             </button>
