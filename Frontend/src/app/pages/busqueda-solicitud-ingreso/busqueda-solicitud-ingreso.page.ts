@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { SolicitudIngresoResponse, SolicitudIngresoService } from 'src/app/services/solicitud-ingreso.service';
+import { resolveSolicitudStateMeta } from '../solicitud-ingreso/solicitud-estado-families';
 
 @Component({
   selector: 'app-busqueda-solicitud-ingreso',
@@ -53,5 +54,9 @@ export class BusquedaSolicitudIngresoPage implements OnInit {
 
   verSolicitud(sol: SolicitudIngresoResponse) {
     this.router.navigate(['/solicitud-ingreso'], { queryParams: { id: sol.id_solicitud } });
+  }
+
+  estadoMeta(estado: string | null | undefined) {
+    return resolveSolicitudStateMeta(estado);
   }
 }
