@@ -59,13 +59,8 @@
               {{ sol.cantidad_muestras ?? 0 }} Muestras
             </span>
             <span class="px-2 py-1 text-xs font-medium rounded-md"
-                  [ngClass]="{
-                    'bg-yellow-100 text-yellow-800': sol.estado === 'borrador',
-                    'bg-blue-100 text-blue-800':    sol.estado === 'enviado' || sol.estado === 'enviada',
-                    'bg-green-100 text-green-800':  sol.estado === 'validado' || sol.estado === 'validada' || sol.estado === 'convertido_muestras' || sol.estado === 'reportes_generados',
-                    'bg-red-100 text-red-800':      sol.estado === 'rechazado' || sol.estado === 'devuelta'
-                  }">
-              {{ sol.estado | titlecase }}
+                  [ngClass]="estadoMeta(sol.estado).css">
+              {{ estadoMeta(sol.estado).label }}
             </span>
           </div>
           <span class="text-xs font-medium text-blue-600 flex items-center gap-1">

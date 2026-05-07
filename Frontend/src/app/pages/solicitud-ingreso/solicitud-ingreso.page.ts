@@ -19,6 +19,7 @@ import {
   EquipoLaboratorio,
   FormularioAnalisisCatalogo,
 } from 'src/app/interfaces/catalogo.interfaces';
+import { canSendToValidationStateFamily, resolveSolicitudStateMeta } from './solicitud-estado-families';
 
 interface FormularioUI {
   id: string | null;
@@ -153,7 +154,7 @@ export class SolicitudIngresoPage implements OnInit {
   updatedAt: string | null = null;
   codigoALI = 'Se asigna al guardar';
   numeroActa = 'Se asigna al guardar';
-  estadoFlujo: 'borrador' | 'enviado' | 'rechazado' | 'validado' | 'convertido_muestras' | 'enviada' | 'devuelta' | 'validada' | 'reportes_generados' = 'borrador';
+  estadoFlujo: string = 'borrador';
   fechaEnvioValidacion: string | null = null;
   plazoEstimado: PlazoEstimadoResponse | null = null;
   solicitudGuardada = false;
@@ -571,6 +572,16 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   async enviarAValidacion(): Promise<void> {
+    if (!this.requiredFieldsComplete || !this.hasConsolidatedForms) {
+      await this.mostrarAlerta('Campos incompletos', 'Existen campos obligatorios sin completar o no hay formularios seleccionados.');
+      return;
+    }
+
+    if (!this.stateFamilyAllowsSubmission) {
+      await this.mostrarAlerta('Estado no reenviable', 'La solicitud ya fue enviada o quedó en un estado post-validación.');
+      return;
+    }
+
     if (!this.solicitudId || !this.updatedAt) {
       await this.mostrarAlerta('Atención', 'Debe guardar la solicitud antes de enviarla a validación.');
       return;
@@ -657,6 +668,22 @@ export class SolicitudIngresoPage implements OnInit {
     return dias.length ? Math.max(...dias) + 1 : null;
   }
 
+  get requiredFieldsComplete(): boolean {
+    return this.form.valid;
+  }
+
+  get hasConsolidatedForms(): boolean {
+    return this.formulariosConsolidados.length > 0;
+  }
+
+  get stateFamilyAllowsSubmission(): boolean {
+    return canSendToValidationStateFamily(this.estadoFlujo);
+  }
+
+  get canSendToValidation(): boolean {
+    return this.requiredFieldsComplete && this.hasConsolidatedForms && this.stateFamilyAllowsSubmission && !!this.solicitudId && !!this.updatedAt;
+  }
+
   get fechaEstimadaEntregaNegativa(): Date | null {
     if (this.plazoEstimado?.fecha_entrega_neg) return new Date(this.plazoEstimado.fecha_entrega_neg);
     const fechaRecepcion = this.form.get('fechaRecepcion')?.value;
@@ -680,21 +707,8 @@ export class SolicitudIngresoPage implements OnInit {
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
 
-  get badgeEstado(): { label: string; css: string } {
-    const mapa: Record<string, { label: string; css: string }> = {
-      borrador: { label: 'Borrador', css: 'badge-draft' },
-      enviada: { label: 'En Validación', css: 'badge-pending' },
-      devuelta: { label: 'Devuelta', css: 'badge-danger' },
-      validada: { label: 'Validada', css: 'badge-success' },
-      reportes_generados: { label: 'Reportes generados', css: 'badge-success' }
-      ,
-      enviado: { label: 'En ValidaciÃ³n', css: 'badge-pending' },
-      rechazado: { label: 'Rechazada', css: 'badge-danger' },
-      validado: { label: 'Validada', css: 'badge-success' },
-      convertido_muestras: { label: 'Convertida a muestras', css: 'badge-success' }
-    };
-
-    return mapa[this.estadoFlujo] ?? mapa['borrador'];
+  get badgeEstado(): ReturnType<typeof resolveSolicitudStateMeta> {
+    return resolveSolicitudStateMeta(this.estadoFlujo);
   }
 
   private construirPayload(): SolicitudIngresoPayload {
