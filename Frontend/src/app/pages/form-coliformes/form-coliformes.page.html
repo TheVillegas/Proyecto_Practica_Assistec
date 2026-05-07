@@ -1,0 +1,573 @@
+<ion-header>
+  <ion-toolbar class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-button (click)="confirmarCancelar()" class="btn-back">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="header-title">
+      <ion-icon name="flask-outline" class="header-icon"></ion-icon>
+      Análisis de Coliformes
+    </ion-title>
+    <ion-buttons slot="end">
+      <span class="badge-etapa">{{ etapaActual }}/{{ TOTAL_ETAPAS }}</span>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="page-content">
+  <div class="wizard-container">
+
+    <!-- ════════════════════════════════════════
+         BARRA DE PROGRESO + STEPPER
+         ════════════════════════════════════════ -->
+    <div class="stepper-wrapper">
+      <div class="stepper-bar">
+        <div class="stepper-fill" [style.width.%]="progresoPorcentaje"></div>
+      </div>
+      <div class="stepper-steps">
+        <button
+          *ngFor="let nombre of NOMBRES_ETAPAS; let i = index"
+          class="step-btn"
+          [class.active]="etapaActual === i + 1"
+          [class.done]="etapaActual > i + 1"
+          (click)="irAEtapa(i + 1)"
+        >
+          <span class="step-circle">{{ i + 1 }}</span>
+          <span class="step-label">{{ nombre }}</span>
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="form">
+
+      <!-- ════════════════════════════════════════
+           ETAPA 1: ALIMENTO E INCUBACIÓN
+           ════════════════════════════════════════ -->
+      <div *ngIf="etapaActual === 1" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="information-circle-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Detalles del Alimento e Incubación</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Datos importados (no editables) -->
+            <div class="seccion-importada">
+              <p class="seccion-tag">
+                <ion-icon name="lock-closed-outline"></ion-icon>
+                Datos importados automáticamente – No editables
+              </p>
+              <div class="grid-2col">
+                <div class="form-group">
+                  <label class="form-label">Código del Alimento</label>
+                  <input type="text" class="form-input input-locked" [value]="datosImportados.codigoAlimento" disabled />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Fecha de Inicio Incubación</label>
+                  <input type="text" class="form-input input-locked" [value]="datosImportados.fechaIncubacion" disabled />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Hora de Inicio Incubación</label>
+                  <input type="text" class="form-input input-locked" [value]="datosImportados.horaIncubacion" disabled />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Analista Responsable de Incubación</label>
+                  <input type="text" class="form-input input-locked" [value]="datosImportados.analistaIncubacion" disabled />
+                </div>
+              </div>
+            </div>
+
+            <div class="seccion-divider"></div>
+
+            <!-- Datos editables -->
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label">Fecha de Término Análisis <span class="required-star">*</span></label>
+                <input
+                  type="text"
+                  class="form-input"
+                  [class.input-error]="campoInvalido('fechaTerminoAnalisis')"
+                  formControlName="fechaTerminoAnalisis"
+                  placeholder="DD/MM"
+                  maxlength="5"
+                />
+                <span class="error-msg" *ngIf="campoInvalido('fechaTerminoAnalisis')">
+                  La fecha debe tener formato DD/MM.
+                </span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Analista Responsable de Término <span class="required-star">*</span></label>
+                <input
+                  type="text"
+                  class="form-input"
+                  [class.input-error]="campoInvalido('analistaTerminoAnalisis')"
+                  formControlName="analistaTerminoAnalisis"
+                  placeholder="Nombre del analista"
+                />
+                <span class="error-msg" *ngIf="campoInvalido('analistaTerminoAnalisis')">
+                  Este campo es obligatorio.
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           ETAPA 2: DETALLES DE SIEMBRA
+           ════════════════════════════════════════ -->
+      <div *ngIf="etapaActual === 2" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="leaf-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Detalles de Siembra</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label">Código Medio de Homogeneización <span class="required-star">*</span></label>
+                <input
+                  type="text"
+                  class="form-input"
+                  [class.input-error]="campoInvalido('codigoMedioHomogeneizacion')"
+                  formControlName="codigoMedioHomogeneizacion"
+                  placeholder="Ej: MH-001"
+                />
+                <span class="error-msg" *ngIf="campoInvalido('codigoMedioHomogeneizacion')">Este campo es obligatorio.</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Caldo Lauril <span class="required-star">*</span></label>
+                <input
+                  type="text"
+                  class="form-input"
+                  [class.input-error]="campoInvalido('caldoLauril')"
+                  formControlName="caldoLauril"
+                  placeholder="Ej: CL-045"
+                />
+                <span class="error-msg" *ngIf="campoInvalido('caldoLauril')">Este campo es obligatorio.</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Tween 80 <span class="optional-tag">(opcional)</span></label>
+                <input type="text" class="form-input" formControlName="tween80" placeholder="Código si aplica" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Código de Muestra según Naturaleza <span class="required-star">*</span></label>
+                <select
+                  class="form-select"
+                  [class.input-error]="campoInvalido('codigoMuestraNaturaleza')"
+                  formControlName="codigoMuestraNaturaleza"
+                >
+                  <option value="">-- Seleccione --</option>
+                  <option value="homogeneo">Homogéneo</option>
+                  <option value="mezcla">Mezcla</option>
+                </select>
+                <span class="error-msg" *ngIf="campoInvalido('codigoMuestraNaturaleza')">Este campo es obligatorio.</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">N° Muestra 10 g / 90 ml</label>
+                <input type="text" class="form-input" formControlName="muestra10g90ml" placeholder="Ej: M10-001" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">N° Muestra 50 g / 450 ml</label>
+                <input type="text" class="form-input" formControlName="muestra50g450ml" placeholder="Ej: M50-001" />
+              </div>
+            </div>
+
+            <!-- Estufa -->
+            <div class="form-group mt-4">
+              <label class="form-label">Estufa Utilizada <span class="required-star">*</span></label>
+              <div class="form-radio-group">
+                <label class="form-check-label" *ngFor="let estufa of ['EST-01 (Principal)', 'EST-02 (Respaldo)', 'EST-03 (Auxiliar)']">
+                  <input type="radio" class="form-radio" name="estufa" [value]="estufa" formControlName="estufaUtilizada" />
+                  <span>{{ estufa }}</span>
+                </label>
+              </div>
+              <span class="error-msg" *ngIf="campoInvalido('estufaUtilizada')">Debe seleccionar una estufa.</span>
+            </div>
+
+            <!-- Micropipetas -->
+            <div class="form-group mt-4">
+              <label class="form-label">Micropipeta Utilizada <span class="required-star">*</span></label>
+              <div class="form-radio-group">
+                <label class="form-check-label" *ngFor="let opcion of OPCIONES_MICROPIPETA">
+                  <input
+                    type="checkbox"
+                    class="form-checkbox"
+                    [checked]="esMicropipetaSeleccionada(opcion)"
+                    (change)="toggleMicropipeta(opcion)"
+                  />
+                  <span>{{ opcion }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           ETAPA 3: CONTROL DE ANÁLISIS (24h y 48h)
+           ════════════════════════════════════════ -->
+      <div *ngIf="etapaActual === 3" class="etapa-panel">
+
+        <!-- Lectura 24h -->
+        <div class="form-card">
+          <div class="form-card-header header-24h">
+            <div class="form-card-title-group">
+              <ion-icon name="time-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Lectura a 24 Horas</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <div class="grid-2col mb-4">
+              <div class="form-group">
+                <label class="form-label">Fecha de Lectura 24 h <span class="required-star">*</span></label>
+                <input type="text" class="form-input" [(ngModel)]="tabla24h.fechaLectura" [ngModelOptions]="{standalone: true}" placeholder="DD/MM" maxlength="5" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hora de Lectura 24 h <span class="required-star">*</span></label>
+                <input
+                  type="time"
+                  class="form-input"
+                  [class.input-error]="errorHora24h"
+                  [(ngModel)]="tabla24h.horaLectura"
+                  [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="onHora24hChange()"
+                />
+                <span class="error-msg" *ngIf="errorHora24h">{{ errorHora24h }}</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Analista Responsable 24 h <span class="required-star">*</span></label>
+                <input type="text" class="form-input" [(ngModel)]="tabla24h.analistaResponsable" [ngModelOptions]="{standalone: true}" placeholder="Nombre del analista" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">N° Muestra 24 h (incluye duplicado) <span class="required-star">*</span></label>
+                <input type="text" class="form-input" [(ngModel)]="tabla24h.numeroMuestraIncluyeDuplicado" [ngModelOptions]="{standalone: true}" placeholder="Ej: 7" />
+              </div>
+            </div>
+
+            <!-- Tabla submuestras 24h -->
+            <div class="tabla-wrapper">
+              <table class="tabla-submuestras">
+                <thead>
+                  <tr>
+                    <th class="th-dilucion">Dilución</th>
+                    <ng-container *ngFor="let entrada of tabla24h.entradas">
+                      <th [attr.colspan]="3" [class.th-duplicado]="entrada.esDuplicado">
+                        {{ entrada.label }}
+                      </th>
+                    </ng-container>
+                  </tr>
+                  <tr>
+                    <th class="th-dilucion"></th>
+                    <ng-container *ngFor="let entrada of tabla24h.entradas">
+                      <th class="th-sub">S1</th>
+                      <th class="th-sub">S2</th>
+                      <th class="th-sub">S3</th>
+                    </ng-container>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let dil of DILUCIONES">
+                    <td class="td-dilucion">{{ dil }}</td>
+                    <ng-container *ngFor="let entrada of tabla24h.entradas">
+                      <td
+                        *ngFor="let idx of [0, 1, 2]"
+                        class="td-celda"
+                        [class.celda-pos]="entrada.submuestras[dil][idx] === 'positivo'"
+                        [class.celda-neg]="entrada.submuestras[dil][idx] === 'negativo'"
+                        (click)="ciclarResultado(entrada, dil, idx)"
+                      >
+                        <span class="celda-badge">
+                          {{ entrada.submuestras[dil][idx] === 'positivo' ? 'POS' :
+                             entrada.submuestras[dil][idx] === 'negativo' ? 'NEG' : '–' }}
+                        </span>
+                      </td>
+                    </ng-container>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="tabla-hint">
+              <ion-icon name="finger-print-outline"></ion-icon>
+              Toca cada celda para alternar: Sin registrar → Positivo → Negativo
+            </p>
+          </div>
+        </div>
+
+        <!-- Lectura 48h -->
+        <div class="form-card">
+          <div class="form-card-header header-48h">
+            <div class="form-card-title-group">
+              <ion-icon name="time-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Lectura a 48 Horas</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <div class="grid-2col mb-4">
+              <div class="form-group">
+                <label class="form-label">Fecha de Lectura 48 h <span class="required-star">*</span></label>
+                <input type="text" class="form-input" [(ngModel)]="tabla48h.fechaLectura" [ngModelOptions]="{standalone: true}" placeholder="DD/MM" maxlength="5" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hora de Lectura 48 h <span class="required-star">*</span></label>
+                <input
+                  type="time"
+                  class="form-input"
+                  [class.input-error]="errorHora48h"
+                  [(ngModel)]="tabla48h.horaLectura"
+                  [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="onHora48hChange()"
+                />
+                <span class="error-msg" *ngIf="errorHora48h">{{ errorHora48h }}</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Analista Responsable 48 h <span class="required-star">*</span></label>
+                <input type="text" class="form-input" [(ngModel)]="tabla48h.analistaResponsable" [ngModelOptions]="{standalone: true}" placeholder="Nombre del analista" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">N° Muestra 48 h (incluye duplicado) <span class="required-star">*</span></label>
+                <input type="text" class="form-input" [(ngModel)]="tabla48h.numeroMuestraIncluyeDuplicado" [ngModelOptions]="{standalone: true}" placeholder="Ej: 7" />
+              </div>
+            </div>
+
+            <!-- Tabla submuestras 48h -->
+            <div class="tabla-wrapper">
+              <table class="tabla-submuestras">
+                <thead>
+                  <tr>
+                    <th class="th-dilucion">Dilución</th>
+                    <ng-container *ngFor="let entrada of tabla48h.entradas">
+                      <th [attr.colspan]="3" [class.th-duplicado]="entrada.esDuplicado">
+                        {{ entrada.label }}
+                      </th>
+                    </ng-container>
+                  </tr>
+                  <tr>
+                    <th class="th-dilucion"></th>
+                    <ng-container *ngFor="let entrada of tabla48h.entradas">
+                      <th class="th-sub">S1</th>
+                      <th class="th-sub">S2</th>
+                      <th class="th-sub">S3</th>
+                    </ng-container>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let dil of DILUCIONES">
+                    <td class="td-dilucion">{{ dil }}</td>
+                    <ng-container *ngFor="let entrada of tabla48h.entradas">
+                      <td
+                        *ngFor="let idx of [0, 1, 2]"
+                        class="td-celda"
+                        [class.celda-pos]="entrada.submuestras[dil][idx] === 'positivo'"
+                        [class.celda-neg]="entrada.submuestras[dil][idx] === 'negativo'"
+                        (click)="ciclarResultado(entrada, dil, idx)"
+                      >
+                        <span class="celda-badge">
+                          {{ entrada.submuestras[dil][idx] === 'positivo' ? 'POS' :
+                             entrada.submuestras[dil][idx] === 'negativo' ? 'NEG' : '–' }}
+                        </span>
+                      </td>
+                    </ng-container>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="tabla-hint">
+              <ion-icon name="finger-print-outline"></ion-icon>
+              Toca cada celda para alternar: Sin registrar → Positivo → Negativo
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ════════════════════════════════════════
+           ETAPA 4: CONTROL DE CALIDAD
+           ════════════════════════════════════════ -->
+      <div *ngIf="etapaActual === 4" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="shield-checkmark-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Control de Calidad</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <div class="control-grid">
+
+              <!-- Control K. aerogenes -->
+              <div class="control-card">
+                <p class="control-title">Control K. aerogenes</p>
+                <div class="form-radio-group">
+                  <label class="form-check-label">
+                    <input type="radio" class="form-radio" [(ngModel)]="controlKAerogenes" [ngModelOptions]="{standalone: true}" value="presencia" />
+                    <span class="badge-presencia">Presencia</span>
+                  </label>
+                  <label class="form-check-label">
+                    <input type="radio" class="form-radio" [(ngModel)]="controlKAerogenes" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                    <span class="badge-ausencia">Ausencia</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Control S. aureus -->
+              <div class="control-card">
+                <p class="control-title">Control S. aureus</p>
+                <div class="form-radio-group">
+                  <label class="form-check-label">
+                    <input type="radio" class="form-radio" [(ngModel)]="controlSAureus" [ngModelOptions]="{standalone: true}" value="presencia" />
+                    <span class="badge-presencia">Presencia</span>
+                  </label>
+                  <label class="form-check-label">
+                    <input type="radio" class="form-radio" [(ngModel)]="controlSAureus" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                    <span class="badge-ausencia">Ausencia</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Control E. coli -->
+              <div class="control-card">
+                <p class="control-title">Control E. coli</p>
+                <div class="form-radio-group">
+                  <label class="form-check-label">
+                    <input type="radio" class="form-radio" [(ngModel)]="controlEColi" [ngModelOptions]="{standalone: true}" value="presencia" />
+                    <span class="badge-presencia">Presencia</span>
+                  </label>
+                  <label class="form-check-label">
+                    <input type="radio" class="form-radio" [(ngModel)]="controlEColi" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                    <span class="badge-ausencia">Ausencia</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Control blanco -->
+              <div class="control-card">
+                <p class="control-title">Control Blanco <span class="required-star">*</span></p>
+                <textarea
+                  class="form-textarea"
+                  rows="2"
+                  placeholder="Descripción del control blanco..."
+                  [(ngModel)]="controlBlanco"
+                  [ngModelOptions]="{standalone: true}"
+                ></textarea>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════
+           ETAPA 5: DATOS FINALES Y RESULTADOS NMP
+           ════════════════════════════════════════ -->
+      <div *ngIf="etapaActual === 5" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Datos Finales y Resultados NMP</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <div class="form-group mb-6">
+              <label class="form-label">N° Muestra <span class="required-star">*</span></label>
+              <input type="text" class="form-input" [(ngModel)]="datosFinalNumeroMuestra" [ngModelOptions]="{standalone: true}" placeholder="Identificador de muestra final" />
+            </div>
+
+            <div class="nmp-banner">
+              <ion-icon name="information-circle-outline" class="nmp-icon"></ion-icon>
+              <p>
+                <strong>Función NMP (placeholder)</strong> — La fórmula oficial de cálculo NMP
+                (tabla FDA/APHA) debe conectarse en el método <code>calcularNMP()</code>.
+                Ingrese los resultados manualmente o presione «Calcular NMP» para usar el placeholder.
+              </p>
+            </div>
+
+            <div class="nmp-grid">
+              <div class="nmp-card">
+                <p class="nmp-label">Coliformes Totales</p>
+                <input type="text" class="form-input" [(ngModel)]="resultadoColiformesTotales" [ngModelOptions]="{standalone: true}" placeholder="NMP / 25 g" />
+              </div>
+              <div class="nmp-card">
+                <p class="nmp-label">Coliformes Fecales</p>
+                <input type="text" class="form-input" [(ngModel)]="resultadoColiformesFecales" [ngModelOptions]="{standalone: true}" placeholder="NMP / 25 g" />
+              </div>
+              <div class="nmp-card">
+                <p class="nmp-label">E. coli</p>
+                <input type="text" class="form-input" [(ngModel)]="resultadoEColi" [ngModelOptions]="{standalone: true}" placeholder="NMP / 25 g" />
+              </div>
+            </div>
+
+            <ion-button expand="block" fill="outline" color="medium" (click)="calcularNMP()" class="btn-calcular-nmp">
+              <ion-icon name="calculator-outline" slot="start"></ion-icon>
+              Calcular NMP (Placeholder)
+            </ion-button>
+
+          </div>
+        </div>
+      </div>
+
+    </form>
+
+    <!-- ════════════════════════════════════════
+         BARRA DE NAVEGACIÓN INFERIOR
+         ════════════════════════════════════════ -->
+    <div class="nav-footer">
+      <ion-button
+        fill="outline"
+        color="medium"
+        (click)="retrocederEtapa()"
+        *ngIf="etapaActual > 1"
+        class="btn-nav"
+      >
+        <ion-icon name="chevron-back-outline" slot="start"></ion-icon>
+        Anterior
+      </ion-button>
+
+      <ion-button
+        fill="outline"
+        color="danger"
+        (click)="confirmarCancelar()"
+        class="btn-nav btn-cancelar"
+      >
+        <ion-icon name="close-outline" slot="start"></ion-icon>
+        Cancelar
+      </ion-button>
+
+      <ion-button
+        *ngIf="etapaActual < TOTAL_ETAPAS"
+        fill="solid"
+        color="primary"
+        (click)="avanzarEtapa()"
+        class="btn-nav btn-primario"
+      >
+        Siguiente
+        <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
+      </ion-button>
+
+      <ion-button
+        *ngIf="etapaActual === TOTAL_ETAPAS"
+        fill="solid"
+        color="success"
+        (click)="enviarFormulario()"
+        class="btn-nav btn-primario"
+      >
+        <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+        Enviar Registro
+      </ion-button>
+    </div>
+
+  </div>
+</ion-content>

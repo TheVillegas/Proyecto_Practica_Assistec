@@ -50,6 +50,11 @@ const routes: Routes = [
     loadChildren: () => import('./pages/solicitud-ingreso/solicitud-ingreso.module').then(m => m.SolicitudIngresoPageModule),
     canActivate: [AuthGuard]
   },
+  {
+    path: 'form-coliformes',
+    loadChildren: () => import('./pages/form-coliformes/form-coliformes.module').then(m => m.FormColiformesPageModule),
+    canActivate: [AuthGuard]
+  },
 ];
 
 @NgModule({
