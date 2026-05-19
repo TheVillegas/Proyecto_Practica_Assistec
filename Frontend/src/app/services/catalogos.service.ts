@@ -85,8 +85,7 @@ export class CatalogosService {
         return this.http.get<FormaCalculo[]>(`${this.apiUrl}/formas_calculo`);
     }
 
-    getSubcategorias(categoriaId?: string): Observable<SubcategoriaProducto[]> {
-        const params = categoriaId ? { id_categoria: categoriaId } : {};
-        return this.http.get<SubcategoriaProducto[]>(`${this.apiUrl}/subcategorias`, { params });
+    getSubcategorias(): Observable<SubcategoriaProducto[]> {
+        return this.http.get<SubcategoriaProducto[]>(`${this.apiUrl}/subcategorias`);
     }
 }

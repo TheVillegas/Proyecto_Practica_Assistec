@@ -166,6 +166,7 @@ export class SolicitudIngresoPage implements OnInit {
 
   categorias: CategoriaProducto[] = [];
   subcategorias: SubcategoriaProducto[] = [];
+  private subcategoriasTodos: SubcategoriaProducto[] = [];
   formulariosDisponibles: FormularioAnalisisCatalogo[] = [];
   formulariosCatalogo: FormularioUI[] = [];
   equiposLaboratorio: EquipoLaboratorio[] = [];
@@ -287,10 +288,13 @@ export class SolicitudIngresoPage implements OnInit {
       categorias: this.catalogosService.getCategorias().pipe(catchError(() => of([]))),
       formularios: this.catalogosService.getFormulariosAnalisis().pipe(catchError(() => of([]))),
       equipos: this.catalogosService.getEquiposInstrumentos().pipe(catchError(() => of([]))),
-      usuarios: this.catalogosService.getResponsables().pipe(catchError(() => of([])))
+      usuarios: this.catalogosService.getResponsables().pipe(catchError(() => of([]))),
+      subcategorias: this.catalogosService.getSubcategorias().pipe(catchError(() => of([])))
     }).subscribe({
-      next: ({ categorias, formularios, equipos, usuarios }) => {
+      next: ({ categorias, formularios, equipos, usuarios, subcategorias }) => {
         this.categorias = this.filtrarCategoriasProyecto(categorias.length > 0 ? categorias : FALLBACK_CATEGORIAS);
+        this.subcategoriasTodos = subcategorias;
+        this.subcategorias = subcategorias;
         this.formulariosDisponibles = this.filtrarFormulariosDigitalizados(formularios.length > 0 ? formularios : FALLBACK_FORMULARIOS);
         this.equiposLaboratorio = equipos;
         this.equiposAlmacenamiento = equipos;
@@ -808,14 +812,8 @@ export class SolicitudIngresoPage implements OnInit {
       this.subcategorias = [];
       return;
     }
-    this.catalogosService.getSubcategorias(categoria.idCategoria).subscribe({
-      next: (subcategorias) => {
-        this.subcategorias = subcategorias;
-      },
-      error: () => {
-        this.subcategorias = [];
-      }
-    });
+    // Filter all loaded subcategorías by categoria ID
+    this.subcategorias = this.subcategoriasTodos.filter((s) => s.idCategoria === categoria.idCategoria);
   }
 
   toggleNoAplicaField(field: 'inicio' | 'termino'): void {
