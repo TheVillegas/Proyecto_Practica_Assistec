@@ -18,6 +18,7 @@ import {
   CategoriaProducto,
   EquipoLaboratorio,
   FormularioAnalisisCatalogo,
+  SubcategoriaProducto,
 } from 'src/app/interfaces/catalogo.interfaces';
 import { canSendToValidationStateFamily, resolveSolicitudStateMeta } from './solicitud-estado-families';
 
@@ -52,7 +53,6 @@ interface SolicitudIngresoFormValue {
   anioIngreso: number;
   codigoALI: string;
   numeroActa: string;
-  codigoExterno: string;
   categoria: string;
   nombreCliente: string;
   direccion: string;
@@ -61,14 +61,18 @@ interface SolicitudIngresoFormValue {
   fechaRecepcion: string;
   temperatura: number | null;
   idTermometro: number | null;
+  codigoEquipoManual: string;
   fechaInicioMuestreo: string;
   fechaTerminoMuestreo: string;
+  noAplicaInicio: boolean;
+  noAplicaTermino: boolean;
   numeroMuestras: number;
   numeroEnvases: number;
   analistaResponsable: string;
   lugarMuestreo: string;
   instructivoMuestreo: string;
   tipoAnalisis: string;
+  subcategoria: string;
   idLugar: number | null;
   envasesSuministradosPor: string;
   muestraCompartida: boolean;
@@ -161,6 +165,7 @@ export class SolicitudIngresoPage implements OnInit {
   cargando = false;
 
   categorias: CategoriaProducto[] = [];
+  subcategorias: SubcategoriaProducto[] = [];
   formulariosDisponibles: FormularioAnalisisCatalogo[] = [];
   formulariosCatalogo: FormularioUI[] = [];
   equiposLaboratorio: EquipoLaboratorio[] = [];
@@ -184,8 +189,7 @@ export class SolicitudIngresoPage implements OnInit {
       anioIngreso: [{ value: inicial.anioIngreso, disabled: true }],
       codigoALI: [inicial.codigoALI, [Validators.required, Validators.min(1)]],
       numeroActa: [inicial.numeroActa, Validators.required],
-      codigoExterno: [inicial.codigoExterno],
-      categoria: [inicial.categoria, Validators.required],
+      categoria: [inicial.categoria],
 
       nombreCliente: [inicial.nombreCliente, Validators.required],
       direccion: [inicial.direccion, Validators.required],
@@ -195,9 +199,12 @@ export class SolicitudIngresoPage implements OnInit {
       fechaRecepcion: [inicial.fechaRecepcion, Validators.required],
       temperatura: [inicial.temperatura, [Validators.required, Validators.min(-100), Validators.max(200)]],
       idTermometro: [inicial.idTermometro, Validators.required],
+      codigoEquipoManual: [inicial.codigoEquipoManual],
 
       fechaInicioMuestreo: [inicial.fechaInicioMuestreo, Validators.required],
       fechaTerminoMuestreo: [inicial.fechaTerminoMuestreo, Validators.required],
+      noAplicaInicio: [inicial.noAplicaInicio],
+      noAplicaTermino: [inicial.noAplicaTermino],
       numeroMuestras: [inicial.numeroMuestras, [Validators.required, Validators.min(1)]],
       numeroEnvases: [inicial.numeroEnvases, [Validators.required, Validators.min(1)]],
       analistaResponsable: [inicial.analistaResponsable, Validators.required],
@@ -205,6 +212,7 @@ export class SolicitudIngresoPage implements OnInit {
       instructivoMuestreo: [inicial.instructivoMuestreo, Validators.required],
 
       tipoAnalisis: [inicial.tipoAnalisis],
+      subcategoria: [inicial.subcategoria],
 
       idLugar: [inicial.idLugar, Validators.required],
       envasesSuministradosPor: [inicial.envasesSuministradosPor, Validators.required],
@@ -229,9 +237,12 @@ export class SolicitudIngresoPage implements OnInit {
       this.numeroActa = valor ? String(valor) : 'Pendiente';
     });
 
-    this.form.get('categoria')?.valueChanges.subscribe(() => {
+    this.form.get('categoria')?.valueChanges.subscribe((categoriaNombre) => {
       this.plazoEstimado = null;
       this.refrescarDetallesFormularios();
+      // Reset subcategoria when categoria changes
+      this.form.get('subcategoria')?.setValue('');
+      this.cargarSubcategorias(categoriaNombre);
     });
   }
 
@@ -240,7 +251,6 @@ export class SolicitudIngresoPage implements OnInit {
       anioIngreso: new Date().getFullYear(),
       codigoALI: '',
       numeroActa: '',
-      codigoExterno: '',
       categoria: '',
       nombreCliente: '',
       direccion: '',
@@ -249,14 +259,18 @@ export class SolicitudIngresoPage implements OnInit {
       fechaRecepcion: '',
       temperatura: null,
       idTermometro: null,
+      codigoEquipoManual: '',
       fechaInicioMuestreo: '',
       fechaTerminoMuestreo: '',
+      noAplicaInicio: false,
+      noAplicaTermino: false,
       numeroMuestras: 1,
       numeroEnvases: 1,
       analistaResponsable: '',
       lugarMuestreo: '',
       instructivoMuestreo: 'No informado',
       tipoAnalisis: '',
+      subcategoria: '',
       idLugar: null,
       envasesSuministradosPor: 'Cliente',
       muestraCompartida: false,
@@ -344,7 +358,6 @@ export class SolicitudIngresoPage implements OnInit {
     this.form.patchValue({
       codigoALI: solicitud.numero_ali,
       numeroActa: solicitud.numero_acta,
-      codigoExterno: solicitud.codigo_externo,
       categoria: solicitud.categoria?.nombre ?? '',
       nombreCliente: solicitud.cliente?.nombre ?? '',
       direccion: solicitud.direccion?.direccion ?? '',
@@ -440,10 +453,11 @@ export class SolicitudIngresoPage implements OnInit {
 
   private validarEtapaActual(): boolean {
     const camposPorEtapa: Record<number, string[]> = {
-      1: ['codigoALI', 'numeroActa', 'categoria'],
+      1: ['codigoALI', 'numeroActa'],
       2: ['nombreCliente', 'direccion', 'nombreSolicitante'],
       3: ['fechaRecepcion', 'temperatura', 'idTermometro'],
-      4: ['fechaInicioMuestreo', 'fechaTerminoMuestreo', 'numeroMuestras', 'numeroEnvases', 'analistaResponsable', 'lugarMuestreo', 'instructivoMuestreo'],
+      4: ['numeroMuestras', 'numeroEnvases', 'analistaResponsable', 'lugarMuestreo', 'instructivoMuestreo'],
+      5: ['categoria', 'subcategoria'],
       6: ['idLugar', 'envasesSuministradosPor'],
       8: ['rutCoordinadoraRecepcion', 'rutJefaArea']
     };
@@ -459,6 +473,22 @@ export class SolicitudIngresoPage implements OnInit {
         valido = false;
       }
     });
+
+    // Stage 4: validate date fields only if NO APLICA is not checked
+    if (this.etapaActual === 4) {
+      const noAplicaInicio = this.form.get('noAplicaInicio')?.value;
+      const noAplicaTermino = this.form.get('noAplicaTermino')?.value;
+      if (!noAplicaInicio) {
+        const ctrl = this.form.get('fechaInicioMuestreo');
+        ctrl?.markAsTouched();
+        if (ctrl?.invalid) valido = false;
+      }
+      if (!noAplicaTermino) {
+        const ctrl = this.form.get('fechaTerminoMuestreo');
+        ctrl?.markAsTouched();
+        if (ctrl?.invalid) valido = false;
+      }
+    }
 
     if (this.etapaActual === 5 && this.formulariosConsolidados.length === 0) {
       valido = false;
@@ -702,6 +732,18 @@ export class SolicitudIngresoPage implements OnInit {
     return base;
   }
 
+  get fechaEnvioInformePositivo(): Date | null {
+    if (!this.fechaEstimadaEntregaConfirmacion) return null;
+    const base = new Date(this.fechaEstimadaEntregaConfirmacion);
+    return base;
+  }
+
+  get fechaEnvioInformeNegativo(): Date | null {
+    if (!this.fechaEstimadaEntregaNegativa) return null;
+    const base = new Date(this.fechaEstimadaEntregaNegativa);
+    return base;
+  }
+
   campoInvalido(campo: string): boolean {
     const control = this.form.get(campo);
     return !!(control && control.invalid && (control.dirty || control.touched));
@@ -712,11 +754,12 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   private construirPayload(): SolicitudIngresoPayload {
+    const subcategoriaId = this.subcategoriaSeleccionada()?.idSubcategoria;
+
     return {
       codigoALI: Number(this.form.get('codigoALI')?.value),
       numeroActa: this.form.get('numeroActa')?.value,
       categoriaId: this.categoriaSeleccionada()?.idCategoria ?? '',
-      codigoExterno: this.form.get('codigoExterno')?.value || '',
       categoria: this.form.get('categoria')?.value,
       nombreCliente: this.form.get('nombreCliente')?.value,
       direccion: this.form.get('direccion')?.value,
@@ -725,6 +768,7 @@ export class SolicitudIngresoPage implements OnInit {
       fechaRecepcion: this.form.get('fechaRecepcion')?.value,
       temperatura: Number(this.form.get('temperatura')?.value),
       idTermometro: Number(this.form.get('idTermometro')?.value),
+      codigoEquipoManual: this.form.get('codigoEquipoManual')?.value || undefined,
       fechaInicioMuestreo: this.form.get('fechaInicioMuestreo')?.value,
       fechaTerminoMuestreo: this.form.get('fechaTerminoMuestreo')?.value,
       numeroMuestras: Number(this.form.get('numeroMuestras')?.value),
@@ -740,12 +784,58 @@ export class SolicitudIngresoPage implements OnInit {
       observacionesLaboratorio: this.form.get('observacionesLaboratorio')?.value || '',
       rutJefaArea: this.form.get('rutJefaArea')?.value,
       rutCoordinadoraRecepcion: this.form.get('rutCoordinadoraRecepcion')?.value,
+      subcategoriaId: subcategoriaId,
     };
   }
 
   private categoriaSeleccionada(): CategoriaProducto | undefined {
     const valor = this.form.get('categoria')?.value;
     return this.categorias.find((categoria) => categoria.nombre === valor || categoria.idCategoria === valor);
+  }
+
+  private subcategoriaSeleccionada(): SubcategoriaProducto | undefined {
+    const valor = this.form.get('subcategoria')?.value;
+    return this.subcategorias.find((s) => s.idSubcategoria === valor || s.nombre === valor);
+  }
+
+  private cargarSubcategorias(categoriaNombre: string): void {
+    if (!categoriaNombre) {
+      this.subcategorias = [];
+      return;
+    }
+    const categoria = this.categorias.find((c) => c.nombre === categoriaNombre);
+    if (!categoria) {
+      this.subcategorias = [];
+      return;
+    }
+    this.catalogosService.getSubcategorias(categoria.idCategoria).subscribe({
+      next: (subcategorias) => {
+        this.subcategorias = subcategorias;
+      },
+      error: () => {
+        this.subcategorias = [];
+      }
+    });
+  }
+
+  toggleNoAplicaField(field: 'inicio' | 'termino'): void {
+    const noAplicaCtrl = this.form.get(`noAplica${field === 'inicio' ? 'Inicio' : 'Termino'}`);
+    const dateCtrl = this.form.get(`fecha${field === 'inicio' ? 'Inicio' : 'Termino'}Muestreo`);
+    const analystCtrl = this.form.get('analistaResponsable');
+
+    if (noAplicaCtrl?.value) {
+      // NO APLICA checked → clear date validators + disable + auto-set analyst
+      dateCtrl?.clearValidators();
+      dateCtrl?.updateValueAndValidity();
+      // Auto-set analyst to first available if not already set
+      if (!analystCtrl?.value && this.analistas.length > 0) {
+        analystCtrl?.setValue(this.analistas[0].nombre);
+      }
+    } else {
+      // NO APLICA unchecked → restore date validators
+      dateCtrl?.setValidators(Validators.required);
+      dateCtrl?.updateValueAndValidity();
+    }
   }
 
   private refrescarDetallesFormularios(): void {

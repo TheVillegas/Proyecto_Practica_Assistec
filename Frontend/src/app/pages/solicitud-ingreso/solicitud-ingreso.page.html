@@ -70,18 +70,11 @@
               </ion-col>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
-                  <label class="form-label">Código Externo</label>
-                  <input type="text" class="form-input" formControlName="codigoExterno" placeholder="Ej: EXT-2026-001" />
-                </div>
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <div class="form-group">
-                  <label class="form-label">Categoría <span class="req">*</span></label>
-                  <select class="form-select" formControlName="categoria" [class.form-input--error]="campoInvalido('categoria')">
+                  <label class="form-label">Categoría</label>
+                  <select class="form-select" formControlName="categoria">
                     <option value="" disabled>Seleccione categoría</option>
                     <option *ngFor="let categoria of categorias" [value]="categoria.nombre">{{ categoria.nombre }}</option>
                   </select>
-                  <span class="error-msg" *ngIf="campoInvalido('categoria')">Campo obligatorio.</span>
                 </div>
               </ion-col>
             </ion-row>
@@ -165,6 +158,12 @@
                   <span class="error-msg" *ngIf="campoInvalido('idTermometro')">Seleccione un equipo.</span>
                 </div>
               </ion-col>
+              <ion-col size="12" size-md="4">
+                <div class="form-group">
+                  <label class="form-label">Código manual del equipo</label>
+                  <input type="text" class="form-input codigo-manual-input" formControlName="codigoEquipoManual" placeholder="Ej: EQ-001 (opcional)" maxlength="50" />
+                </div>
+              </ion-col>
             </ion-row>
           </ion-grid>
         </div>
@@ -182,15 +181,39 @@
             <ion-row>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
-                  <label class="form-label">Fecha inicio muestreo <span class="req">*</span></label>
-                  <input type="datetime-local" class="form-input" formControlName="fechaInicioMuestreo" [class.form-input--error]="campoInvalido('fechaInicioMuestreo')" />
+                  <div class="no-aplica-section">
+                    <label class="toggle-label">
+                      <input type="checkbox" class="form-checkbox" formControlName="noAplicaInicio"
+                        (change)="toggleNoAplicaField('inicio')" />
+                      <span>NO APLICA Fecha inicio muestreo</span>
+                    </label>
+                  </div>
+                  <label class="form-label">
+                    Fecha inicio muestreo
+                    <span class="req" *ngIf="!form.get('noAplicaInicio')?.value">*</span>
+                  </label>
+                  <input type="datetime-local" class="form-input" formControlName="fechaInicioMuestreo"
+                    [class.form-input--error]="campoInvalido('fechaInicioMuestreo')"
+                    [disabled]="form.get('noAplicaInicio')?.value" />
                   <span class="error-msg" *ngIf="campoInvalido('fechaInicioMuestreo')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
-                  <label class="form-label">Fecha término muestreo <span class="req">*</span></label>
-                  <input type="datetime-local" class="form-input" formControlName="fechaTerminoMuestreo" [class.form-input--error]="campoInvalido('fechaTerminoMuestreo')" />
+                  <div class="no-aplica-section">
+                    <label class="toggle-label">
+                      <input type="checkbox" class="form-checkbox" formControlName="noAplicaTermino"
+                        (change)="toggleNoAplicaField('termino')" />
+                      <span>NO APLICA Fecha término muestreo</span>
+                    </label>
+                  </div>
+                  <label class="form-label">
+                    Fecha término muestreo
+                    <span class="req" *ngIf="!form.get('noAplicaTermino')?.value">*</span>
+                  </label>
+                  <input type="datetime-local" class="form-input" formControlName="fechaTerminoMuestreo"
+                    [class.form-input--error]="campoInvalido('fechaTerminoMuestreo')"
+                    [disabled]="form.get('noAplicaTermino')?.value" />
                   <span class="error-msg" *ngIf="campoInvalido('fechaTerminoMuestreo')">Campo obligatorio.</span>
                 </div>
               </ion-col>
@@ -240,6 +263,35 @@
           </div>
         </div>
         <div class="form-card-body">
+          <ion-grid>
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <div class="form-group">
+                  <label class="form-label">Categoría <span class="req">*</span></label>
+                  <select class="form-select" formControlName="categoria" [class.form-input--error]="campoInvalido('categoria')">
+                    <option value="" disabled>Seleccione categoría</option>
+                    <option *ngFor="let categoria of categorias" [value]="categoria.nombre">{{ categoria.nombre }}</option>
+                  </select>
+                  <span class="error-msg" *ngIf="campoInvalido('categoria')">Campo obligatorio.</span>
+                </div>
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <div class="form-group">
+                  <label class="form-label">Subcategoría <span class="req">*</span></label>
+                  <select class="form-select subcategoria-select" formControlName="subcategoria"
+                    [class.form-input--error]="campoInvalido('subcategoria')"
+                    [disabled]="!form.get('categoria')?.value || subcategorias.length === 0">
+                    <option value="" disabled>
+                      {{ !form.get('categoria')?.value ? 'Seleccione una categoría primero.' : (subcategorias.length === 0 ? 'Sin subcategorías disponibles' : 'Seleccione subcategoría') }}
+                    </option>
+                    <option *ngFor="let sub of subcategorias" [value]="sub.idSubcategoria">{{ sub.nombre }}</option>
+                  </select>
+                  <span class="error-msg" *ngIf="campoInvalido('subcategoria')">Campo obligatorio.</span>
+                </div>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+
           <div class="form-group">
             <label class="form-label">Área de análisis</label>
             <select class="form-select" formControlName="tipoAnalisis">
@@ -249,10 +301,6 @@
           </div>
 
           <div class="checklist-section" *ngIf="formulariosCatalogo.length > 0">
-            <h3 class="checklist-title">
-              <ion-icon name="list-outline"></ion-icon>
-              Formularios asociados
-            </h3>
             <div class="checklist-grid">
               <label class="checklist-item" *ngFor="let formulario of formulariosCatalogo"
                 [class.checklist-item--obligatorio]="formulario.obligatorio">
@@ -433,6 +481,16 @@
               <ion-icon name="calendar-outline"></ion-icon>
               <span class="entrega-card__value">{{ fechaEstimadaEntregaConfirmacion ? (fechaEstimadaEntregaConfirmacion | date:'dd/MM/yyyy') : '--' }}</span>
               <span class="entrega-card__label">Fecha confirmacion</span>
+            </div>
+            <div class="entrega-card">
+              <ion-icon name="send-outline"></ion-icon>
+              <span class="entrega-card__value">{{ fechaEnvioInformePositivo ? (fechaEnvioInformePositivo | date:'dd/MM/yyyy') : '--' }}</span>
+              <span class="entrega-card__label">Envío Informe Positivo</span>
+            </div>
+            <div class="entrega-card">
+              <ion-icon name="send-outline"></ion-icon>
+              <span class="entrega-card__value">{{ fechaEnvioInformeNegativo ? (fechaEnvioInformeNegativo | date:'dd/MM/yyyy') : '--' }}</span>
+              <span class="entrega-card__label">Envío Informe Negativo</span>
             </div>
           </div>
         </div>
