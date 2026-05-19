@@ -38,7 +38,6 @@ export interface SolicitudIngresoPayload {
   codigoALI: number;
   numeroActa: string;
   categoriaId: string;
-  codigoExterno: string;
   categoria: string;
   nombreCliente: string;
   direccion: string;
@@ -62,6 +61,8 @@ export interface SolicitudIngresoPayload {
   observacionesLaboratorio: string;
   rutJefaArea: string;
   rutCoordinadoraRecepcion: string;
+  codigoEquipoManual?: string;
+  subcategoriaId?: string;
 }
 
 export interface SolicitudIngresoResponse {
@@ -94,6 +95,8 @@ export interface SolicitudIngresoResponse {
   formularios_seleccionados?: FormularioSeleccionadoPayload[];
   rut_jefa_area?: string;
   rut_coordinadora_recepcion?: string;
+  fecha_envio_informe_positivo?: string;
+  fecha_envio_informe_negativo?: string;
 }
 
 @Injectable({
