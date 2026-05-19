@@ -13,6 +13,13 @@ jest.mock('../src/config/prisma', () => ({
     categoriaProducto: {
         findUnique: jest.fn(),
         findFirst: jest.fn(),
+        create: jest.fn(),
+        findMany: jest.fn()
+    },
+    subcategoriaProducto: {
+        findUnique: jest.fn(),
+        findFirst: jest.fn(),
+        findMany: jest.fn(),
         create: jest.fn()
     },
     cliente: {

@@ -95,14 +95,15 @@ describe('SolicitudIngresoPage', () => {
     expect(component.form.get('numeroActa')?.hasError('required')).toBeTrue();
   });
 
-  it('bloquea Siguiente cuando falta un campo requerido de la etapa', () => {
+  it('bloquea Siguiente cuando falta un campo requerido de la etapa 1', () => {
     component.etapaActual = 1;
-    component.form.patchValue({ codigoALI: 1001, numeroActa: '15', categoria: '' });
+    component.form.patchValue({ codigoALI: null, numeroActa: '' });
 
     component.avanzarEtapa();
 
     expect(component.etapaActual).toBe(1);
-    expect(component.campoInvalido('categoria')).toBeTrue();
+    expect(component.campoInvalido('codigoALI')).toBeTrue();
+    expect(component.campoInvalido('numeroActa')).toBeTrue();
   });
 
   it('muestra detalle informativo de acreditacion, norma y dias por formulario', () => {
