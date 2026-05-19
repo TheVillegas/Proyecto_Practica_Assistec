@@ -209,7 +209,8 @@ class SolicitudService {
             anioIngreso,
             numeroAli,
             numeroActa: data.numeroActa ?? data.numero_acta ?? existing?.numeroActa ?? '',
-            codigoExterno: data.codigoExterno ?? data.codigo_externo ?? existing?.codigoExterno ?? `EXT-${anioIngreso}-${numeroAli}`,
+            codigoExterno: data.codigoExterno ?? data.codigo_externo ?? existing?.codigoExterno ?? '',
+            codigoEquipoManual: data.codigoEquipoManual ?? data.codigo_equipo_manual ?? existing?.codigoEquipoManual ?? null,
             categoriaId: categoria.idCategoria,
             idCliente: cliente.idCliente,
             idDireccion: direccion.idDireccion,
@@ -485,6 +486,8 @@ class SolicitudService {
             rut_jefa_area: solicitud.rutJefaArea,
             rut_coordinadora_recepcion: solicitud.rutCoordinaroraRecepcion,
             fecha_envio_validacion: solicitud.fechaEnvioValidacion,
+            fecha_envio_informe_positivo: solicitud.fechaEnvioInformePositivo,
+            fecha_envio_informe_negativo: solicitud.fechaEnvioInformeNegativo,
             updated_at: solicitud.updatedAt,
             muestras: (solicitud.muestras ?? []).map((muestra) => ({
                 id_solicitud_muestra: muestra.idSolicitudMuestra.toString(),
