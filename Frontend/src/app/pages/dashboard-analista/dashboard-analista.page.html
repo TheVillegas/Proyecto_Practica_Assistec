@@ -29,7 +29,7 @@
       <div class="empty-state">
         <ion-icon name="file-tray-outline" class="empty-icon"></ion-icon>
         <h3>Sin trabajos asignados</h3>
-        <p>No tenés solicitudes de post-validación asignadas en este momento.</p>
+        <p>No tienes solicitudes de post-validación asignadas en este momento.</p>
       </div>
     </div>
 
@@ -39,11 +39,7 @@
         <p>Solicitudes en post-validación asignadas a tu usuario</p>
       </div>
       <div class="queue-list">
-        <div
-          class="queue-item"
-          *ngFor="let item of queueItems"
-          data-queue-item
-        >
+        <div class="queue-item" *ngFor="let item of queueItems" data-queue-item>
           <div class="queue-item__left">
             <span class="queue-item__ali">ALI {{ item.numero_ali }}</span>
             <span class="queue-item__cliente">{{ item.nombre_cliente ?? 'Sin cliente' }}</span>

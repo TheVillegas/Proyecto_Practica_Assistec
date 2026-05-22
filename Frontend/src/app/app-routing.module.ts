@@ -88,6 +88,18 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { allowedRoles: [0, 1, 2, 3, 4] }
   },
+  {
+    path: 'form-coliformes',
+    loadChildren: () => import('./pages/form-coliformes/form-coliformes.module').then((m) => m.FormColiformesPageModule),
+    canActivate: [AuthGuard],
+    data: { allowedRoles: [0, 4] }
+  },
+  {
+    path: 'form-enterobacterias',
+    loadChildren: () => import('./pages/form-enterobacterias/form-enterobacterias.module').then((m) => m.FormEnterobacteriasPageModule),
+    canActivate: [AuthGuard],
+    data: { allowedRoles: [0, 4] }
+  },
 ];
 
 @NgModule({

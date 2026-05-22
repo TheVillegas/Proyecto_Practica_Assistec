@@ -47,6 +47,23 @@
         <span class="nav-dot" *ngIf="activeSegment === 'solicitud'">•</span>
       </li>
 
+      <!-- Formularios — visible para Analista (0) y Admin (4) -->
+      <li *ngIf="canAccessNavigation([0, 4])" class="nav-item-group">
+        <div class="nav-item" [class.active]="activeSegment === 'formularios'" (click)="toggleFormulariosMenu()">
+          <ion-icon name="document-text-outline"></ion-icon>
+          <span class="nav-item-text">Formularios</span>
+          <ion-icon [name]="formulariosMenuOpen ? 'chevron-down-outline' : 'chevron-forward-outline'" class="nav-dot" style="font-size: 14px;"></ion-icon>
+        </div>
+        <ul class="submenu" *ngIf="formulariosMenuOpen">
+          <li class="submenu-item" [class.active]="isRouteActive('/form-coliformes')" (click)="goToFormulario('/form-coliformes')">
+            <span class="submenu-text">E. Coli</span>
+          </li>
+          <li class="submenu-item" [class.active]="isRouteActive('/form-enterobacterias')" (click)="goToFormulario('/form-enterobacterias')">
+            <span class="submenu-text">Enterobacterias</span>
+          </li>
+        </ul>
+      </li>
+
 
     </ul>
   </nav>

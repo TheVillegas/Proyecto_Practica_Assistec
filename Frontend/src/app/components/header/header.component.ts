@@ -74,6 +74,9 @@ export class HeaderComponent implements OnInit {
       this.activeSegment = 'busqueda';
     } else if (url.includes('/solicitud-ingreso')) {
       this.activeSegment = 'solicitud';
+    } else if (url.includes('/form-coliformes') || url.includes('/form-enterobacterias')) {
+      this.activeSegment = 'formularios';
+      this.formulariosMenuOpen = true; // Abrir auto el menú si estamos en estas rutas
     } else if (url === '/') {
       this.activeSegment = 'home';
     }
@@ -95,6 +98,20 @@ export class HeaderComponent implements OnInit {
 
   canAccessNavigation(allowedRoles: number[]): boolean {
     return this.authService.canAccess(allowedRoles, { roles: this.userRoles } as SessionUser);
+  }
+
+  formulariosMenuOpen: boolean = false;
+
+  toggleFormulariosMenu() {
+    this.formulariosMenuOpen = !this.formulariosMenuOpen;
+  }
+  
+  goToFormulario(ruta: string) {
+    this.router.navigate([ruta]);
+  }
+
+  isRouteActive(ruta: string): boolean {
+    return this.router.url.includes(ruta);
   }
 
 
