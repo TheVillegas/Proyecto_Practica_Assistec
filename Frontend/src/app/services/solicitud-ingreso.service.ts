@@ -61,6 +61,12 @@ export interface PlazoEstimadoResponse {
   fecha_entrega_pos: string | null;
 }
 
+export interface ValidacionRevisionState {
+  aprobada: boolean;
+  rut?: string | null;
+  fecha?: string | null;
+}
+
 export interface SolicitudIngresoPayload {
   codigoALI: number;
   numeroActa: string;
@@ -128,6 +134,8 @@ export interface SolicitudIngresoResponse {
   formularios_seleccionados?: FormularioSeleccionadoPayload[];
   rut_jefa_area?: string;
   rut_coordinadora_recepcion?: string;
+  validacion_coordinadora?: ValidacionRevisionState | null;
+  validacion_jefa?: ValidacionRevisionState | null;
   fecha_envio_informe_positivo?: string;
   fecha_envio_informe_negativo?: string;
 }

@@ -171,10 +171,12 @@ class SolicitudService {
         }
 
         const now = new Date();
+        const metadata = this.resetValidationMetadata(this.parseMetadata(solicitud.observacionesGenerales));
         const updated = await solicitudRepository.update(id, {
             estado: ESTADOS.ENVIADO,
             fechaEnvioValidacion: now,
-            rutResponsableIngreso: usuario.id
+            rutResponsableIngreso: usuario.id,
+            observacionesGenerales: JSON.stringify(metadata)
         }, expectedUpdatedAt);
 
         return this.serializeSolicitud(updated);
@@ -194,13 +196,27 @@ class SolicitudService {
             throw new Error('ALREADY_VALIDATED');
         }
 
+        const metadata = this.parseMetadata(solicitud.observacionesGenerales);
+        const validationState = this.getValidationState(metadata);
+        const alreadyValidatedByCurrentRole = usuario.role === ROLES.COORDINADORA
+            ? validationState.coordinadora.aprobada
+            : validationState.jefa.aprobada;
+
+        if (alreadyValidatedByCurrentRole || this.isLegacyFullyValidatedWithoutFlags(solicitud, validationState)) {
+            throw new Error('ALREADY_VALIDATED');
+        }
+
         const now = new Date();
+        const nextMetadata = this.applyValidationApproval(metadata, usuario, now);
+        const nextValidationState = this.getValidationState(nextMetadata);
+        const isFullyValidated = nextValidationState.coordinadora.aprobada && nextValidationState.jefa.aprobada;
         const updated = await solicitudRepository.update(id, {
-            estado: ESTADOS.VALIDADO,
+            estado: isFullyValidated ? ESTADOS.VALIDADO : ESTADOS.ENVIADO,
             rutJefaArea: usuario.role === ROLES.JEFE_AREA ? usuario.id : solicitud.rutJefaArea,
             rutCoordinaroraRecepcion: usuario.role === ROLES.COORDINADORA ? usuario.id : solicitud.rutCoordinaroraRecepcion,
-            fechaEntregaRevisionJefeLab: now,
-            fechaHoraRecepcionCoordinadora: usuario.role === ROLES.COORDINADORA ? now : solicitud.fechaHoraRecepcionCoordinadora
+            fechaEntregaRevisionJefeLab: usuario.role === ROLES.JEFE_AREA ? now : solicitud.fechaEntregaRevisionJefeLab,
+            fechaHoraRecepcionCoordinadora: usuario.role === ROLES.COORDINADORA ? now : solicitud.fechaHoraRecepcionCoordinadora,
+            observacionesGenerales: JSON.stringify(nextMetadata)
         }, expectedUpdatedAt);
 
         return this.serializeSolicitud(updated);
@@ -294,7 +310,9 @@ class SolicitudService {
             analisisDerivadosSubcontratados,
             subcategoriaId,
             noAplicaMuestreo,
-            formularios: formulariosSeleccionados
+            formularios: formulariosSeleccionados,
+            validacionCoordinadora: existingMetadata.validacionCoordinadora ?? null,
+            validacionJefa: existingMetadata.validacionJefa ?? null
         };
 
         return {
@@ -546,6 +564,7 @@ class SolicitudService {
 
     serializeSolicitud(solicitud, extra = {}) {
         const metadata = this.parseMetadata(solicitud.observacionesGenerales);
+        const validationState = this.getValidationState(metadata);
         const dto = {
             id_solicitud: solicitud.idSolicitud.toString(),
             anio_ingreso: solicitud.anioIngreso,
@@ -585,6 +604,8 @@ class SolicitudService {
             rut_responsable_ingreso: solicitud.rutResponsableIngreso,
             rut_jefa_area: solicitud.rutJefaArea,
             rut_coordinadora_recepcion: solicitud.rutCoordinaroraRecepcion,
+            validacion_coordinadora: validationState.coordinadora,
+            validacion_jefa: validationState.jefa,
             fecha_envio_validacion: solicitud.fechaEnvioValidacion,
             fecha_envio_informe_positivo: solicitud.fechaEnvioInformePositivo,
             fecha_envio_informe_negativo: solicitud.fechaEnvioInformeNegativo,
@@ -625,6 +646,67 @@ class SolicitudService {
                 formularios: []
             };
         }
+    }
+
+    normalizeValidationEntry(entry) {
+        if (!entry || typeof entry !== 'object') {
+            return { aprobada: false, rut: null, fecha: null };
+        }
+
+        return {
+            aprobada: Boolean(entry.aprobada),
+            rut: entry.rut ?? null,
+            fecha: entry.fecha ?? null
+        };
+    }
+
+    getValidationState(metadata = {}) {
+        return {
+            coordinadora: this.normalizeValidationEntry(metadata.validacionCoordinadora),
+            jefa: this.normalizeValidationEntry(metadata.validacionJefa)
+        };
+    }
+
+    resetValidationMetadata(metadata = {}) {
+        return {
+            ...metadata,
+            validacionCoordinadora: null,
+            validacionJefa: null
+        };
+    }
+
+    applyValidationApproval(metadata = {}, usuario, fecha) {
+        const nextMetadata = { ...metadata };
+        const approval = {
+            aprobada: true,
+            rut: usuario.id,
+            fecha: fecha.toISOString()
+        };
+
+        if (usuario.role === ROLES.COORDINADORA) {
+            nextMetadata.validacionCoordinadora = approval;
+        }
+
+        if (usuario.role === ROLES.JEFE_AREA) {
+            nextMetadata.validacionJefa = approval;
+        }
+
+        return nextMetadata;
+    }
+
+    isLegacyFullyValidatedWithoutFlags(solicitud, validationState) {
+        const alreadyInPostValidation = [
+            ESTADOS.VALIDADO,
+            ESTADOS.VALIDADA_LEGACY,
+            ESTADOS.CONVERTIDO_MUESTRAS,
+            ESTADOS.REPORTES_GENERADOS_LEGACY
+        ].includes(solicitud.estado);
+
+        if (!alreadyInPostValidation) {
+            return false;
+        }
+
+        return !validationState.coordinadora.aprobada && !validationState.jefa.aprobada;
     }
 
     generarNumeroActa(anio, numeroAli) {

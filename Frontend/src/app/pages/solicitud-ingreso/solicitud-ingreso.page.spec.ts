@@ -16,7 +16,7 @@ describe('SolicitudIngresoPage', () => {
   let solicitudService: jasmine.SpyObj<SolicitudIngresoService>;
   let alertController: jasmine.SpyObj<AlertController>;
   let routeId: string | null;
-  let authServiceStub: { canAccess: jasmine.Spy };
+  let authServiceStub: { canAccess: jasmine.Spy; getUsuario: jasmine.Spy };
 
   beforeEach(async () => {
     solicitudService = jasmine.createSpyObj<SolicitudIngresoService>('SolicitudIngresoService', [
@@ -52,8 +52,10 @@ describe('SolicitudIngresoPage', () => {
       numero_ali: 1001,
       numero_acta: '15',
       codigo_externo: 'EXT-1',
-      estado: 'validada',
+      estado: 'enviado',
       updated_at: '2026-05-07T10:00:00.000Z',
+      validacion_coordinadora: { aprobada: true, rut: '1-1', fecha: '2026-05-07T10:00:00.000Z' },
+      validacion_jefa: { aprobada: false, rut: null, fecha: null },
       formularios_seleccionados: [{ codigo: 'TPA', nombre: 'TPA', genera_tpa_default: true }]
     } as any));
     solicitudService.rechazar.and.returnValue(of({
@@ -69,7 +71,10 @@ describe('SolicitudIngresoPage', () => {
     alertController = jasmine.createSpyObj<AlertController>('AlertController', ['create']);
     alertController.create.and.returnValue(Promise.resolve({ present: () => Promise.resolve() } as any));
     routeId = null;
-    authServiceStub = { canAccess: jasmine.createSpy('canAccess').and.returnValue(false) };
+    authServiceStub = {
+      canAccess: jasmine.createSpy('canAccess').and.returnValue(false),
+      getUsuario: jasmine.createSpy('getUsuario').and.returnValue({ roles: [3], primaryRole: 3, activeRole: 3 })
+    };
 
     await TestBed.configureTestingModule({
       declarations: [SolicitudIngresoPage],
@@ -370,6 +375,7 @@ describe('SolicitudIngresoPage', () => {
   it('abre una solicitud existente en modo solo lectura para revisión', () => {
     routeId = '123';
     authServiceStub.canAccess.and.returnValue(true);
+    authServiceStub.getUsuario.and.returnValue({ roles: [1], primaryRole: 1, activeRole: 1 });
     solicitudService.obtener.and.returnValue(of({
       id_solicitud: '123',
       numero_ali: 1001,
@@ -377,6 +383,8 @@ describe('SolicitudIngresoPage', () => {
       codigo_externo: 'EXT-1',
       estado: 'enviado',
       updated_at: '2026-05-06T12:30:00.000Z',
+      validacion_coordinadora: { aprobada: false, rut: null, fecha: null },
+      validacion_jefa: { aprobada: false, rut: null, fecha: null },
       formularios_seleccionados: [{ codigo: 'TPA', nombre: 'TPA', genera_tpa_default: true }]
     } as any));
 
@@ -391,13 +399,45 @@ describe('SolicitudIngresoPage', () => {
 
   it('valida la solicitud desde la vista de revisión y actualiza el estado', async () => {
     component.reviewMode = true;
+    authServiceStub.getUsuario.and.returnValue({ roles: [1], primaryRole: 1, activeRole: 1 });
     component.solicitudId = '123';
     component.updatedAt = '2026-05-06T12:30:00.000Z';
     component.estadoFlujo = 'enviado';
+    component.validacionCoordinadora = { aprobada: false, rut: null, fecha: null };
+    component.validacionJefa = { aprobada: false, rut: null, fecha: null };
 
     await component.validarSolicitudRevision();
 
     expect(solicitudService.validar).toHaveBeenCalledWith('123', '2026-05-06T12:30:00.000Z');
-    expect(component.estadoFlujo).toBe('validada');
+    expect(component.estadoFlujo).toBe('enviado');
+    expect(component.validacionCoordinadora.aprobada).toBeTrue();
+    expect(component.canTakeReviewAction).toBeFalse();
+  });
+
+  it('oculta la segunda validación para coordinadora cuando su aprobación ya existe', () => {
+    component.reviewMode = true;
+    authServiceStub.getUsuario.and.returnValue({ roles: [1], primaryRole: 1, activeRole: 1 });
+    component.solicitudId = '123';
+    component.updatedAt = '2026-05-06T12:30:00.000Z';
+    component.estadoFlujo = 'enviado';
+    component.validacionCoordinadora = { aprobada: true, rut: '1-1', fecha: '2026-05-06T12:35:00.000Z' };
+    component.validacionJefa = { aprobada: false, rut: null, fecha: null };
+
+    expect(component.canReviewCurrentSolicitud).toBeTrue();
+    expect(component.canTakeReviewAction).toBeFalse();
+    expect(component.reviewAlreadyCompletedMessage).toContain('ya fue registrada');
+  });
+
+  it('mantiene visible la validación para jefatura cuando sólo validó coordinadora', () => {
+    component.reviewMode = true;
+    authServiceStub.getUsuario.and.returnValue({ roles: [2], primaryRole: 2, activeRole: 2 });
+    component.solicitudId = '123';
+    component.updatedAt = '2026-05-06T12:30:00.000Z';
+    component.estadoFlujo = 'enviado';
+    component.validacionCoordinadora = { aprobada: true, rut: '1-1', fecha: '2026-05-06T12:35:00.000Z' };
+    component.validacionJefa = { aprobada: false, rut: null, fecha: null };
+
+    expect(component.canTakeReviewAction).toBeTrue();
+    expect(component.reviewAlreadyCompletedMessage).toBeNull();
   });
 });

@@ -551,35 +551,10 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
     });
 
     describe('REQ-06: Validación de Documentos', () => {
-        it('SC-06.1: Coordinadora valida solicitud', async () => {
+        it('SC-06.1: Coordinadora registra su validación pero la solicitud sigue en revisión hasta la segunda aprobación', async () => {
             const token = mockToken(1); // Coordinadora = 1
             const mockDate = new Date('2024-01-01T00:00:00.000Z');
-            
-            prisma.solicitudIngreso.findUnique.mockResolvedValue({ 
-                idSolicitud: 5n, 
-                numeroAli: 1001,
-                estado: 'enviada',
-                updatedAt: mockDate,
-                observacionesCliente: '',
-                observacionesGenerales: JSON.stringify({ formularios: [{ codigo: 'TPA', genera_tpa_default: true }] }),
-                rutJefaArea: '2-2',
-                rutCoordinaroraRecepcion: '1-1',
-                muestras: []
-            });
-            prisma.muestraAli.findUnique.mockResolvedValue(null);
-            prisma.$transaction.mockImplementation(async (callback) => callback({
-                solicitudIngreso: {
-                    findUnique: jest.fn().mockResolvedValue({ updatedAt: mockDate }),
-                    update: jest.fn().mockResolvedValue({
-                        idSolicitud: 5n,
-                        estado: 'reportes_generados',
-                        updatedAt: new Date('2024-01-02T00:00:00.000Z')
-                    })
-                },
-                muestraAli: { create: jest.fn().mockResolvedValue({ codigoAli: 1001 }) },
-                tpaReporte: { create: jest.fn().mockResolvedValue({ id: 1 }) },
-                ramReporte: { create: jest.fn().mockResolvedValue(null) }
-            }));
+
             prisma.solicitudIngreso.findUnique
                 .mockResolvedValueOnce({
                     idSolicitud: 5n,
@@ -587,7 +562,7 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
                     estado: 'enviada',
                     updatedAt: mockDate,
                     observacionesCliente: '',
-                    observacionesGenerales: JSON.stringify({ formularios: [{ codigo: 'TPA', genera_tpa_default: true }] }),
+                    observacionesGenerales: JSON.stringify({ formularios: [{ codigo: 'TPA', genera_tpa_default: true }], validacionCoordinadora: null, validacionJefa: null }),
                     rutJefaArea: '2-2',
                     rutCoordinaroraRecepcion: '1-1',
                     muestras: []
@@ -618,7 +593,70 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
                     envasesSuministradosPor: 'Cliente',
                     muestraCompartidaQuimica: false,
                     notasDelCliente: '',
-                    observacionesGenerales: JSON.stringify({ nombreSolicitante: 'Solicitante Demo', observacionesLaboratorio: '', formularios: [{ codigo: 'TPA', genera_tpa_default: true }] }),
+                    observacionesGenerales: JSON.stringify({ nombreSolicitante: 'Solicitante Demo', observacionesLaboratorio: '', formularios: [{ codigo: 'TPA', genera_tpa_default: true }], validacionCoordinadora: { aprobada: true, rut: '1-1', fecha: '2024-01-01T00:00:00.000Z' }, validacionJefa: null }),
+                    estado: 'enviado',
+                    rutResponsableIngreso: '3-3',
+                    rutJefaArea: '2-2',
+                    rutCoordinaroraRecepcion: '1-1',
+                    fechaEnvioValidacion: mockDate,
+                    updatedAt: new Date('2024-01-02T00:00:00.000Z'),
+                    muestras: []
+                });
+
+            const res = await request(app)
+                .post('/api/solicitud/5/validar')
+                .set('Authorization', `Bearer ${token}`)
+                .send({ updated_at: '2024-01-01T00:00:00.000Z' });
+
+            expect(res.status).toBe(200);
+            expect(res.body.estado).toBe('enviado');
+            expect(res.body.validacion_coordinadora.aprobada).toBe(true);
+            expect(res.body.validacion_jefa.aprobada).toBe(false);
+        });
+
+        it('SC-06.1b: Jefatura completa la segunda validación y recién ahí pasa a validado', async () => {
+            const token = mockToken(2); // Jefe = 2
+            const mockDate = new Date('2024-01-01T00:00:00.000Z');
+
+            prisma.solicitudIngreso.findUnique
+                .mockResolvedValueOnce({
+                    idSolicitud: 5n,
+                    numeroAli: 1001,
+                    estado: 'enviado',
+                    updatedAt: mockDate,
+                    observacionesCliente: '',
+                    observacionesGenerales: JSON.stringify({ formularios: [{ codigo: 'TPA', genera_tpa_default: true }], validacionCoordinadora: { aprobada: true, rut: '1-1', fecha: '2024-01-01T00:00:00.000Z' }, validacionJefa: null }),
+                    rutJefaArea: '2-2',
+                    rutCoordinaroraRecepcion: '1-1',
+                    muestras: []
+                })
+                .mockResolvedValueOnce({
+                    updatedAt: mockDate
+                })
+                .mockResolvedValueOnce({
+                    idSolicitud: 5n,
+                    anioIngreso: 2024,
+                    numeroAli: 1001,
+                    numeroActa: 'ACTA-2024-1001',
+                    codigoExterno: 'EXT-001',
+                    categoria: { idCategoria: 1n, nombre: 'Agua' },
+                    cliente: { idCliente: 1, nombre: 'Cliente Demo', rut: 'SIN-RUT' },
+                    direccion: { idDireccion: 1, direccion: 'Av. Demo 123', alias: 'Principal' },
+                    fechaRecepcion: mockDate,
+                    fechaInicioMuestreo: mockDate,
+                    fechaTerminoMuestreo: mockDate,
+                    temperaturaRecepcion: 4,
+                    termometro: { idEquipo: 1 },
+                    lugar: { idLugar: 1 },
+                    cantidadMuestras: 1,
+                    cantEnvases: 1,
+                    responsableMuestreo: 'Analista Demo',
+                    lugarMuestreo: 'Planta',
+                    instructivoMuestreo: 'No informado',
+                    envasesSuministradosPor: 'Cliente',
+                    muestraCompartidaQuimica: false,
+                    notasDelCliente: '',
+                    observacionesGenerales: JSON.stringify({ nombreSolicitante: 'Solicitante Demo', observacionesLaboratorio: '', formularios: [{ codigo: 'TPA', genera_tpa_default: true }], validacionCoordinadora: { aprobada: true, rut: '1-1', fecha: '2024-01-01T00:00:00.000Z' }, validacionJefa: { aprobada: true, rut: '2-2', fecha: '2024-01-01T00:00:00.000Z' } }),
                     estado: 'validado',
                     rutResponsableIngreso: '3-3',
                     rutJefaArea: '2-2',
@@ -635,6 +673,8 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
 
             expect(res.status).toBe(200);
             expect(res.body.estado).toBe('validado');
+            expect(res.body.validacion_coordinadora.aprobada).toBe(true);
+            expect(res.body.validacion_jefa.aprobada).toBe(true);
         });
 
         it('SC-06.2: Rechaza actingRole inválido en validación', async () => {
@@ -672,7 +712,7 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
                     estado: 'enviada',
                     updatedAt: mockDate,
                     observacionesCliente: '',
-                    observacionesGenerales: JSON.stringify({ formularios: [{ codigo: 'TPA', genera_tpa_default: true }] }),
+                    observacionesGenerales: JSON.stringify({ formularios: [{ codigo: 'TPA', genera_tpa_default: true }], validacionCoordinadora: null, validacionJefa: null }),
                     rutJefaArea: '2-2',
                     rutCoordinaroraRecepcion: '1-1',
                     muestras: []
@@ -703,8 +743,8 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
                     envasesSuministradosPor: 'Cliente',
                     muestraCompartidaQuimica: false,
                     notasDelCliente: '',
-                    observacionesGenerales: JSON.stringify({ nombreSolicitante: 'Solicitante Demo', observacionesLaboratorio: '', formularios: [{ codigo: 'TPA', genera_tpa_default: true }] }),
-                    estado: 'validado',
+                    observacionesGenerales: JSON.stringify({ nombreSolicitante: 'Solicitante Demo', observacionesLaboratorio: '', formularios: [{ codigo: 'TPA', genera_tpa_default: true }], validacionCoordinadora: { aprobada: true, rut: '4-1', fecha: '2024-01-01T00:00:00.000Z' }, validacionJefa: null }),
+                    estado: 'enviado',
                     rutResponsableIngreso: '3-3',
                     rutJefaArea: '2-2',
                     rutCoordinaroraRecepcion: '4-1',
@@ -736,8 +776,8 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
                 envasesSuministradosPor: 'Cliente',
                 muestraCompartidaQuimica: false,
                 notasDelCliente: '',
-                observacionesGenerales: JSON.stringify({ nombreSolicitante: 'Solicitante Demo', observacionesLaboratorio: '', formularios: [{ codigo: 'TPA', genera_tpa_default: true }] }),
-                estado: 'validado',
+                observacionesGenerales: JSON.stringify({ nombreSolicitante: 'Solicitante Demo', observacionesLaboratorio: '', formularios: [{ codigo: 'TPA', genera_tpa_default: true }], validacionCoordinadora: { aprobada: true, rut: '4-1', fecha: '2024-01-01T00:00:00.000Z' }, validacionJefa: null }),
+                estado: 'enviado',
                 rutResponsableIngreso: '3-3',
                 rutJefaArea: '2-2',
                 rutCoordinaroraRecepcion: '4-1',
@@ -753,11 +793,12 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
                 .send({ actingRole: 1, updated_at: '2024-01-01T00:00:00.000Z' });
 
             expect(res.status).toBe(200);
-            expect(res.body.estado).toBe('validado');
+            expect(res.body.estado).toBe('enviado');
             expect(prisma.solicitudIngreso.update).toHaveBeenCalledWith(expect.objectContaining({
                 where: { idSolicitud: 5n },
                 data: expect.objectContaining({
-                    rutCoordinaroraRecepcion: '4-1'
+                    rutCoordinaroraRecepcion: '4-1',
+                    estado: 'enviado'
                 })
             }));
         });

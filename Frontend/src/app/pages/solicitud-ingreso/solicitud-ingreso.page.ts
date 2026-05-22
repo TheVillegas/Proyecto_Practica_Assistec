@@ -12,7 +12,8 @@ import {
   PlazoEstimadoResponse,
   SolicitudIngresoPayload,
   SolicitudIngresoResponse,
-  SolicitudIngresoService
+  SolicitudIngresoService,
+  ValidacionRevisionState
 } from 'src/app/services/solicitud-ingreso.service';
 import {
   CategoriaProducto,
@@ -168,6 +169,8 @@ export class SolicitudIngresoPage implements OnInit {
   cargando = false;
   reviewMode = false;
   reviewActionLoading = false;
+  validacionCoordinadora: ValidacionRevisionState = { aprobada: false, rut: null, fecha: null };
+  validacionJefa: ValidacionRevisionState = { aprobada: false, rut: null, fecha: null };
 
   categorias: CategoriaProducto[] = [];
   subcategorias: SubcategoriaProducto[] = [];
@@ -364,6 +367,8 @@ export class SolicitudIngresoPage implements OnInit {
     this.numeroActa = solicitud.numero_acta;
     this.estadoFlujo = (solicitud.estado as any) || 'borrador';
     this.fechaEnvioValidacion = solicitud.fecha_envio_validacion ?? null;
+    this.validacionCoordinadora = this.normalizeValidationState(solicitud.validacion_coordinadora);
+    this.validacionJefa = this.normalizeValidationState(solicitud.validacion_jefa);
     this.solicitudGuardada = true;
 
     this.form.patchValue({
@@ -743,6 +748,38 @@ export class SolicitudIngresoPage implements OnInit {
       && this.badgeEstado.family === 'under_review';
   }
 
+  get canTakeReviewAction(): boolean {
+    if (!this.canReviewCurrentSolicitud) {
+      return false;
+    }
+
+    if (this.currentReviewRole === 1) {
+      return !this.validacionCoordinadora.aprobada;
+    }
+
+    if (this.currentReviewRole === 2) {
+      return !this.validacionJefa.aprobada;
+    }
+
+    return false;
+  }
+
+  get reviewAlreadyCompletedMessage(): string | null {
+    if (!this.reviewMode || this.badgeEstado.family !== 'under_review') {
+      return null;
+    }
+
+    if (this.currentReviewRole === 1 && this.validacionCoordinadora.aprobada) {
+      return 'Tu validación como coordinadora ya fue registrada. Falta la otra aprobación.';
+    }
+
+    if (this.currentReviewRole === 2 && this.validacionJefa.aprobada) {
+      return 'Tu validación como jefatura ya fue registrada. Falta la otra aprobación.';
+    }
+
+    return null;
+  }
+
   get fechaEstimadaEntregaNegativa(): Date | null {
     if (this.plazoEstimado?.fecha_entrega_neg) return new Date(this.plazoEstimado.fecha_entrega_neg);
     const fechaRecepcion = this.form.get('fechaRecepcion')?.value;
@@ -783,7 +820,7 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   async validarSolicitudRevision(): Promise<void> {
-    if (!this.canReviewCurrentSolicitud) {
+    if (!this.canTakeReviewAction) {
       return;
     }
 
@@ -802,7 +839,7 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   async rechazarSolicitudRevision(): Promise<void> {
-    if (!this.canReviewCurrentSolicitud) {
+    if (!this.canTakeReviewAction) {
       return;
     }
 
@@ -974,6 +1011,21 @@ export class SolicitudIngresoPage implements OnInit {
   private shouldOpenAsReview(): boolean {
     const solicitudId = this.route.snapshot.queryParamMap.get('id');
     return !!solicitudId && this.authService.canAccess(SolicitudIngresoPage.REVIEW_ALLOWED_ROLES);
+  }
+
+  private normalizeValidationState(state?: ValidacionRevisionState | null): ValidacionRevisionState {
+    return {
+      aprobada: Boolean(state?.aprobada),
+      rut: state?.rut ?? null,
+      fecha: state?.fecha ?? null
+    };
+  }
+
+  private get currentReviewRole(): number | null {
+    const user = this.authService.getUsuario();
+    const role = user?.activeRole ?? user?.primaryRole ?? user?.role ?? user?.rol;
+    const parsed = Number(role);
+    return Number.isInteger(parsed) ? parsed : null;
   }
 
   private syncFormInteractivity(): void {
