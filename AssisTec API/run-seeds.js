@@ -170,6 +170,78 @@ async function seedCategorias() {
   console.log(`  [+] Categorias Producto: ${insertados} insertadas (${nombres.length - insertados} ya existian)`);
 }
 
+async function seedSubcategorias() {
+  const subcategorias = [
+    { categoria: 'Productos Hidrobiologicos', nombre: 'Pescado Fresco' },
+    { categoria: 'Productos Hidrobiologicos', nombre: 'Pescado Congelado' },
+    { categoria: 'Productos Hidrobiologicos', nombre: 'Mariscos' },
+    { categoria: 'Productos Hidrobiologicos', nombre: 'Algas' },
+    { categoria: 'Harina de pescado', nombre: 'Harina de Pescado' },
+    { categoria: 'Alimento', nombre: 'Lacteos' },
+    { categoria: 'Alimento', nombre: 'Carnicos' },
+    { categoria: 'Alimento', nombre: 'Vegetales' },
+    { categoria: 'Alimento', nombre: 'Frutas' },
+    { categoria: 'Alimento', nombre: 'Cereales' },
+    { categoria: 'Conservas', nombre: 'Atun en conserva' },
+    { categoria: 'Aceite de pescado', nombre: 'Aceite Crudo' },
+    { categoria: 'Aceite de pescado', nombre: 'Aceite Refinado' },
+    { categoria: 'Aguas', nombre: 'Agua Potable' },
+    { categoria: 'Aguas', nombre: 'Agua de Pozo' },
+    { categoria: 'Aguas', nombre: 'Agua Superficial' },
+    { categoria: 'Aguas', nombre: 'Agua Residual' },
+    { categoria: 'Aguas', nombre: 'Agua de Mar' },
+    { categoria: 'Manipuladores', nombre: 'Hisopado de Manipuladores' },
+    { categoria: 'Superficie', nombre: 'Hisopado de Superficie' },
+    { categoria: 'CECINAS BIANCHINI', nombre: 'Cecinas' },
+    { categoria: 'Compost', nombre: 'Compost' },
+    { categoria: 'Cliente Knop', nombre: 'Muestra Cliente Knop' },
+  ];
+
+  const categorias = await prisma.categoriaProducto.findMany({
+    select: { idCategoria: true, nombre: true }
+  });
+  const categoriaIds = new Map(categorias.map((categoria) => [categoria.nombre, categoria.idCategoria]));
+
+  const existentes = await prisma.subcategoriaProducto.findMany({
+    select: { idCategoria: true, nombre: true }
+  });
+  const existentesSet = new Set(
+    existentes.map((subcategoria) => `${String(subcategoria.idCategoria)}::${subcategoria.nombre.toLowerCase()}`)
+  );
+
+  let insertados = 0;
+  let omitidos = 0;
+  const faltantes = new Set();
+
+  for (const subcategoria of subcategorias) {
+    const idCategoria = categoriaIds.get(subcategoria.categoria);
+    if (!idCategoria) {
+      faltantes.add(subcategoria.categoria);
+      continue;
+    }
+
+    const key = `${String(idCategoria)}::${subcategoria.nombre.toLowerCase()}`;
+    if (existentesSet.has(key)) {
+      omitidos++;
+      continue;
+    }
+
+    await prisma.subcategoriaProducto.create({
+      data: {
+        nombre: subcategoria.nombre,
+        idCategoria
+      }
+    });
+    existentesSet.add(key);
+    insertados++;
+  }
+
+  console.log(`  [+] Subcategorias Producto: ${insertados} insertadas (${omitidos} ya existian)`);
+  if (faltantes.size > 0) {
+    console.warn(`  [!] Subcategorias omitidas por categorias faltantes: ${Array.from(faltantes).join(', ')}`);
+  }
+}
+
 async function seedFormularios() {
   const formularios = [
     { codigo: 'TPA',              nombreAnalisis: 'Tecnica Placa Aerobia',      area: 'Microbiologia',          generaTpaDefault: true  },
@@ -338,15 +410,39 @@ async function seedTiemposYAlcances() {
 
 async function seedUsuarios() {
   const usuarios = [
-    { rutUsuario: '0-0', nombreApellidoUsuario: 'Analista Prueba',     correoUsuario: 'analista@lab.cl', contrasenaUsuario: HASH_123456, rolUsuario: 0, urlFoto: '' },
-    { rutUsuario: '1-1', nombreApellidoUsuario: 'Coordinadora Prueba', correoUsuario: 'coord@lab.cl',    contrasenaUsuario: HASH_123456, rolUsuario: 1, urlFoto: '' },
-    { rutUsuario: '2-2', nombreApellidoUsuario: 'Jefe de Area Prueba', correoUsuario: 'jefe@lab.cl',     contrasenaUsuario: HASH_123456, rolUsuario: 2, urlFoto: '' },
-    { rutUsuario: '3-3', nombreApellidoUsuario: 'Ingreso Prueba',      correoUsuario: 'ingreso@lab.cl',  contrasenaUsuario: HASH_123456, rolUsuario: 3, urlFoto: '' },
+    { rutUsuario: '0-0', nombreApellidoUsuario: 'Analista Prueba',       correoUsuario: 'analista@lab.cl', contrasenaUsuario: HASH_123456, rolUsuario: 0, urlFoto: '' },
+    { rutUsuario: '1-1', nombreApellidoUsuario: 'Coordinadora Prueba',   correoUsuario: 'coord@lab.cl',    contrasenaUsuario: HASH_123456, rolUsuario: 1, urlFoto: '' },
+    { rutUsuario: '2-2', nombreApellidoUsuario: 'Jefe de Area Prueba',   correoUsuario: 'jefe@lab.cl',     contrasenaUsuario: HASH_123456, rolUsuario: 2, urlFoto: '' },
+    { rutUsuario: '3-3', nombreApellidoUsuario: 'Ingreso Prueba',        correoUsuario: 'ingreso@lab.cl',  contrasenaUsuario: HASH_123456, rolUsuario: 3, urlFoto: '' },
+    { rutUsuario: '4-4', nombreApellidoUsuario: 'Administrador Prueba',  correoUsuario: 'admin@lab.cl',    contrasenaUsuario: HASH_123456, rolUsuario: 4, urlFoto: '' },
   ];
   for (const u of usuarios) {
     await prisma.usuario.upsert({ where: { rutUsuario: u.rutUsuario }, update: {}, create: u });
   }
-  console.log('  [+] Usuarios: 4 registros (analista, coord, jefe, ingreso)');
+  console.log('  [+] Usuarios: 5 registros (analista, coord, jefe, ingreso, admin)');
+}
+
+async function seedUsuarioRoles() {
+  // Ensure every user has a primary role in usuario_roles (backfill-compatible)
+  const usuarios = await prisma.usuario.findMany({ select: { rutUsuario: true, rolUsuario: true } });
+  let insertados = 0;
+  for (const u of usuarios) {
+    if (u.rolUsuario == null) continue;
+    const existe = await prisma.usuarioRol.findUnique({
+      where: { rutUsuario_rol: { rutUsuario: u.rutUsuario, rol: u.rolUsuario } }
+    });
+    if (!existe) {
+      await prisma.usuarioRol.create({
+        data: { rutUsuario: u.rutUsuario, rol: u.rolUsuario, isPrimary: true }
+      });
+      insertados++;
+    }
+  }
+  if (insertados > 0) {
+    console.log(`  [+] UsuarioRoles: ${insertados} registros nuevos desde rolUsuario`);
+  } else {
+    console.log('  [=] UsuarioRoles: ya sincronizados');
+  }
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -368,12 +464,14 @@ async function main() {
 
   // Catalogos del nuevo esquema (solicitud de ingreso)
   await seedCategorias();
+  await seedSubcategorias();
   await seedFormularios();
   await seedAcreditaciones();
   await seedTiemposYAlcances();
 
   // Usuarios de prueba
   await seedUsuarios();
+  await seedUsuarioRoles();
 
   console.log('Seeds completados.');
 }
