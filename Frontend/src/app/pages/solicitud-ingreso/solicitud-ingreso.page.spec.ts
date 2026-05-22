@@ -8,12 +8,15 @@ import { CatalogosService } from 'src/app/services/catalogos.service';
 import { SolicitudIngresoService } from 'src/app/services/solicitud-ingreso.service';
 import { AlertController, ToastController } from '@ionic/angular';
 import { resolveSolicitudStateMeta } from './solicitud-estado-families';
+import { AuthService } from 'src/app/services/auth-service';
 
 describe('SolicitudIngresoPage', () => {
   let fixture: ComponentFixture<SolicitudIngresoPage>;
   let component: SolicitudIngresoPage;
   let solicitudService: jasmine.SpyObj<SolicitudIngresoService>;
   let alertController: jasmine.SpyObj<AlertController>;
+  let routeId: string | null;
+  let authServiceStub: { canAccess: jasmine.Spy };
 
   beforeEach(async () => {
     solicitudService = jasmine.createSpyObj<SolicitudIngresoService>('SolicitudIngresoService', [
@@ -22,7 +25,9 @@ describe('SolicitudIngresoPage', () => {
       'crear',
       'actualizar',
       'obtener',
-      'enviarValidacion'
+      'enviarValidacion',
+      'validar',
+      'rechazar'
     ]);
 
     solicitudService.resolverAnalisis.and.returnValue(of({
@@ -38,13 +43,33 @@ describe('SolicitudIngresoPage', () => {
     }));
     solicitudService.obtenerPlazoEstimado.and.returnValue(of({
       dias_negativo: 4,
-      dias_confirmacion: 7,
+      dias_confirmacion: 6,
       fecha_entrega_neg: '2026-05-09T00:00:00.000Z',
-      fecha_entrega_pos: '2026-05-12T00:00:00.000Z'
+      fecha_entrega_pos: '2026-05-11T00:00:00.000Z'
     }));
+    solicitudService.validar.and.returnValue(of({
+      id_solicitud: '123',
+      numero_ali: 1001,
+      numero_acta: '15',
+      codigo_externo: 'EXT-1',
+      estado: 'validada',
+      updated_at: '2026-05-07T10:00:00.000Z',
+      formularios_seleccionados: [{ codigo: 'TPA', nombre: 'TPA', genera_tpa_default: true }]
+    } as any));
+    solicitudService.rechazar.and.returnValue(of({
+      id_solicitud: '123',
+      numero_ali: 1001,
+      numero_acta: '15',
+      codigo_externo: 'EXT-1',
+      estado: 'rechazado',
+      updated_at: '2026-05-07T10:00:00.000Z',
+      formularios_seleccionados: [{ codigo: 'TPA', nombre: 'TPA', genera_tpa_default: true }]
+    } as any));
 
     alertController = jasmine.createSpyObj<AlertController>('AlertController', ['create']);
     alertController.create.and.returnValue(Promise.resolve({ present: () => Promise.resolve() } as any));
+    routeId = null;
+    authServiceStub = { canAccess: jasmine.createSpy('canAccess').and.returnValue(false) };
 
     await TestBed.configureTestingModule({
       declarations: [SolicitudIngresoPage],
@@ -54,7 +79,10 @@ describe('SolicitudIngresoPage', () => {
         {
           provide: CatalogosService,
           useValue: {
-            getCategorias: () => of([{ idCategoria: '1', nombre: 'Productos Hidrobiologicos' }]),
+            getCategorias: () => of([
+              { idCategoria: '1', nombre: 'Productos Hidrobiologicos' },
+              { idCategoria: '2', nombre: 'Conservas' }
+            ]),
             getFormulariosAnalisis: () => of([
               { idFormularioAnalisis: '2', codigo: 'RAM35', nombreAnalisis: 'RAM 35C', area: 'Microbiologia', generaTpaDefault: false },
               { idFormularioAnalisis: '10', codigo: 'SALMONELLA_ISO', nombreAnalisis: 'Salmonella ISO', area: 'Microbiologia', generaTpaDefault: false },
@@ -67,6 +95,10 @@ describe('SolicitudIngresoPage', () => {
               { idEquipo: 3, nombreEquipo: 'Refrigerador 2-I', codigoEquipo: '2-I' }
             ]),
             getLugaresAlmacenamiento: () => of([{ idLugar: 1, nombreLugar: 'Freezer 33-M', codigoLugar: 'FR-33M' }]),
+            getSubcategorias: () => of([
+              { idSubcategoria: '11', nombre: 'Pescado Fresco', idCategoria: '1' },
+              { idSubcategoria: '12', nombre: 'Atun en conserva', idCategoria: '2' }
+            ]),
             getResponsables: () => of([
               { rut: '0-0', nombreApellido: 'Analista', correo: '', rol: 0 },
               { rut: '1-1', nombreApellido: 'Coordinadora', correo: '', rol: 1 },
@@ -76,9 +108,10 @@ describe('SolicitudIngresoPage', () => {
         },
         { provide: SolicitudIngresoService, useValue: solicitudService },
         { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
-        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: (key: string) => key === 'id' ? routeId : null } } } },
         { provide: AlertController, useValue: alertController },
-        { provide: ToastController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve() }) } }
+        { provide: ToastController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve() }) } },
+        { provide: AuthService, useValue: authServiceStub }
       ]
     }).compileComponents();
 
@@ -126,7 +159,23 @@ describe('SolicitudIngresoPage', () => {
     component.toggleFormulario(formulario);
 
     expect(component.tiempoEntregaNegativoDias).toBe(4);
-    expect(component.tiempoEntregaConfirmacionDias).toBe(7);
+    expect(component.tiempoEntregaConfirmacionDias).toBe(6);
+  });
+
+  it('muestra todas las categorias del catalogo y filtra subcategorias por categoria seleccionada', () => {
+    expect(component.categorias.map((categoria) => categoria.nombre)).toEqual(['Productos Hidrobiologicos', 'Conservas']);
+
+    component.form.patchValue({ categoria: 'Conservas' });
+
+    expect(component.subcategorias.map((subcategoria) => subcategoria.nombre)).toEqual(['Atun en conserva']);
+  });
+
+  it('usa un solo NO APLICA para deshabilitar fechas y asigna analista por defecto', () => {
+    component.form.patchValue({ analistaResponsable: '', noAplicaMuestreo: true });
+
+    expect(component.form.get('fechaInicioMuestreo')?.disabled).toBeTrue();
+    expect(component.form.get('fechaTerminoMuestreo')?.disabled).toBeTrue();
+    expect(component.form.get('analistaResponsable')?.value).toBe('Analista');
   });
 
   it('usa equipos_lab tambien para lugar de almacenamiento', () => {
@@ -150,6 +199,7 @@ describe('SolicitudIngresoPage', () => {
       fechaRecepcion: '2026-05-06T12:00',
       temperatura: 4,
       idTermometro: 2,
+      codigoEquipoManual: '10-T-I',
       fechaInicioMuestreo: '2026-05-06T12:00',
       fechaTerminoMuestreo: '2026-05-06T13:00',
       numeroMuestras: 1,
@@ -157,6 +207,7 @@ describe('SolicitudIngresoPage', () => {
       analistaResponsable: 'Analista',
       lugarMuestreo: 'Planta',
       instructivoMuestreo: 'No informado',
+      subcategoria: '11',
       idLugar: 3,
       envasesSuministradosPor: 'Cliente',
       rutCoordinadoraRecepcion: '1-1',
@@ -186,6 +237,7 @@ describe('SolicitudIngresoPage', () => {
       fechaRecepcion: '2026-05-06T12:00',
       temperatura: 4,
       idTermometro: 2,
+      codigoEquipoManual: '10-T-I',
       fechaInicioMuestreo: '2026-05-06T12:00',
       fechaTerminoMuestreo: '2026-05-06T13:00',
       numeroMuestras: 1,
@@ -193,6 +245,7 @@ describe('SolicitudIngresoPage', () => {
       analistaResponsable: 'Analista',
       lugarMuestreo: 'Planta',
       instructivoMuestreo: 'No informado',
+      subcategoria: '11',
       idLugar: 3,
       envasesSuministradosPor: 'Cliente',
       rutCoordinadoraRecepcion: '1-1',
@@ -220,6 +273,7 @@ describe('SolicitudIngresoPage', () => {
       fechaRecepcion: '2026-05-06T12:00',
       temperatura: 4,
       idTermometro: 2,
+      codigoEquipoManual: '10-T-I',
       fechaInicioMuestreo: '2026-05-06T12:00',
       fechaTerminoMuestreo: '2026-05-06T13:00',
       numeroMuestras: 1,
@@ -227,6 +281,7 @@ describe('SolicitudIngresoPage', () => {
       analistaResponsable: 'Analista',
       lugarMuestreo: 'Planta',
       instructivoMuestreo: 'No informado',
+      subcategoria: '11',
       idLugar: 3,
       envasesSuministradosPor: 'Cliente',
       rutCoordinadoraRecepcion: '1-1',
@@ -310,5 +365,39 @@ describe('SolicitudIngresoPage', () => {
     component.estadoFlujo = 'enviada';
 
     expect(component.badgeEstado).toEqual({ label: 'En validación', css: 'badge-pending', family: 'under_review' });
+  });
+
+  it('abre una solicitud existente en modo solo lectura para revisión', () => {
+    routeId = '123';
+    authServiceStub.canAccess.and.returnValue(true);
+    solicitudService.obtener.and.returnValue(of({
+      id_solicitud: '123',
+      numero_ali: 1001,
+      numero_acta: '15',
+      codigo_externo: 'EXT-1',
+      estado: 'enviado',
+      updated_at: '2026-05-06T12:30:00.000Z',
+      formularios_seleccionados: [{ codigo: 'TPA', nombre: 'TPA', genera_tpa_default: true }]
+    } as any));
+
+    fixture = TestBed.createComponent(SolicitudIngresoPage);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.reviewMode).toBeTrue();
+    expect(component.form.disabled).toBeTrue();
+    expect(component.canReviewCurrentSolicitud).toBeTrue();
+  });
+
+  it('valida la solicitud desde la vista de revisión y actualiza el estado', async () => {
+    component.reviewMode = true;
+    component.solicitudId = '123';
+    component.updatedAt = '2026-05-06T12:30:00.000Z';
+    component.estadoFlujo = 'enviado';
+
+    await component.validarSolicitudRevision();
+
+    expect(solicitudService.validar).toHaveBeenCalledWith('123', '2026-05-06T12:30:00.000Z');
+    expect(component.estadoFlujo).toBe('validada');
   });
 });

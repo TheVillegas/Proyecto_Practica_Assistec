@@ -24,7 +24,7 @@
       </li>
 
       <!-- Búsqueda ALI — visible para Analista (0), Coordinadora (1) y Jefe (2) -->
-      <li *ngIf="userRolNum === 0 || userRolNum === 1 || userRolNum === 2"
+      <li *ngIf="canAccessNavigation([0, 1, 2, 4])"
           class="nav-item" [class.active]="activeSegment === 'busqueda'" (click)="busquedaALI()" data-label="Búsqueda ALI">
         <ion-icon name="search-outline"></ion-icon>
         <span class="nav-item-text">Búsqueda ALI</span>
@@ -32,7 +32,7 @@
       </li>
 
       <!-- Búsqueda Solicitud Ingreso — visible para Ingreso (3), Coordinadora (1) y Jefe (2) -->
-      <li *ngIf="userRolNum === 3 || userRolNum === 1 || userRolNum === 2"
+      <li *ngIf="canAccessNavigation([1, 2, 3, 4])"
           class="nav-item" [class.active]="activeSegment === 'busqueda-solicitud'" (click)="busquedaSolicitudIngreso()" data-label="Búsqueda Solicitud">
         <ion-icon name="document-text-outline"></ion-icon>
         <span class="nav-item-text">Búsqueda Solicitud</span>
@@ -40,7 +40,7 @@
       </li>
 
       <!-- Solicitud Ingreso — visible solo para Ingreso (3) -->
-      <li *ngIf="userRolNum === 3"
+      <li *ngIf="canAccessNavigation([3, 4])"
           class="nav-item" [class.active]="activeSegment === 'solicitud'" (click)="solicitudIngreso()" data-label="Solicitud Ingreso">
         <ion-icon name="add-circle-outline"></ion-icon>
         <span class="nav-item-text">Solicitud Ingreso</span>

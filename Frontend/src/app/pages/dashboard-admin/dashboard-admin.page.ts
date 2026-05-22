@@ -9,12 +9,12 @@ import {
 } from 'src/app/services/solicitud-ingreso.service';
 
 @Component({
-  selector: 'app-dashboard-analista',
-  templateUrl: './dashboard-analista.page.html',
-  styleUrls: ['./dashboard-analista.page.scss'],
+  selector: 'app-dashboard-admin',
+  templateUrl: './dashboard-admin.page.html',
+  styleUrls: ['./dashboard-admin.page.scss'],
   standalone: false
 })
-export class DashboardAnalistaPage implements OnInit {
+export class DashboardAdminPage implements OnInit {
   private readonly router = inject(Router);
   private readonly solicitudService = inject(SolicitudIngresoService);
 
@@ -22,18 +22,13 @@ export class DashboardAnalistaPage implements OnInit {
   queueItems: DashboardQueueItem[] = [];
   loading = true;
 
-  private readonly ANALISTA_FILTERS = {
-    family: 'post_validation' as DashboardFamily,
-    assignedToMe: true
-  };
-
   ngOnInit(): void {
     this.cargarDatos();
   }
 
   cargarDatos(): void {
     this.loading = true;
-    this.solicitudService.obtenerResumenDashboard(this.ANALISTA_FILTERS).subscribe({
+    this.solicitudService.obtenerResumenDashboard({}).subscribe({
       next: (res: DashboardSummaryResponse) => {
         this.summary = res.summary;
       },
@@ -41,7 +36,7 @@ export class DashboardAnalistaPage implements OnInit {
         this.summary = {};
       }
     });
-    this.solicitudService.obtenerBandejaDashboard(this.ANALISTA_FILTERS).subscribe({
+    this.solicitudService.obtenerBandejaDashboard({}).subscribe({
       next: (res: DashboardQueueResponse) => {
         this.queueItems = res.items ?? [];
         this.loading = false;
@@ -57,8 +52,15 @@ export class DashboardAnalistaPage implements OnInit {
     return this.summary[family] ?? 0;
   }
 
-  busquedaALI() {
-    this.router.navigate(['/busqueda-ali']);
+  irADashboardIngreso(): void {
+    this.router.navigate(['/dashboard-ingreso']);
   }
 
+  irABandejaRevision(): void {
+    this.router.navigate(['/busqueda-solicitud-ingreso']);
+  }
+
+  irABusquedaAli(): void {
+    this.router.navigate(['/busqueda-ali']);
+  }
 }

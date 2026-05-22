@@ -111,6 +111,29 @@ class SolicitudController {
         }
     }
 
+    async summary(req, res) {
+        try {
+            const result = await solicitudService.summary(req.user, { actingRole: req.query.actingRole });
+            res.status(200).json(result);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ mensaje: 'Error interno del servidor' });
+        }
+    }
+
+    async queue(req, res) {
+        try {
+            const result = await solicitudService.queue(req.user, {
+                family: req.query.family,
+                actingRole: req.query.actingRole
+            });
+            res.status(200).json(result);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ mensaje: 'Error interno del servidor' });
+        }
+    }
+
     async plazoEstimado(req, res) {
         try {
             const result = await solicitudService.plazoEstimado(req.params.codigoAli);

@@ -3,6 +3,33 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export type DashboardFamily = 'editable' | 'resubmittable' | 'under_review' | 'post_validation';
+
+export interface DashboardQueryFilters {
+  family?: DashboardFamily;
+  actingRole?: number;
+  assignedToMe?: boolean;
+}
+
+export interface DashboardSummaryResponse {
+  summary: Record<DashboardFamily, number>;
+}
+
+export interface DashboardQueueItem {
+  id_solicitud: string;
+  numero_ali: number;
+  codigo_externo: string;
+  estado: string;
+  family: DashboardFamily;
+  updated_at: string;
+  nombre_cliente?: string;
+}
+
+export interface DashboardQueueResponse {
+  items: DashboardQueueItem[];
+  summary?: Partial<Record<DashboardFamily, number>>;
+}
+
 export interface FormularioSeleccionadoPayload {
   id?: string | null;
   codigo: string;
@@ -59,10 +86,12 @@ export interface SolicitudIngresoPayload {
   muestraCompartida: boolean;
   envasesSuministradosPor: string;
   observacionesLaboratorio: string;
+  analisisDerivadosSubcontratados?: string;
   rutJefaArea: string;
   rutCoordinadoraRecepcion: string;
   codigoEquipoManual?: string;
   subcategoriaId?: string;
+  noAplicaMuestreo?: boolean;
 }
 
 export interface SolicitudIngresoResponse {
@@ -81,17 +110,21 @@ export interface SolicitudIngresoResponse {
   direccion?: { id: number; direccion: string; alias: string } | null;
   temperatura?: number;
   id_termometro?: number;
+  codigo_equipo_manual?: string;
   id_lugar?: number;
   cantidad_muestras?: number;
   cant_envases?: number;
   responsable_muestreo?: string;
   lugar_muestreo?: string;
   instructivo_muestreo?: string;
+  subcategoria_id?: string;
+  no_aplica_muestreo?: boolean;
   envases_suministrados_por?: string;
   muestra_compartida_quimica?: boolean;
   notas_cliente?: string;
   nombre_solicitante?: string;
   observaciones_laboratorio?: string;
+  analisis_derivados_subcontratados?: string;
   formularios_seleccionados?: FormularioSeleccionadoPayload[];
   rut_jefa_area?: string;
   rut_coordinadora_recepcion?: string;
@@ -109,6 +142,18 @@ export class SolicitudIngresoService {
 
   listar(): Observable<SolicitudIngresoResponse[]> {
     return this.http.get<SolicitudIngresoResponse[]>(this.apiUrl);
+  }
+
+  obtenerResumenDashboard(filters: DashboardQueryFilters = {}): Observable<DashboardSummaryResponse> {
+    return this.http.get<DashboardSummaryResponse>(`${this.apiUrl}/summary`, {
+      params: this.buildDashboardParams(filters)
+    });
+  }
+
+  obtenerBandejaDashboard(filters: DashboardQueryFilters = {}): Observable<DashboardQueueResponse> {
+    return this.http.get<DashboardQueueResponse>(`${this.apiUrl}/queue`, {
+      params: this.buildDashboardParams(filters)
+    });
   }
 
   crear(payload: SolicitudIngresoPayload): Observable<SolicitudIngresoResponse> {
@@ -132,6 +177,19 @@ export class SolicitudIngresoService {
     });
   }
 
+  validar(idSolicitud: string, updatedAt: string): Observable<SolicitudIngresoResponse> {
+    return this.http.post<SolicitudIngresoResponse>(`${this.apiUrl}/${idSolicitud}/validar`, {
+      updated_at: updatedAt
+    });
+  }
+
+  rechazar(idSolicitud: string, updatedAt: string, motivo?: string): Observable<SolicitudIngresoResponse> {
+    return this.http.post<SolicitudIngresoResponse>(`${this.apiUrl}/${idSolicitud}/rechazar`, {
+      updated_at: updatedAt,
+      motivo: motivo ?? ''
+    });
+  }
+
   resolverAnalisis(idCategoriaProducto: string, idFormularioAnalisis: string): Observable<AnalisisResolucionResponse> {
     return this.http.get<AnalisisResolucionResponse>(`${this.apiUrl}/analisis/resolver`, {
       params: {
@@ -143,5 +201,23 @@ export class SolicitudIngresoService {
 
   obtenerPlazoEstimado(codigoAli: number | string): Observable<PlazoEstimadoResponse> {
     return this.http.get<PlazoEstimadoResponse>(`${this.apiUrl}/${codigoAli}/plazo-estimado`);
+  }
+
+  private buildDashboardParams(filters: DashboardQueryFilters): Record<string, string> {
+    const params: Record<string, string> = {};
+
+    if (filters.family) {
+      params['family'] = filters.family;
+    }
+
+    if (filters.actingRole != null) {
+      params['actingRole'] = String(filters.actingRole);
+    }
+
+    if (filters.assignedToMe != null) {
+      params['assignedToMe'] = String(filters.assignedToMe);
+    }
+
+    return params;
   }
 }

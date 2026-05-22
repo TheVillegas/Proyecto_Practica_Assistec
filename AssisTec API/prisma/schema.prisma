@@ -32,6 +32,7 @@ model Usuario {
   contrasenaUsuario      String              @map("contrasena_usuario") @db.VarChar(255)
   rolUsuario             Int                 @map("rol_usuario")
   urlFoto                String              @map("url_foto") @db.VarChar(255)
+  roles                  UsuarioRol[]
 
   solicitudesResponsable SolicitudIngreso[]  @relation("ResponsableIngreso")
   solicitudesJefaArea    SolicitudIngreso[]  @relation("JefaArea")
@@ -39,6 +40,17 @@ model Usuario {
   solicitudesCreadas     SolicitudIngreso[]  @relation("CreadoPor")
 
   @@map("usuarios")
+}
+
+model UsuarioRol {
+  rutUsuario String  @map("rut_usuario") @db.VarChar(255)
+  rol        Int     @map("rol")
+  isPrimary  Boolean @default(false) @map("is_primary")
+
+  usuario     Usuario @relation(fields: [rutUsuario], references: [rutUsuario], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([rutUsuario, rol])
+  @@map("usuario_roles")
 }
 
 model EquipoLab {

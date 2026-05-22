@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { AuthService } from 'src/app/services/auth-service';
+import { Route, Router } from '@angular/router';
+import { AuthService, SessionUser } from 'src/app/services/auth-service';
 
 @Component({
   selector: 'app-home',
@@ -15,21 +15,28 @@ export class HomePage implements OnInit {
 
   ngOnInit() {
     const user = this.authService.getUsuario();
-    const rol = user?.rol !== undefined ? user.rol : (user?.rol_analista ?? 0);
-
-    switch (rol) {
-      case 3:
-        this.router.navigate(['/dashboard-ingreso'], { replaceUrl: true });
-        break;
-      case 2:
-        this.router.navigate(['/dashboard-jefe'], { replaceUrl: true });
-        break;
-      case 1:
-        this.router.navigate(['/dashboard-coordinadora'], { replaceUrl: true });
-        break;
-      default:
-        this.router.navigate(['/dashboard-analista'], { replaceUrl: true });
+    if (!user) {
+      this.router.navigate(['/login'], { replaceUrl: true });
+      return;
     }
+
+    this.router.navigate([this.resolveLandingRoute(user)], { replaceUrl: true });
+  }
+
+  private resolveLandingRoute(user: SessionUser): string {
+    const landingRoute = this.authService.getLandingRoute(user);
+    const availableRoutes = this.router.config
+      .filter((route: Route) => route.path && Array.isArray(route.data?.['allowedRoles']))
+      .map((route: Route) => ({
+        path: `/${route.path}`,
+        allowedRoles: route.data?.['allowedRoles'] as number[]
+      }));
+
+    if (availableRoutes.some((route) => route.path === landingRoute)) {
+      return landingRoute;
+    }
+
+    return availableRoutes.find((route) => this.authService.canAccess(route.allowedRoles, user))?.path ?? landingRoute;
   }
 
 }
