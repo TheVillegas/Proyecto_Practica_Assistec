@@ -1,8 +1,17 @@
-# Prototipo de formulario de análisis microbiológico
+# Especificaciones para la digitalización del formulario de análisis microbiológico
 
 ## 1. Contexto general
+# Formulario Coliformes totales, coliformes fecales y E. coli 
+Este documento contiene la estructura completa del formulario de coliformes totales, fecales y E. coli, y los requerimientos para la digitalización del formulario para el registro de análisis microbiológico de **Coliformes Totales, Coliformes Fecales y E. coli** en alimentos.
 
-Necesito crear un prototipo funcional de un formulario web para el registro de análisis microbiológico de **Coliformes Totales, Coliformes Fecales y E. coli** en alimentos.
+## 2. Estructura
+El formulario de coliformes está estructurado en etapas, cada una con sus propios campos y validaciones. Las etapas son las siguientes:
+1. Detalles del alimento e incubación
+2. Detalles de siembra
+3. Control de análisis
+4. Control de calidad
+5. Datos finales y cálculo de resultados
+
 
 El formulario debe permitir:
 
@@ -13,13 +22,8 @@ El formulario debe permitir:
 5. Calcular y mostrar los resultados finales de presencia de coliformes y/o E. coli.
 6. Enviar o cancelar el registro del análisis.
 
-El objetivo es generar un prototipo claro, usable y estructurado como formulario de registro de datos de laboratorio.
 
----
-
-## 2. Tipo de aplicación esperada
-
-Construye una interfaz de formulario web para registro de datos.
+## Características de la interfaz del formulario
 
 La interfaz debe tener:
 
@@ -33,7 +37,6 @@ La interfaz debe tener:
 - Estado visual para campos autocompletados y no editables.
 - Tablas editables para registrar lecturas por muestra, duplicado, dilución y submuestra.
 
----
 
 ## 3. Flujo general del formulario
 
@@ -52,81 +55,57 @@ Cada etapa debe estar claramente separada visualmente. Puede implementarse como:
 
 Si se usa stepper/wizard, el usuario debe poder avanzar solamente cuando los campos obligatorios de la etapa actual estén completos.
 
----
+Desde el formulario de solicitud de ingreso se debe autocompletar el código ALI asociado. 
 
-## 4. Reglas de importación automática
-
-Los datos del alimento y de incubación deben importarse automáticamente desde una lista de solicitudes de ingreso.
-
-### Campos autocompletados y no editables
-
-Los siguientes campos deben mostrarse en el formulario, pero no deben permitir edición manual:
-
-| Campo | Tipo de campo | Editable | Obligatorio | Origen |
-|---|---:|---:|---:|---|
-| Código del alimento | Texto | No | Sí | Lista de solicitudes de ingreso |
-| Fecha de incubación | Fecha o texto formateado | No | Sí | Lista de solicitudes de ingreso |
-| Hora de incubación | Hora o texto formateado | No | Sí | Lista de solicitudes de ingreso |
-| Analista responsable de incubación | Texto | No | Sí | Lista de solicitudes de ingreso |
-
-### Comportamiento esperado
-
-- Los campos deben aparecer precargados al abrir el formulario.
-- Deben verse visualmente como campos bloqueados o deshabilitados.
-- Si falta alguno de estos datos importados, mostrar una alerta o mensaje de validación.
-
----
 
 ## 5. Etapa 1: Detalles del alimento e incubación
 
 Esta etapa contiene los datos generales del alimento, incubación y cierre del análisis.
 
 ### Campos
+* Código ALI: autocompletado
+#### Enumeración de coliformes totales (NCh 2635/1. Of2001)
+* Inicio Incubación: Día (dd)/mes (mm)/hora (hh:mm)/Analista
+* Término Análisis: Día (dd)/mes (mm)/hora (hh:mm)/Analista
 
-| Campo | Tipo | Editable | Obligatorio | Observaciones |
-|---|---|---:|---:|---|
-| Código del alimento | Texto | No | Sí | Autocompletado |
-| Fecha de inicio incubación | Texto o fecha | No | Sí | Autocompletado desde fecha de incubación |
-| Hora de inicio incubación | Texto u hora | No | Sí | Autocompletado desde hora de incubación |
-| Analista responsable de incubación | Texto | No | Sí | Autocompletado |
-| Fecha de término análisis | Texto o fecha | Sí | Sí | Ingresado por usuario |
-| Analista responsable de término de análisis | Texto | Sí | Sí | Ingresado por usuario |
+#### Enumeracion de coliformes fecales (NCh 2635/1. Of2001)
+* Inicio Incubación: Día (dd)/mes (mm)/hora (hh:mm)/Analista
+* Término Análisis: Día (dd)/mes (mm)/hora (hh:mm)/Analista
+
+#### Enumeración de Escherichia Coli (NCh 2636. Of2001)
+* Inicio Incubación: Día (dd)/mes (mm)/hora (hh:mm)/Analista
+* Término Análisis: Día (dd)/mes (mm)/hora (hh:mm)/Analista
+
 
 ### Validaciones
 
 - La fecha de término de análisis no puede ser anterior a la fecha de incubación.
 - El analista responsable de término de análisis es obligatorio.
-- Los campos autocompletados deben estar bloqueados.
-
----
+- El campo de código ALI es autocompletado y no editable.
+- Los campos de inicio de incubación y término de análisis son editables.
+- Los campos de analista responsable de incubación y analista responsable de término de análisis son editables.
 
 ## 6. Etapa 2: Detalles de siembra
 
 Esta etapa debe permitir registrar los datos relacionados con la siembra bacteriana y los utensilios utilizados.
 
 ### Campos
+* Caldo Lauril simple: campo de texto editable
+* Tween 80: campo de texto editable
+* Estufa utilizada: campo tipo radio button con opciones (Estufa 73-M (35.0+/-0.5°C), Estufa 2-M (35.5+/-0.5°C))
 
-| Campo | Tipo | Obligatorio | Observaciones |
-|---|---|---:|---|
-| Código del medio de homogeneización | Texto | Sí | Registro general del medio utilizado |
-| Caldo lauril | Texto | Sí | Código o identificación del caldo |
-| Tween 80 | Texto | No | Código o identificación si aplica |
-| Estufa utilizada | Radio button | Sí | Debe permitir seleccionar una estufa |
-| Micropipeta utilizada | Checkbox múltiple | Sí | Opciones: `1 ml`, `10 ml` |
-| Código de muestra según naturaleza | Texto | Sí | Debe indicar homogéneo o mezcla |
-| N° muestra 10 g / 90 ml | Texto | No | Registro de muestra según preparación |
-| N° muestra 50 g / 450 ml | Texto | No | Registro de muestra según preparación |
+* Micropipetas 1ml: campo tipo radio button con opciones (22-M, 72-M, 98-M, 100-M, 102-M)
+* Micropipetas 10ml: campo tipo radio button con opciones (32-M, 103-M, 75-M, 94-M, 106-M)
+* N° muestra 10 g / 90 ml: campo de texto editable
+* N° muestra 50 g / 450 ml: campo de texto editable
+
 
 ### Reglas de interacción
 
 - En **Estufa utilizada**, el usuario debe seleccionar una única opción.
-- En **Micropipeta utilizada**, el usuario puede seleccionar una o más opciones.
+- En **Micropipeta utilizada**, el usuario puede seleccionar una única opción
 - Debe existir al menos una micropipeta seleccionada.
-- Si el campo `Código de muestra según naturaleza` usa opciones, considerar las alternativas:
-  - Homogéneo
-  - Mezcla
 
----
 
 ## 7. Etapa 3: Control de análisis
 
@@ -139,27 +118,22 @@ Debe contener dos bloques o tablas independientes:
 
 Cada bloque debe incluir datos generales de lectura y una tabla de submuestras.
 
----
+### 7.1 Campos para lectura 24 horas
 
-### 7.1 Datos generales para lectura 24 horas
+* Fecha/Hora/Analista lectura lauril 24 horas: (dd/mm/hh:mm/texto) editable
+* Tabla de lectura para las muestras: 
+- 6 muestras + 1 duplicado. 
+- 3 diluciones por muestra. diluciones: 1 ml, 0.1 ml, 0.01 ml.
+- Columnas de tabla: N° de muestra, Duplicado, 1 ml, 0.1 ml, 0.01 ml. (positivos/negativos)
 
-| Campo | Tipo | Obligatorio | Validación |
-|---|---|---:|---|
-| Fecha de lectura 24 h | Fecha en formato `DD/MM` | Sí | Debe respetar formato |
-| Hora de lectura 24 h | Hora en formato `HH:MM` | Sí | Debe estar dentro del rango permitido |
-| Analista responsable 24 h | Texto | Sí | Obligatorio |
-| N° muestra 24 h, incluye duplicado | Texto | Sí | Obligatorio |
 
-### 7.2 Datos generales para lectura 48 horas
+### 7.2 Campos para lectura 48 horas
+* Fecha/Hora/Analista lectura lauril 24 horas: (dd/mm/hh:mm/texto) editable
+* Tabla de lectura para las muestras: 
+- 6 muestras + 1 duplicado. 
+- 3 diluciones por muestra. diluciones: 1 ml, 0.1 ml, 0.01 ml.
+- Columnas de tabla: N° de muestra, Duplicado, 1 ml, 0.1 ml, 0.01 ml. (positivos/negativos)
 
-| Campo | Tipo | Obligatorio | Validación |
-|---|---|---:|---|
-| Fecha de lectura 48 h | Fecha en formato `DD/MM` | Sí | Debe respetar formato |
-| Hora de lectura 48 h | Hora en formato `HH:MM` | Sí | Debe estar dentro del rango permitido |
-| Analista responsable 48 h | Texto | Sí | Obligatorio |
-| N° muestra 48 h, incluye duplicado | Texto | Sí | Obligatorio |
-
----
 
 ## 8. Regla de validación para hora de lectura
 
@@ -178,8 +152,6 @@ Si la hora programada es `10:00`, se deben aceptar lecturas entre:
 Si la hora ingresada está fuera de ese rango, mostrar un mensaje de error como:
 
 > La hora de lectura debe estar dentro del rango permitido de ±2 horas respecto de la hora programada.
-
----
 
 ## 9. Tabla de lectura de submuestras
 
@@ -207,154 +179,41 @@ Para evitar ambigüedad, cada submuestra debería permitir una sola de estas opc
 - `Negativo`
 - `Sin registrar`
 
----
-
-### 9.1 Estructura sugerida de tabla
-
-La tabla debe representar las muestras como columnas agrupadas y las diluciones como filas.
-
-Ejemplo conceptual:
-
-| Dilución | Muestra 1 - S1 | Muestra 1 - S2 | Muestra 1 - S3 | Muestra 2 - S1 | Muestra 2 - S2 | Muestra 2 - S3 | ... | Duplicado - S1 | Duplicado - S2 | Duplicado - S3 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 1 ml | Pos/Neg | Pos/Neg | Pos/Neg | Pos/Neg | Pos/Neg | Pos/Neg | ... | Pos/Neg | Pos/Neg | Pos/Neg |
-| 0,1 ml | Pos/Neg | Pos/Neg | Pos/Neg | Pos/Neg | Pos/Neg | Pos/Neg | ... | Pos/Neg | Pos/Neg | Pos/Neg |
-| 0,01 ml | Pos/Neg | Pos/Neg | Pos/Neg | Pos/Neg | Pos/Neg | Pos/Neg | ... | Pos/Neg | Pos/Neg | Pos/Neg |
-
-### 9.2 Tabla para lectura 24 horas
-
-Debe incluir:
-
-- Fecha de lectura.
-- Hora de lectura.
-- Analista responsable.
-- Número de muestra, incluyendo duplicado.
-- Tabla de submuestras con diluciones `1 ml`, `0,1 ml`, `0,01 ml`.
-- Registro positivo/negativo por cada submuestra.
-
-### 9.3 Tabla para lectura 48 horas
-
-Debe incluir la misma estructura que la tabla de 24 horas:
-
-- Fecha de lectura.
-- Hora de lectura.
-- Analista responsable.
-- Número de muestra, incluyendo duplicado.
-- Tabla de submuestras con diluciones `1 ml`, `0,1 ml`, `0,01 ml`.
-- Registro positivo/negativo por cada submuestra.
-
----
-
 ## 10. Etapa 4: Control de calidad
 
 Esta etapa debe permitir registrar presencia o ausencia de colonias y/o crecimiento de colonias para los controles definidos.
 
 ### Campos de control
+#### Control Coliformes Totales (24 horas)
+* Control (+) K. aerogenes: campo radio button (presencia / ausencia)
+* Control (-) S. aureus: campo radio button (presencia / ausencia)
+* Control E. coli: campo radio button (presencia / ausencia)
+* Control blanco: campo de texto editable
 
-| Control | Tipo | Opciones | Obligatorio |
-|---|---|---|---:|
-| Control K. aerogenes | Checkbox o selector binario | Presencia / Ausencia | Sí |
-| Control S. aureus | Checkbox o selector binario | Presencia / Ausencia | Sí |
-| Control E. coli | Checkbox o selector binario | Presencia / Ausencia | Sí |
-| Control blanco | Texto | Campo libre para observación o resultado | Sí |
+#### Control Coliformes Fecales (24 horas)
+* Control (+) E. coli: campo radio button (presencia / ausencia)
+* Control (-) K. aerogenes: campo radio button (presencia / ausencia)
+* Control blanco: campo de texto editable
 
-### Nota de normalización
+#### Control E. coli (24 horas)
+* Control (+) E. coli: campo radio button (presencia / ausencia)
+* Control (-) K. aerogenes: campo radio button (presencia / ausencia)
+* Control blanco: campo de texto editable
 
-En el prompt base aparecen variantes como `Control Kaerogenes` y `Control K.aerogenes`. Para la interfaz, normalizar como:
-
-- `Control K. aerogenes`
-
----
+- Estos campos deben ubicarse después de la tabla de lectura de 24 horas y después de la tabla de lectura de 48 horas. Deben estar separados por bloques.
 
 ## 11. Etapa 5: Datos finales y cálculo de resultados
 
 Esta etapa debe mostrar o registrar los resultados finales del análisis.
 
 ### Campos
+Tabla de resultados finales. Esta debe contener
+* N° de muestra: campo de texto editable. Debe contener todas las muestras ingresadas en la etapa 3.
+* Filas: CT (Coliformes Totales), CF (Coliformes Fecales), E.Coli (Escherichia Coli). Estas columnas deben ser editables
+- La unidad de medida de cada valor ingresado debe aparecer al lado del valor ingresado en la columna (NMP/g). Por ejemplo: 450 NPM/g.
+* Observaciones finales: campo de texto editable. 
 
-| Campo | Tipo | Editable | Obligatorio | Observaciones |
-|---|---|---:|---:|---|
-| N° muestra | Texto | Sí | Sí | Identificador de muestra final |
-| Resultado NMP / 25 g - Coliformes totales | Número o texto calculado | Sí o calculado | Sí | Resultado final |
-| Resultado NMP / 25 g - Coliformes fecales | Número | Sí o calculado | Sí | Resultado final |
-| Resultado NMP / 25 g - E. coli | Número | Sí o calculado | Sí | Resultado final |
-
-### Reglas de cálculo
-
-El sistema debe calcular o permitir registrar el resultado de presencia de:
-
-- Coliformes totales
-- Coliformes fecales
-- E. coli
-
-El resultado debe expresarse como:
-
-```text
-NMP / 25 g
-```
-
-Si no se implementa todavía el algoritmo exacto de cálculo NMP, dejar preparada una función o placeholder claramente identificada para conectarla posteriormente.
-
-
----
-
-## 12. Campos obligatorios consolidados
-
-Los siguientes campos deben validarse antes de enviar el formulario:
-
-### Datos importados
-
-- Código del alimento
-- Fecha de incubación
-- Hora de incubación
-- Analista responsable de incubación
-
-### Datos de cierre
-
-- Fecha de término análisis
-- Analista responsable de término de análisis
-
-### Siembra
-
-- Código del medio de homogeneización
-- Caldo lauril
-- Estufa utilizada
-- Al menos una micropipeta utilizada
-- Código de muestra según naturaleza
-
-### Lectura 24 horas
-
-- Fecha de lectura 24 h
-- Hora de lectura 24 h
-- Analista responsable 24 h
-- N° muestra 24 h, incluye duplicado
-- Registro de submuestras 24 h
-
-### Lectura 48 horas
-
-- Fecha de lectura 48 h
-- Hora de lectura 48 h
-- Analista responsable 48 h
-- N° muestra 48 h, incluye duplicado
-- Registro de submuestras 48 h
-
-### Control de calidad
-
-- Control K. aerogenes
-- Control S. aureus
-- Control E. coli
-- Control blanco
-
-### Datos finales
-
-- N° muestra
-- Resultado NMP / 25 g para coliformes totales
-- Resultado NMP / 25 g para coliformes fecales
-- Resultado NMP / 25 g para E. coli
-
----
-
-## 13. Comportamiento de botones
+## 12. Comportamiento de botones
 
 ### Botón Enviar
 
@@ -369,7 +228,7 @@ Al hacer clic en **Enviar**:
 
 Mensaje sugerido:
 
-> Registro de análisis enviado correctamente.
+> Registro de análisis Enviado correctamente.
 
 ### Botón Cancelar
 
@@ -382,9 +241,7 @@ Mensaje sugerido:
 
 > ¿Deseas cancelar el registro? Los datos ingresados se perderán.
 
----
-
-## 14. Estados y mensajes de validación
+## 13. Estados y mensajes de validación
 
 Implementar estados visuales para:
 
@@ -404,11 +261,7 @@ Ejemplos de mensajes:
 - `La hora de lectura debe estar dentro del rango permitido de ±2 horas.`
 - `Debe registrar las submuestras antes de enviar.`
 
----
-
-## 15. Requisitos de usabilidad
-
-- Los campos autocompletados deben verse deshabilitados.
+## 14. Requisitos de usabilidad
 - Las tablas deben ser fáciles de leer, con encabezados fijos o agrupados si es posible.
 - Las diluciones deben aparecer como filas.
 - Las muestras y duplicados deben aparecer como grupos de columnas.
@@ -417,101 +270,8 @@ Ejemplos de mensajes:
 - Destacar visualmente las secciones de lectura 24 h y 48 h.
 - Mostrar resumen de resultados antes del envío final.
 
----
-
-## 16. Modelo de datos sugerido
-
-Usar una estructura de datos similar a la siguiente:
-
-```ts
-type ResultadoSubmuestra = 'positivo' | 'negativo' | 'sin_registrar';
-
-type Dilucion = '1ml' | '0.1ml' | '0.01ml';
-
-type LecturaSubmuestra = {
-  muestraId: string;
-  esDuplicado: boolean;
-  dilucion: Dilucion;
-  submuestra: 1 | 2 | 3;
-  resultado: ResultadoSubmuestra;
-};
-
-type Lectura = {
-  tipo: '24h' | '48h';
-  fechaLectura: string;
-  horaLectura: string;
-  analistaResponsable: string;
-  numeroMuestraIncluyeDuplicado: string;
-  submuestras: LecturaSubmuestra[];
-};
-
-type FormularioColiformes = {
-  alimento: {
-    codigoAlimento: string;
-    fechaIncubacion: string;
-    horaIncubacion: string;
-    analistaIncubacion: string;
-    fechaTerminoAnalisis: string;
-    analistaTerminoAnalisis: string;
-  };
-  siembra: {
-    codigoMedioHomogeneizacion: string;
-    caldoLauril: string;
-    tween80?: string;
-    estufaUtilizada: string;
-    micropipetas: string[];
-    codigoMuestraNaturaleza: string;
-    muestra10g90ml?: string;
-    muestra50g450ml?: string;
-  };
-  lecturas: Lectura[];
-  controlCalidad: {
-    controlKAerogenes: 'presencia' | 'ausencia' | 'sin_registrar';
-    controlSAureus: 'presencia' | 'ausencia' | 'sin_registrar';
-    controlEColi: 'presencia' | 'ausencia' | 'sin_registrar';
-    blanco: string;
-  };
-  datosFinales: {
-    numeroMuestra: string;
-    coliformesTotalesNMP25g: number | string;
-    coliformesFecalesNMP25g: number | string;
-    eColiNMP25g: number | string;
-  };
-};
-```
-
----
-
-## 17. Criterios de aceptación
-
-El prototipo se considera correcto si cumple con lo siguiente:
-
-- Muestra las cinco etapas del formulario.
-- Los datos importados aparecen autocompletados y no editables.
-- Permite registrar datos de siembra.
-- Permite seleccionar estufa mediante radio button.
-- Permite seleccionar micropipetas mediante checkbox.
-- Incluye una tabla de lectura para 24 horas.
-- Incluye una tabla de lectura para 48 horas.
-- Cada tabla permite registrar presencia/ausencia por muestra, duplicado, dilución y submuestra.
-- Existen al menos 6 muestras más 1 duplicado.
-- Cada muestra tiene 3 submuestras por dilución.
-- Las diluciones disponibles son `1 ml`, `0,1 ml` y `0,01 ml`.
-- Valida fechas en formato `DD/MM` cuando corresponda.
-- Valida horas en formato `HH:MM`.
-- Valida margen de lectura de ±2 horas.
-- Permite registrar controles de calidad.
-- Permite registrar o calcular resultados NMP / 25 g.
-- Tiene botón **Enviar**.
-- Tiene botón **Cancelar**.
-- Muestra mensajes de error y éxito.
-
----
-
-## 18. Instrucción final para Antigravity
+## 15. Instrucción final
 
 Genera el prototipo completo del formulario siguiendo esta especificación.
 
 Prioriza claridad, estructura visual y fidelidad al flujo de laboratorio. Implementa datos de ejemplo para los campos importados automáticamente y deja preparada la lógica para conectar el formulario a un servidor real.
-
-Si el cálculo exacto de NMP no está definido, implementa una función placeholder y muestra claramente dónde debe conectarse la fórmula o tabla oficial de cálculo.

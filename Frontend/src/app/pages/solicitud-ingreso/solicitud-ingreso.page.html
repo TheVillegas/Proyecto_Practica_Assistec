@@ -68,13 +68,7 @@
                   <input type="text" class="form-input form-input--readonly" formControlName="numeroActa" readonly />
                 </div>
               </ion-col>
-              <ion-col size="12" size-md="6">
-                <div class="form-group">
-                  <label class="form-label">Código Externo</label>
-                  <input type="text" class="form-input" formControlName="codigoExterno"
-                    placeholder="Ej: EXT-2025-001" />
-                </div>
-              </ion-col>
+              <!---Mover categoria a Etapa 5
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Categoría <span class="req">*</span></label>
@@ -86,6 +80,7 @@
                   <span class="error-msg" *ngIf="campoInvalido('categoria')">Campo obligatorio.</span>
                 </div>
               </ion-col>
+            -->
             </ion-row>
           </ion-grid>
         </div>
@@ -262,6 +257,19 @@
             <span class="error-msg" *ngIf="campoInvalido('tipoAnalisis')">Seleccione un tipo de análisis.</span>
           </div>
 
+          <ion-col size="12" size-md="6">
+            <div class="form-group">
+              <label class="form-label">Categoría <span class="req">*</span></label>
+              <select class="form-select" formControlName="categoria"
+                [class.form-input--error]="campoInvalido('categoria')">
+                <option value="" disabled>Seleccione categoría</option>
+                <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+              </select>
+              <span class="error-msg" *ngIf="campoInvalido('categoria')">Campo obligatorio.</span>
+            </div>
+          </ion-col>
+
+
           <!-- Checklist de formularios -->
           <div class="checklist-section" *ngIf="formulariosCatalogo.length > 0">
             <h3 class="checklist-title">
@@ -376,12 +384,26 @@
         </div>
       </div>
 
-      <!-- ════ ETAPA 8: FLUJO ════ -->
+      <!-- ════ ETAPA 8: ANÁLISIS DERIVADOS/SUBCONTRATADOS ════ -->
       <div class="form-card" *ngIf="etapaActual === 8">
         <div class="form-card-header">
           <div class="form-card-title-group">
+            <ion-icon name="water-outline"></ion-icon>
+            <h2 class="form-card-title">Etapa 8 — Análisis Derivados - Subcontratados</h2>
+          </div>
+        </div>
+        <div class="form-card-body">
+          <div class="form-group">
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ ETAPA 9: FLUJO ════ -->
+      <div class="form-card" *ngIf="etapaActual === 9">
+        <div class="form-card-header">
+          <div class="form-card-title-group">
             <ion-icon name="git-network-outline"></ion-icon>
-            <h2 class="form-card-title">Etapa 8 — Estado del Flujo</h2>
+            <h2 class="form-card-title">Etapa 9 — Estado del Flujo</h2>
           </div>
         </div>
         <div class="form-card-body">
@@ -404,12 +426,12 @@
         </div>
       </div>
 
-      <!-- ════ ETAPA 9: ENTREGA ════ -->
-      <div class="form-card" *ngIf="etapaActual === 9">
+      <!-- ════ ETAPA 10: ENTREGA ════ -->
+      <div class="form-card" *ngIf="etapaActual === 10">
         <div class="form-card-header">
           <div class="form-card-title-group">
             <ion-icon name="timer-outline"></ion-icon>
-            <h2 class="form-card-title">Etapa 9 — Tiempo de Entrega</h2>
+            <h2 class="form-card-title">Etapa 10 — Tiempo de Entrega</h2>
           </div>
         </div>
         <div class="form-card-body">
@@ -434,12 +456,12 @@
         </div>
       </div>
 
-      <!-- ════ ETAPA 10: INFORMES ════ -->
-      <div class="form-card" *ngIf="etapaActual === 10">
+      <!-- ════ ETAPA 11: INFORMES ════ -->
+      <div class="form-card" *ngIf="etapaActual === 11">
         <div class="form-card-header">
           <div class="form-card-title-group">
             <ion-icon name="document-attach-outline"></ion-icon>
-            <h2 class="form-card-title">Etapa 10 — Resumen e Informes</h2>
+            <h2 class="form-card-title">Etapa 11 — Resumen e Informes</h2>
           </div>
         </div>
         <div class="form-card-body">
@@ -519,3 +541,5 @@
     </form>
   </div>
 </ion-content>
+
+<!--Agregar etapa intermedia  entre etapa 7 y 8, analisis derivados y subderivados-->

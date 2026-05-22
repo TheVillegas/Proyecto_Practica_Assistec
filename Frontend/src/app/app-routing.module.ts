@@ -55,6 +55,11 @@ const routes: Routes = [
     loadChildren: () => import('./pages/form-coliformes/form-coliformes.module').then(m => m.FormColiformesPageModule),
     canActivate: [AuthGuard]
   },
+  {
+    path: 'form-enterobacterias',
+    loadChildren: () => import('./pages/form-enterobacterias/form-enterobacterias.module').then(m => m.FormEnterobacteriasPageModule),
+    canActivate: [AuthGuard]
+  },
 ];
 
 @NgModule({
