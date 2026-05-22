@@ -2,12 +2,10 @@
 
 <ion-content [fullscreen]="true" class="sdi-content">
   <div class="page-container">
-
-    <!-- ── ENCABEZADO ── -->
     <div class="page-header">
       <div class="page-header__text">
         <h1>Solicitud de Ingreso de Muestras</h1>
-        <p>Complete cada etapa del formulario para registrar la solicitud.</p>
+        <p>Formulario principal del flujo de ingreso, trazabilidad y validación.</p>
       </div>
       <div class="page-header__codes">
         <span class="code-pill">
@@ -18,10 +16,37 @@
           <ion-icon name="document-text-outline"></ion-icon>
           {{ numeroActa }}
         </span>
+        <button type="button" class="btn-secondary" *ngIf="solicitudId && !reviewMode" (click)="nuevaSolicitud()">
+          <ion-icon name="add-circle-outline"></ion-icon>
+          Nueva solicitud
+        </button>
       </div>
     </div>
 
-    <!-- ── STEPPER ── -->
+    <div class="form-card" *ngIf="reviewMode">
+      <div class="form-card-body">
+        <div class="flujo-section">
+          <div class="flujo-estado">
+            <span class="flujo-label">Vista de revisión solo lectura</span>
+            <span class="badge" [ngClass]="badgeEstado.css">{{ badgeEstado.label }}</span>
+          </div>
+          <div class="resumen-acciones" *ngIf="canTakeReviewAction; else reviewAlreadyDoneState">
+            <button type="button" class="btn-validar" (click)="validarSolicitudRevision()" [disabled]="!canTakeReviewAction">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              Validar
+            </button>
+            <button type="button" class="btn-cancel" (click)="rechazarSolicitudRevision()" [disabled]="!canTakeReviewAction">
+              <ion-icon name="close-circle-outline"></ion-icon>
+              Rechazar
+            </button>
+          </div>
+          <ng-template #reviewAlreadyDoneState>
+            <p *ngIf="reviewAlreadyCompletedMessage">{{ reviewAlreadyCompletedMessage }}</p>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
     <div class="stepper-wrapper">
       <div class="stepper-bar">
         <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
@@ -36,10 +61,7 @@
       </div>
     </div>
 
-    <!-- ── FORM ── -->
     <form [formGroup]="form" class="form-wrapper">
-
-      <!-- ════ ETAPA 1: IDENTIFICACIÓN ════ -->
       <div class="form-card" *ngIf="etapaActual === 1">
         <div class="form-card-header">
           <div class="form-card-title-group">
@@ -50,43 +72,31 @@
         <div class="form-card-body">
           <ion-grid>
             <ion-row>
-              <ion-col size="12" size-md="6">
+              <ion-col size="12" size-md="4">
                 <div class="form-group">
                   <label class="form-label">Año de ingreso</label>
                   <input type="text" class="form-input form-input--readonly" formControlName="anioIngreso" readonly />
                 </div>
               </ion-col>
-              <ion-col size="12" size-md="6">
+              <ion-col size="12" size-md="4">
                 <div class="form-group">
-                  <label class="form-label">Código ALI <span class="readonly-badge">Auto</span></label>
-                  <input type="text" class="form-input form-input--readonly" formControlName="codigoALI" readonly />
+                  <label class="form-label">Codigo ALI <span class="req">*</span></label>
+                  <input type="number" class="form-input" formControlName="codigoALI" [class.form-input--error]="campoInvalido('codigoALI')" />
+                  <span class="error-msg" *ngIf="campoInvalido('codigoALI')">Ingrese un ALI valido.</span>
                 </div>
               </ion-col>
-              <ion-col size="12" size-md="6">
+              <ion-col size="12" size-md="4">
                 <div class="form-group">
-                  <label class="form-label">Número de Acta <span class="readonly-badge">Auto</span></label>
-                  <input type="text" class="form-input form-input--readonly" formControlName="numeroActa" readonly />
+                  <label class="form-label">Codigo Serna u Otro <span class="req">*</span></label>
+                  <input type="text" class="form-input" formControlName="numeroActa" [class.form-input--error]="campoInvalido('numeroActa')" />
+                  <span class="error-msg" *ngIf="campoInvalido('numeroActa')">Campo obligatorio.</span>
                 </div>
               </ion-col>
-              <!---Mover categoria a Etapa 5
-              <ion-col size="12" size-md="6">
-                <div class="form-group">
-                  <label class="form-label">Categoría <span class="req">*</span></label>
-                  <select class="form-select" formControlName="categoria"
-                    [class.form-input--error]="campoInvalido('categoria')">
-                    <option value="" disabled>Seleccione categoría</option>
-                    <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
-                  </select>
-                  <span class="error-msg" *ngIf="campoInvalido('categoria')">Campo obligatorio.</span>
-                </div>
-              </ion-col>
-            -->
             </ion-row>
           </ion-grid>
         </div>
       </div>
 
-      <!-- ════ ETAPA 2: CLIENTE ════ -->
       <div class="form-card" *ngIf="etapaActual === 2">
         <div class="form-card-header">
           <div class="form-card-title-group">
@@ -100,33 +110,28 @@
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Nombre del cliente <span class="req">*</span></label>
-                  <input type="text" class="form-input" formControlName="nombreCliente"
-                    placeholder="Razón social o nombre" [class.form-input--error]="campoInvalido('nombreCliente')" />
+                  <input type="text" class="form-input" formControlName="nombreCliente" [class.form-input--error]="campoInvalido('nombreCliente')" />
                   <span class="error-msg" *ngIf="campoInvalido('nombreCliente')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
                   <label class="form-label">Nombre del solicitante <span class="req">*</span></label>
-                  <input type="text" class="form-input" formControlName="nombreSolicitante"
-                    placeholder="Nombre del responsable"
-                    [class.form-input--error]="campoInvalido('nombreSolicitante')" />
+                  <input type="text" class="form-input" formControlName="nombreSolicitante" [class.form-input--error]="campoInvalido('nombreSolicitante')" />
                   <span class="error-msg" *ngIf="campoInvalido('nombreSolicitante')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12">
                 <div class="form-group">
                   <label class="form-label">Dirección <span class="req">*</span></label>
-                  <input type="text" class="form-input" formControlName="direccion" placeholder="Dirección del cliente"
-                    [class.form-input--error]="campoInvalido('direccion')" />
+                  <input type="text" class="form-input" formControlName="direccion" [class.form-input--error]="campoInvalido('direccion')" />
                   <span class="error-msg" *ngIf="campoInvalido('direccion')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12">
                 <div class="form-group">
                   <label class="form-label">Notas del cliente</label>
-                  <textarea class="form-textarea" formControlName="notasCliente" rows="3"
-                    placeholder="Requerimientos especiales, condiciones..."></textarea>
+                  <textarea class="form-textarea" formControlName="notasCliente" rows="3"></textarea>
                 </div>
               </ion-col>
             </ion-row>
@@ -134,7 +139,6 @@
         </div>
       </div>
 
-      <!-- ════ ETAPA 3: RECEPCIÓN ════ -->
       <div class="form-card" *ngIf="etapaActual === 3">
         <div class="form-card-header">
           <div class="form-card-title-group">
@@ -145,20 +149,35 @@
         <div class="form-card-body">
           <ion-grid>
             <ion-row>
-              <ion-col size="12" size-md="6">
+              <ion-col size="12" size-md="4">
                 <div class="form-group">
                   <label class="form-label">Fecha de recepción <span class="req">*</span></label>
-                  <input type="datetime-local" class="form-input" formControlName="fechaRecepcion"
-                    [class.form-input--error]="campoInvalido('fechaRecepcion')" />
+                  <input type="datetime-local" class="form-input" formControlName="fechaRecepcion" [class.form-input--error]="campoInvalido('fechaRecepcion')" />
                   <span class="error-msg" *ngIf="campoInvalido('fechaRecepcion')">Campo obligatorio.</span>
+                </div>
+              </ion-col>
+              <ion-col size="12" size-md="4">
+                <div class="form-group">
+                  <label class="form-label">Temperatura recepción (°C) <span class="req">*</span></label>
+                  <input type="number" class="form-input" formControlName="temperatura" [class.form-input--error]="campoInvalido('temperatura')" />
+                  <span class="error-msg" *ngIf="campoInvalido('temperatura')">Ingrese un valor válido.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
-                  <label class="form-label">Temperatura de recepción (°C) <span class="req">*</span></label>
-                  <input type="number" class="form-input" formControlName="temperatura" placeholder="Ej: 4"
-                    [class.form-input--error]="campoInvalido('temperatura')" />
-                  <span class="error-msg" *ngIf="campoInvalido('temperatura')">Ingrese un valor numérico válido.</span>
+                  <label class="form-label">Termómetro / equipo <span class="req">*</span></label>
+                  <select class="form-select" formControlName="idTermometro" [class.form-input--error]="campoInvalido('idTermometro')">
+                    <option [ngValue]="null" disabled>Seleccione equipo</option>
+                    <option *ngFor="let equipo of equiposLaboratorio" [ngValue]="equipo.idEquipo">{{ equipo.nombreEquipo }}</option>
+                  </select>
+                  <span class="error-msg" *ngIf="campoInvalido('idTermometro')">Seleccione un equipo.</span>
+                </div>
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <div class="form-group">
+                  <label class="form-label">Código manual del equipo <span class="req">*</span></label>
+                  <input type="text" class="form-input codigo-manual-input" formControlName="codigoEquipoManual" [class.form-input--error]="campoInvalido('codigoEquipoManual')" placeholder="Ej: EQ-001" maxlength="50" />
+                  <span class="error-msg" *ngIf="campoInvalido('codigoEquipoManual')">Campo obligatorio.</span>
                 </div>
               </ion-col>
             </ion-row>
@@ -166,7 +185,6 @@
         </div>
       </div>
 
-      <!-- ════ ETAPA 4: MUESTREO ════ -->
       <div class="form-card" *ngIf="etapaActual === 4">
         <div class="form-card-header">
           <div class="form-card-title-group">
@@ -179,58 +197,65 @@
             <ion-row>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
-                  <label class="form-label">Fecha inicio muestreo <span class="req">*</span></label>
+                  <div class="no-aplica-section">
+                    <label class="toggle-label">
+                      <input type="checkbox" class="form-checkbox" formControlName="noAplicaMuestreo" />
+                      <span>NO APLICA fechas de muestreo</span>
+                    </label>
+                  </div>
+                  <label class="form-label">
+                    Fecha inicio muestreo
+                    <span class="req" *ngIf="!form.get('noAplicaMuestreo')?.value">*</span>
+                  </label>
                   <input type="datetime-local" class="form-input" formControlName="fechaInicioMuestreo"
-                    [class.form-input--error]="campoInvalido('fechaInicioMuestreo')" />
+                    [class.form-input--error]="campoInvalido('fechaInicioMuestreo')"
+                    [disabled]="form.get('noAplicaMuestreo')?.value" />
                   <span class="error-msg" *ngIf="campoInvalido('fechaInicioMuestreo')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
-                  <label class="form-label">Fecha término muestreo <span class="req">*</span></label>
+                  <label class="form-label">
+                    Fecha término muestreo
+                    <span class="req" *ngIf="!form.get('noAplicaMuestreo')?.value">*</span>
+                  </label>
                   <input type="datetime-local" class="form-input" formControlName="fechaTerminoMuestreo"
-                    [class.form-input--error]="campoInvalido('fechaTerminoMuestreo')" />
+                    [class.form-input--error]="campoInvalido('fechaTerminoMuestreo')"
+                    [disabled]="form.get('noAplicaMuestreo')?.value" />
                   <span class="error-msg" *ngIf="campoInvalido('fechaTerminoMuestreo')">Campo obligatorio.</span>
                 </div>
               </ion-col>
-              <ion-col size="12" size-md="4">
+              <ion-col size="12" size-md="3">
                 <div class="form-group">
                   <label class="form-label">N° de muestras <span class="req">*</span></label>
-                  <input type="number" class="form-input" formControlName="numeroMuestras" min="1"
-                    [class.form-input--error]="campoInvalido('numeroMuestras')" />
-                  <span class="error-msg" *ngIf="campoInvalido('numeroMuestras')">Mínimo 1.</span>
+                  <input type="number" class="form-input" formControlName="numeroMuestras" min="1" [class.form-input--error]="campoInvalido('numeroMuestras')" />
                 </div>
               </ion-col>
-              <ion-col size="12" size-md="4">
+              <ion-col size="12" size-md="3">
                 <div class="form-group">
                   <label class="form-label">N° de envases <span class="req">*</span></label>
-                  <input type="number" class="form-input" formControlName="numeroEnvases" min="1"
-                    [class.form-input--error]="campoInvalido('numeroEnvases')" />
-                  <span class="error-msg" *ngIf="campoInvalido('numeroEnvases')">Mínimo 1.</span>
+                  <input type="number" class="form-input" formControlName="numeroEnvases" min="1" [class.form-input--error]="campoInvalido('numeroEnvases')" />
                 </div>
               </ion-col>
-              <ion-col size="12" size-md="4">
+              <ion-col size="12" size-md="3">
                 <div class="form-group">
                   <label class="form-label">Analista responsable <span class="req">*</span></label>
-                  <input type="text" class="form-input" formControlName="analistaResponsable"
-                    placeholder="Nombre del analista"
-                    [class.form-input--error]="campoInvalido('analistaResponsable')" />
-                  <span class="error-msg" *ngIf="campoInvalido('analistaResponsable')">Campo obligatorio.</span>
+                  <select class="form-select" formControlName="analistaResponsable" [class.form-input--error]="campoInvalido('analistaResponsable')">
+                    <option value="" disabled>Seleccione analista</option>
+                    <option *ngFor="let analista of analistas" [value]="analista.nombre">{{ analista.nombre }}</option>
+                  </select>
                 </div>
               </ion-col>
-              <ion-col size="12" size-md="6">
+              <ion-col size="12" size-md="3">
                 <div class="form-group">
                   <label class="form-label">Lugar de muestreo <span class="req">*</span></label>
-                  <input type="text" class="form-input" formControlName="lugarMuestreo"
-                    placeholder="Ej: Planta principal" [class.form-input--error]="campoInvalido('lugarMuestreo')" />
-                  <span class="error-msg" *ngIf="campoInvalido('lugarMuestreo')">Campo obligatorio.</span>
+                  <input type="text" class="form-input" formControlName="lugarMuestreo" [class.form-input--error]="campoInvalido('lugarMuestreo')" />
                 </div>
               </ion-col>
-              <ion-col size="12" size-md="6">
+              <ion-col size="12">
                 <div class="form-group">
-                  <label class="form-label">Instructivo de muestreo</label>
-                  <input type="text" class="form-input" formControlName="instructivoMuestreo"
-                    placeholder="Ej: P-LAB-004" />
+                  <label class="form-label">Instructivo de muestreo <span class="req">*</span></label>
+                  <input type="text" class="form-input" formControlName="instructivoMuestreo" [class.form-input--error]="campoInvalido('instructivoMuestreo')" />
                 </div>
               </ion-col>
             </ion-row>
@@ -238,105 +263,11 @@
         </div>
       </div>
 
-      <!-- ════ ETAPA 5: ANÁLISIS ════ -->
       <div class="form-card" *ngIf="etapaActual === 5">
         <div class="form-card-header">
           <div class="form-card-title-group">
             <ion-icon name="analytics-outline"></ion-icon>
-            <h2 class="form-card-title">Etapa 5 — Análisis</h2>
-          </div>
-        </div>
-        <div class="form-card-body">
-          <div class="form-group">
-            <label class="form-label">Tipo de análisis <span class="req">*</span></label>
-            <select class="form-select" formControlName="tipoAnalisis"
-              [class.form-input--error]="campoInvalido('tipoAnalisis')">
-              <option value="" disabled>Seleccione tipo de análisis</option>
-              <option *ngFor="let t of tiposAnalisis" [value]="t.value">{{ t.label }}</option>
-            </select>
-            <span class="error-msg" *ngIf="campoInvalido('tipoAnalisis')">Seleccione un tipo de análisis.</span>
-          </div>
-
-          <ion-col size="12" size-md="6">
-            <div class="form-group">
-              <label class="form-label">Categoría <span class="req">*</span></label>
-              <select class="form-select" formControlName="categoria"
-                [class.form-input--error]="campoInvalido('categoria')">
-                <option value="" disabled>Seleccione categoría</option>
-                <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
-              </select>
-              <span class="error-msg" *ngIf="campoInvalido('categoria')">Campo obligatorio.</span>
-            </div>
-          </ion-col>
-
-
-          <!-- Checklist de formularios -->
-          <div class="checklist-section" *ngIf="formulariosCatalogo.length > 0">
-            <h3 class="checklist-title">
-              <ion-icon name="list-outline"></ion-icon>
-              Formularios asociados al análisis
-            </h3>
-            <div class="checklist-grid">
-              <label class="checklist-item" *ngFor="let f of formulariosCatalogo"
-                [class.checklist-item--obligatorio]="f.obligatorio">
-                <input type="checkbox" class="form-checkbox" [checked]="f.seleccionado" [disabled]="f.obligatorio"
-                  (change)="toggleFormulario(f)" />
-                <span class="checklist-item__name">{{ f.nombre }}</span>
-                <span class="tpa-badge" *ngIf="f.obligatorio">Obligatorio</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Muestras -->
-          <div class="muestras-section">
-            <div class="muestras-header">
-              <h3 class="checklist-title">
-                <ion-icon name="layers-outline"></ion-icon>
-                Gestión de Muestras
-              </h3>
-              <button type="button" class="btn-add-muestra" (click)="agregarMuestra()">
-                <ion-icon name="add-outline"></ion-icon>
-                Agregar muestra
-              </button>
-            </div>
-
-            <div class="muestra-card" *ngFor="let m of muestras">
-              <div class="muestra-card__header">
-                <span class="muestra-card__title">
-                  <ion-icon name="beaker-outline"></ion-icon>
-                  {{ m.nombre }}
-                </span>
-                <button type="button" class="btn-remove-muestra" (click)="eliminarMuestra(m.id)">
-                  <ion-icon name="trash-outline"></ion-icon>
-                </button>
-              </div>
-              <div class="muestra-card__body">
-                <p class="muestra-hint">Formularios asociados a esta muestra:</p>
-                <div class="checklist-grid">
-                  <label class="checklist-item" *ngFor="let f of m.formularios"
-                    [class.checklist-item--obligatorio]="f.obligatorio">
-                    <input type="checkbox" class="form-checkbox" [checked]="f.seleccionado" [disabled]="f.obligatorio"
-                      (change)="toggleFormularioMuestra(m, f)" />
-                    <span class="checklist-item__name">{{ f.nombre }}</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div class="empty-muestras" *ngIf="muestras.length === 0">
-              <ion-icon name="flask-outline"></ion-icon>
-              <p>No hay muestras adicionales. Puede agregar múltiples muestras a esta solicitud.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════ ETAPA 6: ENVASES ════ -->
-      <div class="form-card" *ngIf="etapaActual === 6">
-        <div class="form-card-header">
-          <div class="form-card-title-group">
-            <ion-icon name="archive-outline"></ion-icon>
-            <h2 class="form-card-title">Etapa 6 — Envases y Almacenamiento</h2>
+            <h2 class="form-card-title">Etapa 5 — Formularios y análisis</h2>
           </div>
         </div>
         <div class="form-card-body">
@@ -344,21 +275,118 @@
             <ion-row>
               <ion-col size="12" size-md="6">
                 <div class="form-group">
-                  <label class="form-label">Equipo de almacenamiento <span class="req">*</span></label>
-                  <select class="form-select" formControlName="equipoAlmacenamiento"
-                    [class.form-input--error]="campoInvalido('equipoAlmacenamiento')">
-                    <option value="" disabled>Seleccione equipo</option>
-                    <option *ngFor="let e of equiposAlmacenamiento" [value]="e">{{ e }}</option>
+                  <label class="form-label">Categoría <span class="req">*</span></label>
+                  <select class="form-select" formControlName="categoria" [class.form-input--error]="campoInvalido('categoria')">
+                    <option value="" disabled>Seleccione categoría</option>
+                    <option *ngFor="let categoria of categorias" [value]="categoria.nombre">{{ categoria.nombre }}</option>
                   </select>
-                  <span class="error-msg" *ngIf="campoInvalido('equipoAlmacenamiento')">Seleccione un equipo.</span>
+                  <span class="error-msg" *ngIf="campoInvalido('categoria')">Campo obligatorio.</span>
                 </div>
               </ion-col>
               <ion-col size="12" size-md="6">
+                <div class="form-group">
+                  <label class="form-label">Subcategoría <span class="req">*</span></label>
+                  <select class="form-select subcategoria-select" formControlName="subcategoria"
+                    [class.form-input--error]="campoInvalido('subcategoria')"
+                    [disabled]="!form.get('categoria')?.value || subcategorias.length === 0">
+                    <option value="" disabled>
+                      {{ !form.get('categoria')?.value ? 'Seleccione una categoría primero.' : (subcategorias.length === 0 ? 'Sin subcategorías disponibles' : 'Seleccione subcategoría') }}
+                    </option>
+                    <option *ngFor="let sub of subcategorias" [value]="sub.idSubcategoria">{{ sub.nombre }}</option>
+                  </select>
+                  <span class="error-msg" *ngIf="campoInvalido('subcategoria')">Campo obligatorio.</span>
+                </div>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+
+          <div class="checklist-section" *ngIf="formulariosCatalogo.length > 0">
+            <p class="muestra-hint">Se muestran solo análisis de microbiología.</p>
+            <div class="checklist-grid">
+              <label class="checklist-item" *ngFor="let formulario of formulariosCatalogo"
+                [class.checklist-item--obligatorio]="formulario.obligatorio">
+                <input type="checkbox" class="form-checkbox" [checked]="formulario.seleccionado"
+                  [disabled]="reviewMode || formulario.obligatorio" (change)="toggleFormulario(formulario)" />
+                <span class="checklist-item__name">{{ formulario.nombre }}</span>
+                <span class="tpa-badge" *ngIf="formulario.obligatorio">TPA requerido</span>
+                <span class="muestra-hint" *ngIf="formulario.seleccionado">
+                  LE: {{ formulario.codigoLe || 'No acreditado' }} - Norma: {{ formulario.metodologiaNorma || 'Sin norma' }} - Dias: {{ formulario.diasNegativo ?? '--' }}/{{ formulario.diasConfirmacion ?? '--' }}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="muestras-section">
+            <div class="muestras-header">
+              <h3 class="checklist-title">
+                <ion-icon name="layers-outline"></ion-icon>
+                SubMuestras
+              </h3>
+              <button type="button" class="btn-add-muestra" (click)="agregarMuestra()" [disabled]="reviewMode">
+                <ion-icon name="add-outline"></ion-icon>
+                Agregar submuestra
+              </button>
+            </div>
+
+            <div class="muestra-card" *ngFor="let muestra of muestras">
+              <div class="muestra-card__header">
+                <span class="muestra-card__title">
+                  <ion-icon name="beaker-outline"></ion-icon>
+                  {{ muestra.nombre }}
+                </span>
+                <button type="button" class="btn-remove-muestra" (click)="eliminarMuestra(muestra.id)" [disabled]="reviewMode">
+                  <ion-icon name="trash-outline"></ion-icon>
+                </button>
+              </div>
+              <div class="muestra-card__body">
+                <p class="muestra-hint">Análisis disponibles para esta SubMuestra</p>
+                <div class="checklist-grid">
+                  <label class="checklist-item" *ngFor="let formulario of muestra.formularios"
+                    [class.checklist-item--obligatorio]="formulario.obligatorio">
+                    <input type="checkbox" class="form-checkbox" [checked]="formulario.seleccionado"
+                      [disabled]="reviewMode || formulario.obligatorio" (change)="toggleFormularioMuestra(muestra, formulario)" />
+                    <span class="checklist-item__name">{{ formulario.nombre }}</span>
+                    <span class="muestra-hint" *ngIf="formulario.seleccionado">
+                      LE: {{ formulario.codigoLe || 'No acreditado' }} - Norma: {{ formulario.metodologiaNorma || 'Sin norma' }} - Dias: {{ formulario.diasNegativo ?? '--' }}/{{ formulario.diasConfirmacion ?? '--' }}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card" *ngIf="etapaActual === 6">
+        <div class="form-card-header">
+          <div class="form-card-title-group">
+            <ion-icon name="archive-outline"></ion-icon>
+            <h2 class="form-card-title">Etapa 6 — Envases y almacenamiento</h2>
+          </div>
+        </div>
+        <div class="form-card-body">
+          <ion-grid>
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <div class="form-group">
+                  <label class="form-label">Lugar de almacenamiento <span class="req">*</span></label>
+                  <select class="form-select" formControlName="idLugar" [class.form-input--error]="campoInvalido('idLugar')">
+                    <option [ngValue]="null" disabled>Seleccione lugar</option>
+                    <option *ngFor="let equipo of equiposAlmacenamiento" [ngValue]="equipo.idEquipo">{{ equipo.nombreEquipo }}</option>
+                  </select>
+                </div>
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <div class="form-group">
+                  <label class="form-label">Envases suministrados por <span class="req">*</span></label>
+                  <input type="text" class="form-input" formControlName="envasesSuministradosPor" [class.form-input--error]="campoInvalido('envasesSuministradosPor')" />
+                </div>
+              </ion-col>
+              <ion-col size="12">
                 <div class="form-group form-group--checkbox-row">
-                  <label class="form-label">Muestra compartida con Química</label>
                   <label class="toggle-label">
                     <input type="checkbox" class="form-checkbox" formControlName="muestraCompartida" />
-                    <span>¿Compartir con área de Química?</span>
+                    <span>Muestra compartida con Química</span>
                   </label>
                 </div>
               </ion-col>
@@ -367,46 +395,68 @@
         </div>
       </div>
 
-      <!-- ════ ETAPA 7: OBSERVACIONES ════ -->
       <div class="form-card" *ngIf="etapaActual === 7">
         <div class="form-card-header">
           <div class="form-card-title-group">
             <ion-icon name="create-outline"></ion-icon>
-            <h2 class="form-card-title">Etapa 7 — Observaciones de Laboratorio</h2>
+            <h2 class="form-card-title">Etapa 7 — Observaciones de laboratorio</h2>
           </div>
         </div>
         <div class="form-card-body">
           <div class="form-group">
             <label class="form-label">Observaciones de laboratorio</label>
-            <textarea class="form-textarea" formControlName="observacionesLaboratorio" rows="5"
-              placeholder="Ingrese observaciones, condiciones especiales, notas internas del laboratorio..."></textarea>
+            <textarea class="form-textarea" formControlName="observacionesLaboratorio" rows="5"></textarea>
           </div>
         </div>
       </div>
 
-      <!-- ════ ETAPA 8: ANÁLISIS DERIVADOS/SUBCONTRATADOS ════ -->
       <div class="form-card" *ngIf="etapaActual === 8">
         <div class="form-card-header">
           <div class="form-card-title-group">
-            <ion-icon name="water-outline"></ion-icon>
-            <h2 class="form-card-title">Etapa 8 — Análisis Derivados - Subcontratados</h2>
+            <ion-icon name="share-social-outline"></ion-icon>
+            <h2 class="form-card-title">Etapa 8 — Análisis derivados o Subcontratados</h2>
           </div>
         </div>
         <div class="form-card-body">
           <div class="form-group">
+            <label class="form-label">Detalle opcional</label>
+            <textarea class="form-textarea" formControlName="analisisDerivadosSubcontratados" rows="5"
+              placeholder="Registrar derivaciones o subcontrataciones, si aplica."></textarea>
           </div>
         </div>
       </div>
 
-      <!-- ════ ETAPA 9: FLUJO ════ -->
       <div class="form-card" *ngIf="etapaActual === 9">
         <div class="form-card-header">
           <div class="form-card-title-group">
             <ion-icon name="git-network-outline"></ion-icon>
-            <h2 class="form-card-title">Etapa 9 — Estado del Flujo</h2>
+            <h2 class="form-card-title">Etapa 9 — Flujo de validación</h2>
           </div>
         </div>
         <div class="form-card-body">
+          <ion-grid>
+            <ion-row>
+              <ion-col size="12" size-md="6">
+                <div class="form-group">
+                  <label class="form-label">Coordinadora receptora <span class="req">*</span></label>
+                  <select class="form-select" formControlName="rutCoordinadoraRecepcion" [class.form-input--error]="campoInvalido('rutCoordinadoraRecepcion')">
+                    <option value="" disabled>Seleccione coordinadora</option>
+                    <option *ngFor="let coordinadora of coordinadoras" [value]="coordinadora.rut">{{ coordinadora.nombre }}</option>
+                  </select>
+                </div>
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <div class="form-group">
+                  <label class="form-label">Jefatura responsable <span class="req">*</span></label>
+                  <select class="form-select" formControlName="rutJefaArea" [class.form-input--error]="campoInvalido('rutJefaArea')">
+                    <option value="" disabled>Seleccione jefatura</option>
+                    <option *ngFor="let jefatura of jefaturas" [value]="jefatura.rut">{{ jefatura.nombre }}</option>
+                  </select>
+                </div>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+
           <div class="flujo-section">
             <div class="flujo-estado">
               <span class="flujo-label">Estado actual de la solicitud:</span>
@@ -414,54 +464,60 @@
             </div>
             <div class="flujo-fecha" *ngIf="fechaEnvioValidacion">
               <ion-icon name="time-outline"></ion-icon>
-              <span>Enviado a validación el: <strong>{{ fechaEnvioValidacion | date:'dd/MM/yyyy HH:mm:ss'
-                  }}</strong></span>
-            </div>
-            <div class="flujo-info" *ngIf="!fechaEnvioValidacion">
-              <ion-icon name="information-circle-outline"></ion-icon>
-              <p>La solicitud aún no ha sido enviada a validación. Continue al paso N°10 para guardar la solicitud y
-                use el botón <strong>"Enviar a validación"</strong>.</p>
+              <span>Enviado a validación el: <strong>{{ fechaEnvioValidacion | date:'dd/MM/yyyy HH:mm:ss' }}</strong></span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- ════ ETAPA 10: ENTREGA ════ -->
       <div class="form-card" *ngIf="etapaActual === 10">
         <div class="form-card-header">
           <div class="form-card-title-group">
             <ion-icon name="timer-outline"></ion-icon>
-            <h2 class="form-card-title">Etapa 10 — Tiempo de Entrega</h2>
+            <h2 class="form-card-title">Etapa 10 — Tiempos de entrega supervisor</h2>
           </div>
         </div>
         <div class="form-card-body">
           <div class="entrega-grid">
             <div class="entrega-card">
               <ion-icon name="hourglass-outline"></ion-icon>
-              <span class="entrega-card__value">{{ tiempoEntregaDias }} días</span>
-              <span class="entrega-card__label">Tiempo estimado de entrega</span>
+              <span class="entrega-card__value">{{ tiempoEntregaNegativoDias ?? '--' }} días</span>
+              <span class="entrega-card__label">Resultado negativo (+1 día)</span>
             </div>
             <div class="entrega-card">
               <ion-icon name="calendar-outline"></ion-icon>
-              <span class="entrega-card__value">
-                {{ fechaEstimadaEntrega ? (fechaEstimadaEntrega | date:'dd/MM/yyyy') : '—' }}
-              </span>
-              <span class="entrega-card__label">Fecha estimada de entrega</span>
+              <span class="entrega-card__value">{{ fechaEstimadaEntregaNegativa ? (fechaEstimadaEntregaNegativa | date:'dd/MM/yyyy') : '--' }}</span>
+              <span class="entrega-card__label">Fecha entrega resultado negativo</span>
+            </div>
+            <div class="entrega-card">
+              <ion-icon name="hourglass-outline"></ion-icon>
+              <span class="entrega-card__value">{{ tiempoEntregaConfirmacionDias ?? '--' }} dias</span>
+              <span class="entrega-card__label">Entrega de Informes (+2 días)</span>
+            </div>
+            <div class="entrega-card">
+              <ion-icon name="calendar-outline"></ion-icon>
+              <span class="entrega-card__value">{{ fechaEstimadaEntregaConfirmacion ? (fechaEstimadaEntregaConfirmacion | date:'dd/MM/yyyy') : '--' }}</span>
+              <span class="entrega-card__label">Fecha estimada entrega de informes</span>
+            </div>
+            <div class="entrega-card">
+              <ion-icon name="send-outline"></ion-icon>
+              <span class="entrega-card__value">{{ fechaEnvioInformePositivo ? (fechaEnvioInformePositivo | date:'dd/MM/yyyy') : '--' }}</span>
+              <span class="entrega-card__label">Envío Informe Positivo</span>
+            </div>
+            <div class="entrega-card">
+              <ion-icon name="send-outline"></ion-icon>
+              <span class="entrega-card__value">{{ fechaEnvioInformeNegativo ? (fechaEnvioInformeNegativo | date:'dd/MM/yyyy') : '--' }}</span>
+              <span class="entrega-card__label">Envío Informe Negativo</span>
             </div>
           </div>
-          <p class="entrega-note">
-            <ion-icon name="information-circle-outline"></ion-icon>
-            Calculado en base a {{ 5 }} días base + tiempo adicional según número de muestras.
-          </p>
         </div>
       </div>
 
-      <!-- ════ ETAPA 11: INFORMES ════ -->
       <div class="form-card" *ngIf="etapaActual === 11">
         <div class="form-card-header">
           <div class="form-card-title-group">
             <ion-icon name="document-attach-outline"></ion-icon>
-            <h2 class="form-card-title">Etapa 11 — Resumen e Informes</h2>
+            <h2 class="form-card-title">Etapa 11 — Resumen e informes</h2>
           </div>
         </div>
         <div class="form-card-body">
@@ -482,33 +538,20 @@
               <span class="resumen-item__label">Estado</span>
               <span class="badge" [ngClass]="badgeEstado.css">{{ badgeEstado.label }}</span>
             </div>
-            <div class="resumen-item">
-              <span class="resumen-item__label">N° Muestras</span>
-              <span class="resumen-item__value">{{ form.get('numeroMuestras')?.value || '—' }}</span>
-            </div>
-            <div class="resumen-item">
-              <span class="resumen-item__label">Entrega estimada</span>
-              <span class="resumen-item__value">
-                {{ fechaEstimadaEntrega ? (fechaEstimadaEntrega | date:'dd/MM/yyyy') : '—' }}
-              </span>
-            </div>
           </div>
 
           <div class="formularios-consolidados">
             <h3>Formularios consolidados</h3>
             <div class="formularios-list">
-              <span class="formulario-tag" *ngFor="let f of formulariosConsolidados">
+              <span class="formulario-tag" *ngFor="let formulario of formulariosConsolidados">
                 <ion-icon name="checkmark-circle-outline"></ion-icon>
-                {{ f }}
-              </span>
-              <span class="formulario-empty" *ngIf="formulariosConsolidados.length === 0">
-                Ningún formulario seleccionado aún.
+                {{ formulario.codigo }}
               </span>
             </div>
           </div>
 
           <div class="resumen-acciones">
-            <button type="button" class="btn-validar" (click)="enviarAValidacion()" [disabled]="!solicitudGuardada">
+            <button type="button" class="btn-validar" *ngIf="!reviewMode" (click)="enviarAValidacion()" [disabled]="!canSendToValidation">
               <ion-icon name="send-outline"></ion-icon>
               Enviar a validación
             </button>
@@ -516,7 +559,6 @@
         </div>
       </div>
 
-      <!-- ── FOOTER DE NAVEGACIÓN ── -->
       <div class="nav-footer">
         <button type="button" class="btn-cancel" (click)="confirmarCancelar()">
           <ion-icon name="close-outline"></ion-icon>
@@ -527,7 +569,7 @@
             <ion-icon name="arrow-back-outline"></ion-icon>
             Anterior
           </button>
-          <button type="button" class="btn-save" (click)="guardarSolicitud()" *ngIf="etapaActual === TOTAL_ETAPAS">
+          <button type="button" class="btn-save" (click)="guardarSolicitud()" *ngIf="etapaActual === TOTAL_ETAPAS && !reviewMode" [disabled]="cargando">
             <ion-icon name="save-outline"></ion-icon>
             Guardar solicitud
           </button>
@@ -537,9 +579,6 @@
           </button>
         </div>
       </div>
-
     </form>
   </div>
 </ion-content>
-
-<!--Agregar etapa intermedia  entre etapa 7 y 8, analisis derivados y subderivados-->

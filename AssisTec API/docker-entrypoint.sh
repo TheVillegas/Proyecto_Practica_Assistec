@@ -1,7 +1,12 @@
 #!/bin/sh
 
+set -e
+
 echo "Sincronizando Base de Datos con Prisma..."
-npx prisma db push --accept-data-loss
+sleep 40 
+
+
+npx prisma db push --skip-generate
 
 echo "Ejecutando Seeds de Prisma..."
 node run-seeds.js

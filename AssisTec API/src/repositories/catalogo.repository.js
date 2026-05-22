@@ -18,7 +18,8 @@ class CatalogoRepository {
             'formas_calculo': prisma.maestroFormasCalculo,
             'tipos_analisis': prisma.maestroTiposAnalisis,
             'material_siembra': prisma.materialSiembra,
-            'micropipetas': prisma.micropipeta
+            'micropipetas': prisma.micropipeta,
+            'subcategorias': prisma.subcategoriaProducto
         };
 
         const model = map[tipo.toLowerCase()];

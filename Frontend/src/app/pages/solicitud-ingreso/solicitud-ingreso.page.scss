@@ -1,6 +1,5 @@
 /* solicitud-ingreso.page.scss */
 
-// ── Variables de diseño (alineadas con Design Tokens Asistec) ──────────────────
 $brand-navy: #29588C;
 $brand-blue: #006EB6;
 $brand-blue-focus: #00558f;
@@ -13,7 +12,6 @@ $error-color: #DC2626;
 $success-color: #16A34A;
 $warning-color: #D97706;
 
-// ── Layout general ───────────────────
 .sdi-content {
   --background: #{$bg-global};
 }
@@ -22,7 +20,6 @@ $warning-color: #D97706;
   @apply max-w-4xl mx-auto py-8 px-4;
 }
 
-// ── Encabezado de página ───────────────
 .page-header {
   @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8;
 
@@ -54,7 +51,6 @@ $warning-color: #D97706;
   }
 }
 
-// ── Stepper ───────────
 .stepper-wrapper {
   @apply mb-8;
 }
@@ -116,7 +112,6 @@ $warning-color: #D97706;
   }
 }
 
-// ── Form Card ───────────
 .form-card {
   @apply bg-white rounded-xl border overflow-hidden mb-6;
   border-color: $border-subtle;
@@ -134,14 +129,12 @@ $warning-color: #D97706;
 
 .form-card-title {
   @apply text-lg font-semibold m-0;
-  font-family: 'Inter', sans-serif;
 }
 
 .form-card-body {
   @apply p-6;
 }
 
-// ── Grupos de campo ────────────────
 .form-group {
   @apply flex flex-col gap-1 mb-4;
 
@@ -156,39 +149,27 @@ $warning-color: #D97706;
 
   .req {
     color: $error-color;
-    @apply ml-0.5;
   }
 }
 
-.readonly-badge {
-  @apply inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ml-1;
-  background: #EFF6FF;
-  color: $brand-blue;
-}
-
-// ── Inputs & selects ─────────────────
 .form-input,
 .form-select {
   @apply w-full border rounded-lg px-3 py-2.5 text-sm outline-none transition-all;
   border-color: $border-subtle;
   color: $text-primary;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 
   &:focus {
     border-color: $brand-blue-focus;
-    box-shadow: 0 0 0 3px rgba($brand-blue-focus, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.05);
-    outline: none;
+    box-shadow: 0 0 0 3px rgba($brand-blue-focus, 0.12);
   }
 
   &--readonly {
     background: #F8FAFC;
     color: #64748B;
-    cursor: default;
   }
 
   &--error {
     border-color: $error-color !important;
-    box-shadow: 0 0 0 3px rgba($error-color, 0.1) !important;
   }
 }
 
@@ -196,13 +177,10 @@ $warning-color: #D97706;
   @apply w-full border rounded-lg px-3 py-2.5 text-sm outline-none transition-all resize-y;
   border-color: $border-subtle;
   color: $text-primary;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-  font-family: inherit;
 
   &:focus {
     border-color: $brand-blue-focus;
     box-shadow: 0 0 0 3px rgba($brand-blue-focus, 0.12);
-    outline: none;
   }
 }
 
@@ -211,7 +189,6 @@ $warning-color: #D97706;
   color: $error-color;
 }
 
-// ── Toggle / checkbox ──────────────────
 .toggle-label {
   @apply flex items-center gap-2 cursor-pointer text-sm;
   color: $text-primary;
@@ -222,7 +199,6 @@ $warning-color: #D97706;
   }
 }
 
-// ── Checklist (Etapa 5) ─────────────────
 .checklist-section {
   @apply mt-6;
 }
@@ -239,17 +215,10 @@ $warning-color: #D97706;
 .checklist-item {
   @apply flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all text-sm;
   border-color: $border-subtle;
-  color: $text-primary;
-
-  &:hover {
-    background: #EFF6FF;
-    border-color: $brand-blue;
-  }
 
   &--obligatorio {
     background: #EFF6FF;
     border-color: $brand-blue;
-    cursor: default;
   }
 
   .form-checkbox {
@@ -268,7 +237,6 @@ $warning-color: #D97706;
   color: white;
 }
 
-// ── Muestras (Etapa 5) ────────────────
 .muestras-section {
   @apply mt-8;
 }
@@ -282,11 +250,6 @@ $warning-color: #D97706;
   border-color: $brand-blue;
   color: $brand-blue;
   background: transparent;
-
-  &:hover {
-    background: $brand-blue;
-    color: white;
-  }
 }
 
 .muestra-card {
@@ -313,11 +276,6 @@ $warning-color: #D97706;
   @apply flex items-center justify-center w-7 h-7 rounded-lg transition-all border-none;
   color: $error-color;
   background: #FEF2F2;
-
-  &:hover {
-    background: $error-color;
-    color: white;
-  }
 }
 
 .muestra-hint {
@@ -325,21 +283,6 @@ $warning-color: #D97706;
   color: #64748B;
 }
 
-.empty-muestras {
-  @apply flex flex-col items-center gap-2 py-8 rounded-xl border-2 border-dashed text-center;
-  border-color: $border-subtle;
-  color: #94A3B8;
-
-  ion-icon {
-    @apply text-3xl;
-  }
-
-  p {
-    @apply text-xs max-w-xs;
-  }
-}
-
-// ── Flujo (Etapa 8) ─────────────────
 .flujo-section {
   @apply flex flex-col gap-4;
 }
@@ -348,29 +291,12 @@ $warning-color: #D97706;
   @apply flex items-center gap-3;
 }
 
-.flujo-label {
-  @apply text-sm font-medium;
-  color: $text-primary;
-}
-
 .flujo-fecha {
   @apply flex items-center gap-2 p-3 rounded-lg text-sm;
   background: #EFF6FF;
   color: $brand-navy;
 }
 
-.flujo-info {
-  @apply flex items-start gap-2 p-4 rounded-xl border text-sm;
-  border-color: $border-subtle;
-  background: #FFFBEB;
-  color: $warning-color;
-
-  p {
-    @apply m-0;
-  }
-}
-
-// ── Badges de estado ─────────────
 .badge {
   @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold;
 }
@@ -395,7 +321,6 @@ $warning-color: #D97706;
   color: $error-color;
 }
 
-// ── Entrega (Etapa 9) ────────────
 .entrega-grid {
   @apply grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6;
 }
@@ -421,13 +346,6 @@ $warning-color: #D97706;
   }
 }
 
-.entrega-note {
-  @apply flex items-center gap-2 text-xs p-3 rounded-lg;
-  background: #F8FAFC;
-  color: #64748B;
-}
-
-// ── Resumen e Informes (Etapa 10) ──────────
 .resumen-grid {
   @apply grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6;
 }
@@ -454,15 +372,6 @@ $warning-color: #D97706;
   font-weight: 700;
 }
 
-.formularios-consolidados {
-  @apply mb-6;
-
-  h3 {
-    @apply text-sm font-semibold mb-3;
-    color: $brand-navy;
-  }
-}
-
 .formularios-list {
   @apply flex flex-wrap gap-2;
 }
@@ -473,17 +382,11 @@ $warning-color: #D97706;
   color: $success-color;
 }
 
-.formulario-empty {
-  @apply text-xs;
-  color: #94A3B8;
-}
-
 .resumen-acciones {
   @apply flex justify-end pt-4 border-t;
   border-color: $border-subtle;
 }
 
-// ── Footer de navegación ──────
 .nav-footer {
   @apply flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-4;
 }
@@ -492,18 +395,9 @@ $warning-color: #D97706;
   @apply flex items-center gap-3;
 }
 
-// ── Botones ─────
 .btn-primary {
   @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all;
   background: $brand-blue;
-
-  &:hover {
-    background: darken($brand-blue, 8%);
-  }
-
-  &:disabled {
-    @apply opacity-50 cursor-not-allowed;
-  }
 }
 
 .btn-secondary {
@@ -511,15 +405,6 @@ $warning-color: #D97706;
   border-color: $brand-navy;
   color: $brand-navy;
   background: transparent;
-
-  &:hover {
-    background: $brand-navy;
-    color: white;
-  }
-
-  &:disabled {
-    @apply opacity-40 cursor-not-allowed;
-  }
 }
 
 .btn-cancel {
@@ -527,40 +412,52 @@ $warning-color: #D97706;
   border-color: #df0c0ce1;
   color: #ffffff;
   background: #e70101;
-
-  &:hover {
-    background: darken(#e70101, 8%);
-    color: white;
-  }
 }
 
 .btn-save {
   @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all;
   background: $success-color;
-
-  &:hover {
-    background: darken($success-color, 8%);
-  }
 }
 
 .btn-validar {
   @apply inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all;
   background: linear-gradient(135deg, $brand-navy, $brand-blue);
-  box-shadow: 0 4px 15px rgba($brand-blue, 0.3);
+}
 
-  &:hover {
-    box-shadow: 0 6px 20px rgba($brand-blue, 0.4);
-    transform: translateY(-1px);
-  }
+.form-wrapper {
+  @apply flex flex-col;
+}
 
-  &:disabled {
-    @apply opacity-40 cursor-not-allowed;
-    transform: none;
-    box-shadow: none;
+/* =============================================
+   NO APLICA section (stage 4)
+   ============================================= */
+.no-aplica-section {
+  @apply mb-2;
+
+  .toggle-label {
+    @apply flex items-center gap-2 cursor-pointer text-xs font-semibold;
+    color: $warning-color;
+
+    .form-checkbox {
+      @apply w-4 h-4 rounded cursor-pointer;
+      accent-color: $warning-color;
+    }
   }
 }
 
-// ── Form wrapper ─────────
-.form-wrapper {
-  @apply flex flex-col;
+/* =============================================
+   Código manual input (stage 3)
+   ============================================= */
+.codigo-manual-input {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
+/* =============================================
+   Subcategoría cascading select (stage 5)
+   ============================================= */
+.subcategoria-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #F8FAFC;
 }

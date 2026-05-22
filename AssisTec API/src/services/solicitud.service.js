@@ -1,5 +1,18 @@
 const solicitudRepository = require('../repositories/solicitud.repository');
+const reporteService = require('./reporte.service');
 const ROLES = require('../config/roles');
+
+const ESTADOS = {
+    BORRADOR: 'borrador',
+    ENVIADO: 'enviado',
+    RECHAZADO: 'rechazado',
+    VALIDADO: 'validado',
+    CONVERTIDO_MUESTRAS: 'convertido_muestras',
+    ENVIADA_LEGACY: 'enviada',
+    DEVUELTA_LEGACY: 'devuelta',
+    VALIDADA_LEGACY: 'validada',
+    REPORTES_GENERADOS_LEGACY: 'reportes_generados'
+};
 
 class SolicitudService {
     async crear(data, usuario) {
@@ -7,67 +20,166 @@ class SolicitudService {
             throw new Error('UNAUTHORIZED_ROLE');
         }
 
-        const numeroAli = await solicitudRepository.getNextNumeroAli();
-        const now = new Date();
+        const numeroAli = this.resolveNumeroAliManual(data);
+        if (!String(data.numeroActa ?? data.numero_acta ?? '').trim()) {
+            throw new Error('MISSING_NUMERO_ACTA');
+        }
+        const solicitudData = await this.buildSolicitudData(data, usuario, numeroAli);
+        const cantidadMuestras = Number(data.cantidad_muestras ?? data.numeroMuestras ?? 0);
+        const formulariosDefault = await this.buildFormulariosDefault(solicitudData.categoriaId);
 
-        const nuevaSolicitud = {
-            ...data,
-            numeroAli,
-            estado: 'pendiente',
-            createdAt: now,
-            updatedAt: now,
-            createdBy: usuario.id,
-            rutResponsableIngreso: usuario.id, // Asumimos que quien crea es responsable de ingreso
-        };
-
-        return await solicitudRepository.create(nuevaSolicitud);
+        const creada = await solicitudRepository.createWithAnalisisDefault(solicitudData, cantidadMuestras, formulariosDefault);
+        return this.serializeSolicitud(creada);
     }
 
     async listar(usuario) {
         let whereClause = {};
 
-        // Filtrado por rol
         if (usuario.role === ROLES.INGRESO) {
-            // Ingreso solo ve solicitudes (no restringe por ahora, asumiendo que ve todas las de ingreso)
-        } else if (usuario.role === ROLES.ANALISTA) {
-            // Analista solo ve ALI asignados a él (requiere join complejo, simplificado acá por spec)
-            // whereClause = { muestras: { some: { analisis: { some: { /* logica analista */ } } } } };
+            whereClause = { rutResponsableIngreso: usuario.id };
         }
 
         const list = await solicitudRepository.findAll(whereClause);
-        // Convertir BigInt a String para serialización JSON
-        return list.map(item => ({
-            ...item,
-            idSolicitud: item.idSolicitud.toString(),
-            categoriaId: item.categoriaId.toString()
-        }));
+        return list.map(item => this.serializeSolicitud(item));
     }
 
-    async editar(id, data, expectedUpdatedAt, usuario) {
+    async obtener(id) {
         const solicitud = await solicitudRepository.findById(id);
-        
         if (!solicitud) {
             throw new Error('NOT_FOUND');
         }
 
-        if (solicitud.estado === 'validada' && usuario.role === ROLES.INGRESO) {
-            throw new Error('ALREADY_VALIDATED');
+        return this.serializeSolicitud(solicitud);
+    }
+
+    async summary(usuario, query = {}) {
+        const actingRole = this.resolveActingRole(usuario, query);
+        const filter = this.buildVisibilityFilter(usuario.id, actingRole, null);
+        const summary = await solicitudRepository.getFamilySummary(filter);
+        return { summary };
+    }
+
+    async queue(usuario, query = {}) {
+        const actingRole = this.resolveActingRole(usuario, query);
+        const family = query.family;
+        const filter = this.buildVisibilityFilter(usuario.id, actingRole, family);
+        const items = await solicitudRepository.findWithFilters(filter);
+        return { items: items.map(item => this.serializeSolicitud(item)) };
+    }
+
+    resolveActingRole(usuario, query = {}) {
+        const requestedRole = ROLES.normalizeRole(
+            query.actingRole ?? query.acting_role ?? usuario.actingRole
+        );
+        const userRoles = Array.isArray(usuario.roles) ? usuario.roles : [];
+
+        if (requestedRole !== null && userRoles.includes(requestedRole)) {
+            return requestedRole;
         }
 
-        let datosActualizar = { ...data };
+        return usuario.primaryRole ?? usuario.role ?? ROLES.ANALISTA;
+    }
 
-        // Si es coordinadora y está validada, solo puede editar campos específicos
-        if (usuario.role === ROLES.COORDINADORA) {
-            // Filtrar campos permitidos
-            // datosActualizar = { campoPermitido: data.campoPermitido ... }
+    buildVisibilityFilter(userId, actingRole, family = null) {
+        const filter = {};
+
+        if (family === 'editable') {
+            filter.estado = { in: ['borrador', 'devuelta'] };
+        } else if (family === 'resubmittable') {
+            filter.estado = { in: ['rechazado'] };
+        } else if (family === 'under_review') {
+            filter.estado = { in: ['enviado', 'enviada'] };
+        } else if (family === 'post_validation') {
+            filter.estado = { in: ['validado', 'validada', 'convertido_muestras', 'reportes_generados'] };
         }
+
+        if (actingRole === ROLES.INGRESO) {
+            filter.rutResponsableIngreso = userId;
+        } else if (actingRole === ROLES.ANALISTA) {
+            filter.OR = [
+                { rutJefaArea: userId },
+                { rutCoordinaroraRecepcion: userId }
+            ];
+            if (!family) {
+                filter.estado = { in: ['validado', 'validada', 'convertido_muestras', 'reportes_generados'] };
+            }
+        } else if (actingRole === ROLES.COORDINADORA || actingRole === ROLES.JEFE_AREA) {
+            if (!family) {
+                filter.estado = { in: ['enviado', 'enviada', 'validado', 'validada', 'convertido_muestras', 'reportes_generados'] };
+            }
+        }
+
+        return filter;
+    }
+
+    mapEstadoToFamily(estado) {
+        return solicitudRepository.mapEstadoToFamily(estado);
+    }
+
+    isEditableByRole(estado, role) {
+        const family = this.mapEstadoToFamily(estado);
+        if (family === 'editable' || family === 'resubmittable') return true;
+        if (role === ROLES.INGRESO) {
+            return family === 'editable' || family === 'resubmittable';
+        }
+        return true;
+    }
+
+    async editar(id, data, expectedUpdatedAt, usuario) {
+        const solicitud = await solicitudRepository.findById(id);
+
+        if (!solicitud) {
+            throw new Error('NOT_FOUND');
+        }
+
+        const actingRole = this.resolveActingRole(usuario, data);
+        const family = solicitudRepository.mapEstadoToFamily(solicitud.estado);
+
+        if (actingRole === ROLES.INGRESO) {
+            if (family !== 'editable' && family !== 'resubmittable') {
+                throw new Error('ALREADY_VALIDATED');
+            }
+        } else if (actingRole === ROLES.ANALISTA) {
+            if (family !== 'post_validation') {
+                throw new Error('UNAUTHORIZED_ROLE');
+            }
+            const isAssigned = solicitud.rutJefaArea === usuario.id || solicitud.rutCoordinaroraRecepcion === usuario.id;
+            if (!isAssigned) {
+                throw new Error('NOT_ASSIGNED');
+            }
+        }
+
+        const datosActualizar = await this.buildSolicitudData(
+            data,
+            usuario,
+            solicitud.numeroAli,
+            solicitud
+        );
 
         const updated = await solicitudRepository.update(id, datosActualizar, expectedUpdatedAt);
-        return {
-            ...updated,
-            idSolicitud: updated.idSolicitud.toString(),
-            categoriaId: updated.categoriaId.toString()
-        };
+        return this.serializeSolicitud(updated);
+    }
+
+    async enviarValidacion(id, expectedUpdatedAt, usuario) {
+        if (usuario.role !== ROLES.INGRESO) {
+            throw new Error('UNAUTHORIZED_ROLE');
+        }
+
+        const solicitud = await solicitudRepository.findById(id);
+        if (!solicitud) {
+            throw new Error('NOT_FOUND');
+        }
+
+        const now = new Date();
+        const metadata = this.resetValidationMetadata(this.parseMetadata(solicitud.observacionesGenerales));
+        const updated = await solicitudRepository.update(id, {
+            estado: ESTADOS.ENVIADO,
+            fechaEnvioValidacion: now,
+            rutResponsableIngreso: usuario.id,
+            observacionesGenerales: JSON.stringify(metadata)
+        }, expectedUpdatedAt);
+
+        return this.serializeSolicitud(updated);
     }
 
     async validar(id, expectedUpdatedAt, usuario) {
@@ -80,16 +192,540 @@ class SolicitudService {
             throw new Error('NOT_FOUND');
         }
 
-        if (solicitud.estado === 'validada') {
+        if (solicitud.estado === ESTADOS.CONVERTIDO_MUESTRAS || solicitud.estado === ESTADOS.REPORTES_GENERADOS_LEGACY) {
             throw new Error('ALREADY_VALIDATED');
         }
 
-        const updated = await solicitudRepository.update(id, { estado: 'validada' }, expectedUpdatedAt);
+        const metadata = this.parseMetadata(solicitud.observacionesGenerales);
+        const validationState = this.getValidationState(metadata);
+        const alreadyValidatedByCurrentRole = usuario.role === ROLES.COORDINADORA
+            ? validationState.coordinadora.aprobada
+            : validationState.jefa.aprobada;
+
+        if (alreadyValidatedByCurrentRole || this.isLegacyFullyValidatedWithoutFlags(solicitud, validationState)) {
+            throw new Error('ALREADY_VALIDATED');
+        }
+
+        const now = new Date();
+        const nextMetadata = this.applyValidationApproval(metadata, usuario, now);
+        const nextValidationState = this.getValidationState(nextMetadata);
+        const isFullyValidated = nextValidationState.coordinadora.aprobada && nextValidationState.jefa.aprobada;
+        const updated = await solicitudRepository.update(id, {
+            estado: isFullyValidated ? ESTADOS.VALIDADO : ESTADOS.ENVIADO,
+            rutJefaArea: usuario.role === ROLES.JEFE_AREA ? usuario.id : solicitud.rutJefaArea,
+            rutCoordinaroraRecepcion: usuario.role === ROLES.COORDINADORA ? usuario.id : solicitud.rutCoordinaroraRecepcion,
+            fechaEntregaRevisionJefeLab: usuario.role === ROLES.JEFE_AREA ? now : solicitud.fechaEntregaRevisionJefeLab,
+            fechaHoraRecepcionCoordinadora: usuario.role === ROLES.COORDINADORA ? now : solicitud.fechaHoraRecepcionCoordinadora,
+            observacionesGenerales: JSON.stringify(nextMetadata)
+        }, expectedUpdatedAt);
+
+        return this.serializeSolicitud(updated);
+    }
+
+    async rechazar(id, data, expectedUpdatedAt, usuario) {
+        if (usuario.role !== ROLES.COORDINADORA && usuario.role !== ROLES.JEFE_AREA) {
+            throw new Error('UNAUTHORIZED_ROLE');
+        }
+
+        const motivo = data.motivoDevolucion ?? data.motivo_devolucion ?? '';
+        if (!String(motivo).trim()) {
+            throw new Error('MISSING_REJECTION_REASON');
+        }
+
+        const solicitud = await solicitudRepository.findById(id);
+        if (!solicitud) {
+            throw new Error('NOT_FOUND');
+        }
+
+        const updated = await solicitudRepository.update(id, {
+            estado: ESTADOS.RECHAZADO,
+            motivoDevolucion: motivo,
+            rutJefaArea: usuario.role === ROLES.JEFE_AREA ? usuario.id : solicitud.rutJefaArea,
+            rutCoordinaroraRecepcion: usuario.role === ROLES.COORDINADORA ? usuario.id : solicitud.rutCoordinaroraRecepcion,
+            fechaEntregaRevisionJefeLab: new Date()
+        }, expectedUpdatedAt);
+
+        return this.serializeSolicitud(updated);
+    }
+
+    async resolverAnalisis(query) {
+        const idCategoria = query.id_categoria_producto ?? query.categoriaId ?? query.categoria_id;
+        const idFormulario = query.id_formulario_analisis ?? query.formularioId ?? query.formulario_id;
+        if (!idCategoria || !idFormulario) {
+            throw new Error('MISSING_PARAMS');
+        }
+
+        return this.resolverAnalisisPorCategoriaFormulario(idCategoria, idFormulario);
+    }
+
+    async plazoEstimado(codigoAli) {
+        const solicitud = await solicitudRepository.findByNumeroAli(codigoAli);
+        if (!solicitud) {
+            throw new Error('NOT_FOUND');
+        }
+
+        const analisis = await solicitudRepository.findAnalisisByCodigoAli(codigoAli);
+        const plazo = this.calcularPlazoDesdeAnalisis(analisis);
         return {
-            ...updated,
-            idSolicitud: updated.idSolicitud.toString(),
-            categoriaId: updated.categoriaId.toString()
+            dias_negativo: plazo.diasNegativo,
+            dias_confirmacion: plazo.diasConfirmacion,
+            fecha_entrega_neg: plazo.diasNegativo == null ? null : this.sumarDias(solicitud.fechaRecepcion, plazo.diasNegativo).toISOString(),
+            fecha_entrega_pos: plazo.diasConfirmacion == null ? null : this.sumarDias(solicitud.fechaRecepcion, plazo.diasConfirmacion).toISOString()
         };
+    }
+
+    async buildSolicitudData(data, usuario, numeroAli, existing = null) {
+        const now = new Date();
+        const existingMetadata = existing ? this.parseMetadata(existing.observacionesGenerales) : {};
+        const anioIngreso = existing?.anioIngreso || new Date(data.anioIngreso ?? now).getFullYear();
+        const categoria = await this.resolveCategoria(data, existing);
+        const cliente = await this.resolveCliente(data, existing);
+        const direccion = await this.resolveDireccion(data, cliente.idCliente, existing);
+        const termometro = await this.resolveTermometro(data, existing);
+        const lugar = await this.resolveLugar(data, existing);
+
+        const formulariosSeleccionados = this.normalizeFormularios(data.formulariosSeleccionados ?? data.formularios);
+        const nombreSolicitante = data.nombreSolicitante ?? data.nombre_solicitante ?? existingMetadata.nombreSolicitante ?? '';
+        const observacionesLaboratorio = data.observacionesLaboratorio ?? data.observaciones_laboratorio ?? existingMetadata.observacionesLaboratorio ?? '';
+        const analisisDerivadosSubcontratados = data.analisisDerivadosSubcontratados ?? data.analisis_derivados_subcontratados ?? existingMetadata.analisisDerivadosSubcontratados ?? '';
+        const subcategoriaId = data.subcategoriaId ?? data.subcategoria_id ?? existingMetadata.subcategoriaId ?? null;
+        const noAplicaMuestreo = Boolean(data.noAplicaMuestreo ?? data.no_aplica_muestreo ?? existingMetadata.noAplicaMuestreo ?? false);
+        const cantidadMuestras = Number(data.cantidad_muestras ?? data.numeroMuestras ?? existing?.cantidadMuestras ?? 1);
+        const cantidadEnvases = Number(data.cant_envases ?? data.numeroEnvases ?? existing?.cantEnvases ?? 1);
+        const fechaRecepcion = new Date(data.fechaRecepcion ?? data.fecha_recepcion ?? existing?.fechaRecepcion ?? now);
+        const fechaInicioMuestreo = new Date((noAplicaMuestreo ? null : (data.fechaInicioMuestreo ?? data.fecha_inicio_muestreo)) ?? existing?.fechaInicioMuestreo ?? fechaRecepcion);
+        const fechaTerminoMuestreo = new Date((noAplicaMuestreo ? null : (data.fechaTerminoMuestreo ?? data.fecha_termino_muestreo)) ?? existing?.fechaTerminoMuestreo ?? fechaRecepcion);
+        const diasBase = this.calcularDiasEntrega(formulariosSeleccionados);
+        const fechaNegativa = this.sumarDias(fechaRecepcion, diasBase);
+        const fechaPositiva = this.sumarDias(fechaRecepcion, diasBase + 2);
+        const fechaAnalista = new Date(data.fechaRecepcionAnalista ?? data.fecha_recepcion_analista ?? existing?.fechaRecepcionAnalista ?? fechaRecepcion);
+        const fechaSolicitadaAnalista = new Date(data.fechaSolicitadaEntregaAnalista ?? data.fecha_solicitada_entrega_analista ?? existing?.fechaSolicitadaEntregaAnalista ?? fechaNegativa);
+        const rutJefaArea = data.rutJefaArea ?? data.rut_jefa_area ?? existing?.rutJefaArea ?? usuario.id;
+        const rutCoordinadora = data.rutCoordinadoraRecepcion ?? data.rut_coordinadora_recepcion ?? existing?.rutCoordinaroraRecepcion ?? usuario.id;
+
+        const metadata = {
+            version: 1,
+            nombreSolicitante,
+            observacionesLaboratorio,
+            analisisDerivadosSubcontratados,
+            subcategoriaId,
+            noAplicaMuestreo,
+            formularios: formulariosSeleccionados,
+            validacionCoordinadora: existingMetadata.validacionCoordinadora ?? null,
+            validacionJefa: existingMetadata.validacionJefa ?? null
+        };
+
+        return {
+            anioIngreso,
+            numeroAli,
+            numeroActa: data.numeroActa ?? data.numero_acta ?? existing?.numeroActa ?? '',
+            codigoExterno: data.codigoExterno ?? data.codigo_externo ?? existing?.codigoExterno ?? '',
+            codigoEquipoManual: data.codigoEquipoManual ?? data.codigo_equipo_manual ?? existing?.codigoEquipoManual ?? null,
+            categoriaId: categoria.idCategoria,
+            idCliente: cliente.idCliente,
+            idDireccion: direccion.idDireccion,
+            fechaRecepcion,
+            temperaturaRecepcion: Number(data.temperatura ?? data.temperatura_recepcion ?? existing?.temperaturaRecepcion ?? 0),
+            idTermometro: termometro.idEquipo,
+            fechaInicioMuestreo,
+            fechaTerminoMuestreo,
+            cantidadMuestras,
+            cantEnvases: cantidadEnvases,
+            responsableMuestreo: data.analistaResponsable ?? data.responsable_muestreo ?? existing?.responsableMuestreo ?? '',
+            lugarMuestreo: data.lugarMuestreo ?? data.lugar_muestreo ?? existing?.lugarMuestreo ?? '',
+            instructivoMuestreo: data.instructivoMuestreo ?? data.instructivo_muestreo ?? existing?.instructivoMuestreo ?? 'No informado',
+            envasesSuministradosPor: data.envasesSuministradosPor ?? data.envases_suministrados_por ?? existing?.envasesSuministradosPor ?? 'Cliente',
+            idLugar: lugar.idLugar,
+            muestraCompartidaQuimica: Boolean(data.muestraCompartida ?? data.muestra_compartida_quimica ?? existing?.muestraCompartidaQuimica ?? false),
+            observacionesGenerales: JSON.stringify(metadata),
+            observacionesCliente: data.observacionesCliente ?? data.observaciones_cliente ?? existing?.observacionesCliente ?? `Solicitante: ${nombreSolicitante}`,
+            notasDelCliente: data.notasCliente ?? data.notas_del_cliente ?? existing?.notasDelCliente ?? '',
+            estado: existing?.estado ?? ESTADOS.BORRADOR,
+            rutResponsableIngreso: existing?.rutResponsableIngreso ?? usuario.id,
+            rutJefaArea,
+            rutCoordinaroraRecepcion: rutCoordinadora,
+            fechaEnvioValidacion: existing?.fechaEnvioValidacion ?? now,
+            fechaEntregaRevisionJefeLab: data.fechaEntregaRevisionJefeLab ?? existing?.fechaEntregaRevisionJefeLab ?? fechaNegativa,
+            motivoDevolucion: data.motivoDevolucion ?? data.motivo_devolucion ?? existing?.motivoDevolucion ?? '',
+            fechaHoraRecepcionCoordinadora: data.fechaHoraRecepcionCoordinadora ?? existing?.fechaHoraRecepcionCoordinadora ?? now,
+            fechaEntregaResultadoNegativoMicro: data.fechaEntregaResultadoNegativoMicro ?? existing?.fechaEntregaResultadoNegativoMicro ?? fechaNegativa,
+            diasHabilesResultadoNegativo: data.diasHabilesResultadoNegativo ?? existing?.diasHabilesResultadoNegativo ?? diasBase,
+            fechaEntregaResultadoPositivoMicro: data.fechaEntregaResultadoPositivoMicro ?? existing?.fechaEntregaResultadoPositivoMicro ?? fechaPositiva,
+            diasHabilesResultadoPositivo: data.diasHabilesResultadoPositivo ?? existing?.diasHabilesResultadoPositivo ?? (diasBase + 2),
+            fechaHoraRetiroMuestrasSala: data.fechaHoraRetiroMuestrasSala ?? existing?.fechaHoraRetiroMuestrasSala ?? fechaNegativa,
+            fechaRecepcionAnalista: fechaAnalista,
+            fechaSolicitadaEntregaAnalista: fechaSolicitadaAnalista,
+            fechaEnvioInformePositivo: data.fechaEnvioInformePositivo ?? existing?.fechaEnvioInformePositivo ?? fechaPositiva,
+            fechaEnvioInformeNegativo: data.fechaEnvioInformeNegativo ?? existing?.fechaEnvioInformeNegativo ?? fechaNegativa,
+            createdAt: existing?.createdAt ?? now,
+            updatedAt: now,
+            createdBy: existing?.createdBy ?? usuario.id
+        };
+    }
+
+    async resolveCategoria(data, existing) {
+        const categoriaId = data.categoriaId ?? data.categoria_id ?? data.categoria?.id;
+        if (categoriaId) {
+            const categoria = await solicitudRepository.findCategoriaById(categoriaId);
+            if (categoria) return categoria;
+        }
+
+        const nombre = data.categoriaNombre ?? data.categoria_nombre ?? data.categoria?.nombre ?? data.categoria ?? existing?.categoria?.nombre ?? 'General';
+        const found = await solicitudRepository.findCategoriaByName(nombre);
+        return found || solicitudRepository.createCategoria(nombre);
+    }
+
+    async resolveCliente(data, existing) {
+        const idCliente = data.idCliente ?? data.id_cliente ?? data.cliente?.id;
+        if (idCliente) {
+            const cliente = await solicitudRepository.findClienteById(idCliente);
+            if (cliente) return cliente;
+        }
+
+        const nombre = data.nombreCliente ?? data.nombre_cliente ?? data.cliente?.nombre ?? existing?.cliente?.nombre;
+        const rut = data.rutCliente ?? data.rut_cliente ?? existing?.cliente?.rut ?? 'SIN-RUT';
+        const email = data.emailCliente ?? data.email_cliente ?? existing?.cliente?.email ?? 'sin-correo@asistec.local';
+        const telefono = data.telefonoCliente ?? data.telefono_cliente ?? existing?.cliente?.telefono ?? 'Sin teléfono';
+        const activo = existing?.cliente?.activo ?? 'S';
+
+        const existente = nombre ? await solicitudRepository.findClienteByNombre(nombre) : null;
+        if (existente) return existente;
+
+        return solicitudRepository.createCliente({
+            rut,
+            nombre: nombre || `Cliente ${Date.now()}`,
+            email,
+            telefono,
+            activo
+        });
+    }
+
+    async resolveDireccion(data, idCliente, existing) {
+        const idDireccion = data.idDireccion ?? data.id_direccion ?? data.direccion?.id;
+        if (idDireccion) {
+            const direccion = await solicitudRepository.findDireccionById(idDireccion);
+            if (direccion) return direccion;
+        }
+
+        const textoDireccion = data.direccion ?? data.direccion_texto ?? data.direccionCliente ?? existing?.direccion?.direccion ?? 'Dirección no informada';
+        const existente = await solicitudRepository.findDireccionByClienteYTexto(idCliente, textoDireccion);
+        if (existente) return existente;
+
+        return solicitudRepository.createDireccion({
+            idCliente,
+            alias: data.aliasDireccion ?? data.alias_direccion ?? 'Principal',
+            direccion: textoDireccion,
+            solicitadoPorDefault: data.nombreSolicitante ?? this.parseMetadata(existing?.observacionesGenerales).nombreSolicitante ?? 'Cliente',
+            activo: true
+        });
+    }
+
+    async resolveTermometro(data, existing) {
+        const idTermometro = data.idTermometro ?? data.id_termometro;
+        if (idTermometro) {
+            const equipo = await solicitudRepository.findEquipoById(idTermometro);
+            if (equipo) return equipo;
+        }
+
+        if (existing?.termometro) return existing.termometro;
+
+        const primero = await solicitudRepository.getPrimerEquipo();
+        if (!primero) {
+            throw new Error('MISSING_TERMOMETRO');
+        }
+        return primero;
+    }
+
+    async resolveLugar(data, existing) {
+        const idEquipoAlmacenamiento = data.idEquipoAlmacenamiento ?? data.id_equipo_almacenamiento;
+        if (idEquipoAlmacenamiento) {
+            const equipo = await solicitudRepository.findEquipoById(idEquipoAlmacenamiento);
+            if (equipo) {
+                return this.resolveLugarDesdeEquipo(equipo);
+            }
+        }
+
+        const idLugar = data.idLugar ?? data.id_lugar ?? data.equipoAlmacenamiento ?? data.equipo_almacenamiento;
+        if (idLugar) {
+            const lugar = await solicitudRepository.findLugarById(idLugar);
+            if (lugar) return lugar;
+
+            const equipo = await solicitudRepository.findEquipoById(idLugar);
+            if (equipo) {
+                return this.resolveLugarDesdeEquipo(equipo);
+            }
+        }
+
+        if (existing?.lugar) return existing.lugar;
+
+        const primero = await solicitudRepository.getPrimerLugar();
+        if (!primero) {
+            throw new Error('MISSING_LUGAR');
+        }
+        return primero;
+    }
+
+    async resolveLugarDesdeEquipo(equipo) {
+        const codigo = equipo.codigoEquipo || null;
+        if (codigo) {
+            const byCode = await solicitudRepository.findLugarByCodigo(codigo);
+            if (byCode) return byCode;
+        }
+
+        const byName = await solicitudRepository.findLugarByNombre(equipo.nombreEquipo);
+        if (byName) return byName;
+
+        return solicitudRepository.createLugar({
+            nombreLugar: equipo.nombreEquipo,
+            codigoLugar: codigo
+        });
+    }
+
+    normalizeFormularios(formularios = []) {
+        if (!Array.isArray(formularios)) {
+            return [];
+        }
+
+        return formularios.map((formulario) => ({
+            id: formulario.id ?? formulario.idFormularioAnalisis ?? null,
+            codigo: formulario.codigo ?? formulario.id ?? '',
+            nombre: formulario.nombre ?? formulario.nombreAnalisis ?? '',
+            genera_tpa_default: Boolean(formulario.generaTpaDefault ?? formulario.genera_tpa_default ?? false),
+            acreditado: formulario.acreditado ?? null,
+            codigo_le: formulario.codigo_le ?? formulario.codigoLe ?? null,
+            metodologia_norma: formulario.metodologia_norma ?? formulario.metodologiaNorma ?? null,
+            dias_negativo: formulario.dias_negativo ?? formulario.diasNegativo ?? null,
+            dias_confirmacion: formulario.dias_confirmacion ?? formulario.diasConfirmacion ?? null
+        }));
+    }
+
+    resolveNumeroAliManual(data) {
+        const numeroAli = data.codigoALI ?? data.codigo_ali ?? data.numeroAli ?? data.numero_ali;
+        const parsed = Number(numeroAli);
+        if (!Number.isInteger(parsed) || parsed <= 0) {
+            throw new Error('MISSING_CODIGO_ALI');
+        }
+        return parsed;
+    }
+
+    async buildFormulariosDefault(idCategoriaProducto) {
+        const tpa = await solicitudRepository.findFormularioTpaDefault();
+        if (!tpa) return [];
+        const snapshot = await this.resolverAnalisisPorCategoriaFormulario(idCategoriaProducto, tpa.idFormularioAnalisis);
+        return [{
+            idFormularioAnalisis: tpa.idFormularioAnalisis,
+            idAlcanceAcreditacion: snapshot.id_alcance_acreditacion,
+            acreditado: snapshot.acreditado,
+            metodologiaNorma: snapshot.metodologia_norma,
+            diasNegativoSnapshot: snapshot.dias_negativo,
+            diasConfirmacionSnapshot: snapshot.dias_confirmacion
+        }];
+    }
+
+    async resolverAnalisisPorCategoriaFormulario(idCategoriaProducto, idFormularioAnalisis) {
+        const [formulario, tiempo, alcance] = await Promise.all([
+            solicitudRepository.findFormularioById(idFormularioAnalisis),
+            solicitudRepository.findTiempoPorCategoria(idCategoriaProducto, idFormularioAnalisis),
+            solicitudRepository.findAlcancePorCategoriaFormulario(idCategoriaProducto, idFormularioAnalisis)
+        ]);
+
+        if (!formulario) {
+            throw new Error('FORMULARIO_NOT_FOUND');
+        }
+
+        return {
+            id_formulario_analisis: formulario.idFormularioAnalisis.toString(),
+            codigo_formulario: formulario.codigo,
+            nombre_formulario: formulario.nombreAnalisis,
+            id_alcance_acreditacion: alcance?.idAlcanceAcreditacion ?? null,
+            codigo_le: alcance?.acreditacion?.codigo ?? null,
+            acreditado: Boolean(alcance),
+            metodologia_norma: alcance?.normaEspecifica ?? (tiempo?.metodologiaNorma != null ? String(tiempo.metodologiaNorma) : ''),
+            dias_negativo: tiempo?.diasNegativo ?? null,
+            dias_confirmacion: tiempo?.diasConfirmacion ?? null
+        };
+    }
+
+    calcularPlazoDesdeAnalisis(analisis = []) {
+        const negativos = analisis
+            .map((item) => item.diasNegativoSnapshot ?? null)
+            .filter((dias) => dias !== null && dias !== undefined)
+            .map(Number);
+        const confirmaciones = analisis
+            .map((item) => item.diasConfirmacionSnapshot ?? null)
+            .filter((dias) => dias !== null && dias !== undefined)
+            .map(Number);
+
+        return {
+            diasNegativo: negativos.length ? Math.max(...negativos) + 1 : null,
+            diasConfirmacion: negativos.length ? Math.max(...negativos) + 3 : (confirmaciones.length ? Math.max(...confirmaciones) + 1 : null)
+        };
+    }
+
+    serializeSolicitud(solicitud, extra = {}) {
+        const metadata = this.parseMetadata(solicitud.observacionesGenerales);
+        const validationState = this.getValidationState(metadata);
+        const dto = {
+            id_solicitud: solicitud.idSolicitud.toString(),
+            anio_ingreso: solicitud.anioIngreso,
+            numero_ali: solicitud.numeroAli,
+            numero_acta: solicitud.numeroActa,
+            codigo_externo: solicitud.codigoExterno,
+            categoria: solicitud.categoria
+                ? { id: solicitud.categoria.idCategoria.toString(), nombre: solicitud.categoria.nombre }
+                : null,
+            cliente: solicitud.cliente
+                ? { id: solicitud.cliente.idCliente, nombre: solicitud.cliente.nombre, rut: solicitud.cliente.rut }
+                : null,
+            direccion: solicitud.direccion
+                ? { id: solicitud.direccion.idDireccion, direccion: solicitud.direccion.direccion, alias: solicitud.direccion.alias }
+                : null,
+            fecha_recepcion: solicitud.fechaRecepcion,
+            fecha_inicio_muestreo: solicitud.fechaInicioMuestreo,
+            fecha_termino_muestreo: solicitud.fechaTerminoMuestreo,
+            temperatura: Number(solicitud.temperaturaRecepcion),
+            id_termometro: solicitud.termometro?.idEquipo ?? solicitud.idTermometro,
+            id_lugar: solicitud.lugar?.idLugar ?? solicitud.idLugar,
+            cantidad_muestras: solicitud.cantidadMuestras,
+            cant_envases: solicitud.cantEnvases,
+            responsable_muestreo: solicitud.responsableMuestreo,
+            lugar_muestreo: solicitud.lugarMuestreo,
+            instructivo_muestreo: solicitud.instructivoMuestreo,
+            envases_suministrados_por: solicitud.envasesSuministradosPor,
+            muestra_compartida_quimica: solicitud.muestraCompartidaQuimica,
+            notas_cliente: solicitud.notasDelCliente,
+            nombre_solicitante: metadata.nombreSolicitante ?? '',
+            observaciones_laboratorio: metadata.observacionesLaboratorio ?? '',
+            analisis_derivados_subcontratados: metadata.analisisDerivadosSubcontratados ?? '',
+            formularios_seleccionados: metadata.formularios ?? [],
+            subcategoria_id: metadata.subcategoriaId ?? null,
+            no_aplica_muestreo: Boolean(metadata.noAplicaMuestreo),
+            estado: solicitud.estado,
+            rut_responsable_ingreso: solicitud.rutResponsableIngreso,
+            rut_jefa_area: solicitud.rutJefaArea,
+            rut_coordinadora_recepcion: solicitud.rutCoordinaroraRecepcion,
+            validacion_coordinadora: validationState.coordinadora,
+            validacion_jefa: validationState.jefa,
+            fecha_envio_validacion: solicitud.fechaEnvioValidacion,
+            fecha_envio_informe_positivo: solicitud.fechaEnvioInformePositivo,
+            fecha_envio_informe_negativo: solicitud.fechaEnvioInformeNegativo,
+            codigo_equipo_manual: solicitud.codigoEquipoManual ?? null,
+            updated_at: solicitud.updatedAt,
+            muestras: (solicitud.muestras ?? []).map((muestra) => ({
+                id_solicitud_muestra: muestra.idSolicitudMuestra.toString(),
+                analisis: (muestra.analisis ?? []).map((analisis) => ({
+                    id_solicitud_analisis: analisis.idSolicitudAnalisis.toString(),
+                    id_formulario_analisis: analisis.idFormularioAnalisis.toString(),
+                    codigo_formulario: analisis.formulario?.codigo ?? null,
+                    nombre_formulario: analisis.formulario?.nombreAnalisis ?? null
+                    ,
+                    metodologia_norma: analisis.metodologiaNorma ?? null,
+                    acreditado: Boolean(analisis.acreditado),
+                    codigo_le: analisis.alcance?.acreditacion?.codigo ?? null,
+                    dias_negativo_snapshot: analisis.diasNegativoSnapshot ?? null,
+                    dias_confirmacion_snapshot: analisis.diasConfirmacionSnapshot ?? null
+                }))
+            })),
+            ...extra
+        };
+
+        solicitud.__metadata = metadata;
+        return dto;
+    }
+
+    parseMetadata(rawValue) {
+        if (!rawValue) {
+            return {};
+        }
+
+        try {
+            return JSON.parse(rawValue);
+        } catch (error) {
+            return {
+                observacionesLaboratorio: rawValue,
+                formularios: []
+            };
+        }
+    }
+
+    normalizeValidationEntry(entry) {
+        if (!entry || typeof entry !== 'object') {
+            return { aprobada: false, rut: null, fecha: null };
+        }
+
+        return {
+            aprobada: Boolean(entry.aprobada),
+            rut: entry.rut ?? null,
+            fecha: entry.fecha ?? null
+        };
+    }
+
+    getValidationState(metadata = {}) {
+        return {
+            coordinadora: this.normalizeValidationEntry(metadata.validacionCoordinadora),
+            jefa: this.normalizeValidationEntry(metadata.validacionJefa)
+        };
+    }
+
+    resetValidationMetadata(metadata = {}) {
+        return {
+            ...metadata,
+            validacionCoordinadora: null,
+            validacionJefa: null
+        };
+    }
+
+    applyValidationApproval(metadata = {}, usuario, fecha) {
+        const nextMetadata = { ...metadata };
+        const approval = {
+            aprobada: true,
+            rut: usuario.id,
+            fecha: fecha.toISOString()
+        };
+
+        if (usuario.role === ROLES.COORDINADORA) {
+            nextMetadata.validacionCoordinadora = approval;
+        }
+
+        if (usuario.role === ROLES.JEFE_AREA) {
+            nextMetadata.validacionJefa = approval;
+        }
+
+        return nextMetadata;
+    }
+
+    isLegacyFullyValidatedWithoutFlags(solicitud, validationState) {
+        const alreadyInPostValidation = [
+            ESTADOS.VALIDADO,
+            ESTADOS.VALIDADA_LEGACY,
+            ESTADOS.CONVERTIDO_MUESTRAS,
+            ESTADOS.REPORTES_GENERADOS_LEGACY
+        ].includes(solicitud.estado);
+
+        if (!alreadyInPostValidation) {
+            return false;
+        }
+
+        return !validationState.coordinadora.aprobada && !validationState.jefa.aprobada;
+    }
+
+    generarNumeroActa(anio, numeroAli) {
+        return `ACTA-${anio}-${String(numeroAli).padStart(4, '0')}`;
+    }
+
+    calcularDiasEntrega(formularios = []) {
+        const negativos = formularios
+            .map((formulario) => formulario.dias_negativo ?? formulario.diasNegativoSnapshot)
+            .filter((dias) => dias !== null && dias !== undefined)
+            .map(Number);
+        if (negativos.length === 0) return 1;
+        return Math.max(...negativos) + 1;
+    }
+
+    sumarDias(fecha, dias) {
+        const base = new Date(fecha);
+        base.setDate(base.getDate() + dias);
+        return base;
     }
 }
 

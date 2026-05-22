@@ -1,11 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
+    CategoriaProducto,
     Diluyente,
     EquipoIncubacion,
     EquipoLaboratorio,
+    FormularioAnalisisCatalogo,
     FormaCalculo,
     ItemChecklistLimpieza,
     LugarAlmacenamiento,
@@ -13,6 +15,7 @@ import {
     MaterialSiembra,
     Micropipeta,
     Responsable,
+    SubcategoriaProducto,
     TipoAnalisis
 } from '../interfaces/catalogo.interfaces';
 
@@ -20,11 +23,11 @@ import {
     providedIn: 'root',
 })
 export class CatalogosService {
+    private http = inject(HttpClient);
+
 
     private apiUrl = environment.apiUrl + '/catalogo';
     private usuariosUrl = environment.apiUrl + '/catalogo/usuarios';
-
-    constructor(private http: HttpClient) { }
 
     getMaterialesPesados(): Observable<MaterialPesado[]> {
         return this.http.get<MaterialPesado[]>(`${this.apiUrl}/instrumentos`);
@@ -36,6 +39,14 @@ export class CatalogosService {
 
     getResponsables(): Observable<Responsable[]> {
         return this.http.get<Responsable[]>(this.usuariosUrl);
+    }
+
+    getCategorias(): Observable<CategoriaProducto[]> {
+        return this.http.get<CategoriaProducto[]>(`${this.apiUrl}/categorias`);
+    }
+
+    getFormulariosAnalisis(): Observable<FormularioAnalisisCatalogo[]> {
+        return this.http.get<FormularioAnalisisCatalogo[]>(`${this.apiUrl}/formularios`);
     }
 
     getEquiposInstrumentos(): Observable<EquipoLaboratorio[]> {
@@ -72,5 +83,9 @@ export class CatalogosService {
 
     getFormasCalculo(): Observable<FormaCalculo[]> {
         return this.http.get<FormaCalculo[]>(`${this.apiUrl}/formas_calculo`);
+    }
+
+    getSubcategorias(): Observable<SubcategoriaProducto[]> {
+        return this.http.get<SubcategoriaProducto[]>(`${this.apiUrl}/subcategorias`);
     }
 }

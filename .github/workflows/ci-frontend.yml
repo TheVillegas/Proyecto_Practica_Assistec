@@ -1,0 +1,37 @@
+name: CI — Frontend (Angular)
+
+on:
+  push:
+    paths:
+      - "Frontend/**"
+  pull_request:
+    paths:
+      - "Frontend/**"
+
+jobs:
+  lint-and-test:
+    name: Lint y Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "Frontend/package-lock.json"
+
+      - name: Instalar dependencias
+        working-directory: Frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: Frontend
+        run: npm run lint
+
+      - name: Tests
+        working-directory: Frontend
+        run: npm test -- --watch=false --browsers=ChromeHeadless

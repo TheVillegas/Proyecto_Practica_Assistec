@@ -17,4 +17,4 @@ import { ComponentsModule } from 'src/app/components/components-module/component
   ],
   declarations: [SolicitudIngresoPage]
 })
-export class SolicitudIngresoPageModule { }
+export class SolicitudIngresoPageModule {}

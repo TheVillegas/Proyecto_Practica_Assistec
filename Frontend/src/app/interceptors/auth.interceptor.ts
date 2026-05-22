@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
     HttpRequest,
     HttpHandler,
@@ -13,9 +13,10 @@ import { AlertController } from '@ionic/angular';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-    private isShowingAlert = false;
+    private router = inject(Router);
+    private alertController = inject(AlertController);
 
-    constructor(private router: Router, private alertController: AlertController) { }
+    private isShowingAlert = false;
 
     intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
         const token = sessionStorage.getItem('token'); // Use sessionStorage

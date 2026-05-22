@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { AlertController, LoadingController } from '@ionic/angular';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -15,13 +15,11 @@ export interface OpcionesSeleccionImagen {
   providedIn: 'root',
 })
 export class ImagenUploadService {
-  private apiUrl = environment.apiUrl + '/upload'; // Ruta al endpoint de carga
+  private alertController = inject(AlertController);
+  private http = inject(HttpClient);
+  private loadingController = inject(LoadingController);
 
-  constructor(
-    private alertController: AlertController,
-    private http: HttpClient,
-    private loadingController: LoadingController
-  ) { }
+  private apiUrl = environment.apiUrl + '/upload';
 
   async seleccionarImagen(opciones?: OpcionesSeleccionImagen): Promise<ImagenObservacion | null> {
     const config = {

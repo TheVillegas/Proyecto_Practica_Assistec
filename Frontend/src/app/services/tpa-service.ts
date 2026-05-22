@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -8,9 +8,9 @@ import { ReporteTPA } from '../interfaces/reporte-tpa.interface';
     providedIn: 'root'
 })
 export class TpaService {
-    private apiUrl = environment.apiUrl + '/ReporteTPA';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) { }
+    private apiUrl = environment.apiUrl + '/ReporteTPA';
 
     obtenerReporte(codigoAli: number): Observable<ReporteTPA> {
         return this.http.get<ReporteTPA>(`${this.apiUrl}/${codigoAli}`);

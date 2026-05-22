@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IonContent, NavController, AlertController, LoadingController } from '@ionic/angular';
 import { Router } from '@angular/router';
@@ -19,19 +19,17 @@ import { RamAdapter } from 'src/app/adapters/ram.adapter';
   standalone: false
 })
 export class ReporteRamPage implements OnInit {
+  private aliService = inject(AliService);
+  private route = inject(ActivatedRoute);
+  private ramService = inject(RamService);
+  private router = inject(Router);
+  private catalogosService = inject(CatalogosService);
+  private alertController = inject(AlertController);
+  private navCtrl = inject(NavController);
+  private imagenUploadService = inject(ImagenUploadService);
+  private loadingController = inject(LoadingController);
+  private authService = inject(AuthService);
 
-  constructor(
-    private aliService: AliService,
-    private route: ActivatedRoute,
-    private ramService: RamService,
-    private router: Router,
-    private catalogosService: CatalogosService,
-    private alertController: AlertController,
-    private navCtrl: NavController,
-    private imagenUploadService: ImagenUploadService,
-    private loadingController: LoadingController,
-    private authService: AuthService
-  ) { }
 
   // ... (properties remain) 
   seccionActual: string = '';

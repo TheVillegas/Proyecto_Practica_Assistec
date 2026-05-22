@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-components-module',
@@ -6,10 +6,4 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./components-module.component.scss'],
   standalone: false
 })
-export class ComponentsModuleComponent implements OnInit {
-
-  constructor() { }
-
-  ngOnInit() { }
-
-}
+export class ComponentsModuleComponent {}

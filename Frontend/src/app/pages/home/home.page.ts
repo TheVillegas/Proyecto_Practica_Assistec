@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { Route, Router } from '@angular/router';
+import { AuthService, SessionUser } from 'src/app/services/auth-service';
 
 @Component({
   selector: 'app-home',
@@ -8,25 +9,34 @@ import { Router } from '@angular/router';
   standalone: false
 })
 export class HomePage implements OnInit {
+  private router = inject(Router);
+  private authService = inject(AuthService);
 
-  constructor(private router: Router) { }
 
   ngOnInit() {
+    const user = this.authService.getUsuario();
+    if (!user) {
+      this.router.navigate(['/login'], { replaceUrl: true });
+      return;
+    }
+
+    this.router.navigate([this.resolveLandingRoute(user)], { replaceUrl: true });
   }
 
-  busquedaALI() {
-    console.log("Redirigiendo a Busqueda ALI");
-    this.router.navigate(["/busqueda-ali"]);
-  }
+  private resolveLandingRoute(user: SessionUser): string {
+    const landingRoute = this.authService.getLandingRoute(user);
+    const availableRoutes = this.router.config
+      .filter((route: Route) => route.path && Array.isArray(route.data?.['allowedRoles']))
+      .map((route: Route) => ({
+        path: `/${route.path}`,
+        allowedRoles: route.data?.['allowedRoles'] as number[]
+      }));
 
-  generarALI() {
-    console.log("Redirigiendo a Generar ALI");
-    this.router.navigate(["/generar-ali-basico"]);
-  }
+    if (availableRoutes.some((route) => route.path === landingRoute)) {
+      return landingRoute;
+    }
 
-  solicitudIngreso() {
-    console.log("Redirigiendo a Solicitud de Ingreso");
-    this.router.navigate(["/solicitud-ingreso"]);
+    return availableRoutes.find((route) => this.authService.canAccess(route.allowedRoles, user))?.path ?? landingRoute;
   }
 
 }

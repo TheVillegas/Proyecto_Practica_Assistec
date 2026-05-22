@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { ALI } from '../interfaces/ali';
@@ -8,9 +8,9 @@ import { environment } from '../../environments/environment';
   providedIn: 'root',
 })
 export class AliService {
-  private apiUrl = environment.apiUrl + '/MuestraALI';
+  private http = inject(HttpClient);
 
-  constructor(private http: HttpClient) { }
+  private apiUrl = environment.apiUrl + '/MuestraALI';
 
   getMuestras(): Observable<ALI[]> {
     return this.http.get<any[]>(`${this.apiUrl}/obtenerMuestras`).pipe(

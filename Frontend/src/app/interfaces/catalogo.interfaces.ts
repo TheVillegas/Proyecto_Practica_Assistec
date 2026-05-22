@@ -93,3 +93,23 @@ export interface Responsable {
     correo: string;
     rol: number;
 }
+
+export interface CategoriaProducto {
+    idCategoria: string;
+    nombre: string;
+}
+
+export interface SubcategoriaProducto {
+    idSubcategoria: string;
+    nombre: string;
+    idCategoria: string;
+    activo?: string;
+}
+
+export interface FormularioAnalisisCatalogo {
+    idFormularioAnalisis: string;
+    codigo: string;
+    nombreAnalisis: string;
+    area: string;
+    generaTpaDefault: boolean;
+}

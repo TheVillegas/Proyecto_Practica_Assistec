@@ -2,6 +2,8 @@
 node_modules/
 **/node_modules/
 package-lock.json
+!AssisTec\ API/package-lock.json
+!Frontend/package-lock.json
 
 # --- Seguridad (Claves y secretos) ---
 .env
