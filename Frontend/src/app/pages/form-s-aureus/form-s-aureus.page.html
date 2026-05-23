@@ -123,11 +123,11 @@
                   <label class="form-label">Nº de Muestra</label>
                   <div class="form-radio-group">
                     <label class="form-check-label">
-                      <input type="radio" class="form-radio" formControlName="e1_nroMuestraRadio" value="10gr/90ml" />
+                      <input type="radio" class="form-radio" name="e1_nroMuestraRadio" formControlName="e1_nroMuestraRadio" value="10gr/90ml" />
                       <span>10gr/90ml</span>
                     </label>
                     <label class="form-check-label">
-                      <input type="radio" class="form-radio" formControlName="e1_nroMuestraRadio" value="50gr/450ml" />
+                      <input type="radio" class="form-radio" name="e1_nroMuestraRadio" formControlName="e1_nroMuestraRadio" value="50gr/450ml" />
                       <span>50gr/450ml</span>
                     </label>
                   </div>
@@ -136,11 +136,11 @@
                   <label class="form-label">Estufa</label>
                   <div class="form-radio-group">
                     <label class="form-check-label">
-                      <input type="radio" class="form-radio" formControlName="e1_estufa" value="73-M" />
+                      <input type="radio" class="form-radio" name="e1_estufa" formControlName="e1_estufa" value="73-M" />
                       <span>73-M</span>
                     </label>
                     <label class="form-check-label">
-                      <input type="radio" class="form-radio" formControlName="e1_estufa" value="2-M" />
+                      <input type="radio" class="form-radio" name="e1_estufa" formControlName="e1_estufa" value="2-M" />
                       <span>2-M</span>
                     </label>
                   </div>
@@ -192,11 +192,11 @@
                   <p class="text-xs font-semibold text-slate-600 mb-2">Estado</p>
                   <div class="flex gap-4">
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="e1_duplicadoAliCumple" value="cumple" [ngModelOptions]="{standalone: true}" />
+                      <input type="radio" class="form-radio" name="e1_duplicadoAliCumple" [(ngModel)]="e1_duplicadoAliCumple" value="cumple" [ngModelOptions]="{standalone: true}" />
                       <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
                     </label>
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="e1_duplicadoAliCumple" value="no_cumple" [ngModelOptions]="{standalone: true}" />
+                      <input type="radio" class="form-radio" name="e1_duplicadoAliCumple" [(ngModel)]="e1_duplicadoAliCumple" value="no_cumple" [ngModelOptions]="{standalone: true}" />
                       <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
                     </label>
                   </div>
@@ -212,11 +212,11 @@
                   <p class="text-xs font-semibold text-slate-600 mb-2">Estado</p>
                   <div class="flex gap-4">
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="e1_controlBlancoCumple" value="cumple" [ngModelOptions]="{standalone: true}" />
+                      <input type="radio" class="form-radio" name="e1_controlBlancoCumple" [(ngModel)]="e1_controlBlancoCumple" value="cumple" [ngModelOptions]="{standalone: true}" />
                       <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
                     </label>
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="e1_controlBlancoCumple" value="no_cumple" [ngModelOptions]="{standalone: true}" />
+                      <input type="radio" class="form-radio" name="e1_controlBlancoCumple" [(ngModel)]="e1_controlBlancoCumple" value="no_cumple" [ngModelOptions]="{standalone: true}" />
                       <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
                     </label>
                   </div>
@@ -232,11 +232,11 @@
                   <p class="text-xs font-semibold text-slate-600 mb-2">Estado</p>
                   <div class="flex gap-4">
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="e1_controlSiembraCumple" value="cumple" [ngModelOptions]="{standalone: true}" />
+                      <input type="radio" class="form-radio" name="e1_controlSiembraCumple" [(ngModel)]="e1_controlSiembraCumple" value="cumple" [ngModelOptions]="{standalone: true}" />
                       <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
                     </label>
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="e1_controlSiembraCumple" value="no_cumple" [ngModelOptions]="{standalone: true}" />
+                      <input type="radio" class="form-radio" name="e1_controlSiembraCumple" [(ngModel)]="e1_controlSiembraCumple" value="no_cumple" [ngModelOptions]="{standalone: true}" />
                       <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
                     </label>
                   </div>
@@ -374,11 +374,11 @@
                   <label class="form-label">Estufa <span class="required-star">*</span></label>
                   <div class="form-radio-group">
                     <label class="form-check-label">
-                      <input type="radio" class="form-radio" formControlName="e3_estufa" value="73-M" />
+                      <input type="radio" class="form-radio" name="e3_estufa" formControlName="e3_estufa" value="73-M" />
                       <span>73-M</span>
                     </label>
                     <label class="form-check-label">
-                      <input type="radio" class="form-radio" formControlName="e3_estufa" value="2-M" />
+                      <input type="radio" class="form-radio" name="e3_estufa" formControlName="e3_estufa" value="2-M" />
                       <span>2-M</span>
                     </label>
                   </div>
@@ -493,11 +493,11 @@
                   <label class="form-label">Micropipeta <span class="required-star">*</span></label>
                   <div class="form-radio-group">
                     <label class="form-check-label">
-                      <input type="radio" class="form-radio" formControlName="e4_micropipeta" value="22-M" />
+                      <input type="radio" class="form-radio" name="e4_micropipeta" formControlName="e4_micropipeta" value="22-M" />
                       <span>22-M</span>
                     </label>
                     <label class="form-check-label">
-                      <input type="radio" class="form-radio" formControlName="e4_micropipeta" value="23-M" />
+                      <input type="radio" class="form-radio" name="e4_micropipeta" formControlName="e4_micropipeta" value="23-M" />
                       <span>23-M</span>
                     </label>
                   </div>
@@ -506,11 +506,11 @@
                   <label class="form-label">Estufa <span class="required-star">*</span></label>
                   <div class="form-radio-group">
                     <label class="form-check-label">
-                      <input type="radio" class="form-radio" formControlName="e4_estufa" value="73-M" />
+                      <input type="radio" class="form-radio" name="e4_estufa" formControlName="e4_estufa" value="73-M" />
                       <span>73-M</span>
                     </label>
                     <label class="form-check-label">
-                      <input type="radio" class="form-radio" formControlName="e4_estufa" value="2-M" />
+                      <input type="radio" class="form-radio" name="e4_estufa" formControlName="e4_estufa" value="2-M" />
                       <span>2-M</span>
                     </label>
                   </div>
@@ -685,11 +685,11 @@
                 <label class="form-label font-bold text-[#1e3a8a]">Desfavorable (Sí o No) <span class="required-star">*</span></label>
                 <div class="form-radio-group mt-2">
                   <label class="form-check-label">
-                    <input type="radio" class="form-radio" [(ngModel)]="e6_desfavorable" value="si" [ngModelOptions]="{standalone: true}" />
+                    <input type="radio" class="form-radio" name="e6_desfavorable" [(ngModel)]="e6_desfavorable" value="si" [ngModelOptions]="{standalone: true}" />
                     <span>Sí</span>
                   </label>
                   <label class="form-check-label">
-                    <input type="radio" class="form-radio" [(ngModel)]="e6_desfavorable" value="no" [ngModelOptions]="{standalone: true}" />
+                    <input type="radio" class="form-radio" name="e6_desfavorable" [(ngModel)]="e6_desfavorable" value="no" [ngModelOptions]="{standalone: true}" />
                     <span>No</span>
                   </label>
                 </div>
