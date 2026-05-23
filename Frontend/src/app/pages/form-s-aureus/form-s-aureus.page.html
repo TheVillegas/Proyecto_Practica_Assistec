@@ -1,0 +1,749 @@
+<ion-header>
+  <ion-toolbar class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-button (click)="confirmarCancelar()" class="btn-back">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="header-title">
+      <ion-icon name="flask-outline" class="header-icon"></ion-icon>
+      Análisis de S. Aureus
+    </ion-title>
+    <ion-buttons slot="end">
+      <span class="badge-etapa">{{ etapaActual }}/{{ TOTAL_ETAPAS }}</span>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="page-content">
+  <div class="wizard-container">
+
+    <!-- ═══════════ BARRA DE PROGRESO + STEPPER ══════════ -->
+    <div class="stepper-wrapper">
+      <div class="stepper-bar">
+        <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
+      </div>
+      <div class="stepper-steps">
+        <button *ngFor="let nombre of NOMBRES_ETAPAS; let i = index" class="step-btn"
+          [class.step-btn--active]="etapaActual === i + 1" [class.step-btn--done]="etapaActual > i + 1"
+          (click)="irAEtapa(i + 1)">
+          <span class="step-circle">{{ i + 1 }}</span>
+          <span class="step-label">{{ nombre }}</span>
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="form">
+
+      <!-- ════════ ETAPA 1: INICIO, INCUBACIÓN Y SIEMBRA ════════ -->
+      <div *ngIf="etapaActual === 1" class="etapa-panel animate__animated animate__fadeIn">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="time-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">1. Inicio, Incubación y Siembra</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Inicio Incubación -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                Inicio Incubación
+              </p>
+              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                <div class="form-group">
+                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" formControlName="e1_fechaInicio" [class.input-error]="campoInvalido('e1_fechaInicio')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" formControlName="e1_horaInicio" [class.input-error]="campoInvalido('e1_horaInicio')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e1_analistaInicio" [class.input-error]="campoInvalido('e1_analistaInicio')" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Término Análisis -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                Término Análisis
+              </p>
+              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                <div class="form-group">
+                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" formControlName="e1_fechaTermino" [class.input-error]="campoInvalido('e1_fechaTermino')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" formControlName="e1_horaTermino" [class.input-error]="campoInvalido('e1_horaTermino')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e1_analistaTermino" [class.input-error]="campoInvalido('e1_analistaTermino')" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Parámetros adicionales -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                Parámetros de Siembra
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                <div class="form-group justify-center">
+                  <label class="form-check-label">
+                    <input type="checkbox" class="form-checkbox" formControlName="e1_tiempoMenor15" />
+                    <span>Tiempo entre homogeneizado y siembra < 15 min</span>
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Agar Baird Parker</label>
+                  <input type="text" class="form-input" formControlName="e1_agarBairdParker" [class.input-error]="campoInvalido('e1_agarBairdParker')" />
+                </div>
+                <div class="form-group justify-center">
+                  <label class="form-check-label">
+                    <input type="checkbox" class="form-checkbox" formControlName="e1_micropipeta1ml" />
+                    <span>Micropipetas 1 ml</span>
+                  </label>
+                </div>
+                <div class="form-group justify-center">
+                  <label class="form-check-label">
+                    <input type="checkbox" class="form-checkbox" formControlName="e1_micropipeta10ml" />
+                    <span>Micropipetas 10 ml</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100">
+                <div class="form-group">
+                  <label class="form-label">Nº de Muestra</label>
+                  <div class="form-radio-group">
+                    <label class="form-check-label">
+                      <input type="radio" class="form-radio" formControlName="e1_nroMuestraRadio" value="10gr/90ml" />
+                      <span>10gr/90ml</span>
+                    </label>
+                    <label class="form-check-label">
+                      <input type="radio" class="form-radio" formControlName="e1_nroMuestraRadio" value="50gr/450ml" />
+                      <span>50gr/450ml</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Estufa</label>
+                  <div class="form-radio-group">
+                    <label class="form-check-label">
+                      <input type="radio" class="form-radio" formControlName="e1_estufa" value="73-M" />
+                      <span>73-M</span>
+                    </label>
+                    <label class="form-check-label">
+                      <input type="radio" class="form-radio" formControlName="e1_estufa" value="2-M" />
+                      <span>2-M</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabla de muestras Etapa 1 -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2 mb-3">
+                Muestras y Lecturas (24h - 48h)
+              </p>
+              <div class="tabla-wrapper overflow-x-auto">
+                <table class="tabla-submuestras w-full text-center text-xs">
+                  <thead>
+                    <tr class="bg-[#29588C] text-white">
+                      <th class="p-2 border font-semibold">Nº Muestra (o Duplicado)</th>
+                      <th class="p-2 border font-semibold">(C) 24 Hrs 1</th>
+                      <th class="p-2 border font-semibold">(C) 24 Hrs 2</th>
+                      <th class="p-2 border font-semibold">(C) 48 Hrs 1</th>
+                      <th class="p-2 border font-semibold">(C) 48 Hrs 2</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let m of muestrasEtapa1; let i = index" [class.bg-slate-50]="m.esDuplicado">
+                      <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
+                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.lectura24h1" [ngModelOptions]="{standalone: true}" /></td>
+                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.lectura24h2" [ngModelOptions]="{standalone: true}" /></td>
+                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.lectura48h1" [ngModelOptions]="{standalone: true}" /></td>
+                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.lectura48h2" [ngModelOptions]="{standalone: true}" /></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Controles ALI -->
+            <div class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3">
+                Controles en ALI
+              </p>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-center border-b border-slate-200 pb-4">
+                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+                  <label class="form-label text-xs">Duplicado en ALI</label>
+                  <input type="text" class="form-input mt-2" formControlName="e1_duplicadoAnalisis" placeholder="Valor" />
+                </div>
+                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Estado</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="e1_duplicadoAliCumple" value="cumple" [ngModelOptions]="{standalone: true}" />
+                      <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="e1_duplicadoAliCumple" value="no_cumple" [ngModelOptions]="{standalone: true}" />
+                      <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-center border-b border-slate-200 pb-4">
+                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+                  <label class="form-label text-xs">Control (+) y Blanco en ALI</label>
+                  <input type="text" class="form-input mt-2" formControlName="e1_controlBlanco" placeholder="Valor" />
+                </div>
+                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Estado</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="e1_controlBlancoCumple" value="cumple" [ngModelOptions]="{standalone: true}" />
+                      <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="e1_controlBlancoCumple" value="no_cumple" [ngModelOptions]="{standalone: true}" />
+                      <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+                  <label class="form-label text-xs">Control de Siembra en ALI</label>
+                  <input type="text" class="form-input mt-2" formControlName="e1_controlSiembra" placeholder="Valor" />
+                </div>
+                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Estado</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="e1_controlSiembraCumple" value="cumple" [ngModelOptions]="{standalone: true}" />
+                      <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="e1_controlSiembraCumple" value="no_cumple" [ngModelOptions]="{standalone: true}" />
+                      <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ ETAPA 2: CONTROL DE SIEMBRA ════════ -->
+      <div *ngIf="etapaActual === 2" class="etapa-panel animate__animated animate__fadeIn">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="shield-checkmark-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">2. Control de Siembra y Lecturas</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Parámetros UFC -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                Parámetros UFC
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                <div class="form-group">
+                  <label class="form-label">Control de siembra S.aureus (UFC) <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e2_controlSAureusUFC" [class.input-error]="campoInvalido('e2_controlSAureusUFC')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Control (+) S. aureus <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e2_controlPositivoSAureus" [class.input-error]="campoInvalido('e2_controlPositivoSAureus')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Control (-) S. epidermidis (UFC) <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e2_controlNegativoSEpidermidis" [class.input-error]="campoInvalido('e2_controlNegativoSEpidermidis')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Blanco (UFC) <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e2_blanco" [class.input-error]="campoInvalido('e2_blanco')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">SD <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e2_sd" [class.input-error]="campoInvalido('e2_sd')" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Lectura 24h -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                Lectura 24 Hrs
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <div class="form-group">
+                  <label class="form-label">Fecha <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" formControlName="e2_fecha24h" [class.input-error]="campoInvalido('e2_fecha24h')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Hora <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" formControlName="e2_hora24h" [class.input-error]="campoInvalido('e2_hora24h')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Analista <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e2_analista24h" [class.input-error]="campoInvalido('e2_analista24h')" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Lectura 48h -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                Lectura 48 Hrs
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <div class="form-group">
+                  <label class="form-label">Fecha <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" formControlName="e2_fecha48h" [class.input-error]="campoInvalido('e2_fecha48h')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Hora <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" formControlName="e2_hora48h" [class.input-error]="campoInvalido('e2_hora48h')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Analista <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e2_analista48h" [class.input-error]="campoInvalido('e2_analista48h')" />
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ ETAPA 3: TRASPASO BHI ════════ -->
+      <div *ngIf="etapaActual === 3" class="etapa-panel animate__animated animate__fadeIn">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="color-fill-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">3. Traspaso a Caldo BHI</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Traspaso -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                Datos de Traspaso
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <div class="form-group">
+                  <label class="form-label">Fecha Traspaso <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" formControlName="e3_fechaTraspaso" [class.input-error]="campoInvalido('e3_fechaTraspaso')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Hora Traspaso <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" formControlName="e3_horaTraspaso" [class.input-error]="campoInvalido('e3_horaTraspaso')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Analista Traspaso <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e3_analistaTraspaso" [class.input-error]="campoInvalido('e3_analistaTraspaso')" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100">
+                <div class="form-group">
+                  <label class="form-label">Caldo BHI <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e3_caldoBHI" [class.input-error]="campoInvalido('e3_caldoBHI')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Estufa <span class="required-star">*</span></label>
+                  <div class="form-radio-group">
+                    <label class="form-check-label">
+                      <input type="radio" class="form-radio" formControlName="e3_estufa" value="73-M" />
+                      <span>73-M</span>
+                    </label>
+                    <label class="form-check-label">
+                      <input type="radio" class="form-radio" formControlName="e3_estufa" value="2-M" />
+                      <span>2-M</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div class="form-group">
+                  <label class="form-label">Control (+) S. aureus <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e3_controlPositivo" [class.input-error]="campoInvalido('e3_controlPositivo')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Control (-) S. epidermidis <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e3_controlNegativo" [class.input-error]="campoInvalido('e3_controlNegativo')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Blanco <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e3_blanco" [class.input-error]="campoInvalido('e3_blanco')" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Lectura BHI -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                Lectura
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <div class="form-group">
+                  <label class="form-label">Fecha Lectura <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" formControlName="e3_fechaLectura" [class.input-error]="campoInvalido('e3_fechaLectura')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Hora Lectura <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" formControlName="e3_horaLectura" [class.input-error]="campoInvalido('e3_horaLectura')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Analista Lectura <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e3_analistaLectura" [class.input-error]="campoInvalido('e3_analistaLectura')" />
+                </div>
+              </div>
+            </div>
+
+            <div class="control-card mb-6 overflow-x-auto">
+              <table class="tabla-submuestras w-full text-center text-xs">
+                <thead>
+                  <tr class="bg-[#29588C] text-white">
+                    <th class="p-2 border font-semibold">Nº de Muestra (o Duplicado)</th>
+                    <th class="p-2 border font-semibold">(A) placa 1</th>
+                    <th class="p-2 border font-semibold">(A) placa 2</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let m of muestrasEtapa3; let i = index" [class.bg-slate-50]="m.id === 'DUP'">
+                    <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
+                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.placa1" [ngModelOptions]="{standalone: true}" /></td>
+                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.placa2" [ngModelOptions]="{standalone: true}" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ ETAPA 4: PRUEBA DE COAGULASA ════════ -->
+      <div *ngIf="etapaActual === 4" class="etapa-panel animate__animated animate__fadeIn">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="beaker-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">4. Prueba de Coagulasa</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Prueba -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                Datos de Prueba
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <div class="form-group">
+                  <label class="form-label">Fecha Prueba <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" formControlName="e4_fechaPrueba" [class.input-error]="campoInvalido('e4_fechaPrueba')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Hora Prueba <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" formControlName="e4_horaPrueba" [class.input-error]="campoInvalido('e4_horaPrueba')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Analista Prueba <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e4_analistaPrueba" [class.input-error]="campoInvalido('e4_analistaPrueba')" />
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100">
+                <div class="form-group">
+                  <label class="form-label">Tubos estériles <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e4_tubosEsteriles" [class.input-error]="campoInvalido('e4_tubosEsteriles')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Puntas 1 mL <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e4_puntas1ml" [class.input-error]="campoInvalido('e4_puntas1ml')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Bacident coagulasa / Agua estéril <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e4_bacident" [class.input-error]="campoInvalido('e4_bacident')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Micropipeta <span class="required-star">*</span></label>
+                  <div class="form-radio-group">
+                    <label class="form-check-label">
+                      <input type="radio" class="form-radio" formControlName="e4_micropipeta" value="22-M" />
+                      <span>22-M</span>
+                    </label>
+                    <label class="form-check-label">
+                      <input type="radio" class="form-radio" formControlName="e4_micropipeta" value="23-M" />
+                      <span>23-M</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Estufa <span class="required-star">*</span></label>
+                  <div class="form-radio-group">
+                    <label class="form-check-label">
+                      <input type="radio" class="form-radio" formControlName="e4_estufa" value="73-M" />
+                      <span>73-M</span>
+                    </label>
+                    <label class="form-check-label">
+                      <input type="radio" class="form-radio" formControlName="e4_estufa" value="2-M" />
+                      <span>2-M</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lectura 4-6h -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                Lectura Coagulasa 4-6 Hrs
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <div class="form-group">
+                  <label class="form-label">Fecha Lectura <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" formControlName="e4_fechaLectura4h" [class.input-error]="campoInvalido('e4_fechaLectura4h')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Hora Lectura <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" formControlName="e4_horaLectura4h" [class.input-error]="campoInvalido('e4_horaLectura4h')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Analista Lectura <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e4_analistaLectura4h" [class.input-error]="campoInvalido('e4_analistaLectura4h')" />
+                </div>
+              </div>
+              
+              <div class="form-group mt-4 pt-4 border-t border-slate-100">
+                <label class="form-label">Coagulasa 4-6 Hrs</label>
+                <input type="text" class="form-input" formControlName="e4_coagulasa4h" [class.input-error]="campoInvalido('e4_coagulasa4h')" />
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div class="form-group">
+                  <label class="form-label">Control (+) S. aureus <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e4_controlPositivo4h" [class.input-error]="campoInvalido('e4_controlPositivo4h')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Control (-) S. epidermidis <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e4_controlNegativo4h" [class.input-error]="campoInvalido('e4_controlNegativo4h')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Blanco <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e4_blanco4h" [class.input-error]="campoInvalido('e4_blanco4h')" />
+                </div>
+              </div>
+
+              <table class="tabla-submuestras w-full text-center text-xs mt-4">
+                <thead>
+                  <tr class="bg-[#29588C] text-white">
+                    <th class="p-2 border font-semibold">Nº Muestra</th>
+                    <th class="p-2 border font-semibold">(b) placa 1</th>
+                    <th class="p-2 border font-semibold">(b) placa 2</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let m of muestrasEtapa4_4a6h; let i = index" [class.bg-slate-50]="m.id === 'DUP'">
+                    <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
+                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.placa1" [ngModelOptions]="{standalone: true}" /></td>
+                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.placa2" [ngModelOptions]="{standalone: true}" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Lectura 24h -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                Lectura Coagulasa 24 Hrs
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <div class="form-group">
+                  <label class="form-label">Fecha Lectura <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" formControlName="e4_fechaLectura24h" [class.input-error]="campoInvalido('e4_fechaLectura24h')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Hora Lectura <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" formControlName="e4_horaLectura24h" [class.input-error]="campoInvalido('e4_horaLectura24h')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Analista Lectura <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e4_analistaLectura24h" [class.input-error]="campoInvalido('e4_analistaLectura24h')" />
+                </div>
+              </div>
+              
+              <div class="form-group mt-4 pt-4 border-t border-slate-100">
+                <label class="form-label">Coagulasa 24 Hrs</label>
+                <input type="text" class="form-input" formControlName="e4_coagulasa24h" [class.input-error]="campoInvalido('e4_coagulasa24h')" />
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div class="form-group">
+                  <label class="form-label">Control (+) S. aureus <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e4_controlPositivo24h" [class.input-error]="campoInvalido('e4_controlPositivo24h')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Control (-) S. epidermidis <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e4_controlNegativo24h" [class.input-error]="campoInvalido('e4_controlNegativo24h')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Blanco <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e4_blanco24h" [class.input-error]="campoInvalido('e4_blanco24h')" />
+                </div>
+              </div>
+
+              <table class="tabla-submuestras w-full text-center text-xs mt-4">
+                <thead>
+                  <tr class="bg-[#29588C] text-white">
+                    <th class="p-2 border font-semibold">Nº Muestra</th>
+                    <th class="p-2 border font-semibold">(b) placa 1</th>
+                    <th class="p-2 border font-semibold">(b) placa 2</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let m of muestrasEtapa4_24h; let i = index" [class.bg-slate-50]="m.id === 'DUP'">
+                    <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
+                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.placa1" [ngModelOptions]="{standalone: true}" /></td>
+                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.placa2" [ngModelOptions]="{standalone: true}" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ ETAPA 5: RESULTADOS ════════ -->
+      <div *ngIf="etapaActual === 5" class="etapa-panel animate__animated animate__fadeIn">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">5. Resultados S. Aureus</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <div class="overflow-x-auto">
+              <table class="tabla-submuestras w-full text-center text-xs">
+                <thead>
+                  <tr class="bg-[#29588C] text-white">
+                    <th class="p-2 border font-semibold">Nº de Muestra (o Duplicado)</th>
+                    <th class="p-2 border font-semibold">Nº S. Aureus</th>
+                    <th class="p-2 border font-semibold">UFC/gr</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let m of muestrasEtapa5; let i = index" [class.bg-slate-50]="m.id === 'DUP'">
+                    <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
+                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.numSAureus" [ngModelOptions]="{standalone: true}" /></td>
+                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.ufc" [ngModelOptions]="{standalone: true}" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ ETAPA 6: CONCLUSIÓN FINAL ════════ -->
+      <div *ngIf="etapaActual === 6" class="etapa-panel animate__animated animate__fadeIn">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="document-text-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">6. Conclusión Final</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="form-group border border-slate-100 bg-slate-50 p-4 rounded-lg">
+                <label class="form-label font-bold text-[#1e3a8a]">Desfavorable (Sí o No) <span class="required-star">*</span></label>
+                <div class="form-radio-group mt-2">
+                  <label class="form-check-label">
+                    <input type="radio" class="form-radio" [(ngModel)]="e6_desfavorable" value="si" [ngModelOptions]="{standalone: true}" />
+                    <span>Sí</span>
+                  </label>
+                  <label class="form-check-label">
+                    <input type="radio" class="form-radio" [(ngModel)]="e6_desfavorable" value="no" [ngModelOptions]="{standalone: true}" />
+                    <span>No</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 gap-4">
+                <div class="form-group">
+                  <label class="form-label">Tabla/Página <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e6_tablaPagina" [class.input-error]="campoInvalido('e6_tablaPagina')" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Límite <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="e6_limite" [class.input-error]="campoInvalido('e6_limite')" />
+                </div>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-slate-100 pt-4">
+              <div class="form-group">
+                <label class="form-label">Fecha de entrega <span class="required-star">*</span></label>
+                <input type="date" class="form-input" formControlName="e6_fechaEntrega" [class.input-error]="campoInvalido('e6_fechaEntrega')" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hora de entrega <span class="required-star">*</span></label>
+                <input type="time" class="form-input" formControlName="e6_horaEntrega" [class.input-error]="campoInvalido('e6_horaEntrega')" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </form>
+
+    <!-- ═════════════════ BARRA DE NAVEGACIÓN INFERIOR ═══════════════════════ -->
+    <div class="nav-footer">
+      <button type="button" class="btn-cancel" (click)="confirmarCancelar()">
+        <ion-icon name="close-outline"></ion-icon>
+        Cancelar
+      </button>
+      <div class="nav-footer__actions">
+        <button type="button" class="btn-secondary" (click)="retrocederEtapa()" *ngIf="etapaActual > 1">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+          Anterior
+        </button>
+        <button type="button" class="btn-save" (click)="enviarFormulario()" *ngIf="etapaActual === TOTAL_ETAPAS">
+          <ion-icon name="save-outline"></ion-icon>
+          Enviar Registro
+        </button>
+        <button type="button" class="btn-primary" (click)="avanzarEtapa()" *ngIf="etapaActual < TOTAL_ETAPAS">
+          Siguiente
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</ion-content>

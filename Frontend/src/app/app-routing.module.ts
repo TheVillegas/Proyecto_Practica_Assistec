@@ -95,6 +95,12 @@ const routes: Routes = [
     data: { allowedRoles: [0, 4] }
   },
   {
+    path: 'form-s-aureus',
+    loadChildren: () => import('./pages/form-s-aureus/form-s-aureus.module').then((m) => m.FormSAureusPageModule),
+    canActivate: [AuthGuard],
+    data: { allowedRoles: [0, 4] }
+  },
+  {
     path: 'form-enterobacterias',
     loadChildren: () => import('./pages/form-enterobacterias/form-enterobacterias.module').then((m) => m.FormEnterobacteriasPageModule),
     canActivate: [AuthGuard],
