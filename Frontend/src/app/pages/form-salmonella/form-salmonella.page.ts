@@ -60,14 +60,14 @@ function crearMuestrasEtapa4(): MuestraEtapa4[] {
   for (let i = 1; i <= N_MUESTRAS; i++) {
     arr.push({
       id: `M${i}`, esDuplicado: false, label: `Muestra ${i}`,
-      xld24hSel: '', ss24hSel: '', xld48hSel: '', ss48hSel: '',
-      xld24hRap: '', ss24hRap: '', xld48hRap: '', ss48hRap: ''
+      xld24hSel: '-', ss24hSel: '-', xld48hSel: '-', ss48hSel: '-',
+      xld24hRap: '-', ss24hRap: '-', xld48hRap: '-', ss48hRap: '-'
     });
   }
   arr.push({
     id: 'DUP', esDuplicado: true, label: 'Duplicado',
-    xld24hSel: '', ss24hSel: '', xld48hSel: '', ss48hSel: '',
-    xld24hRap: '', ss24hRap: '', xld48hRap: '', ss48hRap: ''
+    xld24hSel: '-', ss24hSel: '-', xld48hSel: '-', ss48hSel: '-',
+    xld24hRap: '-', ss24hRap: '-', xld48hRap: '-', ss48hRap: '-'
   });
   return arr;
 }
@@ -179,6 +179,14 @@ export class FormSalmonellaPage implements OnInit {
       e4_horaLectura48h: [''],
       e4_analistaLectura48h: [''],
 
+    });
+
+    this.form.get('e1_tipoMatriz')?.valueChanges.subscribe(val => {
+      if (val === 'Normal' || val === 'Polvo') {
+        this.form.get('e1_caldoAPT')?.setValue('Caldo APT');
+      } else if (val === 'Chocolate') {
+        this.form.get('e1_caldoAPT')?.setValue('Leche descremada');
+      }
     });
   }
 

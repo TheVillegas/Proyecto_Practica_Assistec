@@ -63,14 +63,18 @@
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
                 <div class="form-group">
                   <label class="form-label">Tipo de matriz</label>
-                  <div class="form-radio-group">
+                  <div class="form-radio-group" style="flex-wrap: wrap; gap: 8px;">
                     <label class="form-check-label">
                       <input type="radio" class="form-radio" name="e1_tipoMatriz" formControlName="e1_tipoMatriz" value="Normal" />
                       <span>Normal</span>
                     </label>
                     <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e1_tipoMatriz" formControlName="e1_tipoMatriz" value="Especial" />
-                      <span>Especial</span>
+                      <input type="radio" class="form-radio" name="e1_tipoMatriz" formControlName="e1_tipoMatriz" value="Polvo" />
+                      <span>Polvo</span>
+                    </label>
+                    <label class="form-check-label">
+                      <input type="radio" class="form-radio" name="e1_tipoMatriz" formControlName="e1_tipoMatriz" value="Chocolate" />
+                      <span>Chocolate</span>
                     </label>
                   </div>
                 </div>
@@ -88,20 +92,24 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Caldo APT</label>
-                  <div class="form-radio-group">
+                  <label class="form-label">Medio Pre-enriquecimiento</label>
+                  <div class="form-radio-group" style="flex-wrap: wrap; gap: 8px;">
                     <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e1_caldoAPT" formControlName="e1_caldoAPT" value="Si" />
-                      <span>Sí</span>
+                      <input type="radio" class="form-radio" name="e1_caldoAPT" formControlName="e1_caldoAPT" value="Caldo APT" />
+                      <span>Caldo APT</span>
+                    </label>
+                    <label class="form-check-label">
+                      <input type="radio" class="form-radio" name="e1_caldoAPT" formControlName="e1_caldoAPT" value="Leche descremada" />
+                      <span>Leche desc. (450ml)</span>
                     </label>
                     <label class="form-check-label">
                       <input type="radio" class="form-radio" name="e1_caldoAPT" formControlName="e1_caldoAPT" value="No" />
-                      <span>No</span>
+                      <span>No aplica</span>
                     </label>
                   </div>
                 </div>
               </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100" *ngIf="form.get('e1_tipoMatriz')?.value === 'Polvo'">
                 <div class="form-group">
                   <label class="form-label text-xs">Hora de Inicio Hidratación (Solo Polvo)</label>
                   <input type="time" class="form-input" formControlName="e1_horaInicioHidratacion" />
@@ -580,10 +588,34 @@
                   <tbody>
                     <tr *ngFor="let m of muestrasEtapa4; let i = index" [class.bg-slate-50]="m.esDuplicado">
                       <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
-                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.xld24hSel" [ngModelOptions]="{standalone: true}" /></td>
-                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.ss24hSel" [ngModelOptions]="{standalone: true}" /></td>
-                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.xld48hSel" [ngModelOptions]="{standalone: true}" /></td>
-                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.ss48hSel" [ngModelOptions]="{standalone: true}" /></td>
+                      <td class="p-2 border">
+                        <div class="flex justify-center gap-2 text-[10px]">
+                          <label class="flex items-center gap-0.5"><input type="radio" name="xld24Sel_{{i}}" value="+" [(ngModel)]="m.xld24hSel" [ngModelOptions]="{standalone: true}" />+</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="xld24Sel_{{i}}" value="-" [(ngModel)]="m.xld24hSel" [ngModelOptions]="{standalone: true}" />-</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="xld24Sel_{{i}}" value="ok" [(ngModel)]="m.xld24hSel" [ngModelOptions]="{standalone: true}" />ok</label>
+                        </div>
+                      </td>
+                      <td class="p-2 border">
+                        <div class="flex justify-center gap-2 text-[10px]">
+                          <label class="flex items-center gap-0.5"><input type="radio" name="ss24Sel_{{i}}" value="+" [(ngModel)]="m.ss24hSel" [ngModelOptions]="{standalone: true}" />+</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="ss24Sel_{{i}}" value="-" [(ngModel)]="m.ss24hSel" [ngModelOptions]="{standalone: true}" />-</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="ss24Sel_{{i}}" value="ok" [(ngModel)]="m.ss24hSel" [ngModelOptions]="{standalone: true}" />ok</label>
+                        </div>
+                      </td>
+                      <td class="p-2 border">
+                        <div class="flex justify-center gap-2 text-[10px]">
+                          <label class="flex items-center gap-0.5"><input type="radio" name="xld48Sel_{{i}}" value="+" [(ngModel)]="m.xld48hSel" [ngModelOptions]="{standalone: true}" />+</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="xld48Sel_{{i}}" value="-" [(ngModel)]="m.xld48hSel" [ngModelOptions]="{standalone: true}" />-</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="xld48Sel_{{i}}" value="ok" [(ngModel)]="m.xld48hSel" [ngModelOptions]="{standalone: true}" />ok</label>
+                        </div>
+                      </td>
+                      <td class="p-2 border">
+                        <div class="flex justify-center gap-2 text-[10px]">
+                          <label class="flex items-center gap-0.5"><input type="radio" name="ss48Sel_{{i}}" value="+" [(ngModel)]="m.ss48hSel" [ngModelOptions]="{standalone: true}" />+</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="ss48Sel_{{i}}" value="-" [(ngModel)]="m.ss48hSel" [ngModelOptions]="{standalone: true}" />-</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="ss48Sel_{{i}}" value="ok" [(ngModel)]="m.ss48hSel" [ngModelOptions]="{standalone: true}" />ok</label>
+                        </div>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -605,10 +637,34 @@
                   <tbody>
                     <tr *ngFor="let m of muestrasEtapa4; let i = index" [class.bg-slate-50]="m.esDuplicado">
                       <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
-                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.xld24hRap" [ngModelOptions]="{standalone: true}" /></td>
-                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.ss24hRap" [ngModelOptions]="{standalone: true}" /></td>
-                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.xld48hRap" [ngModelOptions]="{standalone: true}" /></td>
-                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.ss48hRap" [ngModelOptions]="{standalone: true}" /></td>
+                      <td class="p-2 border">
+                        <div class="flex justify-center gap-2 text-[10px]">
+                          <label class="flex items-center gap-0.5"><input type="radio" name="xld24Rap_{{i}}" value="+" [(ngModel)]="m.xld24hRap" [ngModelOptions]="{standalone: true}" />+</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="xld24Rap_{{i}}" value="-" [(ngModel)]="m.xld24hRap" [ngModelOptions]="{standalone: true}" />-</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="xld24Rap_{{i}}" value="ok" [(ngModel)]="m.xld24hRap" [ngModelOptions]="{standalone: true}" />ok</label>
+                        </div>
+                      </td>
+                      <td class="p-2 border">
+                        <div class="flex justify-center gap-2 text-[10px]">
+                          <label class="flex items-center gap-0.5"><input type="radio" name="ss24Rap_{{i}}" value="+" [(ngModel)]="m.ss24hRap" [ngModelOptions]="{standalone: true}" />+</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="ss24Rap_{{i}}" value="-" [(ngModel)]="m.ss24hRap" [ngModelOptions]="{standalone: true}" />-</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="ss24Rap_{{i}}" value="ok" [(ngModel)]="m.ss24hRap" [ngModelOptions]="{standalone: true}" />ok</label>
+                        </div>
+                      </td>
+                      <td class="p-2 border">
+                        <div class="flex justify-center gap-2 text-[10px]">
+                          <label class="flex items-center gap-0.5"><input type="radio" name="xld48Rap_{{i}}" value="+" [(ngModel)]="m.xld48hRap" [ngModelOptions]="{standalone: true}" />+</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="xld48Rap_{{i}}" value="-" [(ngModel)]="m.xld48hRap" [ngModelOptions]="{standalone: true}" />-</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="xld48Rap_{{i}}" value="ok" [(ngModel)]="m.xld48hRap" [ngModelOptions]="{standalone: true}" />ok</label>
+                        </div>
+                      </td>
+                      <td class="p-2 border">
+                        <div class="flex justify-center gap-2 text-[10px]">
+                          <label class="flex items-center gap-0.5"><input type="radio" name="ss48Rap_{{i}}" value="+" [(ngModel)]="m.ss48hRap" [ngModelOptions]="{standalone: true}" />+</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="ss48Rap_{{i}}" value="-" [(ngModel)]="m.ss48hRap" [ngModelOptions]="{standalone: true}" />-</label>
+                          <label class="flex items-center gap-0.5"><input type="radio" name="ss48Rap_{{i}}" value="ok" [(ngModel)]="m.ss48hRap" [ngModelOptions]="{standalone: true}" />ok</label>
+                        </div>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
