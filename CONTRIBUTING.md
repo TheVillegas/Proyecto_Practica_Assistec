@@ -1,40 +1,72 @@
-# Guia de Contribucion — AssisTec
+# Guía de Contribución — AssisTec Lab
 
-Esta guia cubre todo lo que un companiero nuevo necesita saber para trabajar en el proyecto.
+Esta guía cubre cómo contribuir al proyecto correctamente.
 
 ---
 
-## Indice
+## ⚠️ Regla de Oro
 
-1. [Levantar el entorno](#levantar-el-entorno)
+**No se hace push directo a `main`.**  
+`main` está protegido: solo se puede mergear via Pull Request con CI verde y al menos 1 aprobación.
+
+Si necesitás ayuda o algo no funciona, hablá con Matías.
+
+---
+
+## Índice
+
+1. [Entorno local](#entorno-local)
 2. [Estructura del proyecto](#estructura-del-proyecto)
 3. [Convenciones de ramas](#convenciones-de-ramas)
 4. [Convenciones de commits](#convenciones-de-commits)
 5. [Flujo de trabajo](#flujo-de-trabajo)
 6. [Pull Requests](#pull-requests)
 7. [Tests](#tests)
-8. [Sobre el .bat de Windows](#sobre-el-bat-de-windows)
+8. [CI / CD](#ci--cd)
 
 ---
 
-## Levantar el entorno
+## Entorno local
 
-Seguir la guia completa en [`docs/environment-setup.md`](docs/environment-setup.md).
+### Requisitos
+- Docker Desktop
+- Node.js 20+
+- pnpm (instalar: `npm install -g pnpm`)
 
-Resumen rapido:
+### Levantar todo con Docker (recomendado)
 
 ```bash
-# 1. Levantar la base de datos
+# Parado en la raíz del proyecto
 docker compose up -d
+```
 
-# 2. Backend
-cd "AssisTec API" && npm install
-# Crear .env (ver docs/environment-setup.md)
-npx prisma db push && node run-seeds.js
-npm run dev          # corre en http://localhost:3001
+Esto levanta los 3 servicios:
 
-# 3. Frontend (otra terminal)
-cd Frontend && npm install && npm start   # corre en http://localhost:4200
+| Servicio | Puerto | URL |
+|----------|--------|-----|
+| Base de Datos (PostgreSQL 16) | 5432 | `localhost:5432` |
+| Backend (Node.js + Prisma) | 3001 | `http://localhost:3001` |
+| Frontend (Angular + nginx) | 8000 | `http://localhost:8000` |
+
+El backend sincroniza Prisma y corre los seeds automáticamente al arrancar.
+
+### Desarrollo local (sin Docker, hot reload)
+
+```bash
+# 1. Base de datos
+docker compose up -d BD_AsisTec
+
+# 2. Backend (terminal 1)
+cd "AssisTec API"
+pnpm install
+pnpm exec prisma db push
+node run-seeds.js
+pnpm run dev          # http://localhost:3001
+
+# 3. Frontend (terminal 2)
+cd Frontend
+pnpm install
+pnpm start            # http://localhost:4200
 ```
 
 ---
@@ -50,10 +82,6 @@ Proyecto_Practica_Assistec/
 │   ├── seeds/       # Datos iniciales
 │   └── migrations/  # Cambios incrementales al schema
 ├── Backend/         # LEGACY — no usar para desarrollo nuevo
-├── docs/            # Documentacion tecnica centralizada
-│   ├── architecture.md
-│   ├── database.md
-│   └── environment-setup.md
 ├── docker-compose.yml
 ├── README.md
 └── CONTRIBUTING.md  # Este archivo
@@ -63,24 +91,24 @@ Proyecto_Practica_Assistec/
 
 ## Convenciones de ramas
 
-Todas las ramas parten desde `master`.
+Todas las ramas parten desde `main`.
 
-| Tipo | Formato | Cuando usarlo |
-|---|---|---|
+| Tipo | Formato | Cuándo usarlo |
+|------|---------|---------------|
 | Feature nueva | `feature/nombre-descriptivo` | Agregar funcionalidad |
 | Bug fix | `fix/nombre-descriptivo` | Corregir un error |
-| Tarea de mantenimiento | `chore/nombre-descriptivo` | Dependencias, config, CI |
-| Documentacion | `docs/nombre-descriptivo` | Solo cambios en docs |
+| Mantenimiento | `chore/nombre-descriptivo` | Dependencias, config, CI |
+| Documentación | `docs/nombre-descriptivo` | Solo cambios en docs |
 
-Ejemplos validos:
+Ejemplos:
 ```
-feature/solicitud-ingreso
+feature/formulario-e-coli
 fix/cors-origin-vacio
 chore/actualizar-prisma
 docs/guia-despliegue
 ```
 
-**Nunca trabajes directamente en `master`.**
+**Nunca trabajes directamente en `main`.**
 
 ---
 
@@ -88,28 +116,27 @@ docs/guia-despliegue
 
 Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
-Formato: `tipo: descripcion en imperativo`
+Formato: `tipo: descripción en imperativo`
 
-| Tipo | Cuando usarlo |
-|---|---|
+| Tipo | Cuándo usarlo |
+|------|---------------|
 | `feat:` | Nueva funcionalidad |
 | `fix:` | Corrección de bug |
-| `chore:` | Mantenimiento (deps, config, sin codigo de produccion) |
-| `docs:` | Solo documentacion |
+| `chore:` | Mantenimiento (deps, config) |
+| `docs:` | Solo documentación |
 | `test:` | Solo tests |
-| `refactor:` | Refactorizacion sin cambio de comportamiento |
+| `refactor:` | Refactorización sin cambio de comportamiento |
 
 Ejemplos:
 ```
-feat: agregar endpoint de validacion de solicitud
-fix: corregir CORS_ORIGIN cuando variable esta vacia
-docs: documentar variables de entorno del backend legacy
-test: agregar tests para SolicitudService
-chore: actualizar prisma a 6.2.0
+feat: agregar formulario de salmonella
+fix: corregir validación de rut en solicitud
+chore: actualizar prisma a 6.19.3
+test: agregar tests para solicitud service
 ```
 
 **Reglas:**
-- Descripcion en minuscula, sin punto al final
+- Descripción en minúscula, sin punto al final
 - Sin emojis
 - Sin "Co-Authored-By" ni atribuciones de IA
 
@@ -118,37 +145,42 @@ chore: actualizar prisma a 6.2.0
 ## Flujo de trabajo
 
 ```
-master
-  |
-  +-- feature/mi-feature
-        |
-        | (desarrollas, commiteas, pruebas)
-        |
-        +-- Pull Request → master
-              |
-              | (CI pasa, al menos 1 review)
-              |
-              merge a master
+main
+  │
+  ├── feature/mi-feature   ← creás tu rama desde main
+  │     │
+  │     │ (desarrollás, commiteás, probás)
+  │     │
+  │     └── Pull Request → main
+  │           │
+  │           │ (CI pasa automáticamente)
+  │           │ (alguien revisa y aprueba)
+  │           │
+  │           merge a main  ← solo via PR, nadie pushea directo
 ```
 
-1. Crea una rama desde `master` con la convencion de nombres de arriba.
-2. Desarrolla, commitea siguiendo Conventional Commits.
-3. Antes de abrir el PR, corre los tests localmente (ver seccion Tests).
-4. Abre el PR con el template, describe los cambios y vincula el issue si existe.
-5. El CI debe pasar. Si falla, corrige antes de pedir review.
-6. Al menos un companiero debe revisar y aprobar.
-7. Merge a `master` — squash si los commits intermedios son muy ruidosos.
+1. Creá una rama desde `main` con la convención de nombres de arriba.
+2. Desarrollá, commiteá siguiendo Conventional Commits.
+3. Antes de abrir el PR, corré los tests localmente.
+4. Abrí el PR desde GitHub con una descripción clara de qué cambia y por qué.
+5. El CI se ejecuta solo. Si falla, corregí antes de pedir review.
+6. Alguien revisa y aprueba (mínimo 1 aprobación requerida).
+7. Merge a `main` — squash si los commits intermedios son muy ruidosos.
 
 ---
 
 ## Pull Requests
 
-- Usa el template provisto (aparece automaticamente al abrir un PR en GitHub).
-- Descripcion obligatoria: que cambias y por que.
-- Al menos 1 reviewer obligatorio.
-- El CI (GitHub Actions) debe pasar antes del merge.
-- Para cambios en el backend, incluye la ruta de la API afectada.
-- Para cambios en el frontend, incluye screenshot si hay cambio visual.
+- **Usá el template** que aparece automáticamente al abrir el PR.
+- **Descripción obligatoria:** qué cambiás y por qué.
+- **Mínimo 1 reviewer** obligatorio.
+- **CI debe pasar** antes del merge (tests + lints + code review automático).
+- Para cambios en backend: incluí la ruta de la API afectada.
+- Para cambios en frontend: incluí screenshot si hay cambio visual.
+
+### Code Review Automático
+
+Al abrir un PR, **Gentleman Guardian Angel** revisa automáticamente el código contra las reglas del `AGENTS.md`. Si encuentra violaciones, las marca en el PR. Revisalas y corregí antes de pedir review humana.
 
 ---
 
@@ -158,30 +190,31 @@ master
 
 ```bash
 cd "AssisTec API"
-npm test
+pnpm test
 ```
 
-Corre los tests con Jest. Requiere que la base de datos este levantada o usar variables de entorno de test.
+Requiere que la base de datos esté levantada (via Docker).
 
 ### Frontend
 
 ```bash
 cd Frontend
-npm test          # modo watch (desarrollo)
-ng test --watch=false --browsers=ChromeHeadless   # una sola pasada (CI)
+pnpm test -- --watch=false --browsers=ChromeHeadless
+pnpm run lint
 ```
 
-Lint del frontend:
-
-```bash
-cd Frontend
-npm run lint
-```
-
-**Regla:** antes de abrir un PR, todos los tests deben pasar localmente. No abras PRs con tests en rojo.
+**Regla:** antes de abrir un PR, todos los tests deben pasar localmente. No abrir PRs con tests en rojo.
 
 ---
 
-## Sobre el .bat de Windows
+## CI / CD
 
-Puede existir un archivo `.bat` en el repositorio para arrancar el proyecto en Windows. Ese script fue creado como solucion de emergencia y es obsoleto. El metodo oficial es el de esta guia. Si el `.bat` no funciona o da errores, ignora el script y sigue los pasos manuales de `docs/environment-setup.md`.
+Al abrir o actualizar un PR, GitHub Actions corre automáticamente:
+
+| Workflow | Qué hace |
+|----------|----------|
+| **CI — Backend** | `pnpm install` + `prisma db push` + `pnpm test` |
+| **CI — Frontend** | `pnpm install` + `pnpm run lint` + `pnpm test` |
+| **AI Code Review** | GGA revisa el código contra `AGENTS.md` |
+
+Los 3 deben pasar para poder mergear.
