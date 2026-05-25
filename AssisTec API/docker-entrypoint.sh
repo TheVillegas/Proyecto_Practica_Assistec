@@ -6,7 +6,7 @@ echo "Sincronizando Base de Datos con Prisma..."
 sleep 40 
 
 
-npx prisma db push --skip-generate
+pnpm exec prisma db push --skip-generate
 
 echo "Ejecutando Seeds de Prisma..."
 node run-seeds.js

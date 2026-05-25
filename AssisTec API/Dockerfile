@@ -1,25 +1,22 @@
 FROM node:20-alpine
 
-# Instalar dependencias necesarias para Prisma en Alpine
-RUN apk add --no-cache openssl dos2unix
+# Instalar dependencias necesarias para Prisma en Alpine + pnpm global
+RUN apk add --no-cache openssl dos2unix && npm install -g pnpm
 
 WORKDIR /app
 
-# Copiar archivos de dependencias
-COPY package*.json ./
+# Copiar solo lo necesario para instalar dependencias (caching)
+COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
 
-# Instalar dependencias
-RUN npm install
+# Instalar dependencias con pnpm
+RUN pnpm install --frozen-lockfile
 
 # Generar Prisma Client
-RUN npx prisma generate
+RUN pnpm exec prisma generate
 
 # Copiar el resto del código
 COPY . .
-
-# Regenerar Prisma Client para Linux (evita binarios de Windows cacheados)
-RUN npx prisma generate
 
 # Dar permisos de ejecución al entrypoint
 RUN dos2unix docker-entrypoint.sh && chmod +x docker-entrypoint.sh

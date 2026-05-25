@@ -13,7 +13,6 @@ services:
       - TZ=America/Santiago
       - PGTZ=America/Santiago
     volumes:
-      # Ya no necesitamos init_refined.sql, Prisma se encarga de estructurar la BD.
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${NOMBRE_DB:-asistectest}"]
@@ -38,6 +37,18 @@ services:
     depends_on:
       BD_AsisTec:
         condition: service_healthy
+
+  # Frontend (Angular + nginx)
+  frontend_asistec:
+    build:
+      context: "./Frontend"
+      dockerfile: Dockerfile
+    container_name: contenedor_asistec_frontend
+    restart: always
+    ports:
+      - "8000:80"
+    depends_on:
+      - backend_asistec
 
 volumes:
   pgdata:

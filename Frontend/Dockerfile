@@ -1,14 +1,28 @@
-FROM node:22-alpine
+# ============================================================
+# BUILD STAGE: Compilar Angular con pnpm
+# ============================================================
+FROM node:20-alpine AS build
+
+# Instalar pnpm global
+RUN npm install -g pnpm
 
 WORKDIR /app
 
-COPY package*.json ./
+# Copiar solo lo necesario para instalar dependencias (caching)
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
-RUN npm install
-RUN npm install -g @ionic/cli
-
+# Copiar el resto del código y compilar
 COPY . .
+RUN pnpm exec ng build --configuration production
 
-EXPOSE 8100
+# ============================================================
+# SERVE STAGE: Servir con nginx
+# ============================================================
+FROM nginx:alpine
 
-CMD ["ionic", "serve", "--external", "--host=0.0.0.0", "--port=8100", "--no-open"]
+COPY --from=build /app/www /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
