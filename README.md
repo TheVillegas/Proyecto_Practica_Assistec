@@ -1,54 +1,97 @@
-# AssisTec — Plataforma de Gestion de Laboratorio
+# AssisTec — Plataforma de Gestión de Laboratorio
 
-Sistema de registro y gestion de analisis microbiologicos de alimentos (RAM y TPA) para laboratorios universitarios.
+Sistema de registro y gestión de análisis microbiológicos de alimentos (RAM y TPA) para el laboratorio AssisTec de la PUCV.
 
 ---
 
 ## Stack
 
-| Capa | Tecnologia |
-|---|---|
-| Frontend | Angular 20 + Ionic |
+| Capa | Tecnología |
+|------|------------|
+| Frontend | Angular 20 + Ionic 8 + Tailwind |
 | Backend | Node.js + Express 5 + Prisma 6 (`AssisTec API/`) |
-| Base de datos | PostgreSQL 16 (Docker) |
+| Base de datos | PostgreSQL 16 |
+| Infraestructura | Docker Compose (3 servicios) |
 
 ---
 
-## Arranque rapido
+## Arranque rápido
 
-Prerequisitos: Docker Desktop, Node.js v18+.
+Requisito: **Docker Desktop**.
 
 ```bash
-# 1. Copiar variables de entorno (OBLIGATORIO - de lo contrario Docker fallara)
+# 1. Clonar y entrar
+git clone https://github.com/TheVillegas/Proyecto_Practica_Assistec.git
+cd Proyecto_Practica_Assistec
+
+# 2. Copiar variables de entorno
 cp "AssisTec API/.env_example" "AssisTec API/.env"
 
-# 2. Levantar la aplicacion
-docker compose up -d        # http://localhost:3001
-
-# 3. Frontend (otra terminal)
-cd Frontend && npm install && npm start   # http://localhost:4200
+# 3. Levantar todo
+docker compose up -d
 ```
 
-Docker levanta PostgreSQL, sincroniza el schema con Prisma, carga los seeds y arranca el backend automaticamente.
+Listo. Los 3 servicios arrancan automáticamente:
 
-Para el detalle completo (variables de entorno, usuarios de prueba, modo desarrollo sin Docker), ver la guia de configuracion.
+| Servicio | URL |
+|----------|-----|
+| **Frontend** | [http://localhost:8000](http://localhost:8000) |
+| **Backend API** | [http://localhost:3001](http://localhost:3001) |
+| **Base de datos** | `localhost:5432` |
+
+El backend sincroniza Prisma y carga los seeds al arrancar. No se necesita instalar nada en la máquina local.
 
 ---
 
-## Documentacion
+## Desarrollo con hot reload
+
+```bash
+# Base de datos sola (Docker)
+docker compose up -d BD_AsisTec
+
+# Backend (terminal 1)
+cd "AssisTec API"
+pnpm install
+pnpm exec prisma db push
+node run-seeds.js
+pnpm run dev
+
+# Frontend (terminal 2)
+cd Frontend
+pnpm install
+pnpm start
+```
+
+El frontend en desarrollo corre en `http://localhost:4200` con hot reload.
+
+---
+
+## Convenciones del proyecto
+
+- **Ramas**: `feature/*`, `fix/*`, `chore/*` — siempre desde `main`
+- **Commits**: [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, etc.)
+- **PR obligatorio**: nadie pushea directo a `main`. Todo entra via Pull Request con CI verde y aprobación del admin.
+
+Ver [`CONTRIBUTING.md`](CONTRIBUTING.md) para el detalle completo.
+
+---
+
+## CI / Code Review Automático
+
+| Workflow | Qué hace |
+|----------|----------|
+| **CI Backend** | Tests + Prisma en cada push/PR |
+| **CI Frontend** | Lint + Tests en cada push/PR |
+| **AI Code Review** | [Gentleman Guardian Angel](https://github.com/Gentleman-Programming/gentleman-guardian-angel) revisa cada PR contra `AGENTS.md` |
+
+---
+
+## Documentación
 
 | Documento | Contenido |
-|---|---|
-| [`docs/environment-setup.md`](docs/environment-setup.md) | Como levantar el entorno, variables de entorno, problemas comunes |
-| [`docs/architecture.md`](docs/architecture.md) | Arquitectura del sistema, flujos, decisiones de diseno |
-| [`docs/database.md`](docs/database.md) | Esquema de base de datos, tablas, ciclo de vida de una muestra |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Ramas, commits, PRs, flujo de trabajo del equipo |
-
----
-
-## Estado del CI
-
-Los workflows de GitHub Actions corren automaticamente en cada push o PR que toque `AssisTec API/` o `Frontend/`.
+|-----------|-----------|
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Cómo contribuir: ramas, commits, PRs, tests |
+| [`AGENTS.md`](AGENTS.md) | Reglas de code review automático |
 
 ---
 
@@ -59,11 +102,10 @@ Proyecto_Practica_Assistec/
 ├── AssisTec API/    # Backend activo (Prisma + Node.js)
 ├── Frontend/        # Angular + Ionic
 ├── BD/              # Scripts de base de datos
-├── Backend/         # LEGACY — ver Backend/README_LEGACY.md
-├── docs/            # Documentacion tecnica
-├── .github/         # Workflows de CI y templates de PR/issues
-└── docker-compose.yml
+├── Backend/         # LEGACY — no usar para desarrollo nuevo
+├── .github/         # Workflows de CI y templates
+├── docker-compose.yml
+├── CONTRIBUTING.md
+├── AGENTS.md
+└── README.md
 ```
-
-> `Backend/` es el backend original (deprecated). No usar para desarrollo nuevo.
-> Ver `Backend/README_LEGACY.md` para el detalle.
