@@ -92,6 +92,9 @@ Ver [`CONTRIBUTING.md`](CONTRIBUTING.md) para el detalle completo.
 |-----------|-----------|
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Cómo contribuir: ramas, commits, PRs, tests |
 | [`AGENTS.md`](AGENTS.md) | Reglas de code review automático |
+| [`docs/environment-setup.md`](docs/environment-setup.md) | Variables de entorno, troubleshooting |
+| [`docs/architecture.md`](docs/architecture.md) | Arquitectura del sistema, flujos, decisiones |
+| [`docs/database.md`](docs/database.md) | Esquema de BD, tablas, ciclo de vida |
 
 ---
 
