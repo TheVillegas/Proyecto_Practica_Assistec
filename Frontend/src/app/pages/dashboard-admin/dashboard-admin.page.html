@@ -1,0 +1,102 @@
+<app-header></app-header>
+
+<ion-content [fullscreen]="true" class="with-sidebar admin-dashboard">
+  <section class="admin-dashboard__container">
+    <header class="admin-dashboard__hero">
+      <p class="admin-dashboard__eyebrow">Administrador</p>
+      <h1 class="admin-dashboard__title">Centro de operaciones transversal</h1>
+      <p class="admin-dashboard__description">
+        Visión completa de todas las familias de solicitudes. Accedé a las bandejas críticas y entrá al flujo correcto antes de ejecutar acciones auditadas con rol actuante.
+      </p>
+    </header>
+
+    <section class="admin-dashboard__stats" aria-label="Resumen por familia">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <ion-icon name="create-outline"></ion-icon>
+          </div>
+          <div>
+            <span class="stat-label">En edición</span>
+            <span class="stat-value" data-family="editable">{{ getCounter('editable') }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon amber">
+            <ion-icon name="refresh-outline"></ion-icon>
+          </div>
+          <div>
+            <span class="stat-label">Para reenviar</span>
+            <span class="stat-value" data-family="resubmittable">{{ getCounter('resubmittable') }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <ion-icon name="hourglass-outline"></ion-icon>
+          </div>
+          <div>
+            <span class="stat-label">En revisión</span>
+            <span class="stat-value" data-family="under_review">{{ getCounter('under_review') }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <ion-icon name="checkmark-done-outline"></ion-icon>
+          </div>
+          <div>
+            <span class="stat-label">Post-validación</span>
+            <span class="stat-value" data-family="post_validation">{{ getCounter('post_validation') }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="queue-section" data-queue-empty *ngIf="queueItems.length === 0 && !loading">
+      <div class="empty-state">
+        <ion-icon name="file-tray-outline" class="empty-icon"></ion-icon>
+        <h3>Sin solicitudes activas</h3>
+        <p>No hay solicitudes en ninguna familia en este momento.</p>
+      </div>
+    </div>
+
+    <div class="queue-section" *ngIf="queueItems.length > 0">
+      <div class="section-header">
+        <h2>Bandeja de revisión</h2>
+        <p>Cola compartida de solicitudes pendientes de validación</p>
+      </div>
+      <div class="queue-list">
+        <div
+          class="queue-item"
+          *ngFor="let item of queueItems"
+          data-queue-item
+        >
+          <div class="queue-item__left">
+            <span class="queue-item__ali">ALI {{ item.numero_ali }}</span>
+            <span class="queue-item__cliente">{{ item.nombre_cliente ?? 'Sin cliente' }}</span>
+          </div>
+          <div class="queue-item__right">
+            <span class="queue-item__estado">{{ item.estado }}</span>
+            <span class="queue-item__familia">{{ item.family }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="admin-dashboard__actions" aria-label="Accesos operativos">
+      <button class="admin-dashboard__card" type="button" (click)="irABandejaRevision()">
+        <span class="admin-dashboard__card-title">Bandeja de revisión</span>
+        <span class="admin-dashboard__card-copy">Abrí la cola compartida de coordinadora y jefatura para validar solicitudes pendientes.</span>
+      </button>
+
+      <button class="admin-dashboard__card" type="button" (click)="irADashboardIngreso()">
+        <span class="admin-dashboard__card-title">Operar como ingreso</span>
+        <span class="admin-dashboard__card-copy">Entrá al dashboard de ingreso para crear o reenviar solicitudes cuando el caso lo requiera.</span>
+      </button>
+
+      <button class="admin-dashboard__card" type="button" (click)="irABusquedaAli()">
+        <span class="admin-dashboard__card-title">Búsqueda ALI</span>
+        <span class="admin-dashboard__card-copy">Consultá historial, trazabilidad y reportes disponibles antes de intervenir.</span>
+      </button>
+    </section>
+  </section>
+</ion-content>

@@ -146,3 +146,142 @@ ion-content {
     background: #F1F3F7;
     pointer-events: none;
 }
+
+// Stats grid
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+
+.stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    ion-icon { font-size: 20px; }
+
+    &.blue  { background: rgba(55, 138, 221, 0.12); color: #378ADD; }
+    &.green { background: rgba(29, 158, 117, 0.12); color: #1D9E75; }
+    &.amber { background: rgba(245, 158, 11,  0.12); color: #F59E0B; }
+}
+
+.stat-label {
+    color: #8A8F9C;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    color: #1A2340;
+    font-size: 22px;
+    font-weight: 600;
+    display: block;
+}
+
+// Queue section
+.queue-section {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #8A8F9C;
+
+    .empty-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+        color: #C4CAD4;
+    }
+
+    h3 {
+        font-size: 16px;
+        color: #1A2340;
+        margin: 0 0 8px;
+    }
+
+    p {
+        font-size: 13px;
+        margin: 0;
+    }
+}
+
+.queue-list {
+    margin-top: 12px;
+}
+
+.queue-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #F1F3F7;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &__left {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+    }
+
+    &__ali {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1A2340;
+    }
+
+    &__cliente {
+        font-size: 13px;
+        color: #8A8F9C;
+    }
+
+    &__estado {
+        font-size: 12px;
+        font-weight: 500;
+        color: #378ADD;
+        background: rgba(55, 138, 221, 0.08);
+        padding: 2px 10px;
+        border-radius: 12px;
+    }
+
+    &__familia {
+        font-size: 11px;
+        color: #8A8F9C;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+}

@@ -1,12 +1,23 @@
 const reporteRepository = require('../repositories/reporte.repository');
 const solicitudRepository = require('../repositories/solicitud.repository');
+const ROLES = require('../config/roles');
 
 class ReporteService {
-    async generar(idSolicitud) {
+    async generar(idSolicitud, usuario) {
         const solicitud = await solicitudRepository.findById(idSolicitud);
 
         if (!solicitud) {
             throw new Error('NOT_FOUND');
+        }
+
+        // Analista: solo puede generar reportes para solicitudes asignadas
+        const actingRole = usuario.actingRole ?? usuario.primaryRole ?? usuario.role;
+        if (actingRole === ROLES.ANALISTA) {
+            const isAssigned = solicitud.rutJefaArea === usuario.id
+                || solicitud.rutCoordinaroraRecepcion === usuario.id;
+            if (!isAssigned) {
+                throw new Error('NOT_ASSIGNED');
+            }
         }
 
         const resultado = await this.generarDesdeSolicitud(solicitud);

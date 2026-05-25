@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const usuarioRepository = require('../repositories/usuario.repository');
+const { resolvePrimaryRole, resolveUserRoles } = require('../config/roles');
 
 class AuthService {
     async login(correo, contrasena) {
@@ -17,10 +18,16 @@ class AuthService {
             throw new Error('Credenciales inválidas');
         }
 
+        const roles = resolveUserRoles(usuario);
+        const primaryRole = resolvePrimaryRole(usuario, roles);
+
         // 3. Generar token
         const payload = {
             id: usuario.rutUsuario,
-            role: usuario.rolUsuario
+            roles,
+            primaryRole,
+            role: primaryRole,
+            rol: primaryRole
         };
 
         const token = jwt.sign(
@@ -35,7 +42,10 @@ class AuthService {
                 rut: usuario.rutUsuario,
                 nombre: usuario.nombreApellidoUsuario,
                 correo: usuario.correoUsuario,
-                rol: usuario.rolUsuario,
+                roles,
+                primaryRole,
+                rol: primaryRole,
+                role: primaryRole,
                 foto: usuario.urlFoto
             }
         };
@@ -57,12 +67,19 @@ class AuthService {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(contrasena, salt);
 
+        const primaryRole = data.rolUsuario ?? 0;
         const nuevoUsuario = {
             rutUsuario: rut,
             nombreApellidoUsuario: nombreApellido,
             correoUsuario: correo,
             contrasenaUsuario: hashedPassword,
-            rolUsuario: data.rolUsuario ?? 0, // Analista por defecto
+            rolUsuario: primaryRole, // Analista por defecto
+            roles: {
+                create: [{
+                    rol: primaryRole,
+                    isPrimary: true
+                }]
+            },
             urlFoto: data.urlFoto || ''
         };
 

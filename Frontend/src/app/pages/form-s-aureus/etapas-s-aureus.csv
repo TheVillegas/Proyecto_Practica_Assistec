@@ -1,0 +1,67 @@
+Número Etapa,Nombre Etapa,Diseño Web
+Etapa 1,Inicio Incubación (Dia/mes/Hora/Analista),Text
+,Término Análsis (Día/Mes/Hora/Analista),Text
+,Tiempo entre homoguenizado y siembra <15 minutos ,Text
+,Agar Baird Parker,Text
+,Micropipetas 1ml,Checkbox
+,Micropipetas 10 ml,Checkbox
+,Nº de Muestra (10gr/90ml / 50gr/450ml),Radio
+,(Estufa 73-M (35.0+/-0.5°C) / Estufa 2-M (35.5+/-0.5°C)),Radio
+,Nº de Muestra (o Nº de Duplicado):,Text
+,( C ) 24 Hrs 1,Text
+,( C ) 24 Hrs 2,Text
+,( C ) 48 Hrs 1,Text
+,( C ) 48 Hrs 2,Text
+,Duplicado en ALI,Text
+,Análisis,Text
+,Cumple y No cumple,Radio
+,Control (+) y Blanco en ALI,Text
+,Cumple y No cumple,Radio
+,Control de Siembra en ALI,Text
+,Cumple y No cumple,Radio
+Etapa 2,Control de siembra S.aureus (UFC),Text
+,Control (+) S. aureus,Text
+,Control (-) S. epidermidis (UFC),Text
+,Blanco (UFC),Text
+,SD,Text
+,Fecha/Hora/Analista lectura 24Hrs,Text
+,Fecha/Hora/Analista lectura 48Hrs,Text
+Etapa 3,Fecha/Hora/Analista traspaso,Text
+,Caldo BHI,Text
+,(Estufa 73-M (35.0+/-0.5°C) / Estufa 2-M (35.5+/-0.5°C)),Radio
+,Control (+) S. aureus: ,Text
+,Control (-) S. epidermidis:,Text
+,Blanco,Text
+,Fecha/Hora/Analista lectura:,Text
+,Nº de Muestra (o Nº de Duplicado):,Text
+,( A ) placa 1,Text
+,( A ) placa 2,Text
+Etapa 4,Fecha/Hora/Analista prueba coagulasa:,Text
+,Tubos estériles: ,Text
+,Puntas 1 mL: ,Text
+,Bacident coagulasa / Agua estéril: ,Text
+,Micropipeta  22-M o 23-M,Radio
+,(Estufa 73-M (35.0+/-0.5°C) / Estufa 2-M (35.5+/-0.5°C)),Radio
+,Fecha/Hora/Analista lectura coagulasa 4-6 Hrs:,Text
+,Coagulasa 4-6 Hrs:,Text
+,Control (+) S. aureus: ,Text
+,Control (-) S. epidermidis: ,Text
+,Blanco: ,Text
+,Nº de Muestra (o Nº de Duplicado):,Text
+,( b ) placa 1,Text
+,( b ) placa 2,Text
+,Fecha/Hora/Analista lectura coagulasa 24 Hrs:,Text
+,Coagulasa 24 Hrs:,Text
+,Control (+) S. aureus: ,Text
+,Control (-) S. epidermidis: ,Text
+,Blanco,Text
+,Nº de Muestra (o Nº de Duplicado):,Text
+,( b ) placa 1,Text
+,( b ) placa 2,Text
+Etapa 5,Nº de Muestra (o Nº de Duplicado):,Text
+,Nº S. Aureus,Text
+,UFC/gr,Text
+Etapa 6,Desfavorable ( Si o No)                                   ,Radio
+,Tabla/Página:,Text
+,Límite:,Text
+,Fecha y hora de entrega: ,Text

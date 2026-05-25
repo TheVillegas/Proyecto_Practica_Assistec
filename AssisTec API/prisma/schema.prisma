@@ -32,6 +32,7 @@ model Usuario {
   contrasenaUsuario      String              @map("contrasena_usuario") @db.VarChar(255)
   rolUsuario             Int                 @map("rol_usuario")
   urlFoto                String              @map("url_foto") @db.VarChar(255)
+  roles                  UsuarioRol[]
 
   solicitudesResponsable SolicitudIngreso[]  @relation("ResponsableIngreso")
   solicitudesJefaArea    SolicitudIngreso[]  @relation("JefaArea")
@@ -39,6 +40,17 @@ model Usuario {
   solicitudesCreadas     SolicitudIngreso[]  @relation("CreadoPor")
 
   @@map("usuarios")
+}
+
+model UsuarioRol {
+  rutUsuario String  @map("rut_usuario") @db.VarChar(255)
+  rol        Int     @map("rol")
+  isPrimary  Boolean @default(false) @map("is_primary")
+
+  usuario     Usuario @relation(fields: [rutUsuario], references: [rutUsuario], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([rutUsuario, rol])
+  @@map("usuario_roles")
 }
 
 model EquipoLab {
@@ -62,14 +74,28 @@ model LugarAlmacenamiento {
 }
 
 model CategoriaProducto {
-  idCategoria   BigInt                  @id @default(autoincrement()) @map("id_categoria")
-  nombre        String                  @db.VarChar(255)
+  idCategoria    BigInt                  @id @default(autoincrement()) @map("id_categoria")
+  nombre         String                  @db.VarChar(255)
   
-  alcances      AlcanceAcreditacion[]
-  tiempos       TiempoPorCategoria[]
-  solicitudes   SolicitudIngreso[]
+  alcances       AlcanceAcreditacion[]
+  tiempos        TiempoPorCategoria[]
+  solicitudes    SolicitudIngreso[]
+  subcategorias  SubcategoriaProducto[]
 
   @@map("categorias_producto")
+}
+
+model SubcategoriaProducto {
+  idSubcategoria  BigInt             @id @default(autoincrement()) @map("id_subcategoria")
+  nombre          String             @db.VarChar(255)
+  idCategoria     BigInt             @map("id_categoria")
+  activo          String?            @default("S") @db.VarChar(1)
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamp()
+
+  categoria       CategoriaProducto  @relation(fields: [idCategoria], references: [idCategoria])
+
+  @@map("subcategorias_producto")
 }
 
 model AcreditacionInn {
@@ -158,7 +184,8 @@ model SolicitudIngreso {
   anioIngreso                         Int                @map("anio_ingreso") @db.SmallInt
   numeroAli                           Int                @map("numero_ali")
   numeroActa                          String             @map("numero_acta")
-  codigoExterno                       String             @map("codigo_externo")
+  codigoExterno                       String             @default("") @map("codigo_externo")
+  codigoEquipoManual                  String?            @map("codigo_equipo_manual") @db.VarChar(50)
   categoriaId                         BigInt             @map("categoria")
   idCliente                           Int                @map("id_cliente")
   idDireccion                         Int                @map("id_direccion")

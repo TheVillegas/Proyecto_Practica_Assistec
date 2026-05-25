@@ -52,6 +52,79 @@ class SolicitudService {
         return this.serializeSolicitud(solicitud);
     }
 
+    async summary(usuario, query = {}) {
+        const actingRole = this.resolveActingRole(usuario, query);
+        const filter = this.buildVisibilityFilter(usuario.id, actingRole, null);
+        const summary = await solicitudRepository.getFamilySummary(filter);
+        return { summary };
+    }
+
+    async queue(usuario, query = {}) {
+        const actingRole = this.resolveActingRole(usuario, query);
+        const family = query.family;
+        const filter = this.buildVisibilityFilter(usuario.id, actingRole, family);
+        const items = await solicitudRepository.findWithFilters(filter);
+        return { items: items.map(item => this.serializeSolicitud(item)) };
+    }
+
+    resolveActingRole(usuario, query = {}) {
+        const requestedRole = ROLES.normalizeRole(
+            query.actingRole ?? query.acting_role ?? usuario.actingRole
+        );
+        const userRoles = Array.isArray(usuario.roles) ? usuario.roles : [];
+
+        if (requestedRole !== null && userRoles.includes(requestedRole)) {
+            return requestedRole;
+        }
+
+        return usuario.primaryRole ?? usuario.role ?? ROLES.ANALISTA;
+    }
+
+    buildVisibilityFilter(userId, actingRole, family = null) {
+        const filter = {};
+
+        if (family === 'editable') {
+            filter.estado = { in: ['borrador', 'devuelta'] };
+        } else if (family === 'resubmittable') {
+            filter.estado = { in: ['rechazado'] };
+        } else if (family === 'under_review') {
+            filter.estado = { in: ['enviado', 'enviada'] };
+        } else if (family === 'post_validation') {
+            filter.estado = { in: ['validado', 'validada', 'convertido_muestras', 'reportes_generados'] };
+        }
+
+        if (actingRole === ROLES.INGRESO) {
+            filter.rutResponsableIngreso = userId;
+        } else if (actingRole === ROLES.ANALISTA) {
+            filter.OR = [
+                { rutJefaArea: userId },
+                { rutCoordinaroraRecepcion: userId }
+            ];
+            if (!family) {
+                filter.estado = { in: ['validado', 'validada', 'convertido_muestras', 'reportes_generados'] };
+            }
+        } else if (actingRole === ROLES.COORDINADORA || actingRole === ROLES.JEFE_AREA) {
+            if (!family) {
+                filter.estado = { in: ['enviado', 'enviada', 'validado', 'validada', 'convertido_muestras', 'reportes_generados'] };
+            }
+        }
+
+        return filter;
+    }
+
+    mapEstadoToFamily(estado) {
+        return solicitudRepository.mapEstadoToFamily(estado);
+    }
+
+    isEditableByRole(estado, role) {
+        const family = this.mapEstadoToFamily(estado);
+        if (family === 'editable' || family === 'resubmittable') return true;
+        if (role === ROLES.INGRESO) {
+            return family === 'editable' || family === 'resubmittable';
+        }
+        return true;
+    }
+
     async editar(id, data, expectedUpdatedAt, usuario) {
         const solicitud = await solicitudRepository.findById(id);
 
@@ -59,8 +132,21 @@ class SolicitudService {
             throw new Error('NOT_FOUND');
         }
 
-        if ([ESTADOS.VALIDADO, ESTADOS.CONVERTIDO_MUESTRAS, ESTADOS.VALIDADA_LEGACY, ESTADOS.REPORTES_GENERADOS_LEGACY].includes(solicitud.estado) && usuario.role === ROLES.INGRESO) {
-            throw new Error('ALREADY_VALIDATED');
+        const actingRole = this.resolveActingRole(usuario, data);
+        const family = solicitudRepository.mapEstadoToFamily(solicitud.estado);
+
+        if (actingRole === ROLES.INGRESO) {
+            if (family !== 'editable' && family !== 'resubmittable') {
+                throw new Error('ALREADY_VALIDATED');
+            }
+        } else if (actingRole === ROLES.ANALISTA) {
+            if (family !== 'post_validation') {
+                throw new Error('UNAUTHORIZED_ROLE');
+            }
+            const isAssigned = solicitud.rutJefaArea === usuario.id || solicitud.rutCoordinaroraRecepcion === usuario.id;
+            if (!isAssigned) {
+                throw new Error('NOT_ASSIGNED');
+            }
         }
 
         const datosActualizar = await this.buildSolicitudData(
@@ -85,10 +171,12 @@ class SolicitudService {
         }
 
         const now = new Date();
+        const metadata = this.resetValidationMetadata(this.parseMetadata(solicitud.observacionesGenerales));
         const updated = await solicitudRepository.update(id, {
             estado: ESTADOS.ENVIADO,
             fechaEnvioValidacion: now,
-            rutResponsableIngreso: usuario.id
+            rutResponsableIngreso: usuario.id,
+            observacionesGenerales: JSON.stringify(metadata)
         }, expectedUpdatedAt);
 
         return this.serializeSolicitud(updated);
@@ -108,13 +196,27 @@ class SolicitudService {
             throw new Error('ALREADY_VALIDATED');
         }
 
+        const metadata = this.parseMetadata(solicitud.observacionesGenerales);
+        const validationState = this.getValidationState(metadata);
+        const alreadyValidatedByCurrentRole = usuario.role === ROLES.COORDINADORA
+            ? validationState.coordinadora.aprobada
+            : validationState.jefa.aprobada;
+
+        if (alreadyValidatedByCurrentRole || this.isLegacyFullyValidatedWithoutFlags(solicitud, validationState)) {
+            throw new Error('ALREADY_VALIDATED');
+        }
+
         const now = new Date();
+        const nextMetadata = this.applyValidationApproval(metadata, usuario, now);
+        const nextValidationState = this.getValidationState(nextMetadata);
+        const isFullyValidated = nextValidationState.coordinadora.aprobada && nextValidationState.jefa.aprobada;
         const updated = await solicitudRepository.update(id, {
-            estado: ESTADOS.VALIDADO,
+            estado: isFullyValidated ? ESTADOS.VALIDADO : ESTADOS.ENVIADO,
             rutJefaArea: usuario.role === ROLES.JEFE_AREA ? usuario.id : solicitud.rutJefaArea,
             rutCoordinaroraRecepcion: usuario.role === ROLES.COORDINADORA ? usuario.id : solicitud.rutCoordinaroraRecepcion,
-            fechaEntregaRevisionJefeLab: now,
-            fechaHoraRecepcionCoordinadora: usuario.role === ROLES.COORDINADORA ? now : solicitud.fechaHoraRecepcionCoordinadora
+            fechaEntregaRevisionJefeLab: usuario.role === ROLES.JEFE_AREA ? now : solicitud.fechaEntregaRevisionJefeLab,
+            fechaHoraRecepcionCoordinadora: usuario.role === ROLES.COORDINADORA ? now : solicitud.fechaHoraRecepcionCoordinadora,
+            observacionesGenerales: JSON.stringify(nextMetadata)
         }, expectedUpdatedAt);
 
         return this.serializeSolicitud(updated);
@@ -185,11 +287,14 @@ class SolicitudService {
         const formulariosSeleccionados = this.normalizeFormularios(data.formulariosSeleccionados ?? data.formularios);
         const nombreSolicitante = data.nombreSolicitante ?? data.nombre_solicitante ?? existingMetadata.nombreSolicitante ?? '';
         const observacionesLaboratorio = data.observacionesLaboratorio ?? data.observaciones_laboratorio ?? existingMetadata.observacionesLaboratorio ?? '';
+        const analisisDerivadosSubcontratados = data.analisisDerivadosSubcontratados ?? data.analisis_derivados_subcontratados ?? existingMetadata.analisisDerivadosSubcontratados ?? '';
+        const subcategoriaId = data.subcategoriaId ?? data.subcategoria_id ?? existingMetadata.subcategoriaId ?? null;
+        const noAplicaMuestreo = Boolean(data.noAplicaMuestreo ?? data.no_aplica_muestreo ?? existingMetadata.noAplicaMuestreo ?? false);
         const cantidadMuestras = Number(data.cantidad_muestras ?? data.numeroMuestras ?? existing?.cantidadMuestras ?? 1);
         const cantidadEnvases = Number(data.cant_envases ?? data.numeroEnvases ?? existing?.cantEnvases ?? 1);
         const fechaRecepcion = new Date(data.fechaRecepcion ?? data.fecha_recepcion ?? existing?.fechaRecepcion ?? now);
-        const fechaInicioMuestreo = new Date(data.fechaInicioMuestreo ?? data.fecha_inicio_muestreo ?? existing?.fechaInicioMuestreo ?? fechaRecepcion);
-        const fechaTerminoMuestreo = new Date(data.fechaTerminoMuestreo ?? data.fecha_termino_muestreo ?? existing?.fechaTerminoMuestreo ?? fechaRecepcion);
+        const fechaInicioMuestreo = new Date((noAplicaMuestreo ? null : (data.fechaInicioMuestreo ?? data.fecha_inicio_muestreo)) ?? existing?.fechaInicioMuestreo ?? fechaRecepcion);
+        const fechaTerminoMuestreo = new Date((noAplicaMuestreo ? null : (data.fechaTerminoMuestreo ?? data.fecha_termino_muestreo)) ?? existing?.fechaTerminoMuestreo ?? fechaRecepcion);
         const diasBase = this.calcularDiasEntrega(formulariosSeleccionados);
         const fechaNegativa = this.sumarDias(fechaRecepcion, diasBase);
         const fechaPositiva = this.sumarDias(fechaRecepcion, diasBase + 2);
@@ -202,14 +307,20 @@ class SolicitudService {
             version: 1,
             nombreSolicitante,
             observacionesLaboratorio,
-            formularios: formulariosSeleccionados
+            analisisDerivadosSubcontratados,
+            subcategoriaId,
+            noAplicaMuestreo,
+            formularios: formulariosSeleccionados,
+            validacionCoordinadora: existingMetadata.validacionCoordinadora ?? null,
+            validacionJefa: existingMetadata.validacionJefa ?? null
         };
 
         return {
             anioIngreso,
             numeroAli,
             numeroActa: data.numeroActa ?? data.numero_acta ?? existing?.numeroActa ?? '',
-            codigoExterno: data.codigoExterno ?? data.codigo_externo ?? existing?.codigoExterno ?? `EXT-${anioIngreso}-${numeroAli}`,
+            codigoExterno: data.codigoExterno ?? data.codigo_externo ?? existing?.codigoExterno ?? '',
+            codigoEquipoManual: data.codigoEquipoManual ?? data.codigo_equipo_manual ?? existing?.codigoEquipoManual ?? null,
             categoriaId: categoria.idCategoria,
             idCliente: cliente.idCliente,
             idDireccion: direccion.idDireccion,
@@ -379,7 +490,12 @@ class SolicitudService {
             id: formulario.id ?? formulario.idFormularioAnalisis ?? null,
             codigo: formulario.codigo ?? formulario.id ?? '',
             nombre: formulario.nombre ?? formulario.nombreAnalisis ?? '',
-            genera_tpa_default: Boolean(formulario.generaTpaDefault ?? formulario.genera_tpa_default ?? false)
+            genera_tpa_default: Boolean(formulario.generaTpaDefault ?? formulario.genera_tpa_default ?? false),
+            acreditado: formulario.acreditado ?? null,
+            codigo_le: formulario.codigo_le ?? formulario.codigoLe ?? null,
+            metodologia_norma: formulario.metodologia_norma ?? formulario.metodologiaNorma ?? null,
+            dias_negativo: formulario.dias_negativo ?? formulario.diasNegativo ?? null,
+            dias_confirmacion: formulario.dias_confirmacion ?? formulario.diasConfirmacion ?? null
         }));
     }
 
@@ -442,12 +558,13 @@ class SolicitudService {
 
         return {
             diasNegativo: negativos.length ? Math.max(...negativos) + 1 : null,
-            diasConfirmacion: confirmaciones.length ? Math.max(...confirmaciones) + 1 : null
+            diasConfirmacion: negativos.length ? Math.max(...negativos) + 3 : (confirmaciones.length ? Math.max(...confirmaciones) + 1 : null)
         };
     }
 
     serializeSolicitud(solicitud, extra = {}) {
         const metadata = this.parseMetadata(solicitud.observacionesGenerales);
+        const validationState = this.getValidationState(metadata);
         const dto = {
             id_solicitud: solicitud.idSolicitud.toString(),
             anio_ingreso: solicitud.anioIngreso,
@@ -479,12 +596,20 @@ class SolicitudService {
             notas_cliente: solicitud.notasDelCliente,
             nombre_solicitante: metadata.nombreSolicitante ?? '',
             observaciones_laboratorio: metadata.observacionesLaboratorio ?? '',
+            analisis_derivados_subcontratados: metadata.analisisDerivadosSubcontratados ?? '',
             formularios_seleccionados: metadata.formularios ?? [],
+            subcategoria_id: metadata.subcategoriaId ?? null,
+            no_aplica_muestreo: Boolean(metadata.noAplicaMuestreo),
             estado: solicitud.estado,
             rut_responsable_ingreso: solicitud.rutResponsableIngreso,
             rut_jefa_area: solicitud.rutJefaArea,
             rut_coordinadora_recepcion: solicitud.rutCoordinaroraRecepcion,
+            validacion_coordinadora: validationState.coordinadora,
+            validacion_jefa: validationState.jefa,
             fecha_envio_validacion: solicitud.fechaEnvioValidacion,
+            fecha_envio_informe_positivo: solicitud.fechaEnvioInformePositivo,
+            fecha_envio_informe_negativo: solicitud.fechaEnvioInformeNegativo,
+            codigo_equipo_manual: solicitud.codigoEquipoManual ?? null,
             updated_at: solicitud.updatedAt,
             muestras: (solicitud.muestras ?? []).map((muestra) => ({
                 id_solicitud_muestra: muestra.idSolicitudMuestra.toString(),
@@ -521,6 +646,67 @@ class SolicitudService {
                 formularios: []
             };
         }
+    }
+
+    normalizeValidationEntry(entry) {
+        if (!entry || typeof entry !== 'object') {
+            return { aprobada: false, rut: null, fecha: null };
+        }
+
+        return {
+            aprobada: Boolean(entry.aprobada),
+            rut: entry.rut ?? null,
+            fecha: entry.fecha ?? null
+        };
+    }
+
+    getValidationState(metadata = {}) {
+        return {
+            coordinadora: this.normalizeValidationEntry(metadata.validacionCoordinadora),
+            jefa: this.normalizeValidationEntry(metadata.validacionJefa)
+        };
+    }
+
+    resetValidationMetadata(metadata = {}) {
+        return {
+            ...metadata,
+            validacionCoordinadora: null,
+            validacionJefa: null
+        };
+    }
+
+    applyValidationApproval(metadata = {}, usuario, fecha) {
+        const nextMetadata = { ...metadata };
+        const approval = {
+            aprobada: true,
+            rut: usuario.id,
+            fecha: fecha.toISOString()
+        };
+
+        if (usuario.role === ROLES.COORDINADORA) {
+            nextMetadata.validacionCoordinadora = approval;
+        }
+
+        if (usuario.role === ROLES.JEFE_AREA) {
+            nextMetadata.validacionJefa = approval;
+        }
+
+        return nextMetadata;
+    }
+
+    isLegacyFullyValidatedWithoutFlags(solicitud, validationState) {
+        const alreadyInPostValidation = [
+            ESTADOS.VALIDADO,
+            ESTADOS.VALIDADA_LEGACY,
+            ESTADOS.CONVERTIDO_MUESTRAS,
+            ESTADOS.REPORTES_GENERADOS_LEGACY
+        ].includes(solicitud.estado);
+
+        if (!alreadyInPostValidation) {
+            return false;
+        }
+
+        return !validationState.coordinadora.aprobada && !validationState.jefa.aprobada;
     }
 
     generarNumeroActa(anio, numeroAli) {

@@ -8,37 +8,61 @@
         <ion-icon name="flask-outline"></ion-icon>
         AsisTec Lab
       </div>
-      <h1>Bienvenido a la interfaz digital de AsisTec</h1>
-      <p>Plataforma de gestión de muestras del laboratorio AsisTec — Pontificia Universidad Católica de Valparaíso.</p>
+      <h1>Panel de Coordinación</h1>
+      <p>Revisión y validación de solicitudes de ingreso.</p>
       <div class="banner-circle"></div>
     </div>
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon blue">
-          <ion-icon name="layers-outline"></ion-icon>
+        <div class="stat-icon amber">
+          <ion-icon name="hourglass-outline"></ion-icon>
         </div>
         <div>
-          <span class="stat-label">Muestras Activas</span>
-          <span class="stat-value">—</span>
+          <span class="stat-label">En revisión</span>
+          <span class="stat-value" data-family="under_review">{{ getCounter('under_review') }}</span>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon green">
-          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <ion-icon name="checkmark-done-outline"></ion-icon>
         </div>
         <div>
-          <span class="stat-label">Reportes Verificados</span>
-          <span class="stat-value">—</span>
+          <span class="stat-label">Post-validación</span>
+          <span class="stat-value" data-family="post_validation">{{ getCounter('post_validation') }}</span>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon amber">
-          <ion-icon name="time-outline"></ion-icon>
-        </div>
-        <div>
-          <span class="stat-label">Pendientes de Revisión</span>
-          <span class="stat-value">—</span>
+    </div>
+
+    <div class="queue-section" data-queue-empty *ngIf="queueItems.length === 0 && !loading">
+      <div class="empty-state">
+        <ion-icon name="file-tray-outline" class="empty-icon"></ion-icon>
+        <h3>Bandeja de revisión vacía</h3>
+        <p>No hay solicitudes pendientes de validación en este momento.</p>
+      </div>
+    </div>
+
+    <div class="queue-section" *ngIf="queueItems.length > 0">
+      <div class="section-header">
+        <h2>Bandeja de revisión</h2>
+        <p>Solicitudes pendientes de validación</p>
+      </div>
+      <div class="queue-list">
+        <div
+          class="queue-item"
+          *ngFor="let item of queueItems"
+          data-queue-item
+        >
+          <div class="queue-item__left">
+            <span class="queue-item__ali">ALI {{ item.numero_ali }}</span>
+            <span class="queue-item__cliente">{{ item.nombre_cliente ?? 'Sin cliente' }}</span>
+          </div>
+          <div class="queue-item__right">
+            <span class="queue-item__estado">{{ item.estado }}</span>
+            <button class="btn-validar-item" (click)="verDetalle(item)">
+              <ion-icon name="eye-outline"></ion-icon> Ver detalle
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -67,16 +91,6 @@
           <h3>Búsqueda ALI</h3>
           <p>Consultar registros, historial y reportes de muestras ingresadas al sistema.</p>
           <span class="action-link">Consultar →</span>
-          <div class="action-circle"></div>
-        </div>
-
-        <div class="action-card action-card--disabled">
-          <div class="action-icon">
-            <ion-icon name="checkbox-outline"></ion-icon>
-          </div>
-          <h3>Validar Formularios</h3>
-          <p>Revisión y aprobación de formularios pendientes de validación. Próximamente disponible.</p>
-          <span class="action-link action-link--disabled">Próximamente</span>
           <div class="action-circle"></div>
         </div>
 

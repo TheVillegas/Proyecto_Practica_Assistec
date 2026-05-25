@@ -15,6 +15,7 @@ import {
     MaterialSiembra,
     Micropipeta,
     Responsable,
+    SubcategoriaProducto,
     TipoAnalisis
 } from '../interfaces/catalogo.interfaces';
 
@@ -82,5 +83,9 @@ export class CatalogosService {
 
     getFormasCalculo(): Observable<FormaCalculo[]> {
         return this.http.get<FormaCalculo[]>(`${this.apiUrl}/formas_calculo`);
+    }
+
+    getSubcategorias(): Observable<SubcategoriaProducto[]> {
+        return this.http.get<SubcategoriaProducto[]>(`${this.apiUrl}/subcategorias`);
     }
 }

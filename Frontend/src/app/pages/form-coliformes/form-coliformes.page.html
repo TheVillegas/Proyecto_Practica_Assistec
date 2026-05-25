@@ -1,0 +1,647 @@
+<ion-header>
+  <ion-toolbar class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-button (click)="confirmarCancelar()" class="btn-back">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="header-title">
+      <ion-icon name="flask-outline" class="header-icon"></ion-icon>
+      Análisis de Coliformes
+    </ion-title>
+    <ion-buttons slot="end">
+      <span class="badge-etapa">{{ etapaActual }}/{{ TOTAL_ETAPAS }}</span>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="page-content">
+  <div class="wizard-container">
+
+    <!-- ═══════════ BARRA DE PROGRESO + STEPPER ══════════ -->
+    <div class="stepper-wrapper">
+      <div class="stepper-bar">
+        <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
+      </div>
+      <div class="stepper-steps">
+        <button *ngFor="let nombre of NOMBRES_ETAPAS; let i = index" class="step-btn"
+          [class.step-btn--active]="etapaActual === i + 1" [class.step-btn--done]="etapaActual > i + 1"
+          (click)="irAEtapa(i + 1)">
+          <span class="step-circle">{{ i + 1 }}</span>
+          <span class="step-label">{{ nombre }}</span>
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="form">
+
+      <!-- ════════ ETAPA 1: DETALLES DEL ALIMENTO E INCUBACIÓN ════════ -->
+      <div *ngIf="etapaActual === 1" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="information-circle-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Detalles del Alimento e Incubación</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Código ALI (Autocompletado) -->
+            <div class="seccion-importada mb-6">
+              <div class="seccion-tag">
+                <ion-icon name="cloud-download-outline"></ion-icon>
+              </div>
+              <div class="form-group max-w-xs">
+                <label class="form-label">Código del Alimento (ALI)</label>
+                <input type="text" class="form-input input-locked" [value]="datosImportados.codigoAlimento" disabled />
+              </div>
+            </div>
+
+            <!-- BLOQUE 1: Coliformes Totales -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                1. Enumeración de Coliformes Totales (NCh 2635/1. Of2001)
+              </p>
+              <!-- Inicio Incubación -->
+              <p class="text-xs font-semibold text-slate-500 mt-3 mb-1">Inicio Incubación</p>
+              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="form-group">
+                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="ct_analistaInicio"
+                    placeholder="Nombre analista" [class.input-error]="campoInvalido('ct_analistaInicio')" />
+                </div>
+              </div>
+
+              <!-- Término Análisis -->
+              <p class="text-xs font-semibold text-slate-500 mt-4 mb-1">Término Análisis</p>
+              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="form-group">
+                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="ct_analistaTermino"
+                    placeholder="Nombre analista" [class.input-error]="campoInvalido('ct_analistaTermino')" />
+                </div>
+              </div>
+            </div>
+
+            <!-- BLOQUE 2: Coliformes Fecales -->
+            <div class="control-card mb-6">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                2. Enumeración de Coliformes Fecales (NCh 2635/1. Of2001)
+              </p>
+
+              <!-- Inicio Incubación -->
+              <p class="text-xs font-semibold text-slate-500 mt-3 mb-1">Inicio Incubación</p>
+              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="form-group">
+                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="cf_analistaInicio"
+                    placeholder="Nombre analista" [class.input-error]="campoInvalido('cf_analistaInicio')" />
+                </div>
+              </div>
+
+              <!-- Término Análisis -->
+              <p class="text-xs font-semibold text-slate-500 mt-4 mb-1">Término Análisis</p>
+              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="form-group">
+                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="cf_analistaTermino"
+                    placeholder="Nombre analista" [class.input-error]="campoInvalido('cf_analistaTermino')" />
+                </div>
+              </div>
+            </div>
+
+            <!-- BLOQUE 3: Escherichia Coli -->
+            <div class="control-card">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                3. Enumeración de Escherichia coli (NCh 2636. Of2001)
+              </p>
+
+              <!-- Inicio Incubación -->
+              <p class="text-xs font-semibold text-slate-500 mt-3 mb-1">Inicio Incubación</p>
+              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="form-group">
+                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="ec_analistaInicio"
+                    placeholder="Nombre analista" [class.input-error]="campoInvalido('ec_analistaInicio')" />
+                </div>
+              </div>
+
+              <!-- Término Análisis -->
+              <p class="text-xs font-semibold text-slate-500 mt-4 mb-1">Término Análisis</p>
+              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="form-group">
+                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                  <input type="date" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                  <input type="time" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                  <input type="text" class="form-input" formControlName="ec_analistaTermino"
+                    placeholder="Nombre analista" [class.input-error]="campoInvalido('ec_analistaTermino')" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═════════ ETAPA 2: DETALLES DE SIEMBRA ═════════ -->
+      <div *ngIf="etapaActual === 2" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="leaf-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Detalles de Siembra</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label">Caldo Lauril simple <span class="required-star">*</span></label>
+                <input type="text" class="form-input" [class.input-error]="campoInvalido('caldoLauril')"
+                  formControlName="caldoLauril" placeholder="Ej: CL-045" />
+                <span class="error-msg" *ngIf="campoInvalido('caldoLauril')">Campo obligatorio.</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Tween 80 <span class="optional-tag">(opcional)</span></label>
+                <input type="text" class="form-input" formControlName="tween80" placeholder="Código si aplica" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">N° Muestra 10 g / 90 ml</label>
+                <input type="text" class="form-input" formControlName="muestra10g90ml" placeholder="Ej: 3" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">N° Muestra 50 g / 450 ml</label>
+                <input type="text" class="form-input" formControlName="muestra50g450ml" placeholder="Ej: 5" />
+              </div>
+            </div>
+
+            <!-- Estufa Utilizada -->
+            <div class="form-group mt-4 border-t border-slate-100 pt-4">
+              <label class="form-label">Estufa <span class="required-star">*</span></label>
+              <div class="form-radio-group">
+                <label class="form-check-label">
+                  <input type="radio" class="form-radio" name="estufaUtilizada" value="Estufa 73-M (35.0+/-0.5°C)"
+                    formControlName="estufaUtilizada" />
+                  <span>Estufa 73-M (35.0+/-0.5°C)</span>
+                </label>
+                <label class="form-check-label">
+                  <input type="radio" class="form-radio" name="estufaUtilizada" value="Estufa 2-M (35.5+/-0.5°C)"
+                    formControlName="estufaUtilizada" />
+                  <span>Estufa 2-M (35.5+/-0.5°C)</span>
+                </label>
+              </div>
+              <span class="error-msg" *ngIf="campoInvalido('estufaUtilizada')">Debe seleccionar una estufa.</span>
+            </div>
+
+            <!-- Micropipeta 1ml -->
+            <div class="form-group mt-4 border-t border-slate-100 pt-4">
+              <label class="form-label">Micropipetas 1ml <span class="required-star">*</span></label>
+              <div class="form-radio-group">
+                <label class="form-check-label" *ngFor="let mic of ['22-M', '72-M', '98-M', '100-M', '102-M']">
+                  <input type="radio" class="form-radio" name="micropipeta1ml" [value]="mic"
+                    formControlName="micropipeta1ml" />
+                  <span>{{ mic }}</span>
+                </label>
+              </div>
+              <span class="error-msg" *ngIf="campoInvalido('micropipeta1ml')">Debe seleccionar una micropipeta de
+                1ml.</span>
+            </div>
+
+            <!-- Micropipeta 10ml -->
+            <div class="form-group mt-4 border-t border-slate-100 pt-4">
+              <label class="form-label">Micropipetas 10ml <span class="required-star">*</span></label>
+              <div class="form-radio-group">
+                <label class="form-check-label" *ngFor="let mic of ['32-M', '103-M', '75-M', '94-M', '106-M']">
+                  <input type="radio" class="form-radio" name="micropipeta10ml" [value]="mic"
+                    formControlName="micropipeta10ml" />
+                  <span>{{ mic }}</span>
+                </label>
+              </div>
+              <span class="error-msg" *ngIf="campoInvalido('micropipeta10ml')">Debe seleccionar una micropipeta de
+                10ml.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════ ETAPA 3: CONTROL DE ANÁLISIS (24h y 48h) ═══════════ -->
+      <div *ngIf="etapaActual === 3" class="etapa-panel">
+
+        <!-- Lectura 24h -->
+        <div class="form-card">
+          <div class="form-card-header header-24h">
+            <div class="form-card-title-group">
+              <ion-icon name="time-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Lectura a 24 Horas</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+              <div class="form-group">
+                <label class="form-label text-xs">Fecha de Lectura <span class="required-star">*</span></label>
+                <input type="date" class="form-input" [(ngModel)]="tabla24h.fechaLectura"
+                  [ngModelOptions]="{standalone: true}" placeholder="DD/MM" maxlength="5" />
+              </div>
+              <div class="form-group">
+                <label class="form-label text-xs">Hora de Lectura <span class="required-star">*</span></label>
+                <input type="time" class="form-input" [class.input-error]="errorHora24h"
+                  [(ngModel)]="tabla24h.horaLectura" [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="onHora24hChange()" />
+                <span class="error-msg" *ngIf="errorHora24h">{{ errorHora24h }}</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label text-xs">Analista Responsable <span class="required-star">*</span></label>
+                <input type="text" class="form-input" [(ngModel)]="tabla24h.analistaResponsable"
+                  [ngModelOptions]="{standalone: true}" placeholder="Nombre del analista" />
+              </div>
+            </div>
+
+            <!-- Tabla submuestras 24h -->
+            <div class="tabla-wrapper">
+              <table class="tabla-submuestras">
+                <thead>
+                  <tr>
+                    <th class="th-dilucion">Dilución</th>
+                    <ng-container *ngFor="let entrada of tabla24h.entradas">
+                      <th [attr.colspan]="3" [class.th-duplicado]="entrada.esDuplicado">
+                        {{ entrada.label }}
+                      </th>
+                    </ng-container>
+                  </tr>
+                  <tr>
+                    <th class="th-dilucion"></th>
+                    <ng-container *ngFor="let entrada of tabla24h.entradas">
+                      <th class="th-sub">S1</th>
+                      <th class="th-sub">S2</th>
+                      <th class="th-sub">S3</th>
+                    </ng-container>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let dil of DILUCIONES">
+                    <td class="td-dilucion">{{ dil }}</td>
+                    <ng-container *ngFor="let entrada of tabla24h.entradas">
+                      <td *ngFor="let idx of [0, 1, 2]" class="td-celda"
+                        [class.celda-pos]="entrada.submuestras[dil][idx] === 'positivo'"
+                        [class.celda-neg]="entrada.submuestras[dil][idx] === 'negativo'"
+                        (click)="ciclarResultado(entrada, dil, idx)">
+                        <span class="celda-badge">
+                          {{ entrada.submuestras[dil][idx] === 'positivo' ? 'POS' :
+                          entrada.submuestras[dil][idx] === 'negativo' ? 'NEG' : '–' }}
+                        </span>
+                      </td>
+                    </ng-container>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="tabla-hint">
+              <ion-icon name="finger-print-outline"></ion-icon>
+              Toca cada celda para alternar: Sin registrar → Positivo → Negativo
+            </p>
+          </div>
+        </div>
+
+        <!-- Lectura 48h -->
+        <div class="form-card">
+          <div class="form-card-header header-48h">
+            <div class="form-card-title-group">
+              <ion-icon name="time-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Lectura a 48 Horas</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+              <div class="form-group">
+                <label class="form-label text-xs">Fecha de Lectura <span class="required-star">*</span></label>
+                <input type="date" class="form-input" [(ngModel)]="tabla48h.fechaLectura"
+                  [ngModelOptions]="{standalone: true}" placeholder="DD/MM" maxlength="5" />
+              </div>
+              <div class="form-group">
+                <label class="form-label text-xs">Hora de Lectura <span class="required-star">*</span></label>
+                <input type="time" class="form-input" [class.input-error]="errorHora48h"
+                  [(ngModel)]="tabla48h.horaLectura" [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="onHora48hChange()" />
+                <span class="error-msg" *ngIf="errorHora48h">{{ errorHora48h }}</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label text-xs">Analista Responsable<span class="required-star">*</span></label>
+                <input type="text" class="form-input" [(ngModel)]="tabla48h.analistaResponsable"
+                  [ngModelOptions]="{standalone: true}" placeholder="Nombre del analista" />
+              </div>
+            </div>
+
+            <!-- Tabla submuestras 48h -->
+            <div class="tabla-wrapper">
+              <table class="tabla-submuestras">
+                <thead>
+                  <tr>
+                    <th class="th-dilucion">Dilución</th>
+                    <ng-container *ngFor="let entrada of tabla48h.entradas">
+                      <th [attr.colspan]="3" [class.th-duplicado]="entrada.esDuplicado">
+                        {{ entrada.label }}
+                      </th>
+                    </ng-container>
+                  </tr>
+                  <tr>
+                    <th class="th-dilucion"></th>
+                    <ng-container *ngFor="let entrada of tabla48h.entradas">
+                      <th class="th-sub">S1</th>
+                      <th class="th-sub">S2</th>
+                      <th class="th-sub">S3</th>
+                    </ng-container>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let dil of DILUCIONES">
+                    <td class="td-dilucion">{{ dil }}</td>
+                    <ng-container *ngFor="let entrada of tabla48h.entradas">
+                      <td *ngFor="let idx of [0, 1, 2]" class="td-celda"
+                        [class.celda-pos]="entrada.submuestras[dil][idx] === 'positivo'"
+                        [class.celda-neg]="entrada.submuestras[dil][idx] === 'negativo'"
+                        (click)="ciclarResultado(entrada, dil, idx)">
+                        <span class="celda-badge">
+                          {{ entrada.submuestras[dil][idx] === 'positivo' ? 'POS' :
+                          entrada.submuestras[dil][idx] === 'negativo' ? 'NEG' : '–' }}
+                        </span>
+                      </td>
+                    </ng-container>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="tabla-hint">
+              <ion-icon name="finger-print-outline"></ion-icon>
+              Toca cada celda para alternar: Sin registrar → Positivo → Negativo
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ═════════════ ETAPA 4: CONTROL DE CALIDAD ═══════════════════ -->
+      <div *ngIf="etapaActual === 4" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="shield-checkmark-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Controles de Calidad</h2>
+            </div>
+          </div>
+          <div class="form-card-body flex flex-col gap-6">
+
+            <!-- BLOQUE 1: Coliformes Totales (24 horas) -->
+            <div class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3">
+                Control Coliformes Totales (24 horas)
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) K. aerogenes</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="ct_controlKAerogenes"
+                        [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="ct_controlKAerogenes"
+                        [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) S. aureus</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="ct_controlSAureus"
+                        [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="ct_controlSAureus"
+                        [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Control blanco <span class="required-star">*</span></label>
+                  <input type="text" class="form-input bg-white" placeholder="Descripción del control blanco..."
+                    [(ngModel)]="ct_controlBlanco" [ngModelOptions]="{standalone: true}" />
+                </div>
+              </div>
+
+              <!-- BLOQUE 2: Coliformes Fecales (24 horas) -->
+              <div class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
+                <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3">
+                  Control Coliformes Fecales (24 horas)
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+                    <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
+                    <div class="flex gap-4">
+                      <label class="form-check-label text-xs">
+                        <input type="radio" class="form-radio" [(ngModel)]="cf_controlEColi"
+                          [ngModelOptions]="{standalone: true}" value="presencia" />
+                        <span class="badge-presencia">Presencia</span>
+                      </label>
+                      <label class="form-check-label text-xs">
+                        <input type="radio" class="form-radio" [(ngModel)]="cf_controlEColi"
+                          [ngModelOptions]="{standalone: true}" value="ausencia" />
+                        <span class="badge-ausencia">Ausencia</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+                    <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
+                    <div class="flex gap-4">
+                      <label class="form-check-label text-xs">
+                        <input type="radio" class="form-radio" [(ngModel)]="cf_controlKAerogenes"
+                          [ngModelOptions]="{standalone: true}" value="presencia" />
+                        <span class="badge-presencia">Presencia</span>
+                      </label>
+                      <label class="form-check-label text-xs">
+                        <input type="radio" class="form-radio" [(ngModel)]="cf_controlKAerogenes"
+                          [ngModelOptions]="{standalone: true}" value="ausencia" />
+                        <span class="badge-ausencia">Ausencia</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Control blanco <span class="required-star">*</span></label>
+                  <input type="text" class="form-input bg-white" placeholder="Descripción del control blanco..."
+                    [(ngModel)]="cf_controlBlanco" [ngModelOptions]="{standalone: true}" />
+                </div>
+              </div>
+
+              <!-- BLOQUE 3: Escherichia coli (24 horas) -->
+              <div class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
+                <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3">
+                  Control Escherichia coli (24 horas)
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+                    <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
+                    <div class="flex gap-4">
+                      <label class="form-check-label text-xs">
+                        <input type="radio" class="form-radio" [(ngModel)]="ec_controlEColi"
+                          [ngModelOptions]="{standalone: true}" value="presencia" />
+                        <span class="badge-presencia">Presencia</span>
+                      </label>
+                      <label class="form-check-label text-xs">
+                        <input type="radio" class="form-radio" [(ngModel)]="ec_controlEColi"
+                          [ngModelOptions]="{standalone: true}" value="ausencia" />
+                        <span class="badge-ausencia">Ausencia</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+                    <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
+                    <div class="flex gap-4">
+                      <label class="form-check-label text-xs">
+                        <input type="radio" class="form-radio" [(ngModel)]="ec_controlKAerogenes"
+                          [ngModelOptions]="{standalone: true}" value="presencia" />
+                        <span class="badge-presencia">Presencia</span>
+                      </label>
+                      <label class="form-check-label text-xs">
+                        <input type="radio" class="form-radio" [(ngModel)]="ec_controlKAerogenes"
+                          [ngModelOptions]="{standalone: true}" value="ausencia" />
+                        <span class="badge-ausencia">Ausencia</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Control blanco <span class="required-star">*</span></label>
+                  <input type="text" class="form-input bg-white" placeholder="Descripción del control blanco..."
+                    [(ngModel)]="ec_controlBlanco" [ngModelOptions]="{standalone: true}" />
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════ ETAPA 5: DATOS FINALES Y RESULTADOS NMP ═════════════════════════ -->
+      <div *ngIf="etapaActual === 5" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Datos Finales y Resultados</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Tabla de Resultados Finales por Muestra -->
+            <p class="form-label mb-3">Resultados Finales por Muestra</p>
+            <div class="tabla-wrapper mb-6">
+              <table class="tabla-submuestras w-full text-xs">
+                <thead>
+                  <tr class="bg-[#29588C] text-white">
+                    <th class="py-2 px-3 text-left font-semibold">N° Muestra</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <td class="py-2 px-3 font-semibold">CT</td>
+                  <td class="py-2 px-3 font-semibold">CF</td>
+                  <td class="py-2 px-3 font-semibold">E. coli</td>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Botón calcular simulación de laboratorio -->
+            <div class="flex justify-end mb-6">
+              <ion-button fill="outline" color="primary" (click)="calcularNMP()" class="btn-calcular-nmp">
+                <ion-icon name="calculator-outline" slot="start"></ion-icon>
+                Simular Cálculo NMP
+              </ion-button>
+            </div>
+
+            <!-- Observaciones finales -->
+            <div class="form-group border-t border-slate-100 pt-4">
+              <label class="form-label">Observaciones Finales <span class="optional-tag">(opcional)</span></label>
+              <textarea class="form-textarea w-full border border-gray-200 rounded-lg p-3 text-sm" rows="3"
+                placeholder="Escriba comentarios, notas o incidencias del análisis..."
+                [(ngModel)]="observacionesFinales" [ngModelOptions]="{standalone: true}"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- ═════════════════ BARRA DE NAVEGACIÓN INFERIOR ═══════════════════════ -->
+
+    <div class="nav-footer">
+      <button type="button" class="btn-cancel" (click)="confirmarCancelar()">
+        <ion-icon name="close-outline"></ion-icon>
+        Cancelar
+      </button>
+      <div class="nav-footer__actions">
+        <button type="button" class="btn-secondary" (click)="retrocederEtapa()" *ngIf="etapaActual > 1">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+          Anterior
+        </button>
+        <button type="button" class="btn-save" (click)="enviarFormulario()" *ngIf="etapaActual === TOTAL_ETAPAS">
+          <ion-icon name="save-outline"></ion-icon>
+          Enviar Registro
+        </button>
+        <button type="button" class="btn-primary" (click)="avanzarEtapa()" *ngIf="etapaActual < TOTAL_ETAPAS">
+          Siguiente
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+</ion-content>

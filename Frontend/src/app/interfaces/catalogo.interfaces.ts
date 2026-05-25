@@ -99,6 +99,13 @@ export interface CategoriaProducto {
     nombre: string;
 }
 
+export interface SubcategoriaProducto {
+    idSubcategoria: string;
+    nombre: string;
+    idCategoria: string;
+    activo?: string;
+}
+
 export interface FormularioAnalisisCatalogo {
     idFormularioAnalisis: string;
     codigo: string;

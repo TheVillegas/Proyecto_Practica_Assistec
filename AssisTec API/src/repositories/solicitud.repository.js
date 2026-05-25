@@ -273,6 +273,42 @@ class SolicitudRepository {
         });
     }
 
+    async findWithFilters(whereClause = {}, options = {}) {
+        return await prisma.solicitudIngreso.findMany({
+            where: whereClause,
+            orderBy: { createdAt: 'desc' },
+            include: options.lean ? undefined : this.getInclude()
+        });
+    }
+
+    async getFamilySummary(whereClause = {}) {
+        const items = await prisma.solicitudIngreso.findMany({
+            where: whereClause,
+            select: {
+                estado: true
+            }
+        });
+
+        const summary = { editable: 0, resubmittable: 0, under_review: 0, post_validation: 0 };
+
+        for (const item of items) {
+            const family = this.mapEstadoToFamily(item.estado);
+            if (family && family in summary) {
+                summary[family]++;
+            }
+        }
+
+        return summary;
+    }
+
+    mapEstadoToFamily(estado) {
+        if (['borrador', 'devuelta'].includes(estado)) return 'editable';
+        if (['rechazado'].includes(estado)) return 'resubmittable';
+        if (['enviado', 'enviada'].includes(estado)) return 'under_review';
+        if (['validado', 'validada', 'convertido_muestras', 'reportes_generados'].includes(estado)) return 'post_validation';
+        return null;
+    }
+
     getInclude() {
         return {
             categoria: true,

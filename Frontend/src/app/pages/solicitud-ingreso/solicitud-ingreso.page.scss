@@ -427,3 +427,37 @@ $warning-color: #D97706;
 .form-wrapper {
   @apply flex flex-col;
 }
+
+/* =============================================
+   NO APLICA section (stage 4)
+   ============================================= */
+.no-aplica-section {
+  @apply mb-2;
+
+  .toggle-label {
+    @apply flex items-center gap-2 cursor-pointer text-xs font-semibold;
+    color: $warning-color;
+
+    .form-checkbox {
+      @apply w-4 h-4 rounded cursor-pointer;
+      accent-color: $warning-color;
+    }
+  }
+}
+
+/* =============================================
+   Código manual input (stage 3)
+   ============================================= */
+.codigo-manual-input {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
+/* =============================================
+   Subcategoría cascading select (stage 5)
+   ============================================= */
+.subcategoria-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #F8FAFC;
+}

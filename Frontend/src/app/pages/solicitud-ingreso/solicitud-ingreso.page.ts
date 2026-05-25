@@ -12,13 +12,16 @@ import {
   PlazoEstimadoResponse,
   SolicitudIngresoPayload,
   SolicitudIngresoResponse,
-  SolicitudIngresoService
+  SolicitudIngresoService,
+  ValidacionRevisionState
 } from 'src/app/services/solicitud-ingreso.service';
 import {
   CategoriaProducto,
   EquipoLaboratorio,
   FormularioAnalisisCatalogo,
+  SubcategoriaProducto,
 } from 'src/app/interfaces/catalogo.interfaces';
+import { AuthService } from 'src/app/services/auth-service';
 import { canSendToValidationStateFamily, resolveSolicitudStateMeta } from './solicitud-estado-families';
 
 interface FormularioUI {
@@ -52,7 +55,6 @@ interface SolicitudIngresoFormValue {
   anioIngreso: number;
   codigoALI: string;
   numeroActa: string;
-  codigoExterno: string;
   categoria: string;
   nombreCliente: string;
   direccion: string;
@@ -61,18 +63,21 @@ interface SolicitudIngresoFormValue {
   fechaRecepcion: string;
   temperatura: number | null;
   idTermometro: number | null;
+  codigoEquipoManual: string;
   fechaInicioMuestreo: string;
   fechaTerminoMuestreo: string;
+  noAplicaMuestreo: boolean;
   numeroMuestras: number;
   numeroEnvases: number;
   analistaResponsable: string;
   lugarMuestreo: string;
   instructivoMuestreo: string;
-  tipoAnalisis: string;
+  subcategoria: string;
   idLugar: number | null;
   envasesSuministradosPor: string;
   muestraCompartida: boolean;
   observacionesLaboratorio: string;
+  analisisDerivadosSubcontratados: string;
   rutCoordinadoraRecepcion: string;
   rutJefaArea: string;
 }
@@ -96,7 +101,6 @@ const FALLBACK_FORMULARIOS: FormularioAnalisisCatalogo[] = [
   { idFormularioAnalisis: 'fallback-mohos-levaduras', codigo: 'HONGOS_LEVADURAS', nombreAnalisis: 'Mohos y Levaduras', area: 'Microbiologia', generaTpaDefault: false }
 ];
 
-const CATEGORIAS_PROYECTO = ['agua', 'alimento', 'harina', 'hidrobiologico', 'hidrobiológicos'];
 const FORMULARIOS_DIGITALIZADOS = new Set([
   'TPA',
   'RAM35',
@@ -126,6 +130,8 @@ const NOMBRES_FORMULARIOS_UI: Record<string, string> = {
   standalone: false,
 })
 export class SolicitudIngresoPage implements OnInit {
+  private static readonly REVIEW_ALLOWED_ROLES = [1, 2, 4];
+
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -133,8 +139,9 @@ export class SolicitudIngresoPage implements OnInit {
   private toastCtrl = inject(ToastController);
   private catalogosService = inject(CatalogosService);
   private solicitudIngresoService = inject(SolicitudIngresoService);
+  private authService = inject(AuthService);
 
-  readonly TOTAL_ETAPAS = 10;
+  readonly TOTAL_ETAPAS = 11;
   readonly NOMBRES_ETAPAS = [
     'Identificación',
     'Cliente',
@@ -143,9 +150,10 @@ export class SolicitudIngresoPage implements OnInit {
     'Análisis',
     'Envases',
     'Observaciones',
+    'Derivados',
     'Flujo',
-    'Entrega',
-    'Informes',
+    'Entrega Supervisor',
+    'Resumen',
   ];
 
   form!: FormGroup;
@@ -159,8 +167,14 @@ export class SolicitudIngresoPage implements OnInit {
   plazoEstimado: PlazoEstimadoResponse | null = null;
   solicitudGuardada = false;
   cargando = false;
+  reviewMode = false;
+  reviewActionLoading = false;
+  validacionCoordinadora: ValidacionRevisionState = { aprobada: false, rut: null, fecha: null };
+  validacionJefa: ValidacionRevisionState = { aprobada: false, rut: null, fecha: null };
 
   categorias: CategoriaProducto[] = [];
+  subcategorias: SubcategoriaProducto[] = [];
+  private subcategoriasTodos: SubcategoriaProducto[] = [];
   formulariosDisponibles: FormularioAnalisisCatalogo[] = [];
   formulariosCatalogo: FormularioUI[] = [];
   equiposLaboratorio: EquipoLaboratorio[] = [];
@@ -168,11 +182,11 @@ export class SolicitudIngresoPage implements OnInit {
   analistas: ResponsableUI[] = [];
   coordinadoras: ResponsableUI[] = [];
   jefaturas: ResponsableUI[] = [];
-  areasAnalisis: string[] = [];
   muestras: Muestra[] = [];
   private muestraCounter = 1;
 
   ngOnInit(): void {
+    this.reviewMode = this.shouldOpenAsReview();
     this.inicializarFormulario();
     this.cargarCatalogos();
   }
@@ -184,8 +198,7 @@ export class SolicitudIngresoPage implements OnInit {
       anioIngreso: [{ value: inicial.anioIngreso, disabled: true }],
       codigoALI: [inicial.codigoALI, [Validators.required, Validators.min(1)]],
       numeroActa: [inicial.numeroActa, Validators.required],
-      codigoExterno: [inicial.codigoExterno],
-      categoria: [inicial.categoria, Validators.required],
+      categoria: [inicial.categoria],
 
       nombreCliente: [inicial.nombreCliente, Validators.required],
       direccion: [inicial.direccion, Validators.required],
@@ -195,29 +208,32 @@ export class SolicitudIngresoPage implements OnInit {
       fechaRecepcion: [inicial.fechaRecepcion, Validators.required],
       temperatura: [inicial.temperatura, [Validators.required, Validators.min(-100), Validators.max(200)]],
       idTermometro: [inicial.idTermometro, Validators.required],
+      codigoEquipoManual: [inicial.codigoEquipoManual, Validators.required],
 
       fechaInicioMuestreo: [inicial.fechaInicioMuestreo, Validators.required],
       fechaTerminoMuestreo: [inicial.fechaTerminoMuestreo, Validators.required],
+      noAplicaMuestreo: [inicial.noAplicaMuestreo],
       numeroMuestras: [inicial.numeroMuestras, [Validators.required, Validators.min(1)]],
       numeroEnvases: [inicial.numeroEnvases, [Validators.required, Validators.min(1)]],
       analistaResponsable: [inicial.analistaResponsable, Validators.required],
       lugarMuestreo: [inicial.lugarMuestreo, Validators.required],
       instructivoMuestreo: [inicial.instructivoMuestreo, Validators.required],
 
-      tipoAnalisis: [inicial.tipoAnalisis],
+      subcategoria: [inicial.subcategoria],
 
       idLugar: [inicial.idLugar, Validators.required],
       envasesSuministradosPor: [inicial.envasesSuministradosPor, Validators.required],
       muestraCompartida: [inicial.muestraCompartida],
 
       observacionesLaboratorio: [inicial.observacionesLaboratorio],
+      analisisDerivadosSubcontratados: [inicial.analisisDerivadosSubcontratados],
 
       rutCoordinadoraRecepcion: [inicial.rutCoordinadoraRecepcion, Validators.required],
       rutJefaArea: [inicial.rutJefaArea, Validators.required],
     });
 
-    this.form.get('tipoAnalisis')?.valueChanges.subscribe((area) => {
-      this.cargarFormulariosPorArea(area);
+    this.form.get('noAplicaMuestreo')?.valueChanges.subscribe((value) => {
+      this.toggleNoAplicaMuestreo(Boolean(value));
     });
 
     this.form.get('codigoALI')?.valueChanges.subscribe((valor) => {
@@ -229,10 +245,15 @@ export class SolicitudIngresoPage implements OnInit {
       this.numeroActa = valor ? String(valor) : 'Pendiente';
     });
 
-    this.form.get('categoria')?.valueChanges.subscribe(() => {
+    this.form.get('categoria')?.valueChanges.subscribe((categoriaNombre) => {
       this.plazoEstimado = null;
       this.refrescarDetallesFormularios();
+      // Reset subcategoria when categoria changes
+      this.form.get('subcategoria')?.setValue('');
+      this.cargarSubcategorias(categoriaNombre);
     });
+
+    this.syncFormInteractivity();
   }
 
   private valoresInicialesFormulario(): SolicitudIngresoFormValue {
@@ -240,7 +261,6 @@ export class SolicitudIngresoPage implements OnInit {
       anioIngreso: new Date().getFullYear(),
       codigoALI: '',
       numeroActa: '',
-      codigoExterno: '',
       categoria: '',
       nombreCliente: '',
       direccion: '',
@@ -249,18 +269,21 @@ export class SolicitudIngresoPage implements OnInit {
       fechaRecepcion: '',
       temperatura: null,
       idTermometro: null,
+      codigoEquipoManual: '',
       fechaInicioMuestreo: '',
       fechaTerminoMuestreo: '',
+      noAplicaMuestreo: false,
       numeroMuestras: 1,
       numeroEnvases: 1,
       analistaResponsable: '',
       lugarMuestreo: '',
       instructivoMuestreo: 'No informado',
-      tipoAnalisis: '',
+      subcategoria: '',
       idLugar: null,
       envasesSuministradosPor: 'Cliente',
       muestraCompartida: false,
       observacionesLaboratorio: '',
+      analisisDerivadosSubcontratados: '',
       rutCoordinadoraRecepcion: '',
       rutJefaArea: '',
     };
@@ -273,10 +296,13 @@ export class SolicitudIngresoPage implements OnInit {
       categorias: this.catalogosService.getCategorias().pipe(catchError(() => of([]))),
       formularios: this.catalogosService.getFormulariosAnalisis().pipe(catchError(() => of([]))),
       equipos: this.catalogosService.getEquiposInstrumentos().pipe(catchError(() => of([]))),
-      usuarios: this.catalogosService.getResponsables().pipe(catchError(() => of([])))
+      usuarios: this.catalogosService.getResponsables().pipe(catchError(() => of([]))),
+      subcategorias: this.catalogosService.getSubcategorias().pipe(catchError(() => of([])))
     }).subscribe({
-      next: ({ categorias, formularios, equipos, usuarios }) => {
-        this.categorias = this.filtrarCategoriasProyecto(categorias.length > 0 ? categorias : FALLBACK_CATEGORIAS);
+      next: ({ categorias, formularios, equipos, usuarios, subcategorias }) => {
+        this.categorias = categorias.length > 0 ? categorias : FALLBACK_CATEGORIAS;
+        this.subcategoriasTodos = subcategorias;
+        this.subcategorias = subcategorias;
         this.formulariosDisponibles = this.filtrarFormulariosDigitalizados(formularios.length > 0 ? formularios : FALLBACK_FORMULARIOS);
         this.equiposLaboratorio = equipos;
         this.equiposAlmacenamiento = equipos;
@@ -286,16 +312,14 @@ export class SolicitudIngresoPage implements OnInit {
           this.mostrarToast('No hay equipos de laboratorio cargados. Aplicá los seeds de BD_AsisTec antes de probar.', 'warning');
         }
         this.normalizarUsuarios(usuarios);
-        this.areasAnalisis = Array.from(new Set(this.formulariosDisponibles.map((formulario) => formulario.area).filter(Boolean)));
-        this.cargarFormulariosPorArea(this.form.get('tipoAnalisis')?.value);
+        this.cargarFormularios();
         this.cargarSolicitudSiCorresponde();
       },
       error: async () => {
         await this.mostrarToast('No se pudieron cargar todos los catálogos. Se aplicaron valores mínimos de respaldo.', 'warning');
-        this.categorias = this.filtrarCategoriasProyecto(FALLBACK_CATEGORIAS);
+        this.categorias = FALLBACK_CATEGORIAS;
         this.formulariosDisponibles = this.filtrarFormulariosDigitalizados(FALLBACK_FORMULARIOS);
-        this.areasAnalisis = Array.from(new Set(this.formulariosDisponibles.map((formulario) => formulario.area)));
-        this.cargarFormulariosPorArea('');
+        this.cargarFormularios();
         this.cargarSolicitudSiCorresponde();
       }
     });
@@ -311,12 +335,16 @@ export class SolicitudIngresoPage implements OnInit {
     this.analistas = normalizados.filter((usuario) => usuario.rol === 0);
     this.coordinadoras = normalizados.filter((usuario) => usuario.rol === 1);
     this.jefaturas = normalizados.filter((usuario) => usuario.rol === 2);
+    if (this.form.get('noAplicaMuestreo')?.value) {
+      this.asignarAnalistaPorDefecto();
+    }
   }
 
   private cargarSolicitudSiCorresponde(): void {
     const id = this.route.snapshot.queryParamMap.get('id');
     if (!id) {
       this.cargando = false;
+      this.syncFormInteractivity();
       return;
     }
 
@@ -339,12 +367,13 @@ export class SolicitudIngresoPage implements OnInit {
     this.numeroActa = solicitud.numero_acta;
     this.estadoFlujo = (solicitud.estado as any) || 'borrador';
     this.fechaEnvioValidacion = solicitud.fecha_envio_validacion ?? null;
+    this.validacionCoordinadora = this.normalizeValidationState(solicitud.validacion_coordinadora);
+    this.validacionJefa = this.normalizeValidationState(solicitud.validacion_jefa);
     this.solicitudGuardada = true;
 
     this.form.patchValue({
       codigoALI: solicitud.numero_ali,
       numeroActa: solicitud.numero_acta,
-      codigoExterno: solicitud.codigo_externo,
       categoria: solicitud.categoria?.nombre ?? '',
       nombreCliente: solicitud.cliente?.nombre ?? '',
       direccion: solicitud.direccion?.direccion ?? '',
@@ -353,28 +382,31 @@ export class SolicitudIngresoPage implements OnInit {
       fechaRecepcion: this.toLocalDateTime(solicitud.fecha_recepcion as any),
       temperatura: solicitud.temperatura ?? null,
       idTermometro: solicitud.id_termometro ?? null,
+      codigoEquipoManual: solicitud.codigo_equipo_manual ?? '',
       fechaInicioMuestreo: this.toLocalDateTime(solicitud.fecha_inicio_muestreo as any),
       fechaTerminoMuestreo: this.toLocalDateTime(solicitud.fecha_termino_muestreo as any),
+      noAplicaMuestreo: Boolean(solicitud.no_aplica_muestreo),
       numeroMuestras: solicitud.cantidad_muestras ?? 1,
       numeroEnvases: solicitud.cant_envases ?? 1,
       analistaResponsable: solicitud.responsable_muestreo ?? '',
       lugarMuestreo: solicitud.lugar_muestreo ?? '',
       instructivoMuestreo: solicitud.instructivo_muestreo ?? 'No informado',
+      subcategoria: solicitud.subcategoria_id ?? '',
       idLugar: solicitud.id_lugar ?? null,
       envasesSuministradosPor: solicitud.envases_suministrados_por ?? 'Cliente',
       muestraCompartida: solicitud.muestra_compartida_quimica ?? false,
       observacionesLaboratorio: solicitud.observaciones_laboratorio ?? '',
+      analisisDerivadosSubcontratados: solicitud.analisis_derivados_subcontratados ?? '',
       rutCoordinadoraRecepcion: solicitud.rut_coordinadora_recepcion ?? '',
       rutJefaArea: solicitud.rut_jefa_area ?? '',
-    });
-
-    const areas = solicitud.formularios_seleccionados?.map((formulario) => this.buscarAreaFormulario(formulario.codigo)) ?? [];
-    this.form.patchValue({
-      tipoAnalisis: areas.find(Boolean) ?? ''
     }, { emitEvent: false });
-    this.cargarFormulariosPorArea(this.form.get('tipoAnalisis')?.value);
+
+    this.cargarSubcategorias(solicitud.categoria?.nombre ?? '');
+    this.cargarFormularios();
     this.marcarFormulariosSeleccionados(solicitud.formularios_seleccionados ?? []);
+    this.toggleNoAplicaMuestreo(Boolean(solicitud.no_aplica_muestreo), false);
     this.cargarPlazoEstimadoBackend();
+    this.syncFormInteractivity();
   }
 
   private marcarFormulariosSeleccionados(formulariosSeleccionados: FormularioSeleccionadoPayload[]): void {
@@ -386,22 +418,10 @@ export class SolicitudIngresoPage implements OnInit {
     this.refrescarDetallesFormularios();
   }
 
-  private buscarAreaFormulario(codigo: string): string {
-    return this.formulariosDisponibles.find((formulario) => formulario.codigo === codigo)?.area ?? '';
-  }
-
-  private filtrarCategoriasProyecto(categorias: CategoriaProducto[]): CategoriaProducto[] {
-    const filtradas = categorias.filter((categoria) => {
-      const nombre = this.normalizarTexto(categoria.nombre);
-      return CATEGORIAS_PROYECTO.some((permitida) => nombre.includes(this.normalizarTexto(permitida)));
-    });
-
-    return filtradas.length > 0 ? filtradas : FALLBACK_CATEGORIAS;
-  }
-
   private filtrarFormulariosDigitalizados(formularios: FormularioAnalisisCatalogo[]): FormularioAnalisisCatalogo[] {
     return formularios
       .filter((formulario) => FORMULARIOS_DIGITALIZADOS.has(String(formulario.codigo).toUpperCase()))
+      .filter((formulario) => this.normalizarTexto(formulario.area).includes('microbiologia') || String(formulario.codigo).toUpperCase() === 'TPA')
       .map((formulario) => ({
         ...formulario,
         nombreAnalisis: NOMBRES_FORMULARIOS_UI[String(formulario.codigo).toUpperCase()] ?? formulario.nombreAnalisis
@@ -420,6 +440,13 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   avanzarEtapa(): void {
+    if (this.reviewMode) {
+      if (this.etapaActual < this.TOTAL_ETAPAS) {
+        this.etapaActual++;
+      }
+      return;
+    }
+
     if (!this.validarEtapaActual()) return;
     if (this.etapaActual < this.TOTAL_ETAPAS) {
       this.etapaActual++;
@@ -440,12 +467,13 @@ export class SolicitudIngresoPage implements OnInit {
 
   private validarEtapaActual(): boolean {
     const camposPorEtapa: Record<number, string[]> = {
-      1: ['codigoALI', 'numeroActa', 'categoria'],
+      1: ['codigoALI', 'numeroActa'],
       2: ['nombreCliente', 'direccion', 'nombreSolicitante'],
-      3: ['fechaRecepcion', 'temperatura', 'idTermometro'],
-      4: ['fechaInicioMuestreo', 'fechaTerminoMuestreo', 'numeroMuestras', 'numeroEnvases', 'analistaResponsable', 'lugarMuestreo', 'instructivoMuestreo'],
+      3: ['fechaRecepcion', 'temperatura', 'idTermometro', 'codigoEquipoManual'],
+      4: ['numeroMuestras', 'numeroEnvases', 'analistaResponsable', 'lugarMuestreo', 'instructivoMuestreo'],
+      5: ['categoria', 'subcategoria'],
       6: ['idLugar', 'envasesSuministradosPor'],
-      8: ['rutCoordinadoraRecepcion', 'rutJefaArea']
+      9: ['rutCoordinadoraRecepcion', 'rutJefaArea']
     };
 
     const campos = camposPorEtapa[this.etapaActual];
@@ -460,6 +488,19 @@ export class SolicitudIngresoPage implements OnInit {
       }
     });
 
+    // Stage 4: validate both date fields only if NO APLICA is not checked.
+    if (this.etapaActual === 4) {
+      const noAplicaMuestreo = this.form.get('noAplicaMuestreo')?.value;
+      if (!noAplicaMuestreo) {
+        const inicioCtrl = this.form.get('fechaInicioMuestreo');
+        inicioCtrl?.markAsTouched();
+        if (inicioCtrl?.invalid) valido = false;
+        const terminoCtrl = this.form.get('fechaTerminoMuestreo');
+        terminoCtrl?.markAsTouched();
+        if (terminoCtrl?.invalid) valido = false;
+      }
+    }
+
     if (this.etapaActual === 5 && this.formulariosConsolidados.length === 0) {
       valido = false;
     }
@@ -471,9 +512,8 @@ export class SolicitudIngresoPage implements OnInit {
     return valido;
   }
 
-  private cargarFormulariosPorArea(areaSeleccionada: string): void {
+  private cargarFormularios(): void {
     const catalogo = this.formulariosDisponibles
-      .filter((formulario) => !areaSeleccionada || formulario.area === areaSeleccionada)
       .map((formulario) => ({
         id: formulario.idFormularioAnalisis,
         codigo: formulario.codigo,
@@ -490,6 +530,7 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   toggleFormulario(formulario: FormularioUI): void {
+    if (this.reviewMode) return;
     if (formulario.obligatorio) return;
     formulario.seleccionado = !formulario.seleccionado;
     this.cargarDetalleFormulario(formulario);
@@ -497,6 +538,7 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   agregarMuestra(): void {
+    if (this.reviewMode) return;
     const formularios = this.formulariosCatalogo.map((formulario) => ({ ...formulario }));
     this.muestras.push({
       id: this.muestraCounter,
@@ -507,10 +549,12 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   eliminarMuestra(id: number): void {
+    if (this.reviewMode) return;
     this.muestras = this.muestras.filter((muestra) => muestra.id !== id);
   }
 
   toggleFormularioMuestra(_muestra: Muestra, formulario: FormularioUI): void {
+    if (this.reviewMode) return;
     if (formulario.obligatorio) return;
     formulario.seleccionado = !formulario.seleccionado;
     this.cargarDetalleFormulario(formulario);
@@ -572,6 +616,7 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   async enviarAValidacion(): Promise<void> {
+    this.form.markAllAsTouched();
     if (!this.requiredFieldsComplete || !this.hasConsolidatedForms) {
       await this.mostrarAlerta('Campos incompletos', 'Existen campos obligatorios sin completar o no hay formularios seleccionados.');
       return;
@@ -582,9 +627,18 @@ export class SolicitudIngresoPage implements OnInit {
       return;
     }
 
+    // Auto-save if not yet persisted
     if (!this.solicitudId || !this.updatedAt) {
-      await this.mostrarAlerta('Atención', 'Debe guardar la solicitud antes de enviarla a validación.');
-      return;
+      this.cargando = true;
+      const payload = this.construirPayload();
+      try {
+        const response = await this.solicitudIngresoService.crear(payload).toPromise();
+        this.aplicarSolicitud(response!);
+      } catch (error: any) {
+        this.cargando = false;
+        await this.mostrarAlerta('Error', error?.error?.mensaje || 'No se pudo guardar antes de enviar.');
+        return;
+      }
     }
 
     const alert = await this.alertCtrl.create({
@@ -601,7 +655,7 @@ export class SolicitudIngresoPage implements OnInit {
               next: async (response) => {
                 this.aplicarSolicitud(response);
                 this.cargando = false;
-                this.etapaActual = 8;
+                this.etapaActual = 9;
                 await this.mostrarToast('Solicitud enviada a validación exitosamente.', 'success');
               },
               error: async (error) => {
@@ -633,6 +687,10 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   nuevaSolicitud(): void {
+    if (this.reviewMode) {
+      return;
+    }
+
     this.solicitudId = null;
     this.updatedAt = null;
     this.codigoALI = 'Pendiente';
@@ -648,7 +706,8 @@ export class SolicitudIngresoPage implements OnInit {
     this.form.markAsPristine();
     this.form.markAsUntouched();
 
-    this.cargarFormulariosPorArea('');
+    this.subcategorias = this.subcategoriasTodos;
+    this.cargarFormularios();
     this.router.navigate([], { relativeTo: this.route, queryParams: {} });
   }
 
@@ -662,10 +721,7 @@ export class SolicitudIngresoPage implements OnInit {
 
   get tiempoEntregaConfirmacionDias(): number | null {
     if (this.plazoEstimado?.dias_confirmacion != null) return this.plazoEstimado.dias_confirmacion;
-    const dias = this.formulariosConsolidados
-      .map((formulario) => formulario.dias_confirmacion)
-      .filter((valor): valor is number => valor !== null && valor !== undefined);
-    return dias.length ? Math.max(...dias) + 1 : null;
+    return this.tiempoEntregaNegativoDias == null ? null : this.tiempoEntregaNegativoDias + 2;
   }
 
   get requiredFieldsComplete(): boolean {
@@ -682,6 +738,46 @@ export class SolicitudIngresoPage implements OnInit {
 
   get canSendToValidation(): boolean {
     return this.requiredFieldsComplete && this.hasConsolidatedForms && this.stateFamilyAllowsSubmission && !!this.solicitudId && !!this.updatedAt;
+  }
+
+  get canReviewCurrentSolicitud(): boolean {
+    return this.reviewMode
+      && !this.reviewActionLoading
+      && !!this.solicitudId
+      && !!this.updatedAt
+      && this.badgeEstado.family === 'under_review';
+  }
+
+  get canTakeReviewAction(): boolean {
+    if (!this.canReviewCurrentSolicitud) {
+      return false;
+    }
+
+    if (this.currentReviewRole === 1) {
+      return !this.validacionCoordinadora.aprobada;
+    }
+
+    if (this.currentReviewRole === 2) {
+      return !this.validacionJefa.aprobada;
+    }
+
+    return false;
+  }
+
+  get reviewAlreadyCompletedMessage(): string | null {
+    if (!this.reviewMode || this.badgeEstado.family !== 'under_review') {
+      return null;
+    }
+
+    if (this.currentReviewRole === 1 && this.validacionCoordinadora.aprobada) {
+      return 'Tu validación como coordinadora ya fue registrada. Falta la otra aprobación.';
+    }
+
+    if (this.currentReviewRole === 2 && this.validacionJefa.aprobada) {
+      return 'Tu validación como jefatura ya fue registrada. Falta la otra aprobación.';
+    }
+
+    return null;
   }
 
   get fechaEstimadaEntregaNegativa(): Date | null {
@@ -702,6 +798,18 @@ export class SolicitudIngresoPage implements OnInit {
     return base;
   }
 
+  get fechaEnvioInformePositivo(): Date | null {
+    if (!this.fechaEstimadaEntregaConfirmacion) return null;
+    const base = new Date(this.fechaEstimadaEntregaConfirmacion);
+    return base;
+  }
+
+  get fechaEnvioInformeNegativo(): Date | null {
+    if (!this.fechaEstimadaEntregaNegativa) return null;
+    const base = new Date(this.fechaEstimadaEntregaNegativa);
+    return base;
+  }
+
   campoInvalido(campo: string): boolean {
     const control = this.form.get(campo);
     return !!(control && control.invalid && (control.dirty || control.touched));
@@ -711,12 +819,52 @@ export class SolicitudIngresoPage implements OnInit {
     return resolveSolicitudStateMeta(this.estadoFlujo);
   }
 
+  async validarSolicitudRevision(): Promise<void> {
+    if (!this.canTakeReviewAction) {
+      return;
+    }
+
+    this.reviewActionLoading = true;
+    this.solicitudIngresoService.validar(this.solicitudId!, this.updatedAt!).subscribe({
+      next: async (response) => {
+        this.reviewActionLoading = false;
+        this.aplicarSolicitud(response);
+        await this.mostrarToast('Solicitud validada correctamente.', 'success');
+      },
+      error: async (error) => {
+        this.reviewActionLoading = false;
+        await this.mostrarAlerta('Error', error?.error?.mensaje || 'No se pudo validar la solicitud.');
+      }
+    });
+  }
+
+  async rechazarSolicitudRevision(): Promise<void> {
+    if (!this.canTakeReviewAction) {
+      return;
+    }
+
+    const motivo = window.prompt('Motivo de rechazo (opcional):') ?? '';
+    this.reviewActionLoading = true;
+    this.solicitudIngresoService.rechazar(this.solicitudId!, this.updatedAt!, motivo).subscribe({
+      next: async (response) => {
+        this.reviewActionLoading = false;
+        this.aplicarSolicitud(response);
+        await this.mostrarToast('Solicitud rechazada correctamente.', 'success');
+      },
+      error: async (error) => {
+        this.reviewActionLoading = false;
+        await this.mostrarAlerta('Error', error?.error?.mensaje || 'No se pudo rechazar la solicitud.');
+      }
+    });
+  }
+
   private construirPayload(): SolicitudIngresoPayload {
+    const subcategoriaId = this.subcategoriaSeleccionada()?.idSubcategoria;
+
     return {
       codigoALI: Number(this.form.get('codigoALI')?.value),
       numeroActa: this.form.get('numeroActa')?.value,
       categoriaId: this.categoriaSeleccionada()?.idCategoria ?? '',
-      codigoExterno: this.form.get('codigoExterno')?.value || '',
       categoria: this.form.get('categoria')?.value,
       nombreCliente: this.form.get('nombreCliente')?.value,
       direccion: this.form.get('direccion')?.value,
@@ -725,8 +873,9 @@ export class SolicitudIngresoPage implements OnInit {
       fechaRecepcion: this.form.get('fechaRecepcion')?.value,
       temperatura: Number(this.form.get('temperatura')?.value),
       idTermometro: Number(this.form.get('idTermometro')?.value),
-      fechaInicioMuestreo: this.form.get('fechaInicioMuestreo')?.value,
-      fechaTerminoMuestreo: this.form.get('fechaTerminoMuestreo')?.value,
+      codigoEquipoManual: this.form.get('codigoEquipoManual')?.value || undefined,
+      fechaInicioMuestreo: this.form.get('noAplicaMuestreo')?.value ? undefined : this.form.get('fechaInicioMuestreo')?.value,
+      fechaTerminoMuestreo: this.form.get('noAplicaMuestreo')?.value ? undefined : this.form.get('fechaTerminoMuestreo')?.value,
       numeroMuestras: Number(this.form.get('numeroMuestras')?.value),
       numeroEnvases: Number(this.form.get('numeroEnvases')?.value),
       analistaResponsable: this.form.get('analistaResponsable')?.value,
@@ -738,14 +887,68 @@ export class SolicitudIngresoPage implements OnInit {
       muestraCompartida: Boolean(this.form.get('muestraCompartida')?.value),
       envasesSuministradosPor: this.form.get('envasesSuministradosPor')?.value,
       observacionesLaboratorio: this.form.get('observacionesLaboratorio')?.value || '',
+      analisisDerivadosSubcontratados: this.form.get('analisisDerivadosSubcontratados')?.value || '',
       rutJefaArea: this.form.get('rutJefaArea')?.value,
       rutCoordinadoraRecepcion: this.form.get('rutCoordinadoraRecepcion')?.value,
+      subcategoriaId: subcategoriaId,
+      noAplicaMuestreo: Boolean(this.form.get('noAplicaMuestreo')?.value),
     };
   }
 
   private categoriaSeleccionada(): CategoriaProducto | undefined {
     const valor = this.form.get('categoria')?.value;
     return this.categorias.find((categoria) => categoria.nombre === valor || categoria.idCategoria === valor);
+  }
+
+  private subcategoriaSeleccionada(): SubcategoriaProducto | undefined {
+    const valor = this.form.get('subcategoria')?.value;
+    return this.subcategoriasTodos.find((s) => s.idSubcategoria === valor || s.nombre === valor);
+  }
+
+  private cargarSubcategorias(categoriaNombre: string): void {
+    if (!categoriaNombre) {
+      this.subcategorias = [];
+      return;
+    }
+    const categoria = this.categorias.find((c) => c.nombre === categoriaNombre);
+    if (!categoria) {
+      this.subcategorias = [];
+      return;
+    }
+    this.subcategorias = this.subcategoriasTodos.filter((s) => String(s.idCategoria) === String(categoria.idCategoria));
+  }
+
+  toggleNoAplicaMuestreo(noAplica: boolean, limpiarFechas = true): void {
+    const inicioCtrl = this.form.get('fechaInicioMuestreo');
+    const terminoCtrl = this.form.get('fechaTerminoMuestreo');
+
+    [inicioCtrl, terminoCtrl].forEach((control) => {
+      if (noAplica) {
+        control?.clearValidators();
+        if (limpiarFechas) {
+          control?.setValue('', { emitEvent: false });
+        }
+        control?.disable({ emitEvent: false });
+      } else if (!this.reviewMode) {
+        control?.enable({ emitEvent: false });
+        control?.setValidators(Validators.required);
+      } else {
+        control?.setValidators(Validators.required);
+        control?.disable({ emitEvent: false });
+      }
+      control?.updateValueAndValidity({ emitEvent: false });
+    });
+
+    if (noAplica) {
+      this.asignarAnalistaPorDefecto();
+    }
+  }
+
+  private asignarAnalistaPorDefecto(): void {
+    const analystCtrl = this.form.get('analistaResponsable');
+    if (!analystCtrl?.value && this.analistas.length > 0) {
+      analystCtrl?.setValue(this.analistas[0].nombre);
+    }
   }
 
   private refrescarDetallesFormularios(): void {
@@ -803,5 +1006,40 @@ export class SolicitudIngresoPage implements OnInit {
   private async mostrarToast(message: string, color: 'success' | 'warning' | 'danger'): Promise<void> {
     const toast = await this.toastCtrl.create({ message, duration: 2500, color, position: 'top' });
     await toast.present();
+  }
+
+  private shouldOpenAsReview(): boolean {
+    const solicitudId = this.route.snapshot.queryParamMap.get('id');
+    return !!solicitudId && this.authService.canAccess(SolicitudIngresoPage.REVIEW_ALLOWED_ROLES);
+  }
+
+  private normalizeValidationState(state?: ValidacionRevisionState | null): ValidacionRevisionState {
+    return {
+      aprobada: Boolean(state?.aprobada),
+      rut: state?.rut ?? null,
+      fecha: state?.fecha ?? null
+    };
+  }
+
+  private get currentReviewRole(): number | null {
+    const user = this.authService.getUsuario();
+    const role = user?.activeRole ?? user?.primaryRole ?? user?.role ?? user?.rol;
+    const parsed = Number(role);
+    return Number.isInteger(parsed) ? parsed : null;
+  }
+
+  private syncFormInteractivity(): void {
+    if (!this.form) {
+      return;
+    }
+
+    if (this.reviewMode) {
+      this.form.disable({ emitEvent: false });
+      return;
+    }
+
+    this.form.enable({ emitEvent: false });
+    this.form.get('anioIngreso')?.disable({ emitEvent: false });
+    this.toggleNoAplicaMuestreo(Boolean(this.form.get('noAplicaMuestreo')?.value), false);
   }
 }

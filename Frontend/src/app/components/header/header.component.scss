@@ -113,6 +113,41 @@
     line-height: 1;
 }
 
+.nav-item-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 2px;
+}
+
+.submenu {
+    list-style: none;
+    padding: 0;
+    margin: 4px 0 0 0;
+    width: 100%;
+    
+    .submenu-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px 8px 40px;
+        color: rgba(255, 255, 255, 0.65);
+        font-size: 13px;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background 0.15s, color 0.15s;
+        
+        &:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        &.active {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            font-weight: 500;
+        }
+    }
+}
+
 // ── USER CARD (zona inferior) ────────────────────────────────────
 .sidebar-user {
     display: flex;

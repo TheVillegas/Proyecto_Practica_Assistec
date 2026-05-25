@@ -1,7 +1,15 @@
 import { Component, OnInit, Input, inject } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { AuthService } from '../../services/auth-service';
+import { AuthService, SessionUser } from '../../services/auth-service';
+
+const ROLE_LABELS: Record<number, string> = {
+  4: 'Administrator',
+  3: 'Ingreso',
+  2: 'Jefe de Área',
+  1: 'Coordinadora de Área',
+  0: 'Analista'
+};
 
 @Component({
   selector: 'app-header',
@@ -17,6 +25,7 @@ export class HeaderComponent implements OnInit {
   userName: string = 'Usuario';
   userRole: string = 'Analista';
   userRolNum: number = 0;
+  userRoles: number[] = [0];
   userPhoto: string = '';
   userInitials: string = 'U';
 
@@ -38,30 +47,18 @@ export class HeaderComponent implements OnInit {
     this.authService.currentUser$.subscribe(user => {
       if (user) {
         this.userName = user.nombreApellido || user.nombre || 'Usuario';
-        
-        const rolInt = user.rol !== undefined ? user.rol : (user.rol_analista ?? 0);
+        const rolInt = user.primaryRole ?? user.rol ?? user.rol_analista ?? 0;
         this.userRolNum = rolInt;
-
-        switch (rolInt) {
-          case 1:
-            this.userRole = 'Coordinadora de Área';
-            break;
-          case 2:
-            this.userRole = 'Jefe de Área';
-            break;
-          case 3:
-            this.userRole = 'Ingreso';
-            break;
-          default:
-            this.userRolNum = 0;
-            this.userRole = 'Analista';
-        }
+        this.userRoles = Array.isArray(user.roles) && user.roles.length ? user.roles : [rolInt];
+        this.userRole = this.buildUserRoleLabel(user);
 
         this.userPhoto = user.url_foto || user.urlFoto || 'https://ui-avatars.com/api/?name=' + (this.userName || 'U') + '&background=random';
         this.userInitials = this.getInitials(this.userName);
       } else {
         this.userName = 'Usuario';
         this.userRole = 'Analista';
+        this.userRolNum = 0;
+        this.userRoles = [0];
         this.userPhoto = 'https://ui-avatars.com/api/?name=Usuario&background=random';
         this.userInitials = 'U';
       }
@@ -77,6 +74,9 @@ export class HeaderComponent implements OnInit {
       this.activeSegment = 'busqueda';
     } else if (url.includes('/solicitud-ingreso')) {
       this.activeSegment = 'solicitud';
+    } else if (url.includes('/form-coliformes') || url.includes('/form-enterobacterias') || url.includes('/form-s-aureus')) {
+      this.activeSegment = 'formularios';
+      this.formulariosMenuOpen = true; // Abrir auto el menú si estamos en estas rutas
     } else if (url === '/') {
       this.activeSegment = 'home';
     }
@@ -87,6 +87,31 @@ export class HeaderComponent implements OnInit {
     const parts = name.trim().split(' ');
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  private buildUserRoleLabel(user: SessionUser): string {
+    const primaryRoleLabel = ROLE_LABELS[user.primaryRole] ?? ROLE_LABELS[0];
+    const secondaryRoles = this.userRoles.filter((role) => role !== user.primaryRole).map((role) => ROLE_LABELS[role]).filter(Boolean);
+
+    return secondaryRoles.length ? `${primaryRoleLabel} · ${secondaryRoles.join(' · ')}` : primaryRoleLabel;
+  }
+
+  canAccessNavigation(allowedRoles: number[]): boolean {
+    return this.authService.canAccess(allowedRoles, { roles: this.userRoles } as SessionUser);
+  }
+
+  formulariosMenuOpen: boolean = false;
+
+  toggleFormulariosMenu() {
+    this.formulariosMenuOpen = !this.formulariosMenuOpen;
+  }
+  
+  goToFormulario(ruta: string) {
+    this.router.navigate([ruta]);
+  }
+
+  isRouteActive(ruta: string): boolean {
+    return this.router.url.includes(ruta);
   }
 
 

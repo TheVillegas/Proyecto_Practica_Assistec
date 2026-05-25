@@ -1,0 +1,846 @@
+<ion-header>
+  <ion-toolbar class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-button (click)="confirmarCancelar()" class="btn-back">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="header-title">
+      <ion-icon name="flask-outline" class="header-icon"></ion-icon>
+      Análisis de Enterobacterias
+    </ion-title>
+    <ion-buttons slot="end">
+      <span class="badge-etapa">{{ pasoActual }}/{{ TOTAL_PASOS }}</span>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="page-content">
+  <div class="wizard-container">
+
+    <!-- ══════════════════ STEPPER PRINCIPAL (3 etapas) ══════════════════ -->
+    <div class="stepper-wrapper">
+      <div class="stepper-bar">
+        <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
+      </div>
+      <div class="stepper-steps">
+        <button
+          *ngFor="let etapa of ETAPAS_PRINCIPALES; let i = index"
+          class="step-btn"
+          [class.step-btn--active]="etapaPrincipalActiva === i"
+          [class.step-btn--done]="etapaPrincipalActiva > i">
+          <span class="step-circle">{{ i + 1 }}</span>
+          <span class="step-label">{{ etapa }}</span>
+        </button>
+      </div>
+
+      <!-- Subetapa activa -->
+      <div class="subetapa-indicator">
+        <ion-icon name="chevron-forward-outline" class="sub-icon"></ion-icon>
+        <span>{{ subetapaActivaLabel }}</span>
+      </div>
+    </div>
+
+    <!-- ══════════════════ FORMULARIO ══════════════════ -->
+    <form [formGroup]="form">
+
+      <!-- ════════ PASO 1: Preparación / Pesado ════════ -->
+      <div *ngIf="pasoActual === 1" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="scale-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Preparación — Pesado</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Código ALI (autocompletado) -->
+            <div class="seccion-importada">
+              <div class="seccion-tag">
+                <ion-icon name="cloud-download-outline"></ion-icon>
+                <span>Datos importados del sistema</span>
+              </div>
+              <div class="form-group max-w-xs">
+                <label class="form-label">Código ALI <span class="required-star">*</span></label>
+                <input type="text" class="form-input input-locked" formControlName="codigoALI" readonly />
+              </div>
+            </div>
+
+            <div class="grid-2col">
+              <!-- N° Acta -->
+              <div class="form-group">
+                <label class="form-label" for="nActa">N° Acta <span class="required-star">*</span></label>
+                <input id="nActa" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('nActa')"
+                  formControlName="nActa" placeholder="Ej: ACT-2025-001" />
+                <span class="error-msg" *ngIf="campoInvalido('nActa')">El campo N° Acta es obligatorio.</span>
+              </div>
+
+              <!-- Tipo de muestra -->
+              <div class="form-group">
+                <label class="form-label" for="tipoMuestra">Tipo de muestra <span class="required-star">*</span></label>
+                <select id="tipoMuestra" class="form-select"
+                  [class.input-error]="campoInvalido('tipoMuestra')"
+                  formControlName="tipoMuestra">
+                  <option value="">— Seleccionar —</option>
+                  <option *ngFor="let opt of opcionesTipoMuestra" [value]="opt">{{ opt }}</option>
+                </select>
+                <span class="error-msg" *ngIf="campoInvalido('tipoMuestra')">El campo Tipo de muestra es obligatorio.</span>
+              </div>
+
+              <!-- N° de Muestra (10g/90ml) -->
+              <div class="form-group">
+                <label class="form-label" for="nMuestra10g">N° de Muestra (10 g / 90 ml) <span class="optional-tag">(opcional)</span></label>
+                <input id="nMuestra10g" type="number" min="0" class="form-input"
+                  [class.input-error]="campoInvalido('nMuestra10g90ml')"
+                  formControlName="nMuestra10g90ml" placeholder="0" />
+                <span class="error-msg" *ngIf="campoInvalido('nMuestra10g90ml')">Ingrese un valor numérico válido.</span>
+              </div>
+
+              <!-- N° de Muestra (50g/450ml) -->
+              <div class="form-group">
+                <label class="form-label" for="nMuestra50g">N° de Muestra (50 g / 450 ml) <span class="optional-tag">(opcional)</span></label>
+                <input id="nMuestra50g" type="number" min="0" class="form-input"
+                  [class.input-error]="campoInvalido('nMuestra50g450ml')"
+                  formControlName="nMuestra50g450ml" placeholder="0" />
+                <span class="error-msg" *ngIf="campoInvalido('nMuestra50g450ml')">Ingrese un valor numérico válido.</span>
+              </div>
+            </div>
+
+            <!-- Fecha / Hora / Analista de Inicio -->
+            <div class="seccion-divider"></div>
+            <p class="subseccion-title">Fecha, hora y analista de inicio</p>
+            <div class="grid-3col">
+              <div class="form-group">
+                <label class="form-label" for="fechaInicio">Fecha de inicio <span class="required-star">*</span></label>
+                <input id="fechaInicio" type="date" class="form-input"
+                  [class.input-error]="campoInvalido('fechaInicio')"
+                  formControlName="fechaInicio"
+                  [max]="hoy()" />
+                <span class="error-msg" *ngIf="campoInvalido('fechaInicio')">El campo Fecha de inicio es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="horaInicio">Hora de inicio <span class="required-star">*</span></label>
+                <input id="horaInicio" type="time" class="form-input"
+                  [class.input-error]="campoInvalido('horaInicio')"
+                  formControlName="horaInicio" />
+                <span class="error-msg" *ngIf="campoInvalido('horaInicio')">El campo Hora de inicio es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="analistaInicio">Analista de inicio <span class="required-star">*</span></label>
+                <input id="analistaInicio" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('analistaInicio')"
+                  formControlName="analistaInicio" placeholder="Nombre del analista" />
+                <span class="error-msg" *ngIf="campoInvalido('analistaInicio')">El campo Analista de inicio es obligatorio.</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ PASO 2: Preparación / Homogeneización ════════ -->
+      <div *ngIf="pasoActual === 2" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="refresh-circle-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Preparación — Homogeneización</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <p class="subseccion-title">Fecha, hora y analista de homogeneización</p>
+            <div class="grid-3col">
+              <div class="form-group">
+                <label class="form-label" for="fechaHomog">Fecha de homogeneización <span class="required-star">*</span></label>
+                <input id="fechaHomog" type="date" class="form-input"
+                  [class.input-error]="campoInvalido('fechaHomog')"
+                  formControlName="fechaHomog"
+                  [max]="hoy()" />
+                <span class="error-msg" *ngIf="campoInvalido('fechaHomog')">El campo Fecha de homogeneización es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="horaHomog">Hora de homogeneización <span class="required-star">*</span></label>
+                <input id="horaHomog" type="time" class="form-input"
+                  [class.input-error]="campoInvalido('horaHomog')"
+                  formControlName="horaHomog" />
+                <span class="error-msg" *ngIf="campoInvalido('horaHomog')">El campo Hora de homogeneización es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="analistaHomog">Analista de homogeneización <span class="required-star">*</span></label>
+                <input id="analistaHomog" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('analistaHomog')"
+                  formControlName="analistaHomog" placeholder="Nombre del analista" />
+                <span class="error-msg" *ngIf="campoInvalido('analistaHomog')">El campo Analista de homogeneización es obligatorio.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ PASO 3: Preparación / Sembrado ════════ -->
+      <div *ngIf="pasoActual === 3" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="leaf-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Preparación — Sembrado</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <div class="grid-2col">
+              <!-- Agar VRBG -->
+              <div class="form-group">
+                <label class="form-label" for="agarVRBGSembrado">Agar VRBG <span class="required-star">*</span></label>
+                <input id="agarVRBGSembrado" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('agarVRBGSembrado')"
+                  formControlName="agarVRBGSembrado" placeholder="Ej: VRBG-045" />
+                <span class="error-msg" *ngIf="campoInvalido('agarVRBGSembrado')">El campo Agar VRBG es obligatorio.</span>
+              </div>
+
+              <!-- Placas -->
+              <div class="form-group">
+                <label class="form-label" for="placasSembrado">Placas <span class="required-star">*</span></label>
+                <select id="placasSembrado" class="form-select"
+                  [class.input-error]="campoInvalido('placasSembrado')"
+                  formControlName="placasSembrado">
+                  <option value="">— Seleccionar placa —</option>
+                  <option value="PL-001">PL-001</option>
+                  <option value="PL-002">PL-002</option>
+                  <option value="PL-003">PL-003</option>
+                </select>
+                <span class="error-msg" *ngIf="campoInvalido('placasSembrado')">Debe seleccionar una placa.</span>
+              </div>
+            </div>
+
+            <!-- Estufa -->
+            <div class="form-group mt-4 pt-4 border-t border-slate-100">
+              <label class="form-label">Estufa <span class="required-star">*</span></label>
+              <div class="form-radio-group">
+                <label class="form-check-label" *ngFor="let est of opcionesEstufa">
+                  <input type="radio" class="form-radio" [value]="est.valor"
+                    formControlName="estufaSembrado" />
+                  <span>{{ est.label }}</span>
+                </label>
+              </div>
+              <span class="error-msg" *ngIf="campoInvalido('estufaSembrado')">Debe seleccionar una estufa.</span>
+            </div>
+
+            <!-- Micropipetas 1 ml -->
+            <div class="form-group mt-4 pt-4 border-t border-slate-100">
+              <label class="form-label">Micropipetas 1 ml <span class="required-star">*</span></label>
+              <div class="form-radio-group">
+                <label class="form-check-label">
+                  <input type="radio" class="form-radio" value="100"
+                    formControlName="micropipeta1mlSembrado" />
+                  <span>100</span>
+                </label>
+              </div>
+              <span class="error-msg" *ngIf="campoInvalido('micropipeta1mlSembrado')">Debe seleccionar la micropipeta.</span>
+            </div>
+
+            <!-- Fecha / Hora / Analista de sembrado -->
+            <div class="seccion-divider"></div>
+            <p class="subseccion-title">Fecha, hora y analista de sembrado</p>
+            <div class="grid-3col">
+              <div class="form-group">
+                <label class="form-label" for="fechaSembrado">Fecha de sembrado <span class="required-star">*</span></label>
+                <input id="fechaSembrado" type="date" class="form-input"
+                  [class.input-error]="campoInvalido('fechaSembrado')"
+                  formControlName="fechaSembrado"
+                  [max]="hoy()" />
+                <span class="error-msg" *ngIf="campoInvalido('fechaSembrado')">El campo Fecha de sembrado es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="horaSembrado">Hora de sembrado <span class="required-star">*</span></label>
+                <input id="horaSembrado" type="time" class="form-input"
+                  [class.input-error]="campoInvalido('horaSembrado')"
+                  formControlName="horaSembrado" />
+                <span class="error-msg" *ngIf="campoInvalido('horaSembrado')">El campo Hora de sembrado es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="analistaSembrado">Analista de sembrado <span class="required-star">*</span></label>
+                <input id="analistaSembrado" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('analistaSembrado')"
+                  formControlName="analistaSembrado" placeholder="Nombre del analista" />
+                <span class="error-msg" *ngIf="campoInvalido('analistaSembrado')">El campo Analista de sembrado es obligatorio.</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ PASO 4: Preparación / Incubación ════════ -->
+      <div *ngIf="pasoActual === 4" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="thermometer-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Preparación — Incubación</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Agar VRBG -->
+            <div class="form-group max-w-sm">
+              <label class="form-label" for="agarVRBGIncub">Agar VRBG <span class="required-star">*</span></label>
+              <input id="agarVRBGIncub" type="text" class="form-input"
+                [class.input-error]="campoInvalido('agarVRBGIncub')"
+                formControlName="agarVRBGIncub" placeholder="Ej: VRBG-045" />
+              <span class="error-msg" *ngIf="campoInvalido('agarVRBGIncub')">El campo Agar VRBG es obligatorio.</span>
+            </div>
+
+            <!-- Estufa -->
+            <div class="form-group mt-4 pt-4 border-t border-slate-100">
+              <label class="form-label">Estufa <span class="required-star">*</span></label>
+              <div class="form-radio-group">
+                <label class="form-check-label" *ngFor="let est of opcionesEstufa">
+                  <input type="radio" class="form-radio" [value]="est.valor"
+                    formControlName="estufaIncub" />
+                  <span>{{ est.label }}</span>
+                </label>
+              </div>
+              <span class="error-msg" *ngIf="campoInvalido('estufaIncub')">Debe seleccionar una estufa.</span>
+            </div>
+
+            <!-- Fecha término / Hora / Analista -->
+            <div class="seccion-divider"></div>
+            <p class="subseccion-title">Fecha, hora y analista de término</p>
+            <div class="grid-3col">
+              <div class="form-group">
+                <label class="form-label" for="fechaTermino">Fecha término <span class="required-star">*</span></label>
+                <input id="fechaTermino" type="date" class="form-input"
+                  [class.input-error]="campoInvalido('fechaTermino')"
+                  formControlName="fechaTermino"
+                  [max]="hoy()" />
+                <span class="error-msg" *ngIf="campoInvalido('fechaTermino')">El campo Fecha término es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="horaTermino">Hora término <span class="required-star">*</span></label>
+                <input id="horaTermino" type="time" class="form-input"
+                  [class.input-error]="campoInvalido('horaTermino')"
+                  formControlName="horaTermino" />
+                <span class="error-msg" *ngIf="campoInvalido('horaTermino')">El campo Hora término es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="analistaIncub">Analista <span class="required-star">*</span></label>
+                <input id="analistaIncub" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('analistaIncub')"
+                  formControlName="analistaIncub" placeholder="Nombre del analista" />
+                <span class="error-msg" *ngIf="campoInvalido('analistaIncub')">El campo Analista es obligatorio.</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ PASO 5: Análisis (Lectura) ════════ -->
+      <div *ngIf="pasoActual === 5" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header header-analisis">
+            <div class="form-card-title-group">
+              <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Análisis (Lectura 24 hrs)</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Fecha / Hora / Analista de lectura 24h -->
+            <p class="subseccion-title">Datos de lectura a 24 horas</p>
+            <div class="grid-3col">
+              <div class="form-group">
+                <label class="form-label" for="fechaLectura24h">Fecha de lectura 24 hrs <span class="required-star">*</span></label>
+                <input id="fechaLectura24h" type="date" class="form-input"
+                  [class.input-error]="campoInvalido('fechaLectura24h')"
+                  formControlName="fechaLectura24h"
+                  [max]="hoy()" />
+                <span class="error-msg" *ngIf="campoInvalido('fechaLectura24h')">El campo Fecha de lectura 24 hrs es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="horaLectura24h">Hora de lectura 24 hrs <span class="required-star">*</span></label>
+                <input id="horaLectura24h" type="time" class="form-input"
+                  [class.input-error]="campoInvalido('horaLectura24h')"
+                  formControlName="horaLectura24h" />
+                <span class="error-msg" *ngIf="campoInvalido('horaLectura24h')">El campo Hora de lectura 24 hrs es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="analistaLectura24h">Analista de lectura 24 hrs <span class="required-star">*</span></label>
+                <input id="analistaLectura24h" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('analistaLectura24h')"
+                  formControlName="analistaLectura24h" placeholder="Nombre del analista" />
+                <span class="error-msg" *ngIf="campoInvalido('analistaLectura24h')">El campo Analista de lectura 24 hrs es obligatorio.</span>
+              </div>
+            </div>
+
+            <div class="seccion-divider"></div>
+
+            <!-- Datos de medición -->
+            <p class="subseccion-title">Datos de medición</p>
+            <div class="grid-3col">
+              <div class="form-group">
+                <label class="form-label" for="nMuestraLectura">N° de muestra <span class="required-star">*</span></label>
+                <input id="nMuestraLectura" type="number" min="0" class="form-input"
+                  [class.input-error]="campoInvalido('nMuestraLectura')"
+                  formControlName="nMuestraLectura" placeholder="0" />
+                <span class="error-msg" *ngIf="campoInvalido('nMuestraLectura')">Ingrese un valor numérico válido.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="dilucion">Dilución <span class="required-star">*</span></label>
+                <input id="dilucion" type="number" min="0" class="form-input"
+                  [class.input-error]="campoInvalido('dilucion')"
+                  formControlName="dilucion" placeholder="0" />
+                <span class="error-msg" *ngIf="campoInvalido('dilucion')">Ingrese un valor numérico válido.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="colonias">(C) Colonias <span class="required-star">*</span></label>
+                <input id="colonias" type="number" min="0" class="form-input"
+                  [class.input-error]="campoInvalido('colonias')"
+                  formControlName="colonias" placeholder="0" />
+                <span class="error-msg" *ngIf="campoInvalido('colonias')">Ingrese un valor numérico válido.</span>
+              </div>
+            </div>
+
+            <!-- Equipo Cuenta Colonias -->
+            <div class="form-group mt-4 pt-4 border-t border-slate-100">
+              <label class="form-label" for="equipoCuentaColonias">Equipo Cuenta Colonias <span class="required-star">*</span></label>
+              <select id="equipoCuentaColonias" class="form-select"
+                [class.input-error]="campoInvalido('equipoCuentaColonias')"
+                formControlName="equipoCuentaColonias">
+                <option value="">— Seleccionar equipo —</option>
+                <option value="ECC-001">ECC-001 (Principal)</option>
+                <option value="ECC-002">ECC-002 (Respaldo)</option>
+              </select>
+              <span class="error-msg" *ngIf="campoInvalido('equipoCuentaColonias')">Debe seleccionar un equipo cuenta colonias.</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ PASO 6: Confirmación / Incubación ════════ -->
+      <div *ngIf="pasoActual === 6" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header header-confirmacion">
+            <div class="form-card-title-group">
+              <ion-icon name="thermometer-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Confirmación — Incubación</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Fecha / Hora / Analista de traspaso -->
+            <p class="subseccion-title">Traspaso</p>
+            <div class="grid-3col">
+              <div class="form-group">
+                <label class="form-label" for="fechaTraspaso">Fecha de traspaso <span class="required-star">*</span></label>
+                <input id="fechaTraspaso" type="date" class="form-input"
+                  [class.input-error]="campoInvalido('fechaTraspaso')"
+                  formControlName="fechaTraspaso"
+                  [max]="hoy()" />
+                <span class="error-msg" *ngIf="campoInvalido('fechaTraspaso')">El campo Fecha de traspaso es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="horaTraspaso">Hora de traspaso <span class="required-star">*</span></label>
+                <input id="horaTraspaso" type="time" class="form-input"
+                  [class.input-error]="campoInvalido('horaTraspaso')"
+                  formControlName="horaTraspaso" />
+                <span class="error-msg" *ngIf="campoInvalido('horaTraspaso')">El campo Hora de traspaso es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="analistaTraspaso">Analista de traspaso <span class="required-star">*</span></label>
+                <input id="analistaTraspaso" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('analistaTraspaso')"
+                  formControlName="analistaTraspaso" placeholder="Nombre del analista" />
+                <span class="error-msg" *ngIf="campoInvalido('analistaTraspaso')">El campo Analista de traspaso es obligatorio.</span>
+              </div>
+            </div>
+
+            <div class="seccion-divider"></div>
+
+            <!-- Agar Nutritivo -->
+            <div class="form-group max-w-sm">
+              <label class="form-label" for="agarNutritivo">Agar Nutritivo <span class="required-star">*</span></label>
+              <input id="agarNutritivo" type="text" class="form-input"
+                [class.input-error]="campoInvalido('agarNutritivo')"
+                formControlName="agarNutritivo" placeholder="Ej: AN-032" />
+              <span class="error-msg" *ngIf="campoInvalido('agarNutritivo')">El campo Agar Nutritivo es obligatorio.</span>
+            </div>
+
+            <!-- Estufa de Confirmación -->
+            <div class="form-group mt-4 pt-4 border-t border-slate-100">
+              <label class="form-label">Estufa <span class="required-star">*</span></label>
+              <div class="form-radio-group">
+                <label class="form-check-label" *ngFor="let est of opcionesEstufa">
+                  <input type="radio" class="form-radio" [value]="est.valor"
+                    formControlName="estufaConfIncub" />
+                  <span>{{ est.label }}</span>
+                </label>
+              </div>
+              <span class="error-msg" *ngIf="campoInvalido('estufaConfIncub')">Debe seleccionar una estufa.</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ PASO 7: Confirmación / Lectura ════════ -->
+      <div *ngIf="pasoActual === 7" class="etapa-panel">
+
+        <!-- Bloque: Datos generales de lectura -->
+        <div class="form-card">
+          <div class="form-card-header header-confirmacion">
+            <div class="form-card-title-group">
+              <ion-icon name="eye-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Confirmación — Lectura</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <p class="subseccion-title">Datos generales de lectura</p>
+            <div class="grid-3col">
+              <div class="form-group">
+                <label class="form-label" for="fechaLectConf">Fecha de lectura <span class="required-star">*</span></label>
+                <input id="fechaLectConf" type="date" class="form-input"
+                  [class.input-error]="campoInvalido('fechaLectConf')"
+                  formControlName="fechaLectConf"
+                  [max]="hoy()" />
+                <span class="error-msg" *ngIf="campoInvalido('fechaLectConf')">El campo Fecha de lectura es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="horaLectConf">Hora de lectura <span class="required-star">*</span></label>
+                <input id="horaLectConf" type="time" class="form-input"
+                  [class.input-error]="campoInvalido('horaLectConf')"
+                  formControlName="horaLectConf" />
+                <span class="error-msg" *ngIf="campoInvalido('horaLectConf')">El campo Hora de lectura es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="analistaLectConf">Analista de lectura <span class="required-star">*</span></label>
+                <input id="analistaLectConf" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('analistaLectConf')"
+                  formControlName="analistaLectConf" placeholder="Nombre del analista" />
+                <span class="error-msg" *ngIf="campoInvalido('analistaLectConf')">El campo Analista de lectura es obligatorio.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloque: Tabla de lectura de placas -->
+        <div class="form-card">
+          <div class="form-card-header header-placas">
+            <div class="form-card-title-group">
+              <ion-icon name="grid-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Tabla de Lectura de Placas</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <div class="tabla-wrapper">
+              <table class="tabla-placas">
+                <thead>
+                  <tr>
+                    <th>Muestra / Placa 1</th>
+                    <th>Muestra / Placa 2</th>
+                    <th>Duplicado / Placa 1</th>
+                    <th>Duplicado / Placa 2</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <input type="number" min="0" class="form-input-sm"
+                        [class.input-error]="erroresTablaPlacas['muestraPlaca1']"
+                        [(ngModel)]="tablaPlacas.muestraPlaca1"
+                        [ngModelOptions]="{standalone: true}"
+                        placeholder="0" />
+                      <span class="error-msg block" *ngIf="erroresTablaPlacas['muestraPlaca1']">
+                        {{ erroresTablaPlacas['muestraPlaca1'] }}
+                      </span>
+                    </td>
+                    <td>
+                      <input type="number" min="0" class="form-input-sm"
+                        [class.input-error]="erroresTablaPlacas['muestraPlaca2']"
+                        [(ngModel)]="tablaPlacas.muestraPlaca2"
+                        [ngModelOptions]="{standalone: true}"
+                        placeholder="0" />
+                      <span class="error-msg block" *ngIf="erroresTablaPlacas['muestraPlaca2']">
+                        {{ erroresTablaPlacas['muestraPlaca2'] }}
+                      </span>
+                    </td>
+                    <td>
+                      <input type="number" min="0" class="form-input-sm"
+                        [class.input-error]="erroresTablaPlacas['duplicadoPlaca1']"
+                        [(ngModel)]="tablaPlacas.duplicadoPlaca1"
+                        [ngModelOptions]="{standalone: true}"
+                        placeholder="0" />
+                      <span class="error-msg block" *ngIf="erroresTablaPlacas['duplicadoPlaca1']">
+                        {{ erroresTablaPlacas['duplicadoPlaca1'] }}
+                      </span>
+                    </td>
+                    <td>
+                      <input type="number" min="0" class="form-input-sm"
+                        [class.input-error]="erroresTablaPlacas['duplicadoPlaca2']"
+                        [(ngModel)]="tablaPlacas.duplicadoPlaca2"
+                        [ngModelOptions]="{standalone: true}"
+                        placeholder="0" />
+                      <span class="error-msg block" *ngIf="erroresTablaPlacas['duplicadoPlaca2']">
+                        {{ erroresTablaPlacas['duplicadoPlaca2'] }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="tabla-hint">
+              <ion-icon name="information-circle-outline"></ion-icon>
+              Los campos de esta tabla son opcionales. Si los completa, deben contener valores numéricos válidos.
+            </p>
+          </div>
+        </div>
+
+        <!-- Bloque: Prueba de Oxidasa y Agar Glucosa -->
+        <div class="form-card">
+          <div class="form-card-header header-oxidasa">
+            <div class="form-card-title-group">
+              <ion-icon name="flask-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Prueba de Oxidasa y Agar Glucosa</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Fecha / Hora / Analista de Prueba Oxidasa -->
+            <p class="subseccion-title">Fecha, hora y analista de prueba de oxidasa</p>
+            <div class="grid-3col">
+              <div class="form-group">
+                <label class="form-label" for="fechaOxidasa">Fecha de Prueba Oxidasa <span class="required-star">*</span></label>
+                <input id="fechaOxidasa" type="date" class="form-input"
+                  [class.input-error]="campoInvalido('fechaOxidasa')"
+                  formControlName="fechaOxidasa"
+                  [max]="hoy()" />
+                <span class="error-msg" *ngIf="campoInvalido('fechaOxidasa')">El campo Fecha de Prueba Oxidasa es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="horaOxidasa">Hora de Prueba Oxidasa <span class="required-star">*</span></label>
+                <input id="horaOxidasa" type="time" class="form-input"
+                  [class.input-error]="campoInvalido('horaOxidasa')"
+                  formControlName="horaOxidasa" />
+                <span class="error-msg" *ngIf="campoInvalido('horaOxidasa')">El campo Hora de Prueba Oxidasa es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="analistaOxidasa">Analista de Prueba Oxidasa <span class="required-star">*</span></label>
+                <input id="analistaOxidasa" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('analistaOxidasa')"
+                  formControlName="analistaOxidasa" placeholder="Nombre del analista" />
+                <span class="error-msg" *ngIf="campoInvalido('analistaOxidasa')">El campo Analista de Prueba Oxidasa es obligatorio.</span>
+              </div>
+            </div>
+
+            <div class="seccion-divider"></div>
+
+            <!-- Test Oxidasa / Reactivo -->
+            <div class="form-group max-w-sm">
+              <label class="form-label" for="reactivoOxidasa">
+                Test Oxidasa / Reactivo de Oxidasa <span class="required-star">*</span>
+              </label>
+              <input id="reactivoOxidasa" type="text" class="form-input"
+                [class.input-error]="campoInvalido('reactivoOxidasa')"
+                formControlName="reactivoOxidasa"
+                placeholder="R69-AA-NN  (Ej: R69-25-01)" />
+              <span class="error-msg" *ngIf="campoInvalido('reactivoOxidasa')">
+                {{ mensajeErrorReactivo() }}
+              </span>
+              <p class="campo-hint">Formato: R69-AA-NN. Donde AA = año (2 dígitos), NN = 01 o 02.</p>
+            </div>
+
+            <!-- Desaireado de Agar Glucosa -->
+            <div class="form-group mt-4 pt-4 border-t border-slate-100">
+              <label class="form-label" for="desaireadoAgarGlucosa">Desaireado de Agar Glucosa <span class="required-star">*</span></label>
+              <select id="desaireadoAgarGlucosa" class="form-select"
+                [class.input-error]="campoInvalido('desaireadoAgarGlucosa')"
+                formControlName="desaireadoAgarGlucosa">
+                <option value="">— Seleccionar —</option>
+                <option value="DAG-001">DAG-001</option>
+                <option value="DAG-002">DAG-002</option>
+              </select>
+              <span class="error-msg" *ngIf="campoInvalido('desaireadoAgarGlucosa')">Debe seleccionar un desaireado de Agar Glucosa.</span>
+            </div>
+
+            <!-- Controles -->
+            <div class="seccion-divider"></div>
+            <p class="subseccion-title">Controles y referencias</p>
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label" for="agarGlucosa">Agar Glucosa <span class="required-star">*</span></label>
+                <input id="agarGlucosa" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('agarGlucosa')"
+                  formControlName="agarGlucosa" placeholder="Código o descripción" />
+                <span class="error-msg" *ngIf="campoInvalido('agarGlucosa')">El campo Agar Glucosa es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="controlPosEcoli">Control (+) E. coli <span class="required-star">*</span></label>
+                <input id="controlPosEcoli" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('controlPosEcoli')"
+                  formControlName="controlPosEcoli" placeholder="Resultado control positivo" />
+                <span class="error-msg" *ngIf="campoInvalido('controlPosEcoli')">El campo Control (+) E. coli es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="controlNegPaer">Control (-) P. aeruginosa <span class="required-star">*</span></label>
+                <input id="controlNegPaer" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('controlNegPaer')"
+                  formControlName="controlNegPaer" placeholder="Resultado control negativo" />
+                <span class="error-msg" *ngIf="campoInvalido('controlNegPaer')">El campo Control (-) P. aeruginosa es obligatorio.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="blanco">Blanco <span class="required-star">*</span></label>
+                <input id="blanco" type="text" class="form-input"
+                  [class.input-error]="campoInvalido('blanco')"
+                  formControlName="blanco" placeholder="Resultado blanco" />
+                <span class="error-msg" *ngIf="campoInvalido('blanco')">El campo Blanco es obligatorio.</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ PASO 8: Confirmación / Resultados ════════ -->
+      <div *ngIf="pasoActual === 8" class="etapa-panel">
+        <div class="form-card">
+          <div class="form-card-header header-confirmacion">
+            <div class="form-card-title-group">
+              <ion-icon name="checkmark-done-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Confirmación — Resultados</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+
+            <!-- Tabla de resultados -->
+            <p class="subseccion-title">Tabla de resultados finales</p>
+            <div class="tabla-wrapper">
+              <table class="tabla-resultados">
+                <thead>
+                  <tr>
+                    <th>N° muestra / b</th>
+                    <th>N° muestra / a</th>
+                    <th>d</th>
+                    <th>n1</th>
+                    <th>n2</th>
+                    <th>m</th>
+                    <th>Σa</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <input type="number" min="0" class="form-input-sm"
+                        [class.input-error]="erroresTablaResultados['muestraB']"
+                        [(ngModel)]="tablaResultados.muestraB"
+                        [ngModelOptions]="{standalone: true}" placeholder="0" />
+                      <span class="error-msg block" *ngIf="erroresTablaResultados['muestraB']">
+                        {{ erroresTablaResultados['muestraB'] }}
+                      </span>
+                    </td>
+                    <td>
+                      <input type="number" min="0" class="form-input-sm"
+                        [class.input-error]="erroresTablaResultados['muestraA']"
+                        [(ngModel)]="tablaResultados.muestraA"
+                        [ngModelOptions]="{standalone: true}" placeholder="0" />
+                      <span class="error-msg block" *ngIf="erroresTablaResultados['muestraA']">
+                        {{ erroresTablaResultados['muestraA'] }}
+                      </span>
+                    </td>
+                    <td>
+                      <input type="number" min="0" class="form-input-sm"
+                        [class.input-error]="erroresTablaResultados['d']"
+                        [(ngModel)]="tablaResultados.d"
+                        [ngModelOptions]="{standalone: true}" placeholder="0" />
+                      <span class="error-msg block" *ngIf="erroresTablaResultados['d']">
+                        {{ erroresTablaResultados['d'] }}
+                      </span>
+                    </td>
+                    <td>
+                      <input type="number" min="0" class="form-input-sm"
+                        [class.input-error]="erroresTablaResultados['n1']"
+                        [(ngModel)]="tablaResultados.n1"
+                        [ngModelOptions]="{standalone: true}" placeholder="0" />
+                      <span class="error-msg block" *ngIf="erroresTablaResultados['n1']">
+                        {{ erroresTablaResultados['n1'] }}
+                      </span>
+                    </td>
+                    <td>
+                      <input type="number" min="0" class="form-input-sm"
+                        [class.input-error]="erroresTablaResultados['n2']"
+                        [(ngModel)]="tablaResultados.n2"
+                        [ngModelOptions]="{standalone: true}" placeholder="0" />
+                      <span class="error-msg block" *ngIf="erroresTablaResultados['n2']">
+                        {{ erroresTablaResultados['n2'] }}
+                      </span>
+                    </td>
+                    <td>
+                      <input type="number" min="0" class="form-input-sm"
+                        [class.input-error]="erroresTablaResultados['m']"
+                        [(ngModel)]="tablaResultados.m"
+                        [ngModelOptions]="{standalone: true}" placeholder="0" />
+                      <span class="error-msg block" *ngIf="erroresTablaResultados['m']">
+                        {{ erroresTablaResultados['m'] }}
+                      </span>
+                    </td>
+                    <td>
+                      <input type="number" min="0" class="form-input-sm"
+                        [class.input-error]="erroresTablaResultados['sumaA']"
+                        [(ngModel)]="tablaResultados.sumaA"
+                        [ngModelOptions]="{standalone: true}" placeholder="0" />
+                      <span class="error-msg block" *ngIf="erroresTablaResultados['sumaA']">
+                        {{ erroresTablaResultados['sumaA'] }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="form-group mt-6">
+              <label class="form-label" for="observaciones">Observaciones <span class="optional-tag">(opcional)</span></label>
+              <textarea id="observaciones" class="form-textarea" rows="4"
+                placeholder="Escriba comentarios, notas o incidencias del análisis..."
+                formControlName="observaciones"></textarea>
+            </div>
+
+            <!-- Mensaje de éxito -->
+            <div class="success-banner" *ngIf="formularioCompletado">
+              <ion-icon name="checkmark-circle-outline" class="success-icon"></ion-icon>
+              <p>Registro de análisis completado correctamente.</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </form>
+
+    <!-- ══════════════════ BARRA DE NAVEGACIÓN INFERIOR ══════════════════ -->
+    <div class="nav-footer">
+      <button type="button" class="btn-cancel" (click)="confirmarCancelar()">
+        <ion-icon name="close-outline"></ion-icon>
+        Cancelar
+      </button>
+      <div class="nav-footer__actions">
+        <button type="button" class="btn-secondary" (click)="retroceder()" *ngIf="pasoActual > 1">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+          Anterior
+        </button>
+        <button type="button" class="btn-primary" (click)="avanzar()" *ngIf="pasoActual < TOTAL_PASOS">
+          Siguiente
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+        <button type="button" class="btn-save" (click)="finalizar()" *ngIf="pasoActual === TOTAL_PASOS && !formularioCompletado">
+          <ion-icon name="save-outline"></ion-icon>
+          Finalizar
+        </button>
+      </div>
+    </div>
+
+  </div>
+</ion-content>
