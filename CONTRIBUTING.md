@@ -7,9 +7,9 @@ Esta guía cubre cómo contribuir al proyecto correctamente.
 ## ⚠️ Regla de Oro
 
 **No se hace push directo a `main`.**  
-`main` está protegido: solo se puede mergear via Pull Request con CI verde y al menos 1 aprobación.
+`main` está protegido: solo se puede mergear via Pull Request con CI verde y aprobación del admin.
 
-Si necesitás ayuda o algo no funciona, hablá con Matías.
+Si necesitás ayuda o algo no funciona, hablá con el admin del repositorio.
 
 ---
 
@@ -108,7 +108,7 @@ chore/actualizar-prisma
 docs/guia-despliegue
 ```
 
-**Nunca trabajes directamente en `main`.**
+**Nunca trabajar directamente en `main`.**
 
 ---
 
@@ -130,7 +130,7 @@ Formato: `tipo: descripción en imperativo`
 Ejemplos:
 ```
 feat: agregar formulario de salmonella
-fix: corregir validación de rut en solicitud
+fix: corregir validacion de rut en solicitud
 chore: actualizar prisma a 6.19.3
 test: agregar tests para solicitud service
 ```
@@ -138,7 +138,7 @@ test: agregar tests para solicitud service
 **Reglas:**
 - Descripción en minúscula, sin punto al final
 - Sin emojis
-- Sin "Co-Authored-By" ni atribuciones de IA
+- Sin atribuciones de IA
 
 ---
 
@@ -147,40 +147,40 @@ test: agregar tests para solicitud service
 ```
 main
   │
-  ├── feature/mi-feature   ← creás tu rama desde main
+  ├── feature/mi-feature   ← crear rama desde main
   │     │
-  │     │ (desarrollás, commiteás, probás)
+  │     │ (desarrollar, commitear, probar)
   │     │
   │     └── Pull Request → main
   │           │
   │           │ (CI pasa automáticamente)
-  │           │ (alguien revisa y aprueba)
+  │           │ (admin revisa y aprueba)
   │           │
   │           merge a main  ← solo via PR, nadie pushea directo
 ```
 
-1. Creá una rama desde `main` con la convención de nombres de arriba.
-2. Desarrollá, commiteá siguiendo Conventional Commits.
-3. Antes de abrir el PR, corré los tests localmente.
-4. Abrí el PR desde GitHub con una descripción clara de qué cambia y por qué.
-5. El CI se ejecuta solo. Si falla, corregí antes de pedir review.
-6. Alguien revisa y aprueba (mínimo 1 aprobación requerida).
-7. Merge a `main` — squash si los commits intermedios son muy ruidosos.
+1. Crear una rama desde `main` con la convención de nombres indicada.
+2. Desarrollar y commitear siguiendo Conventional Commits.
+3. Antes de abrir el PR, ejecutar los tests localmente.
+4. Abrir el PR desde GitHub con una descripción clara de los cambios y su motivo.
+5. El CI se ejecuta automáticamente. Si falla, corregir antes de solicitar revisión.
+6. El admin revisa y aprueba (aprobación requerida para merge).
+7. El admin hace el merge a `main`.
 
 ---
 
 ## Pull Requests
 
-- **Usá el template** que aparece automáticamente al abrir el PR.
-- **Descripción obligatoria:** qué cambiás y por qué.
-- **Mínimo 1 reviewer** obligatorio.
-- **CI debe pasar** antes del merge (tests + lints + code review automático).
-- Para cambios en backend: incluí la ruta de la API afectada.
-- Para cambios en frontend: incluí screenshot si hay cambio visual.
+- Usar el template que aparece automáticamente al abrir el PR.
+- Descripción obligatoria: qué cambia y por qué.
+- El admin revisa y aprueba antes del merge.
+- CI debe pasar antes del merge (tests + lints + code review automático).
+- Para cambios en backend: incluir la ruta de la API afectada.
+- Para cambios en frontend: incluir screenshot si hay cambio visual.
 
 ### Code Review Automático
 
-Al abrir un PR, **Gentleman Guardian Angel** revisa automáticamente el código contra las reglas del `AGENTS.md`. Si encuentra violaciones, las marca en el PR. Revisalas y corregí antes de pedir review humana.
+Al abrir un PR, **Gentleman Guardian Angel** revisa automáticamente el código contra las reglas del `AGENTS.md`. Si encuentra violaciones, las marca en el PR. Revisar y corregir antes de solicitar revisión del admin.
 
 ---
 
