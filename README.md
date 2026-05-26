@@ -95,6 +95,7 @@ Ver [`CONTRIBUTING.md`](CONTRIBUTING.md) para el detalle completo.
 | [`docs/environment-setup.md`](docs/environment-setup.md) | Variables de entorno, troubleshooting |
 | [`docs/architecture.md`](docs/architecture.md) | Arquitectura del sistema, flujos, decisiones |
 | [`docs/database.md`](docs/database.md) | Esquema de BD, tablas, ciclo de vida |
+| [`docs/setup-sin-docker.md`](docs/setup-sin-docker.md) | Backend nativo en Windows (sin Docker) |
 
 ---
 
