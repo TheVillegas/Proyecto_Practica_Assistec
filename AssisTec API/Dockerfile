@@ -1,7 +1,7 @@
 FROM node:20-alpine
 
-# Instalar dependencias necesarias para Prisma en Alpine + pnpm global
-RUN apk add --no-cache openssl dos2unix && npm install -g pnpm
+# Instalar dependencias necesarias para Prisma en Alpine + pnpm global + psql para migraciones
+RUN apk add --no-cache openssl dos2unix postgresql-client && npm install -g pnpm
 
 WORKDIR /app
 
