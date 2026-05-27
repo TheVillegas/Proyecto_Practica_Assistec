@@ -381,3 +381,688 @@ model RamReporte {
 
   @@map("ram_reporte")
 }
+
+// ============================================================
+// FORMULARIO S. AUREUS (sau_)
+// ============================================================
+
+model SauFormulario {
+  idSauFormulario    BigInt     @id @default(autoincrement()) @map("id_sau_formulario")
+  idSolicitudAnalisis BigInt   @map("id_solicitud_analisis")
+  etapaActual        Int       @default(1) @map("etapa_actual") @db.SmallInt
+  estado             String    @default("en_proceso") @db.VarChar(50)
+  rutAnalista        String    @map("rut_analista") @db.VarChar(255)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt          DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+
+  solicitudAnalisis SolicitudAnalisis @relation(fields: [idSolicitudAnalisis], references: [idSolicitudAnalisis])
+  analista          Usuario           @relation(fields: [rutAnalista], references: [rutUsuario])
+
+  muestras          SauMuestra[]
+  etapa1            SauEtapa1?
+  etapa2            SauEtapa2?
+  etapa3            SauEtapa3?
+  etapa4            SauEtapa4?
+  etapa5Resultado   SauEtapa5Resultado[]
+  etapa6Cierre      SauEtapa6Cierre?
+
+  @@map("sau_formulario")
+}
+
+model SauMuestra {
+  idSauMuestra       BigInt  @id @default(autoincrement()) @map("id_sau_muestra")
+  idSauFormulario    BigInt  @map("id_sau_formulario")
+  idSolicitudMuestra BigInt  @map("id_solicitud_muestra")
+  numeroMuestra      String  @map("numero_muestra") @db.VarChar(50)
+  esDuplicado        Boolean @default(false) @map("es_duplicado")
+  orden              Int     @map("orden") @db.SmallInt
+
+  formulario         SauFormulario           @relation(fields: [idSauFormulario], references: [idSauFormulario])
+  solicitudMuestra   SolicitudMuestra        @relation(fields: [idSolicitudMuestra], references: [idSolicitudMuestra])
+
+  etapa1Lecturas     SauEtapa1Lectura[]
+  etapa3Lecturas     SauEtapa3Lectura[]
+  etapa4Lecturas     SauEtapa4Lectura[]
+  etapa5Resultados   SauEtapa5Resultado[]
+
+  @@map("sau_muestra")
+}
+
+model SauEtapa1 {
+  idSauEtapa1          BigInt    @id @default(autoincrement()) @map("id_sau_etapa1")
+  idSauFormulario      BigInt    @unique @map("id_sau_formulario")
+  fechaInicioIncubacion DateTime @map("fecha_inicio_incubacion") @db.Timestamp()
+  rutAnalistaInicio    String    @map("rut_analista_inicio") @db.VarChar(255)
+  fechaTerminoAnalisis DateTime? @map("fecha_termino_analisis") @db.Timestamp()
+  rutAnalistaTermino   String?   @map("rut_analista_termino") @db.VarChar(255)
+  tiempoHomoSiembraMin Decimal?  @map("tiempo_homo_siembra_min") @db.Decimal(5, 2)
+  tiempoHomoValido     Boolean?  @map("tiempo_homo_valido")
+  codigoAgarBairdParker String   @map("codigo_agar_baird_parker") @db.VarChar(100)
+  pesoMuestraTipo      String    @map("peso_muestra_tipo") @db.VarChar(20)
+  idEstufa             Int       @map("id_estufa")
+  duplicadoAliRef      String?   @map("duplicado_ali_ref") @db.VarChar(100)
+  ctrlDuplicadoCumple  Boolean?  @map("ctrl_duplicado_cumple")
+  ctrlPositivoBlancoAli String?  @map("ctrl_positivo_blanco_ali") @db.VarChar(255)
+  ctrlPositivoCumple   Boolean?  @map("ctrl_positivo_cumple")
+  ctrlSiembraAli       String?   @map("ctrl_siembra_ali") @db.VarChar(255)
+  ctrlSiembraCumple    Boolean?  @map("ctrl_siembra_cumple")
+  completada           Boolean   @default(false)
+  updatedAt            DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario   SauFormulario          @relation(fields: [idSauFormulario], references: [idSauFormulario])
+  analistaInicio Usuario              @relation("SauEtapa1_AnalistaInicio", fields: [rutAnalistaInicio], references: [rutUsuario])
+  analistaTermino Usuario?            @relation("SauEtapa1_AnalistaTermino", fields: [rutAnalistaTermino], references: [rutUsuario])
+  estufa       EquipoIncubacion       @relation(fields: [idEstufa], references: [idIncubacion])
+
+  micropipetas SauEtapa1Micropipeta[]
+
+  @@map("sau_etapa1")
+}
+
+model SauEtapa1Micropipeta {
+  id           Int    @id @default(autoincrement())
+  idSauEtapa1  BigInt @map("id_sau_etapa1")
+  idPipeta     Int    @map("id_pipeta")
+  capacidad    String @db.VarChar(10)
+
+  etapa1    SauEtapa1    @relation(fields: [idSauEtapa1], references: [idSauEtapa1])
+  micropipeta Micropipeta @relation(fields: [idPipeta], references: [idPipeta])
+
+  @@map("sau_etapa1_micropipeta")
+}
+
+model SauEtapa1Lectura {
+  idSauEtapa1Lectura BigInt   @id @default(autoincrement()) @map("id_sau_etapa1_lectura")
+  idSauMuestra       BigInt   @map("id_sau_muestra")
+  conteo24hPlaca1    Decimal? @map("conteo_24h_placa1") @db.Decimal(10, 2)
+  conteo24hPlaca2    Decimal? @map("conteo_24h_placa2") @db.Decimal(10, 2)
+  conteo48hPlaca1    Decimal? @map("conteo_48h_placa1") @db.Decimal(10, 2)
+  conteo48hPlaca2    Decimal? @map("conteo_48h_placa2") @db.Decimal(10, 2)
+
+  muestra  SauMuestra  @relation(fields: [idSauMuestra], references: [idSauMuestra])
+
+  @@map("sau_etapa1_lectura")
+}
+
+model SauEtapa2 {
+  idSauEtapa2          BigInt    @id @default(autoincrement()) @map("id_sau_etapa2")
+  idSauFormulario      BigInt    @unique @map("id_sau_formulario")
+  ctrlSiembraSAureusUfc Decimal? @map("ctrl_siembra_s_aureus_ufc") @db.Decimal(10, 2)
+  ctrlPositivoSAureus  String?   @map("ctrl_positivo_s_aureus") @db.VarChar(50)
+  ctrlNegativoSEpiderUfc Decimal? @map("ctrl_negativo_s_epider_ufc") @db.Decimal(10, 2)
+  blancoUfc            Decimal?  @map("blanco_ufc") @db.Decimal(10, 2)
+  sd                   String?   @db.VarChar(100)
+  fechaLectura24h      DateTime? @map("fecha_lectura_24h") @db.Timestamp()
+  rutAnalista24h       String?   @map("rut_analista_24h") @db.VarChar(255)
+  fechaLectura48h      DateTime? @map("fecha_lectura_48h") @db.Timestamp()
+  rutAnalista48h       String?   @map("rut_analista_48h") @db.VarChar(255)
+  completada           Boolean   @default(false)
+  updatedAt            DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario      SauFormulario @relation(fields: [idSauFormulario], references: [idSauFormulario])
+  analista24h     Usuario?      @relation("SauEtapa2_Analista24h", fields: [rutAnalista24h], references: [rutUsuario])
+  analista48h     Usuario?      @relation("SauEtapa2_Analista48h", fields: [rutAnalista48h], references: [rutUsuario])
+
+  @@map("sau_etapa2")
+}
+
+model SauEtapa3 {
+  idSauEtapa3            BigInt    @id @default(autoincrement()) @map("id_sau_etapa3")
+  idSauFormulario        BigInt    @unique @map("id_sau_formulario")
+  fechaHoraTraspaso      DateTime  @map("fecha_hora_traspaso") @db.Timestamp()
+  rutAnalistaTraspaso    String    @map("rut_analista_traspaso") @db.VarChar(255)
+  duracionTraspasoLectura String?  @map("duracion_traspaso_lectura")
+  codigoCaldoBhi         String?   @map("codigo_caldo_bhi") @db.VarChar(100)
+  idEstufa               Int       @map("id_estufa")
+  ctrlPositivoSAureus    String?   @map("ctrl_positivo_s_aureus") @db.VarChar(50)
+  ctrlNegativoSEpider    String?   @map("ctrl_negativo_s_epider") @db.VarChar(50)
+  blanco                 String?   @db.VarChar(50)
+  fechaHoraLectura       DateTime? @map("fecha_hora_lectura") @db.Timestamp()
+  rutAnalistaLectura     String?   @map("rut_analista_lectura") @db.VarChar(255)
+  observaciones          String?
+  completada             Boolean   @default(false)
+  updatedAt              DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario       SauFormulario    @relation(fields: [idSauFormulario], references: [idSauFormulario])
+  analistaTraspaso Usuario          @relation("SauEtapa3_AnalistaTraspaso", fields: [rutAnalistaTraspaso], references: [rutUsuario])
+  analistaLectura  Usuario?         @relation("SauEtapa3_AnalistaLectura", fields: [rutAnalistaLectura], references: [rutUsuario])
+  estufa           EquipoIncubacion @relation(fields: [idEstufa], references: [idIncubacion])
+
+  lecturas         SauEtapa3Lectura[]
+
+  @@map("sau_etapa3")
+}
+
+model SauEtapa3Lectura {
+  idSauEtapa3Lectura BigInt   @id @default(autoincrement()) @map("id_sau_etapa3_lectura")
+  idSauMuestra       BigInt   @map("id_sau_muestra")
+  idSauEtapa3        BigInt   @map("id_sau_etapa3")
+  coloniasPlaca1     Decimal? @map("colonias_placa1") @db.Decimal(10, 2)
+  coloniasPlaca2     Decimal? @map("colonias_placa2") @db.Decimal(10, 2)
+
+  muestra  SauMuestra @relation(fields: [idSauMuestra], references: [idSauMuestra])
+  etapa3   SauEtapa3  @relation(fields: [idSauEtapa3], references: [idSauEtapa3])
+
+  @@map("sau_etapa3_lectura")
+}
+
+model SauEtapa4 {
+  idSauEtapa4            BigInt    @id @default(autoincrement()) @map("id_sau_etapa4")
+  idSauFormulario        BigInt    @unique @map("id_sau_formulario")
+  fechaHoraPrueba        DateTime  @map("fecha_hora_prueba") @db.Timestamp()
+  rutAnalistaPrueba      String    @map("rut_analista_prueba") @db.VarChar(255)
+  codigoTubosEsteriles   String?   @map("codigo_tubos_esteriles") @db.VarChar(100)
+  codigoPuntas1ml        String?   @map("codigo_puntas_1ml") @db.VarChar(100)
+  codigoBacidentAgua     String?   @map("codigo_bacident_agua") @db.VarChar(100)
+  idMicropipeta          Int?      @map("id_micropipeta")
+  idEstufa               Int       @map("id_estufa")
+  fechaLectura46h        DateTime? @map("fecha_lectura_4_6h") @db.Timestamp()
+  rutAnalista46h         String?   @map("rut_analista_4_6h") @db.VarChar(255)
+  resultadoCoagulasa46h  String?   @map("resultado_coagulasa_4_6h") @db.VarChar(100)
+  ctrlPositivo46h        String?   @map("ctrl_positivo_4_6h") @db.VarChar(50)
+  ctrlNegativo46h        String?   @map("ctrl_negativo_4_6h") @db.VarChar(50)
+  blanco46h              String?   @map("blanco_4_6h") @db.VarChar(50)
+  fechaLectura24h        DateTime? @map("fecha_lectura_24h") @db.Timestamp()
+  rutAnalista24h         String?   @map("rut_analista_24h") @db.VarChar(255)
+  resultadoCoagulasa24h  String?   @map("resultado_coagulasa_24h") @db.VarChar(100)
+  ctrlPositivo24h        String?   @map("ctrl_positivo_24h") @db.VarChar(50)
+  ctrlNegativo24h        String?   @map("ctrl_negativo_24h") @db.VarChar(50)
+  blanco24h              String?   @map("blanco_24h") @db.VarChar(50)
+  completada             Boolean   @default(false)
+  updatedAt              DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario     SauFormulario    @relation(fields: [idSauFormulario], references: [idSauFormulario])
+  analistaPrueba Usuario          @relation("SauEtapa4_AnalistaPrueba", fields: [rutAnalistaPrueba], references: [rutUsuario])
+  analista46h    Usuario?         @relation("SauEtapa4_Analista46h", fields: [rutAnalista46h], references: [rutUsuario])
+  analista24h    Usuario?         @relation("SauEtapa4_Analista24h", fields: [rutAnalista24h], references: [rutUsuario])
+  micropipeta    Micropipeta?     @relation(fields: [idMicropipeta], references: [idPipeta])
+  estufa         EquipoIncubacion @relation(fields: [idEstufa], references: [idIncubacion])
+
+  lecturas       SauEtapa4Lectura[]
+
+  @@map("sau_etapa4")
+}
+
+model SauEtapa4Lectura {
+  idSauEtapa4Lectura BigInt   @id @default(autoincrement()) @map("id_sau_etapa4_lectura")
+  idSauMuestra       BigInt   @map("id_sau_muestra")
+  idSauEtapa4        BigInt   @map("id_sau_etapa4")
+  tipoLectura        String   @map("tipo_lectura") @db.VarChar(5)
+  coloniasPlaca1     Decimal? @map("colonias_placa1") @db.Decimal(10, 2)
+  coloniasPlaca2     Decimal? @map("colonias_placa2") @db.Decimal(10, 2)
+
+  muestra  SauMuestra @relation(fields: [idSauMuestra], references: [idSauMuestra])
+  etapa4   SauEtapa4  @relation(fields: [idSauEtapa4], references: [idSauEtapa4])
+
+  @@map("sau_etapa4_lectura")
+}
+
+model SauEtapa5Resultado {
+  idSauEtapa5Resultado  BigInt   @id @default(autoincrement()) @map("id_sau_etapa5_resultado")
+  idSauMuestra          BigInt   @unique @map("id_sau_muestra")
+  nSAureus              Decimal? @map("n_s_aureus") @db.Decimal(15, 4)
+  ufcPorG               Decimal? @map("ufc_por_g") @db.Decimal(15, 4)
+  incongruenciaDetectada Boolean @default(false) @map("incongruencia_detectada")
+  observacionIncongruencia String? @map("observacion_incongruencia")
+
+  muestra  SauMuestra @relation(fields: [idSauMuestra], references: [idSauMuestra])
+
+  @@map("sau_etapa5_resultado")
+}
+
+model SauEtapa6Cierre {
+  idSauEtapa6           BigInt    @id @default(autoincrement()) @map("id_sau_etapa6")
+  idSauFormulario       BigInt    @unique @map("id_sau_formulario")
+  desfavorable          Boolean?  @map("desfavorable")
+  tablaPaginaReferencia String?   @map("tabla_pagina_referencia") @db.VarChar(255)
+  limiteNormativo       String?   @map("limite_normativo") @db.VarChar(100)
+  ctrlCalidadEtapa1Ok   Boolean?  @map("ctrl_calidad_etapa1_ok")
+  fechaHoraEntrega      DateTime? @map("fecha_hora_entrega") @db.Timestamp()
+  rutCoordinadorCierre  String?   @map("rut_coordinador_cierre") @db.VarChar(255)
+  cerrado               Boolean   @default(false)
+  updatedAt             DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario      SauFormulario @relation(fields: [idSauFormulario], references: [idSauFormulario])
+  coordinadorCierre Usuario?    @relation(fields: [rutCoordinadorCierre], references: [rutUsuario])
+
+  @@map("sau_etapa6_cierre")
+}
+
+// ============================================================
+// FORMULARIO COLIFORMES (coli_)
+// ============================================================
+
+model ColiFormulario {
+  idColiFormulario   BigInt     @id @default(autoincrement()) @map("id_coli_formulario")
+  idSolicitudAnalisis BigInt    @map("id_solicitud_analisis")
+  faseActual         Int        @default(1) @map("fase_actual") @db.SmallInt
+  estado             String     @default("en_proceso") @db.VarChar(50)
+  rutAnalista        String     @map("rut_analista") @db.VarChar(255)
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt          DateTime   @default(now()) @map("updated_at") @db.Timestamp()
+
+  solicitudAnalisis SolicitudAnalisis @relation(fields: [idSolicitudAnalisis], references: [idSolicitudAnalisis])
+  analista          Usuario           @relation(fields: [rutAnalista], references: [rutUsuario])
+
+  muestras          ColiMuestra[]
+  fase1             ColiFase1?
+  fase2             ColiFase2?
+  fase3             ColiFase3?
+  fase35Controles   ColiFase35Controles?
+  fase4Resultado    ColiFase4Resultado[]
+
+  @@map("coli_formulario")
+}
+
+model ColiMuestra {
+  idColiMuestra      BigInt   @id @default(autoincrement()) @map("id_coli_muestra")
+  idColiFormulario   BigInt   @map("id_coli_formulario")
+  idSolicitudMuestra BigInt   @map("id_solicitud_muestra")
+  numeroMuestra      String   @map("numero_muestra") @db.VarChar(50)
+  esDuplicado        Boolean  @default(false) @map("es_duplicado")
+  pesoMuestraTipo    String   @map("peso_muestra_tipo") @db.VarChar(20)
+  orden              Int      @map("orden") @db.SmallInt
+
+  formulario         ColiFormulario       @relation(fields: [idColiFormulario], references: [idColiFormulario])
+  solicitudMuestra   SolicitudMuestra     @relation(fields: [idSolicitudMuestra], references: [idSolicitudMuestra])
+
+  submuestras        ColiFase3Submuestra[]
+  fase4Resultados    ColiFase4Resultado[]
+
+  @@map("coli_muestra")
+}
+
+model ColiFase1 {
+  idColiFase1          BigInt    @id @default(autoincrement()) @map("id_coli_fase1")
+  idColiFormulario     BigInt    @unique @map("id_coli_formulario")
+  fechaInicioIncubacion DateTime @map("fecha_inicio_incubacion") @db.Timestamp()
+  rutAnalistaInicio    String    @map("rut_analista_inicio") @db.VarChar(255)
+  fechaTerminoAnalisis DateTime? @map("fecha_termino_analisis") @db.Timestamp()
+  rutAnalistaTermino   String?   @map("rut_analista_termino") @db.VarChar(255)
+  completada           Boolean   @default(false)
+  updatedAt            DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario      ColiFormulario @relation(fields: [idColiFormulario], references: [idColiFormulario])
+  analistaInicio  Usuario        @relation("ColiFase1_AnalistaInicio", fields: [rutAnalistaInicio], references: [rutUsuario])
+  analistaTermino Usuario?       @relation("ColiFase1_AnalistaTermino", fields: [rutAnalistaTermino], references: [rutUsuario])
+
+  @@map("coli_fase1")
+}
+
+model ColiFase2 {
+  idColiFase2      BigInt   @id @default(autoincrement()) @map("id_coli_fase2")
+  idColiFormulario BigInt   @unique @map("id_coli_formulario")
+  codigoCaldoLauril String  @map("codigo_caldo_lauril") @db.VarChar(100)
+  codigoTween80    String?  @map("codigo_tween_80") @db.VarChar(100)
+  completada       Boolean  @default(false)
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario ColiFormulario @relation(fields: [idColiFormulario], references: [idColiFormulario])
+
+  estufas      ColiFase2Estufa[]
+  micropipetas ColiFase2Micropipeta[]
+
+  @@map("coli_fase2")
+}
+
+model ColiFase2Estufa {
+  id           Int    @id @default(autoincrement())
+  idColiFase2  BigInt @map("id_coli_fase2")
+  idIncubacion Int    @map("id_incubacion")
+
+  fase2  ColiFase2       @relation(fields: [idColiFase2], references: [idColiFase2])
+  estufa EquipoIncubacion @relation(fields: [idIncubacion], references: [idIncubacion])
+
+  @@map("coli_fase2_estufa")
+}
+
+model ColiFase2Micropipeta {
+  id           Int    @id @default(autoincrement())
+  idColiFase2  BigInt @map("id_coli_fase2")
+  idPipeta     Int    @map("id_pipeta")
+  capacidad    String @db.VarChar(10)
+
+  fase2       ColiFase2   @relation(fields: [idColiFase2], references: [idColiFase2])
+  micropipeta Micropipeta @relation(fields: [idPipeta], references: [idPipeta])
+
+  @@map("coli_fase2_micropipeta")
+}
+
+model ColiFase3 {
+  idColiFase3          BigInt    @id @default(autoincrement()) @map("id_coli_fase3")
+  idColiFormulario     BigInt    @unique @map("id_coli_formulario")
+  fechaLectura24h      DateTime? @map("fecha_lectura_24h") @db.Timestamp()
+  rutAnalista24h       String?   @map("rut_analista_24h") @db.VarChar(255)
+  lectura24hEnTolerancia Boolean? @map("lectura_24h_en_tolerancia")
+  fechaLectura48h      DateTime? @map("fecha_lectura_48h") @db.Timestamp()
+  rutAnalista48h       String?   @map("rut_analista_48h") @db.VarChar(255)
+  lectura48hEnTolerancia Boolean? @map("lectura_48h_en_tolerancia")
+  completada           Boolean   @default(false)
+  updatedAt            DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario     ColiFormulario @relation(fields: [idColiFormulario], references: [idColiFormulario])
+  analista24h    Usuario?       @relation("ColiFase3_Analista24h", fields: [rutAnalista24h], references: [rutUsuario])
+  analista48h    Usuario?       @relation("ColiFase3_Analista48h", fields: [rutAnalista48h], references: [rutUsuario])
+
+  @@map("coli_fase3")
+}
+
+model ColiFase3Submuestra {
+  idSubmuestra   BigInt   @id @default(autoincrement()) @map("id_submuestra")
+  idColiMuestra  BigInt   @map("id_coli_muestra")
+  tipoLectura    String   @map("tipo_lectura") @db.VarChar(5)
+  dilucion       String   @db.VarChar(10)
+  numeroTubo     Int      @map("numero_tubo") @db.SmallInt
+  presencia      Boolean?
+
+  muestra ColiMuestra @relation(fields: [idColiMuestra], references: [idColiMuestra])
+
+  @@unique([idColiMuestra, tipoLectura, dilucion, numeroTubo])
+  @@map("coli_fase3_submuestra")
+}
+
+model ColiFase35Controles {
+  idColiFase35     BigInt   @id @default(autoincrement()) @map("id_coli_fase35")
+  idColiFormulario BigInt   @unique @map("id_coli_formulario")
+  ctrlTotKAerogenes Boolean? @map("ctrl_tot_k_aerogenes")
+  ctrlTotSAureus   Boolean? @map("ctrl_tot_s_aureus")
+  blancoTotales    String?  @map("blanco_totales") @db.VarChar(100)
+  ctrlFecEColi     Boolean? @map("ctrl_fec_e_coli")
+  ctrlFecKAerogenes Boolean? @map("ctrl_fec_k_aerogenes")
+  blancoFecales    String?  @map("blanco_fecales") @db.VarChar(100)
+  ctrlEcoEColi     Boolean? @map("ctrl_eco_e_coli")
+  ctrlEcoKAerogenes Boolean? @map("ctrl_eco_k_aerogenes")
+  blancoEcoli      String?  @map("blanco_ecoli") @db.VarChar(100)
+  completada       Boolean  @default(false)
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario ColiFormulario @relation(fields: [idColiFormulario], references: [idColiFormulario])
+
+  @@map("coli_fase35_controles")
+}
+
+model ColiFase4Resultado {
+  idColiFase4Resultado BigInt   @id @default(autoincrement()) @map("id_coli_fase4_resultado")
+  idColiMuestra        BigInt   @unique @map("id_coli_muestra")
+  coliformesTotales    Decimal? @map("coliformes_totales") @db.Decimal(15, 4)
+  coliformesFecales    Decimal? @map("coliformes_fecales") @db.Decimal(15, 4)
+  eColi                Decimal? @map("e_coli") @db.Decimal(15, 4)
+  incongruenciaDetectada Boolean @default(false) @map("incongruencia_detectada")
+  observacionIncongruencia String? @map("observacion_incongruencia")
+
+  muestra ColiMuestra @relation(fields: [idColiMuestra], references: [idColiMuestra])
+
+  @@map("coli_fase4_resultado")
+}
+
+// ============================================================
+// FORMULARIO SALMONELLA (sal_)
+// ============================================================
+
+model SalFormulario {
+  idSalFormulario    BigInt     @id @default(autoincrement()) @map("id_sal_formulario")
+  idSolicitudAnalisis BigInt    @map("id_solicitud_analisis")
+  faseActual         Int        @default(1) @map("fase_actual") @db.SmallInt
+  estado             String     @default("en_proceso") @db.VarChar(50)
+  rutAnalista        String     @map("rut_analista") @db.VarChar(255)
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt          DateTime   @default(now()) @map("updated_at") @db.Timestamp()
+
+  solicitudAnalisis SolicitudAnalisis @relation(fields: [idSolicitudAnalisis], references: [idSolicitudAnalisis])
+  analista          Usuario           @relation(fields: [rutAnalista], references: [rutUsuario])
+
+  muestras          SalMuestra[]
+  fase1             SalFase1?
+  fase2a            SalFase2a?
+  fase2b            SalFase2b?
+  fase2c            SalFase2c?
+  fase3a            SalFase3a?
+  fase3b            SalFase3b?
+  fase4a            SalFase4a?
+  fase5Resultado    SalFase5Resultado[]
+
+  @@map("sal_formulario")
+}
+
+model SalMuestra {
+  idSalMuestra       BigInt   @id @default(autoincrement()) @map("id_sal_muestra")
+  idSalFormulario    BigInt   @map("id_sal_formulario")
+  idSolicitudMuestra BigInt   @map("id_solicitud_muestra")
+  numeroMuestra      String   @map("numero_muestra") @db.VarChar(50)
+  esDuplicado        Boolean  @default(false) @map("es_duplicado")
+  orden              Int      @map("orden") @db.SmallInt
+
+  formulario         SalFormulario        @relation(fields: [idSalFormulario], references: [idSalFormulario])
+  solicitudMuestra   SolicitudMuestra     @relation(fields: [idSolicitudMuestra], references: [idSolicitudMuestra])
+
+  fase3cLecturas     SalFase3cLectura[]
+  fase4bLecturas     SalFase4bLectura[]
+  fase5Resultados    SalFase5Resultado[]
+
+  @@map("sal_muestra")
+}
+
+model SalFase1 {
+  idSalFase1                BigInt    @id @default(autoincrement()) @map("id_sal_fase1")
+  idSalFormulario           BigInt    @unique @map("id_sal_formulario")
+  fechaHoraInicioIncubacion DateTime  @map("fecha_hora_inicio_incubacion") @db.Timestamp()
+  tipoMatriz                String    @map("tipo_matriz") @db.VarChar(20)
+  pesoMuestra               String    @map("peso_muestra") @db.VarChar(20)
+  caldoHomogeneizacion      String    @map("caldo_homogeneizacion") @db.VarChar(30)
+  caldoAsignadoAuto         Boolean   @default(false) @map("caldo_asignado_auto")
+  horaInicioHidratacion     DateTime? @map("hora_inicio_hidratacion") @db.Time()
+  horaTerminoHidratacion    DateTime? @map("hora_termino_hidratacion") @db.Time()
+  hidratacionValida         Boolean?  @map("hidratacion_valida")
+  completada                Boolean   @default(false)
+  updatedAt                 DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario SalFormulario @relation(fields: [idSalFormulario], references: [idSalFormulario])
+
+  @@map("sal_fase1")
+}
+
+model SalFase2a {
+  idSalFase2a              BigInt    @id @default(autoincrement()) @map("id_sal_fase2a")
+  idSalFormulario          BigInt    @unique @map("id_sal_formulario")
+  fechaSiembra             DateTime  @map("fecha_siembra") @db.Date()
+  horaInicioHomo           DateTime  @map("hora_inicio_homo") @db.Time()
+  horaTerminoHomo          DateTime  @map("hora_termino_homo") @db.Time()
+  horaIngresoEstufa        DateTime  @map("hora_ingreso_estufa") @db.Time()
+  minutosHomoAEstufa       Decimal?  @map("minutos_homo_a_estufa") @db.Decimal(5, 2)
+  alertaTiempo25min        Boolean   @default(false) @map("alerta_tiempo_25min")
+  rutAnalistaResponsable   String    @map("rut_analista_responsable") @db.VarChar(255)
+  fechaTerminoAnalisis     DateTime? @map("fecha_termino_analisis") @db.Date()
+  completada               Boolean   @default(false)
+  updatedAt                DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario          SalFormulario @relation(fields: [idSalFormulario], references: [idSalFormulario])
+  analistaResponsable Usuario       @relation("SalFase2a_AnalistaResp", fields: [rutAnalistaResponsable], references: [rutUsuario])
+
+  @@map("sal_fase2a")
+}
+
+model SalFase2b {
+  idSalFase2b        BigInt   @id @default(autoincrement()) @map("id_sal_fase2b")
+  idSalFormulario    BigInt   @unique @map("id_sal_formulario")
+  codigoCaldoAptLeche String  @map("codigo_caldo_apt_leche") @db.VarChar(100)
+  idEstufa           Int      @map("id_estufa")
+  completada         Boolean  @default(false)
+  updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario SalFormulario    @relation(fields: [idSalFormulario], references: [idSalFormulario])
+  estufa     EquipoIncubacion @relation(fields: [idEstufa], references: [idIncubacion])
+
+  tweenPipetas   SalFase2bTweenPipeta[]
+  micropipetas   SalFase2bMicropipeta[]
+
+  @@map("sal_fase2b")
+}
+
+model SalFase2bTweenPipeta {
+  id           Int    @id @default(autoincrement())
+  idSalFase2b  BigInt @map("id_sal_fase2b")
+  idMaterial   Int    @map("id_material")
+
+  fase2b   SalFase2b     @relation(fields: [idSalFase2b], references: [idSalFase2b])
+  material MaterialSiembra @relation(fields: [idMaterial], references: [idMaterialSiembra])
+
+  @@map("sal_fase2b_tween_pipeta")
+}
+
+model SalFase2bMicropipeta {
+  id           Int    @id @default(autoincrement())
+  idSalFase2b  BigInt @map("id_sal_fase2b")
+  idPipeta     Int    @map("id_pipeta")
+
+  fase2b      SalFase2b   @relation(fields: [idSalFase2b], references: [idSalFase2b])
+  micropipeta Micropipeta @relation(fields: [idPipeta], references: [idPipeta])
+
+  @@map("sal_fase2b_micropipeta")
+}
+
+model SalFase2c {
+  idSalFase2c              BigInt    @id @default(autoincrement()) @map("id_sal_fase2c")
+  idSalFormulario          BigInt    @unique @map("id_sal_formulario")
+  descripcionCtrlAnalisis  String?   @map("descripcion_ctrl_analisis") @db.VarChar(255)
+  resultadoCtrlAnalisis    Boolean?  @map("resultado_ctrl_analisis")
+  ctrlPositivoBlancoAli    String?   @map("ctrl_positivo_blanco_ali") @db.VarChar(255)
+  resultadoCtrlPositivo    Boolean?  @map("resultado_ctrl_positivo")
+  ctrlSiembraAli           String?   @map("ctrl_siembra_ali") @db.VarChar(255)
+  resultadoCtrlSiembra     Boolean?  @map("resultado_ctrl_siembra")
+  completada               Boolean   @default(false)
+  updatedAt                DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario SalFormulario @relation(fields: [idSalFormulario], references: [idSalFormulario])
+
+  @@map("sal_fase2c")
+}
+
+model SalFase3a {
+  idSalFase3a               BigInt    @id @default(autoincrement()) @map("id_sal_fase3a")
+  idSalFormulario           BigInt    @unique @map("id_sal_formulario")
+  fechaTraspaso             DateTime  @map("fecha_traspaso") @db.Date()
+  horaLecturaCaldoApt       DateTime  @map("hora_lectura_caldo_apt") @db.Time()
+  rutAnalistaCaldoApt       String    @map("rut_analista_caldo_apt") @db.VarChar(255)
+  horaLecturaCaldosFinales  DateTime? @map("hora_lectura_caldos_finales") @db.Time()
+  rutAnalistaCaldosFinales  String?   @map("rut_analista_caldos_finales") @db.VarChar(255)
+  completada                Boolean   @default(false)
+  updatedAt                 DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario             SalFormulario @relation(fields: [idSalFormulario], references: [idSalFormulario])
+  analistaCaldoApt       Usuario       @relation("SalFase3a_AnalistaCaldoApt", fields: [rutAnalistaCaldoApt], references: [rutUsuario])
+  analistaCaldosFinales  Usuario?      @relation("SalFase3a_AnalistaCaldosFinales", fields: [rutAnalistaCaldosFinales], references: [rutUsuario])
+
+  @@map("sal_fase3a")
+}
+
+model SalFase3b {
+  idSalFase3b      BigInt   @id @default(autoincrement()) @map("id_sal_fase3b")
+  idSalFormulario  BigInt   @unique @map("id_sal_formulario")
+  idEstufaSelenito Int      @map("id_estufa_selenito")
+  completada       Boolean  @default(false)
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario      SalFormulario    @relation(fields: [idSalFormulario], references: [idSalFormulario])
+  estufaSelenito  EquipoIncubacion @relation("SalFase3b_EstufaSelenito", fields: [idEstufaSelenito], references: [idIncubacion])
+
+  pipetas      SalFase3bPipeta[]
+  micropipetas SalFase3bMicropipeta[]
+
+  @@map("sal_fase3b")
+}
+
+model SalFase3bPipeta {
+  id           Int    @id @default(autoincrement())
+  idSalFase3b  BigInt @map("id_sal_fase3b")
+  idMaterial   Int    @map("id_material")
+  tipoMaterial String @map("tipo_material") @db.VarChar(30)
+
+  fase3b    SalFase3b      @relation(fields: [idSalFase3b], references: [idSalFase3b])
+  material  MaterialSiembra @relation(fields: [idMaterial], references: [idMaterialSiembra])
+
+  @@map("sal_fase3b_pipeta")
+}
+
+model SalFase3bMicropipeta {
+  id           Int    @id @default(autoincrement())
+  idSalFase3b  BigInt @map("id_sal_fase3b")
+  idPipeta     Int    @map("id_pipeta")
+
+  fase3b      SalFase3b   @relation(fields: [idSalFase3b], references: [idSalFase3b])
+  micropipeta Micropipeta @relation(fields: [idPipeta], references: [idPipeta])
+
+  @@map("sal_fase3b_micropipeta")
+}
+
+model SalFase3cLectura {
+  idSalFase3cLectura       BigInt   @id @default(autoincrement()) @map("id_sal_fase3c_lectura")
+  idSalMuestra             BigInt   @map("id_sal_muestra")
+  resultadoCaldoApt        Boolean? @map("resultado_caldo_apt")
+  resultadoseLenito        Boolean? @map("resultado_selenito")
+  resultadoRappaport       Boolean? @map("resultado_rappaport")
+  ctrlPositivoSEnteritidis Boolean? @map("ctrl_positivo_s_enteritidis")
+  ctrlNegativoKPneumoniae  Boolean? @map("ctrl_negativo_k_pneumoniae")
+  ctrlBlanco               Boolean? @map("ctrl_blanco")
+
+  muestra SalMuestra @relation(fields: [idSalMuestra], references: [idSalMuestra])
+
+  @@map("sal_fase3c_lectura")
+}
+
+model SalFase4a {
+  idSalFase4a              BigInt    @id @default(autoincrement()) @map("id_sal_fase4a")
+  idSalFormulario          BigInt    @unique @map("id_sal_formulario")
+  fechaHoraTraspasoAgares  DateTime  @map("fecha_hora_traspaso_agares") @db.Timestamp()
+  rutAnalistaTraspaso      String    @map("rut_analista_traspaso") @db.VarChar(255)
+  codigoAgarXld            String    @map("codigo_agar_xld") @db.VarChar(100)
+  codigoAgarSs             String    @map("codigo_agar_ss") @db.VarChar(100)
+  idEstufaAgares           Int       @map("id_estufa_agares")
+  fechaHoraLectura24h      DateTime? @map("fecha_hora_lectura_24h") @db.Timestamp()
+  rutAnalistaLectura24h    String?   @map("rut_analista_lectura_24h") @db.VarChar(255)
+  fechaHoraLectura48h      DateTime? @map("fecha_hora_lectura_48h") @db.Timestamp()
+  rutAnalistaLectura48h    String?   @map("rut_analista_lectura_48h") @db.VarChar(255)
+  completada               Boolean   @default(false)
+  updatedAt                DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+
+  formulario          SalFormulario    @relation(fields: [idSalFormulario], references: [idSalFormulario])
+  analistaTraspaso    Usuario          @relation("SalFase4a_AnalistaTraspaso", fields: [rutAnalistaTraspaso], references: [rutUsuario])
+  analistaLectura24h  Usuario?         @relation("SalFase4a_AnalistaLectura24h", fields: [rutAnalistaLectura24h], references: [rutUsuario])
+  analistaLectura48h  Usuario?         @relation("SalFase4a_AnalistaLectura48h", fields: [rutAnalistaLectura48h], references: [rutUsuario])
+  estufaAgares        EquipoIncubacion @relation(fields: [idEstufaAgares], references: [idIncubacion])
+
+  fase4bLecturas      SalFase4bLectura[]
+
+  @@map("sal_fase4a")
+}
+
+model SalFase4bLectura {
+  idSalFase4bLectura      BigInt   @id @default(autoincrement()) @map("id_sal_fase4b_lectura")
+  idSalMuestra            BigInt   @map("id_sal_muestra")
+  idSalFase4a             BigInt   @map("id_sal_fase4a")
+  resXld24hSelenito       String?  @map("res_xld_24h_selenito") @db.VarChar(10)
+  resSs24hSelenito        String?  @map("res_ss_24h_selenito") @db.VarChar(10)
+  resXld48hSelenito       String?  @map("res_xld_48h_selenito") @db.VarChar(10)
+  resSs48hSelenito        String?  @map("res_ss_48h_selenito") @db.VarChar(10)
+  resXld24hRappaport      String?  @map("res_xld_24h_rappaport") @db.VarChar(10)
+  resSs24hRappaport       String?  @map("res_ss_24h_rappaport") @db.VarChar(10)
+  resXld48hRappaport      String?  @map("res_xld_48h_rappaport") @db.VarChar(10)
+  resSs48hRappaport       String?  @map("res_ss_48h_rappaport") @db.VarChar(10)
+  ctrlPositivoSEnteritidis String? @map("ctrl_positivo_s_enteritidis") @db.VarChar(10)
+  ctrlNegativoKPneumoniae String?  @map("ctrl_negativo_k_pneumoniae") @db.VarChar(10)
+  ctrlBlanco              String?  @map("ctrl_blanco") @db.VarChar(10)
+
+  muestra SalMuestra @relation(fields: [idSalMuestra], references: [idSalMuestra])
+  fase4a  SalFase4a  @relation(fields: [idSalFase4a], references: [idSalFase4a])
+
+  @@map("sal_fase4b_lectura")
+}
+
+model SalFase5Resultado {
+  idSalFase5Resultado BigInt   @id @default(autoincrement()) @map("id_sal_fase5_resultado")
+  idSalMuestra        BigInt   @unique @map("id_sal_muestra")
+  resultadoFinal      String   @map("resultado_final") @db.VarChar(10)
+
+  muestra SalMuestra @relation(fields: [idSalMuestra], references: [idSalMuestra])
+
+  @@map("sal_fase5_resultado")
+}
