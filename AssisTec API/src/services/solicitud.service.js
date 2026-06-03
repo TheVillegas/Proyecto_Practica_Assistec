@@ -1,5 +1,7 @@
 const solicitudRepository = require('../repositories/solicitud.repository');
 const reporteService = require('./reporte.service');
+const formularioMicrobiologicoService = require('./formularioMicrobiologico.service');
+const prisma = require('../config/prisma');
 const ROLES = require('../config/roles');
 
 const ESTADOS = {
@@ -210,15 +212,25 @@ class SolicitudService {
         const nextMetadata = this.applyValidationApproval(metadata, usuario, now);
         const nextValidationState = this.getValidationState(nextMetadata);
         const isFullyValidated = nextValidationState.coordinadora.aprobada && nextValidationState.jefa.aprobada;
-        const updated = await solicitudRepository.update(id, {
+        const updateData = {
             estado: isFullyValidated ? ESTADOS.VALIDADO : ESTADOS.ENVIADO,
             rutJefaArea: usuario.role === ROLES.JEFE_AREA ? usuario.id : solicitud.rutJefaArea,
             rutCoordinaroraRecepcion: usuario.role === ROLES.COORDINADORA ? usuario.id : solicitud.rutCoordinaroraRecepcion,
             fechaEntregaRevisionJefeLab: usuario.role === ROLES.JEFE_AREA ? now : solicitud.fechaEntregaRevisionJefeLab,
             fechaHoraRecepcionCoordinadora: usuario.role === ROLES.COORDINADORA ? now : solicitud.fechaHoraRecepcionCoordinadora,
             observacionesGenerales: JSON.stringify(nextMetadata)
-        }, expectedUpdatedAt);
+        };
 
+        if (isFullyValidated) {
+            const updated = await prisma.$transaction(async (tx) => {
+                const solicitudActualizada = await solicitudRepository.update(id, updateData, expectedUpdatedAt, tx);
+                await formularioMicrobiologicoService.crearFormulariosParaSolicitud(solicitudActualizada, tx);
+                return solicitudActualizada;
+            });
+            return this.serializeSolicitud(updated);
+        }
+
+        const updated = await solicitudRepository.update(id, updateData, expectedUpdatedAt);
         return this.serializeSolicitud(updated);
     }
 
