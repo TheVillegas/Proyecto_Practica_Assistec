@@ -16,6 +16,9 @@ const muestraRoutes = require('./src/routes/muestra.routes');
 const analisisRoutes = require('./src/routes/analisis.routes');
 const reporteRoutes = require('./src/routes/reporte.routes');
 const catalogoRoutes = require('./src/routes/catalogo.routes');
+const saureusRoutes = require('./src/routes/saureus.routes');
+const coliformesRoutes = require('./src/routes/coliformes.routes');
+const salmonellaRoutes = require('./src/routes/salmonella.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/solicitud', solicitudRoutes);
@@ -23,6 +26,9 @@ app.use('/api/solicitud/:id/muestra', muestraRoutes);
 app.use('/api/muestra/:id/analisis', analisisRoutes);
 app.use('/api/solicitud/:id/generar', reporteRoutes);
 app.use('/api/catalogo', catalogoRoutes);
+app.use('/api/formulario/sau', saureusRoutes);
+app.use('/api/formulario/coli', coliformesRoutes);
+app.use('/api/formulario/sal', salmonellaRoutes);
 
 // Ruta de health check
 app.get('/', (req, res) => {
@@ -30,10 +36,8 @@ app.get('/', (req, res) => {
 });
 
 // Manejo de errores global
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ mensaje: 'Error interno del servidor', error: err.message });
-});
+const errorHandler = require('./src/middleware/errorHandler');
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 
