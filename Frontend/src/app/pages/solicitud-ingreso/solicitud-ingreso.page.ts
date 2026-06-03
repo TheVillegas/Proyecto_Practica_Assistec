@@ -120,7 +120,8 @@ const NOMBRES_FORMULARIOS_UI: Record<string, string> = {
   RAM: 'RAM',
   SALMONELLA_ISO: 'Salmonella',
   HONGOS_LEVADURAS: 'Mohos y Levaduras',
-  ECOLI_NCH3056: 'E. coli'
+  ECOLI_NCH3056: 'E. coli',
+  SAUREUS: 'S. Aureus'
 };
 
 @Component({
