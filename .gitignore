@@ -40,4 +40,5 @@ nul
 # --- Carpetas de trabajo interno (auditorías, agentes) ---
 Auditoria/
 gentleman-guardian-angel/
-.atl/
+.atl/.obsidian/
+AssisTec API/package-lock.json
