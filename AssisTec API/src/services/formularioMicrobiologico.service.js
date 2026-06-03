@@ -3,9 +3,12 @@ const coliformesRepository = require('../repositories/coliformes.repository');
 const salmonellaRepository = require('../repositories/salmonella.repository');
 
 const CODIGO_MAP = {
-    SAU: 'sau',
-    COLI: 'coli',
-    SAL: 'sal'
+    SAUREUS: 'sau',
+    COLIFORMES_TOTALES: 'coli',
+    COLIFORMES_FECALES: 'coli',
+    ECOLI_NCH3056: 'coli',
+    SALMONELLA: 'sal',
+    SALMONELLA_ISO: 'sal'
 };
 
 const REPOSITORY_MAP = {
