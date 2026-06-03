@@ -187,9 +187,12 @@ export class SolicitudIngresoPage implements OnInit {
   private muestraCounter = 1;
 
   ngOnInit(): void {
-    this.reviewMode = this.shouldOpenAsReview();
     this.inicializarFormulario();
     this.cargarCatalogos();
+    this.authService.currentUser$.subscribe(() => {
+      this.reviewMode = this.shouldOpenAsReview();
+      this.syncFormInteractivity();
+    });
   }
 
   private inicializarFormulario(): void {
