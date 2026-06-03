@@ -1011,7 +1011,9 @@ export class SolicitudIngresoPage implements OnInit {
 
   private shouldOpenAsReview(): boolean {
     const solicitudId = this.route.snapshot.queryParamMap.get('id');
-    return !!solicitudId && this.authService.canAccess(SolicitudIngresoPage.REVIEW_ALLOWED_ROLES);
+    const role = this.currentReviewRole;
+    const isAllowedRole = role !== null && SolicitudIngresoPage.REVIEW_ALLOWED_ROLES.includes(role);
+    return !!solicitudId && isAllowedRole;
   }
 
   private normalizeValidationState(state?: ValidacionRevisionState | null): ValidacionRevisionState {
