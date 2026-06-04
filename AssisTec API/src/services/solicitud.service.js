@@ -222,9 +222,11 @@ class SolicitudService {
         };
 
         if (isFullyValidated) {
+            // El optimistic lock (expectedUpdatedAt) protege contra concurrencia.
+            // Si otro validador modificó la solicitud entre nuestra lectura y esta
+            // escritura, la actualización falla con CONCURRENCY_ERROR.
             const updated = await prisma.$transaction(async (tx) => {
                 await this.sincronizarAnalisisEnBaseDatos(solicitud, tx);
-
                 const solicitudActualizada = await solicitudRepository.update(id, updateData, expectedUpdatedAt, tx);
                 await formularioMicrobiologicoService.crearFormulariosParaSolicitud(solicitudActualizada, tx);
                 return solicitudActualizada;
@@ -269,16 +271,31 @@ class SolicitudService {
         // Determinar si tenemos asignación por submuestra (nuevo formato) o plana (legacy)
         const usarSubmuestras = metadata.submuestras && metadata.submuestras.length === solicitud.muestras.length;
 
+        // Pre-fetch all formulario metadata to avoid N+1 queries
+        const snapshotCache = new Map();
+        const codigosUnicos = new Set();
+        const formulariosARecorrer = usarSubmuestras
+            ? metadata.submuestras.flatMap((s) => s.formularios || [])
+            : formulariosSeleccionados;
+        for (const formulario of formulariosARecorrer) {
+            if (formulario.id) codigosUnicos.add(String(formulario.id));
+        }
+        const snapshotEntries = await Promise.all(
+            Array.from(codigosUnicos).map(async (id) => {
+                const snapshot = await this.resolverAnalisisPorCategoriaFormulario(solicitud.categoriaId, id);
+                return [id, snapshot];
+            })
+        );
+        snapshotEntries.forEach(([id, snapshot]) => snapshotCache.set(id, snapshot));
+
         if (usarSubmuestras) {
             // NUEVO: asignación respetando qué análisis va en cada submuestra
             for (let i = 0; i < solicitud.muestras.length; i++) {
                 const muestra = solicitud.muestras[i];
                 const submuestraData = metadata.submuestras[i] || { formularios: [] };
                 for (const formulario of submuestraData.formularios) {
-                    const snapshot = await this.resolverAnalisisPorCategoriaFormulario(
-                        solicitud.categoriaId,
-                        formulario.id
-                    );
+                    const snapshot = snapshotCache.get(String(formulario.id));
+                    if (!snapshot) continue;
                     dataAnalisis.push({
                         idSolicitudAnalisis: nextId,
                         idSolicitudMuestra: muestra.idSolicitudMuestra,
@@ -296,10 +313,8 @@ class SolicitudService {
             // LEGACY: todos los formularios a todas las muestras
             for (const muestra of solicitud.muestras) {
                 for (const formulario of formulariosSeleccionados) {
-                    const snapshot = await this.resolverAnalisisPorCategoriaFormulario(
-                        solicitud.categoriaId,
-                        formulario.id
-                    );
+                    const snapshot = snapshotCache.get(String(formulario.id));
+                    if (!snapshot) continue;
                     dataAnalisis.push({
                         idSolicitudAnalisis: nextId,
                         idSolicitudMuestra: muestra.idSolicitudMuestra,

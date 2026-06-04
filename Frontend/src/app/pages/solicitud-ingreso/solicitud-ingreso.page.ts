@@ -860,6 +860,9 @@ export class SolicitudIngresoPage implements OnInit {
       submuestras.push({ nombre: m.nombre, formularios: fms });
     });
 
+    // Asegurar que numeroMuestras coincida con la cantidad real de submuestras antes de enviar
+    this.form.get('numeroMuestras')?.setValue(submuestras.length, { emitEvent: false });
+
     return {
       codigoALI: Number(this.form.get('codigoALI')?.value),
       numeroActa: this.form.get('numeroActa')?.value,
