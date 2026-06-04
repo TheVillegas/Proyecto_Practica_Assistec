@@ -48,11 +48,14 @@ class FormularioMicrobiologicoService {
                 orden: index + 1
             }));
 
+            // Pasar el modelo específico desde la transacción, no el tx completo
+            // tx.salFormulario / tx.coliFormulario / tx.sauFormulario
+            const txModel = tx[`${tipo}Formulario`];
             const creado = await repository.create({
                 idSolicitudAnalisis: analisis.idSolicitudAnalisis,
                 rutAnalista: null,
                 muestras: muestrasPayload
-            }, tx);
+            }, txModel);
 
             creados.push({ tipo, id: creado[repository.idField] });
         }

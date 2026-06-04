@@ -1,0 +1,200 @@
+<app-header></app-header>
+
+<ion-content [fullscreen]="true" class="with-sidebar">
+  <!-- Vista de Lista de Solicitudes Pendientes -->
+  <div class="list-container" *ngIf="!selectedSolicitud">
+    <div class="welcome-banner">
+      <div class="banner-badge">
+        <ion-icon name="flask-outline"></ion-icon>
+        AsisTec Lab
+      </div>
+      <h1>Validación de Solicitudes</h1>
+      <p>Revisión y firma electrónica de solicitudes pendientes de aprobación.</p>
+      <div class="banner-circle"></div>
+    </div>
+
+    <!-- Spinner Cargando -->
+    <div class="queue-section" *ngIf="loading" style="text-align: center; padding: 40px 20px;">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <p style="color: #8A8F9C; margin-top: 10px;">Cargando solicitudes...</p>
+    </div>
+
+    <!-- Bandeja Vacía -->
+    <div class="queue-section" *ngIf="!loading && solicitudesPendientes.length === 0">
+      <div class="empty-state">
+        <ion-icon name="file-tray-outline" class="empty-icon"></ion-icon>
+        <h3>Sin solicitudes pendientes</h3>
+        <p>No tienes solicitudes asignadas para validación en este momento.</p>
+      </div>
+    </div>
+
+    <!-- Lista de solicitudes -->
+    <div class="queue-section" *ngIf="!loading && solicitudesPendientes.length > 0">
+      <div class="section-header">
+        <h2>Solicitudes Pendientes</h2>
+        <p>Selecciona una solicitud para iniciar la revisión</p>
+      </div>
+      <div class="queue-list">
+        <div class="queue-item" *ngFor="let item of solicitudesPendientes">
+          <div class="queue-item__left">
+            <span class="queue-item__ali">ALI {{ item.numero_ali }}</span>
+            <span class="queue-item__cliente">{{ item.nombre_cliente ?? 'Sin cliente' }}</span>
+          </div>
+          <div class="queue-item__right">
+            <span class="queue-item__estado">{{ item.estado }}</span>
+            <button class="btn-validar-item" (click)="seleccionarSolicitud(item)">
+              <ion-icon name="eye-outline"></ion-icon> Revisar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista de Detalle y Controles de Validación -->
+  <div class="page-container" *ngIf="selectedSolicitud">
+    <button type="button" class="btn-volver" (click)="deseleccionarSolicitud()">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+      Volver al listado
+    </button>
+
+    <div class="page-header">
+      <div class="page-header__text">
+        <h1>Revisión de Solicitud</h1>
+        <p>Ingreso de muestras y asignación de análisis.</p>
+      </div>
+      <div class="page-header__codes">
+        <span class="code-pill">ALI {{ codigoALI }}</span>
+        <span class="code-pill code-pill--secondary">Acta {{ numeroActa }}</span>
+        <span class="badge" [ngClass]="badgeEstado.css">{{ badgeEstado.label }}</span>
+      </div>
+    </div>
+
+    <!-- Controles de validación (Aprobar / Rechazar) -->
+    <div class="validation-controls-card" *ngIf="canTakeReviewAction">
+      <div class="validation-controls-card__header">
+        <div class="form-card-title-group" style="display: flex; align-items: center; gap: 8px;">
+          <ion-icon name="shield-checkmark-outline" style="font-size: 24px;"></ion-icon>
+          <h3 class="form-card-title" style="margin: 0;">Controles de Validación</h3>
+        </div>
+      </div>
+      <div class="validation-controls-card__body">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" for="motivoRechazo" style="font-weight: 600; display: block; margin-bottom: 6px;">
+            Observaciones / Motivo de Rechazo <span class="req">*</span>
+          </label>
+          <textarea
+            id="motivoRechazo"
+            class="form-textarea"
+            [(ngModel)]="motivoRechazo"
+            placeholder="Escriba las observaciones o el motivo del rechazo aquí... (Obligatorio para rechazar)"
+            style="min-height: 100px; padding: 10px;"
+          ></textarea>
+        </div>
+        <div class="resumen-acciones" style="display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid #E5E7EB; padding-top: 16px;">
+          <button type="button" class="btn-cancel" (click)="rechazarSolicitud()" [disabled]="reviewActionLoading" style="cursor: pointer;">
+            <ion-icon name="close-circle-outline"></ion-icon>
+            Rechazar
+          </button>
+          <button type="button" class="btn-validar" (click)="validarSolicitud()" [disabled]="reviewActionLoading" style="cursor: pointer;">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            Validar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado de revisión ya realizada -->
+    <div class="form-card" *ngIf="reviewAlreadyCompletedMessage" style="margin-bottom: 24px; border-left: 4px solid #F59E0B; background: #FFFBEB;">
+      <div class="form-card-body" style="padding: 16px; display: flex; align-items: center; gap: 12px;">
+        <ion-icon name="alert-circle-outline" style="font-size: 24px; color: #D97706;"></ion-icon>
+        <span style="color: #D97706; font-weight: 500;">{{ reviewAlreadyCompletedMessage }}</span>
+      </div>
+    </div>
+
+    <!-- Stepper de las 11 etapas -->
+    <div class="stepper-wrapper">
+      <div class="stepper-bar">
+        <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
+      </div>
+      <div class="stepper-steps">
+        <button *ngFor="let nombre of NOMBRES_ETAPAS; let i = index" class="step-btn"
+          [class.step-btn--active]="etapaActual === i + 1" [class.step-btn--done]="etapaActual > i + 1"
+          (click)="irAEtapa(i + 1)">
+          <span class="step-circle">{{ i + 1 }}</span>
+          <span class="step-label">{{ nombre }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Componentes de paso -->
+    <form [formGroup]="form" class="form-wrapper">
+      <app-step1-identificacion class="form-card" *ngIf="etapaActual === 1" [parentForm]="form" [reviewMode]="true"></app-step1-identificacion>
+
+      <app-step2-datos-alimento class="form-card" *ngIf="etapaActual === 2" [parentForm]="form" [reviewMode]="true"></app-step2-datos-alimento>
+
+      <app-step3-analisis-solicitado class="form-card" *ngIf="etapaActual === 3" [parentForm]="form" [reviewMode]="true" [equiposLaboratorio]="equiposLaboratorio"></app-step3-analisis-solicitado>
+
+      <app-step4-observaciones class="form-card" *ngIf="etapaActual === 4" [parentForm]="form" [reviewMode]="true" [analistas]="analistas"></app-step4-observaciones>
+
+      <app-step5-resolucion class="form-card" *ngIf="etapaActual === 5"
+        [parentForm]="form"
+        [reviewMode]="true"
+        [categorias]="categorias"
+        [subcategorias]="subcategorias"
+        [formulariosCatalogo]="formulariosCatalogo"
+        [muestras]="muestras"
+        (toggleFormularioEvent)="toggleFormulario($event)"
+        (agregarMuestraEvent)="agregarMuestra()"
+        (eliminarMuestraEvent)="eliminarMuestra($event)"
+        (toggleFormularioMuestraEvent)="toggleFormularioMuestra($event.muestra, $event.formulario)">
+      </app-step5-resolucion>
+
+      <app-step6-muestreo class="form-card" *ngIf="etapaActual === 6" [parentForm]="form" [reviewMode]="true" [equiposAlmacenamiento]="equiposAlmacenamiento"></app-step6-muestreo>
+
+      <app-step7-observaciones-laboratorio class="form-card" *ngIf="etapaActual === 7" [parentForm]="form" [reviewMode]="true"></app-step7-observaciones-laboratorio>
+
+      <app-step8-analisis-derivados class="form-card" *ngIf="etapaActual === 8" [parentForm]="form" [reviewMode]="true"></app-step8-analisis-derivados>
+
+      <app-step9-flujo-validacion class="form-card" *ngIf="etapaActual === 9"
+        [parentForm]="form"
+        [reviewMode]="true"
+        [coordinadoras]="coordinadoras"
+        [jefaturas]="jefaturas"
+        [badgeEstado]="badgeEstado"
+        [fechaEnvioValidacion]="fechaEnvioValidacion">
+      </app-step9-flujo-validacion>
+
+      <app-step10-tiempos-entrega class="form-card" *ngIf="etapaActual === 10"
+        [parentForm]="form"
+        [reviewMode]="true"
+        [tiempoEntregaNegativoDias]="tiempoEntregaNegativoDias"
+        [fechaEstimadaEntregaNegativa]="fechaEstimadaEntregaNegativa"
+        [tiempoEntregaConfirmacionDias]="tiempoEntregaConfirmacionDias"
+        [fechaEstimadaEntregaConfirmacion]="fechaEstimadaEntregaConfirmacion"
+        [fechaEnvioInformePositivo]="fechaEnvioInformePositivo"
+        [fechaEnvioInformeNegativo]="fechaEnvioInformeNegativo">
+      </app-step10-tiempos-entrega>
+
+      <app-step11-resumen-informes class="form-card" *ngIf="etapaActual === 11"
+        [parentForm]="form"
+        [reviewMode]="true"
+        [codigoALI]="codigoALI"
+        [badgeEstado]="badgeEstado"
+        [formulariosConsolidados]="formulariosConsolidados"
+        [canSendToValidation]="false">
+      </app-step11-resumen-informes>
+
+      <div class="nav-footer">
+        <button type="button" class="btn-secondary" (click)="retrocederEtapa()" [disabled]="etapaActual === 1">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+          Anterior
+        </button>
+        <button type="button" class="btn-primary" (click)="avanzarEtapa()" *ngIf="etapaActual < TOTAL_ETAPAS">
+          Siguiente
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+      </div>
+    </form>
+  </div>
+</ion-content>

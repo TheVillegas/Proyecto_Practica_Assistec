@@ -13,7 +13,7 @@ import {
   SolicitudIngresoPayload,
   SolicitudIngresoResponse,
   SolicitudIngresoService,
-  ValidacionRevisionState
+  SubmuestraPayload,
 } from 'src/app/services/solicitud-ingreso.service';
 import {
   CategoriaProducto,
@@ -21,7 +21,6 @@ import {
   FormularioAnalisisCatalogo,
   SubcategoriaProducto,
 } from 'src/app/interfaces/catalogo.interfaces';
-import { AuthService } from 'src/app/services/auth-service';
 import { canSendToValidationStateFamily, resolveSolicitudStateMeta } from './solicitud-estado-families';
 
 interface FormularioUI {
@@ -131,8 +130,6 @@ const NOMBRES_FORMULARIOS_UI: Record<string, string> = {
   standalone: false,
 })
 export class SolicitudIngresoPage implements OnInit {
-  private static readonly REVIEW_ALLOWED_ROLES = [1, 2, 4];
-
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -140,7 +137,6 @@ export class SolicitudIngresoPage implements OnInit {
   private toastCtrl = inject(ToastController);
   private catalogosService = inject(CatalogosService);
   private solicitudIngresoService = inject(SolicitudIngresoService);
-  private authService = inject(AuthService);
 
   readonly TOTAL_ETAPAS = 11;
   readonly NOMBRES_ETAPAS = [
@@ -168,10 +164,6 @@ export class SolicitudIngresoPage implements OnInit {
   plazoEstimado: PlazoEstimadoResponse | null = null;
   solicitudGuardada = false;
   cargando = false;
-  reviewMode = false;
-  reviewActionLoading = false;
-  validacionCoordinadora: ValidacionRevisionState = { aprobada: false, rut: null, fecha: null };
-  validacionJefa: ValidacionRevisionState = { aprobada: false, rut: null, fecha: null };
 
   categorias: CategoriaProducto[] = [];
   subcategorias: SubcategoriaProducto[] = [];
@@ -189,10 +181,6 @@ export class SolicitudIngresoPage implements OnInit {
   ngOnInit(): void {
     this.inicializarFormulario();
     this.cargarCatalogos();
-    this.authService.currentUser$.subscribe(() => {
-      this.reviewMode = this.shouldOpenAsReview();
-      this.syncFormInteractivity();
-    });
   }
 
   private inicializarFormulario(): void {
@@ -371,8 +359,6 @@ export class SolicitudIngresoPage implements OnInit {
     this.numeroActa = solicitud.numero_acta;
     this.estadoFlujo = (solicitud.estado as any) || 'borrador';
     this.fechaEnvioValidacion = solicitud.fecha_envio_validacion ?? null;
-    this.validacionCoordinadora = this.normalizeValidationState(solicitud.validacion_coordinadora);
-    this.validacionJefa = this.normalizeValidationState(solicitud.validacion_jefa);
     this.solicitudGuardada = true;
 
     this.form.patchValue({
@@ -407,7 +393,73 @@ export class SolicitudIngresoPage implements OnInit {
 
     this.cargarSubcategorias(solicitud.categoria?.nombre ?? '');
     this.cargarFormularios();
+
+    // 1. Restaurar submuestras ANTES de refrescarDetallesFormularios
+    if (solicitud.submuestras && solicitud.submuestras.length > 0) {
+      // Índice 0 = muestra principal (ya manejada por formulariosCatalogo)
+      // Índices 1+ = submuestras adicionales
+      const creadas: Muestra[] = [];
+      for (let i = 1; i < solicitud.submuestras.length; i++) {
+        const sub = solicitud.submuestras[i];
+        const codigosSubmuestra = new Set((sub.formularios ?? []).map((f: any) => f.codigo));
+        const detallesSub = new Map((sub.formularios ?? []).map((f: any) => [f.codigo, f]));
+        const formularios = this.formulariosDisponibles.map((f) => {
+          const detalle = detallesSub.get(f.codigo);
+          return {
+            id: f.idFormularioAnalisis,
+            codigo: f.codigo,
+            nombre: f.nombreAnalisis,
+            area: f.area,
+            seleccionado: codigosSubmuestra.has(f.codigo) || Boolean(f.generaTpaDefault),
+            obligatorio: Boolean(f.generaTpaDefault),
+            acreditado: detalle?.acreditado ?? undefined,
+            codigoLe: detalle?.codigo_le ?? undefined,
+            metodologiaNorma: detalle?.metodologia_norma ?? undefined,
+            diasNegativo: detalle?.dias_negativo ?? undefined,
+            diasConfirmacion: detalle?.dias_confirmacion ?? undefined,
+            cargandoDetalle: false
+          };
+        });
+        creadas.push({
+          id: i,
+          nombre: sub.nombre ?? `Submuestra ${i}`,
+          formularios
+        });
+      }
+      this.muestras = creadas;
+      this.muestraCounter = creadas.length + 1;
+    } else if (solicitud.muestras && solicitud.muestras.length > 0) {
+      // LEGACY: restaurar desde solicitud_analisis (solo TPA)
+      const creadas: Muestra[] = solicitud.muestras.map((muestra: any, index: number) => {
+        const formularios = this.formulariosDisponibles.map((f) => {
+          const matchingAnalisis = muestra.analisis?.find((a: any) => String(a.id_formulario_analisis) === String(f.idFormularioAnalisis) || a.codigo_formulario === f.codigo);
+          return {
+            id: f.idFormularioAnalisis,
+            codigo: f.codigo,
+            nombre: f.nombreAnalisis,
+            area: f.area,
+            seleccionado: !!matchingAnalisis || Boolean(f.generaTpaDefault),
+            obligatorio: Boolean(f.generaTpaDefault),
+            acreditado: matchingAnalisis ? matchingAnalisis.acreditado : undefined,
+            codigoLe: matchingAnalisis ? matchingAnalisis.codigo_le : undefined,
+            metodologiaNorma: matchingAnalisis ? matchingAnalisis.metodologia_norma : undefined,
+            diasNegativo: matchingAnalisis ? matchingAnalisis.dias_negativo_snapshot : undefined,
+            diasConfirmacion: matchingAnalisis ? matchingAnalisis.dias_confirmacion_snapshot : undefined
+          };
+        });
+        return {
+          id: index + 1,
+          nombre: `Muestra ${index + 1}`,
+          formularios
+        };
+      });
+      this.muestras = creadas;
+      this.muestraCounter = creadas.length + 1;
+    }
+
+    // 2. Marcar seleccionados + refrescar detalles (AHORA incluye submuestras)
     this.marcarFormulariosSeleccionados(solicitud.formularios_seleccionados ?? []);
+
     this.toggleNoAplicaMuestreo(Boolean(solicitud.no_aplica_muestreo), false);
     this.cargarPlazoEstimadoBackend();
     this.syncFormInteractivity();
@@ -444,13 +496,6 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   avanzarEtapa(): void {
-    if (this.reviewMode) {
-      if (this.etapaActual < this.TOTAL_ETAPAS) {
-        this.etapaActual++;
-      }
-      return;
-    }
-
     if (!this.validarEtapaActual()) return;
     if (this.etapaActual < this.TOTAL_ETAPAS) {
       this.etapaActual++;
@@ -534,7 +579,6 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   toggleFormulario(formulario: FormularioUI): void {
-    if (this.reviewMode) return;
     if (formulario.obligatorio) return;
     formulario.seleccionado = !formulario.seleccionado;
     this.cargarDetalleFormulario(formulario);
@@ -542,7 +586,6 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   agregarMuestra(): void {
-    if (this.reviewMode) return;
     const formularios = this.formulariosCatalogo.map((formulario) => ({ ...formulario }));
     this.muestras.push({
       id: this.muestraCounter,
@@ -553,12 +596,10 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   eliminarMuestra(id: number): void {
-    if (this.reviewMode) return;
     this.muestras = this.muestras.filter((muestra) => muestra.id !== id);
   }
 
   toggleFormularioMuestra(_muestra: Muestra, formulario: FormularioUI): void {
-    if (this.reviewMode) return;
     if (formulario.obligatorio) return;
     formulario.seleccionado = !formulario.seleccionado;
     this.cargarDetalleFormulario(formulario);
@@ -691,10 +732,6 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   nuevaSolicitud(): void {
-    if (this.reviewMode) {
-      return;
-    }
-
     this.solicitudId = null;
     this.updatedAt = null;
     this.codigoALI = 'Pendiente';
@@ -744,46 +781,6 @@ export class SolicitudIngresoPage implements OnInit {
     return this.requiredFieldsComplete && this.hasConsolidatedForms && this.stateFamilyAllowsSubmission && !!this.solicitudId && !!this.updatedAt;
   }
 
-  get canReviewCurrentSolicitud(): boolean {
-    return this.reviewMode
-      && !this.reviewActionLoading
-      && !!this.solicitudId
-      && !!this.updatedAt
-      && this.badgeEstado.family === 'under_review';
-  }
-
-  get canTakeReviewAction(): boolean {
-    if (!this.canReviewCurrentSolicitud) {
-      return false;
-    }
-
-    if (this.currentReviewRole === 1) {
-      return !this.validacionCoordinadora.aprobada;
-    }
-
-    if (this.currentReviewRole === 2) {
-      return !this.validacionJefa.aprobada;
-    }
-
-    return false;
-  }
-
-  get reviewAlreadyCompletedMessage(): string | null {
-    if (!this.reviewMode || this.badgeEstado.family !== 'under_review') {
-      return null;
-    }
-
-    if (this.currentReviewRole === 1 && this.validacionCoordinadora.aprobada) {
-      return 'Tu validación como coordinadora ya fue registrada. Falta la otra aprobación.';
-    }
-
-    if (this.currentReviewRole === 2 && this.validacionJefa.aprobada) {
-      return 'Tu validación como jefatura ya fue registrada. Falta la otra aprobación.';
-    }
-
-    return null;
-  }
-
   get fechaEstimadaEntregaNegativa(): Date | null {
     if (this.plazoEstimado?.fecha_entrega_neg) return new Date(this.plazoEstimado.fecha_entrega_neg);
     const fechaRecepcion = this.form.get('fechaRecepcion')?.value;
@@ -823,47 +820,45 @@ export class SolicitudIngresoPage implements OnInit {
     return resolveSolicitudStateMeta(this.estadoFlujo);
   }
 
-  async validarSolicitudRevision(): Promise<void> {
-    if (!this.canTakeReviewAction) {
-      return;
-    }
-
-    this.reviewActionLoading = true;
-    this.solicitudIngresoService.validar(this.solicitudId!, this.updatedAt!).subscribe({
-      next: async (response) => {
-        this.reviewActionLoading = false;
-        this.aplicarSolicitud(response);
-        await this.mostrarToast('Solicitud validada correctamente.', 'success');
-      },
-      error: async (error) => {
-        this.reviewActionLoading = false;
-        await this.mostrarAlerta('Error', error?.error?.mensaje || 'No se pudo validar la solicitud.');
-      }
-    });
-  }
-
-  async rechazarSolicitudRevision(): Promise<void> {
-    if (!this.canTakeReviewAction) {
-      return;
-    }
-
-    const motivo = window.prompt('Motivo de rechazo (opcional):') ?? '';
-    this.reviewActionLoading = true;
-    this.solicitudIngresoService.rechazar(this.solicitudId!, this.updatedAt!, motivo).subscribe({
-      next: async (response) => {
-        this.reviewActionLoading = false;
-        this.aplicarSolicitud(response);
-        await this.mostrarToast('Solicitud rechazada correctamente.', 'success');
-      },
-      error: async (error) => {
-        this.reviewActionLoading = false;
-        await this.mostrarAlerta('Error', error?.error?.mensaje || 'No se pudo rechazar la solicitud.');
-      }
-    });
-  }
-
   private construirPayload(): SolicitudIngresoPayload {
     const subcategoriaId = this.subcategoriaSeleccionada()?.idSubcategoria;
+
+    // Construir submuestras: [muestra principal, ...adicionales]
+    const submuestras: SubmuestraPayload[] = [];
+
+    // Muestra principal: formularios seleccionados del listado principal
+    const principalFormularios = this.formulariosCatalogo
+      .filter((f) => f.seleccionado)
+      .map((f) => ({
+        id: f.id,
+        codigo: f.codigo,
+        nombre: f.nombre,
+        genera_tpa_default: f.obligatorio,
+        acreditado: f.acreditado,
+        codigo_le: f.codigoLe ?? null,
+        metodologia_norma: f.metodologiaNorma ?? null,
+        dias_negativo: f.diasNegativo ?? null,
+        dias_confirmacion: f.diasConfirmacion ?? null
+      }));
+    submuestras.push({ nombre: 'Muestra 1', formularios: principalFormularios });
+
+    // Submuestras adicionales
+    this.muestras.forEach((m, i) => {
+      const fms = m.formularios
+        .filter((f) => f.seleccionado)
+        .map((f) => ({
+          id: f.id,
+          codigo: f.codigo,
+          nombre: f.nombre,
+          genera_tpa_default: f.obligatorio,
+          acreditado: f.acreditado,
+          codigo_le: f.codigoLe ?? null,
+          metodologia_norma: f.metodologiaNorma ?? null,
+          dias_negativo: f.diasNegativo ?? null,
+          dias_confirmacion: f.diasConfirmacion ?? null
+        }));
+      submuestras.push({ nombre: m.nombre, formularios: fms });
+    });
 
     return {
       codigoALI: Number(this.form.get('codigoALI')?.value),
@@ -880,12 +875,13 @@ export class SolicitudIngresoPage implements OnInit {
       codigoEquipoManual: this.form.get('codigoEquipoManual')?.value || undefined,
       fechaInicioMuestreo: this.form.get('noAplicaMuestreo')?.value ? undefined : this.form.get('fechaInicioMuestreo')?.value,
       fechaTerminoMuestreo: this.form.get('noAplicaMuestreo')?.value ? undefined : this.form.get('fechaTerminoMuestreo')?.value,
-      numeroMuestras: Number(this.form.get('numeroMuestras')?.value),
+      numeroMuestras: submuestras.length, // debe coincidir con la cantidad de submuestras
       numeroEnvases: Number(this.form.get('numeroEnvases')?.value),
       analistaResponsable: this.form.get('analistaResponsable')?.value,
       lugarMuestreo: this.form.get('lugarMuestreo')?.value,
       instructivoMuestreo: this.form.get('instructivoMuestreo')?.value,
       formularios: this.formulariosConsolidados,
+      submuestras: submuestras.length > 0 ? submuestras : undefined,
       idLugar: Number(this.form.get('idLugar')?.value),
       idEquipoAlmacenamiento: Number(this.form.get('idLugar')?.value),
       muestraCompartida: Boolean(this.form.get('muestraCompartida')?.value),
@@ -933,12 +929,9 @@ export class SolicitudIngresoPage implements OnInit {
           control?.setValue('', { emitEvent: false });
         }
         control?.disable({ emitEvent: false });
-      } else if (!this.reviewMode) {
+      } else {
         control?.enable({ emitEvent: false });
         control?.setValidators(Validators.required);
-      } else {
-        control?.setValidators(Validators.required);
-        control?.disable({ emitEvent: false });
       }
       control?.updateValueAndValidity({ emitEvent: false });
     });
@@ -1012,35 +1005,8 @@ export class SolicitudIngresoPage implements OnInit {
     await toast.present();
   }
 
-  private shouldOpenAsReview(): boolean {
-    const solicitudId = this.route.snapshot.queryParamMap.get('id');
-    const role = this.currentReviewRole;
-    const isAllowedRole = role !== null && SolicitudIngresoPage.REVIEW_ALLOWED_ROLES.includes(role);
-    return !!solicitudId && isAllowedRole;
-  }
-
-  private normalizeValidationState(state?: ValidacionRevisionState | null): ValidacionRevisionState {
-    return {
-      aprobada: Boolean(state?.aprobada),
-      rut: state?.rut ?? null,
-      fecha: state?.fecha ?? null
-    };
-  }
-
-  private get currentReviewRole(): number | null {
-    const user = this.authService.getUsuario();
-    const role = user?.activeRole ?? user?.primaryRole ?? user?.role ?? user?.rol;
-    const parsed = Number(role);
-    return Number.isInteger(parsed) ? parsed : null;
-  }
-
   private syncFormInteractivity(): void {
     if (!this.form) {
-      return;
-    }
-
-    if (this.reviewMode) {
-      this.form.disable({ emitEvent: false });
       return;
     }
 

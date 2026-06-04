@@ -1,0 +1,14 @@
+<div [formGroup]="parentForm">
+  <div class="form-card-header">
+    <div class="form-card-title-group">
+      <ion-icon name="create-outline"></ion-icon>
+      <h2 class="form-card-title">Etapa 7 — Observaciones de laboratorio</h2>
+    </div>
+  </div>
+  <div class="form-card-body">
+    <div class="form-group">
+      <label class="form-label">Observaciones de laboratorio</label>
+      <textarea class="form-textarea" formControlName="observacionesLaboratorio" rows="5" [readonly]="reviewMode || isReadOnly"></textarea>
+    </div>
+  </div>
+</div>

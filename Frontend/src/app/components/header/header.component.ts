@@ -74,6 +74,8 @@ export class HeaderComponent implements OnInit {
       this.activeSegment = 'busqueda';
     } else if (url.includes('/solicitud-ingreso')) {
       this.activeSegment = 'solicitud';
+    } else if (url.includes('/validacion-solicitudes')) {
+      this.activeSegment = 'validacion-solicitudes';
     } else if (url.includes('/form-coliformes') || url.includes('/form-enterobacterias') || url.includes('/form-s-aureus')) {
       this.activeSegment = 'formularios';
       this.formulariosMenuOpen = true; // Abrir auto el menú si estamos en estas rutas
@@ -123,6 +125,11 @@ export class HeaderComponent implements OnInit {
   busquedaSolicitudIngreso() {
     console.log("Redirigiendo a Búsqueda Solicitud Ingreso");
     this.router.navigate(["/busqueda-solicitud-ingreso"]);
+  }
+
+  validacionSolicitudes() {
+    console.log("Redirigiendo a Validación de Solicitudes");
+    this.router.navigate(["/validacion-solicitudes"]);
   }
 
   solicitudIngreso() {

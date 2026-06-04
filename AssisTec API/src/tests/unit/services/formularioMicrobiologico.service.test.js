@@ -26,9 +26,9 @@ describe('FormularioMicrobiologicoService', () => {
     describe('crearFormulariosParaSolicitud', () => {
         test('debe crear formularios para SAU, COLI y SAL', async () => {
             const solicitud = crearSolicitudCompleta([
-                ['SAU'],
-                ['COLI'],
-                ['SAL']
+                ['SAUREUS'],
+                ['COLIFORMES_TOTALES'],
+                ['SALMONELLA']
             ]);
 
             saureusRepository.findBySolicitudAnalisis.mockResolvedValue(null);
@@ -48,7 +48,7 @@ describe('FormularioMicrobiologicoService', () => {
         });
 
         test('debe saltar formularios ya existentes (idempotencia)', async () => {
-            const solicitud = crearSolicitudCompleta([['SAU']]);
+            const solicitud = crearSolicitudCompleta([['SAUREUS']]);
 
             saureusRepository.findBySolicitudAnalisis.mockResolvedValue({ idSauFormulario: BigInt(99) });
 
@@ -67,7 +67,7 @@ describe('FormularioMicrobiologicoService', () => {
         });
 
         test('debe pasar tx a los repositories cuando se proporciona', async () => {
-            const solicitud = crearSolicitudCompleta([['SAU']]);
+            const solicitud = crearSolicitudCompleta([['SAUREUS']]);
             const tx = { mockTransaction: true };
 
             saureusRepository.findBySolicitudAnalisis.mockResolvedValue(null);
@@ -83,7 +83,7 @@ describe('FormularioMicrobiologicoService', () => {
 
         test('debe mapear correctamente las muestras vinculadas', async () => {
             const solicitud = crearSolicitudCompleta([
-                ['SAU']
+                ['SAUREUS']
             ]);
 
             saureusRepository.findBySolicitudAnalisis.mockResolvedValue(null);
@@ -102,7 +102,7 @@ describe('FormularioMicrobiologicoService', () => {
         });
 
         test('debe dejar rutAnalista como null', async () => {
-            const solicitud = crearSolicitudCompleta([['COLI']]);
+            const solicitud = crearSolicitudCompleta([['COLIFORMES_TOTALES']]);
 
             coliformesRepository.findBySolicitudAnalisis.mockResolvedValue(null);
             coliformesRepository.create.mockResolvedValue({ idColiFormulario: BigInt(1) });
@@ -125,7 +125,7 @@ describe('FormularioMicrobiologicoService', () => {
         });
 
         test('debe crear solo los formularios inexistentes en mix idempotente', async () => {
-            const solicitud = crearSolicitudCompleta([['SAU'], ['SAU']]);
+            const solicitud = crearSolicitudCompleta([['SAUREUS'], ['SAUREUS']]);
 
             saureusRepository.findBySolicitudAnalisis.mockImplementation(async (id) => {
                 if (String(id) === '101') return { idSauFormulario: BigInt(99) };

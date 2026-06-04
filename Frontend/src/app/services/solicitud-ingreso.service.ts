@@ -67,6 +67,11 @@ export interface ValidacionRevisionState {
   fecha?: string | null;
 }
 
+export interface SubmuestraPayload {
+  nombre: string;
+  formularios: FormularioSeleccionadoPayload[];
+}
+
 export interface SolicitudIngresoPayload {
   codigoALI: number;
   numeroActa: string;
@@ -87,6 +92,7 @@ export interface SolicitudIngresoPayload {
   lugarMuestreo: string;
   instructivoMuestreo: string;
   formularios: FormularioSeleccionadoPayload[];
+  submuestras?: SubmuestraPayload[];
   idLugar: number | null;
   idEquipoAlmacenamiento?: number | null;
   muestraCompartida: boolean;
@@ -132,12 +138,27 @@ export interface SolicitudIngresoResponse {
   observaciones_laboratorio?: string;
   analisis_derivados_subcontratados?: string;
   formularios_seleccionados?: FormularioSeleccionadoPayload[];
+  submuestras?: SubmuestraPayload[];
   rut_jefa_area?: string;
   rut_coordinadora_recepcion?: string;
   validacion_coordinadora?: ValidacionRevisionState | null;
   validacion_jefa?: ValidacionRevisionState | null;
   fecha_envio_informe_positivo?: string;
   fecha_envio_informe_negativo?: string;
+  muestras?: Array<{
+    id_solicitud_muestra: string;
+    analisis?: Array<{
+      id_solicitud_analisis: string;
+      id_formulario_analisis: string;
+      codigo_formulario?: string | null;
+      nombre_formulario?: string | null;
+      metodologia_norma?: string | null;
+      acreditado: boolean;
+      codigo_le?: string | null;
+      dias_negativo_snapshot?: number | null;
+      dias_confirmacion_snapshot?: number | null;
+    }>;
+  }>;
 }
 
 @Injectable({

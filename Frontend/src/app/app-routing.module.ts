@@ -106,6 +106,12 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { allowedRoles: [0, 4] }
   },
+  {
+    path: 'validacion-solicitudes',
+    loadChildren: () => import('./pages/validacion-solicitudes/validacion-solicitudes.module').then((m) => m.ValidacionSolicitudesPageModule),
+    canActivate: [AuthGuard],
+    data: { allowedRoles: [1, 2, 4] }
+  },
 ];
 
 @NgModule({

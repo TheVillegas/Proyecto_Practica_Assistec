@@ -1,0 +1,42 @@
+<div [formGroup]="parentForm">
+  <div class="form-card-header">
+    <div class="form-card-title-group">
+      <ion-icon name="timer-outline"></ion-icon>
+      <h2 class="form-card-title">Etapa 10 — Tiempos de entrega supervisor</h2>
+    </div>
+  </div>
+  <div class="form-card-body">
+    <div class="entrega-grid">
+      <div class="entrega-card">
+        <ion-icon name="hourglass-outline"></ion-icon>
+        <span class="entrega-card__value">{{ tiempoEntregaNegativoDias ?? '--' }} días</span>
+        <span class="entrega-card__label">Resultado negativo (+1 día)</span>
+      </div>
+      <div class="entrega-card">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <span class="entrega-card__value">{{ fechaEstimadaEntregaNegativa ? (fechaEstimadaEntregaNegativa | date:'dd/MM/yyyy') : '--' }}</span>
+        <span class="entrega-card__label">Fecha entrega resultado negativo</span>
+      </div>
+      <div class="entrega-card">
+        <ion-icon name="hourglass-outline"></ion-icon>
+        <span class="entrega-card__value">{{ tiempoEntregaConfirmacionDias ?? '--' }} dias</span>
+        <span class="entrega-card__label">Entrega de Informes (+2 días)</span>
+      </div>
+      <div class="entrega-card">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <span class="entrega-card__value">{{ fechaEstimadaEntregaConfirmacion ? (fechaEstimadaEntregaConfirmacion | date:'dd/MM/yyyy') : '--' }}</span>
+        <span class="entrega-card__label">Fecha estimada entrega de informes</span>
+      </div>
+      <div class="entrega-card">
+        <ion-icon name="send-outline"></ion-icon>
+        <span class="entrega-card__value">{{ fechaEnvioInformePositivo ? (fechaEnvioInformePositivo | date:'dd/MM/yyyy') : '--' }}</span>
+        <span class="entrega-card__label">Envío Informe Positivo</span>
+      </div>
+      <div class="entrega-card">
+        <ion-icon name="send-outline"></ion-icon>
+        <span class="entrega-card__value">{{ fechaEnvioInformeNegativo ? (fechaEnvioInformeNegativo | date:'dd/MM/yyyy') : '--' }}</span>
+        <span class="entrega-card__label">Envío Informe Negativo</span>
+      </div>
+    </div>
+  </div>
+</div>

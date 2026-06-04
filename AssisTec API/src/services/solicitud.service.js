@@ -223,6 +223,8 @@ class SolicitudService {
 
         if (isFullyValidated) {
             const updated = await prisma.$transaction(async (tx) => {
+                await this.sincronizarAnalisisEnBaseDatos(solicitud, tx);
+
                 const solicitudActualizada = await solicitudRepository.update(id, updateData, expectedUpdatedAt, tx);
                 await formularioMicrobiologicoService.crearFormulariosParaSolicitud(solicitudActualizada, tx);
                 return solicitudActualizada;
@@ -234,12 +236,96 @@ class SolicitudService {
         return this.serializeSolicitud(updated);
     }
 
+    async sincronizarAnalisisEnBaseDatos(solicitud, tx) {
+        const metadata = this.parseMetadata(solicitud.observacionesGenerales);
+        const formulariosSeleccionados = metadata.formularios ?? [];
+
+        if (formulariosSeleccionados.length === 0 || !tx || !tx.solicitudAnalisis) {
+            return;
+        }
+
+        // 1. Eliminar análisis previos de esta solicitud
+        if (typeof tx.solicitudAnalisis.deleteMany === 'function') {
+            await tx.solicitudAnalisis.deleteMany({
+                where: {
+                    muestra: {
+                        idSolicitud: solicitud.idSolicitud
+                    }
+                }
+            });
+        }
+
+        // 2. Obtener el siguiente ID para idSolicitudAnalisis
+        let nextId = BigInt(1);
+        if (typeof tx.solicitudAnalisis.aggregate === 'function') {
+            const aggr = await tx.solicitudAnalisis.aggregate({
+                _max: { idSolicitudAnalisis: true }
+            });
+            nextId = (aggr._max.idSolicitudAnalisis || BigInt(0)) + BigInt(1);
+        }
+
+        const dataAnalisis = [];
+
+        // Determinar si tenemos asignación por submuestra (nuevo formato) o plana (legacy)
+        const usarSubmuestras = metadata.submuestras && metadata.submuestras.length === solicitud.muestras.length;
+
+        if (usarSubmuestras) {
+            // NUEVO: asignación respetando qué análisis va en cada submuestra
+            for (let i = 0; i < solicitud.muestras.length; i++) {
+                const muestra = solicitud.muestras[i];
+                const submuestraData = metadata.submuestras[i] || { formularios: [] };
+                for (const formulario of submuestraData.formularios) {
+                    const snapshot = await this.resolverAnalisisPorCategoriaFormulario(
+                        solicitud.categoriaId,
+                        formulario.id
+                    );
+                    dataAnalisis.push({
+                        idSolicitudAnalisis: nextId,
+                        idSolicitudMuestra: muestra.idSolicitudMuestra,
+                        idAlcanceAcreditacion: snapshot.id_alcance_acreditacion,
+                        idFormularioAnalisis: BigInt(formulario.id),
+                        acreditado: snapshot.acreditado,
+                        metodologiaNorma: snapshot.metodologia_norma,
+                        diasNegativoSnapshot: snapshot.dias_negativo,
+                        diasConfirmacionSnapshot: snapshot.dias_confirmacion
+                    });
+                    nextId += BigInt(1);
+                }
+            }
+        } else {
+            // LEGACY: todos los formularios a todas las muestras
+            for (const muestra of solicitud.muestras) {
+                for (const formulario of formulariosSeleccionados) {
+                    const snapshot = await this.resolverAnalisisPorCategoriaFormulario(
+                        solicitud.categoriaId,
+                        formulario.id
+                    );
+                    dataAnalisis.push({
+                        idSolicitudAnalisis: nextId,
+                        idSolicitudMuestra: muestra.idSolicitudMuestra,
+                        idAlcanceAcreditacion: snapshot.id_alcance_acreditacion,
+                        idFormularioAnalisis: BigInt(formulario.id),
+                        acreditado: snapshot.acreditado,
+                        metodologiaNorma: snapshot.metodologia_norma,
+                        diasNegativoSnapshot: snapshot.dias_negativo,
+                        diasConfirmacionSnapshot: snapshot.dias_confirmacion
+                    });
+                    nextId += BigInt(1);
+                }
+            }
+        }
+
+        if (dataAnalisis.length > 0 && typeof tx.solicitudAnalisis.createMany === 'function') {
+            await tx.solicitudAnalisis.createMany({ data: dataAnalisis });
+        }
+    }
+
     async rechazar(id, data, expectedUpdatedAt, usuario) {
         if (usuario.role !== ROLES.COORDINADORA && usuario.role !== ROLES.JEFE_AREA) {
             throw new Error('UNAUTHORIZED_ROLE');
         }
 
-        const motivo = data.motivoDevolucion ?? data.motivo_devolucion ?? '';
+        const motivo = data.motivoDevolucion ?? data.motivo_devolucion ?? data.motivo ?? '';
         if (!String(motivo).trim()) {
             throw new Error('MISSING_REJECTION_REASON');
         }
@@ -297,6 +383,7 @@ class SolicitudService {
         const lugar = await this.resolveLugar(data, existing);
 
         const formulariosSeleccionados = this.normalizeFormularios(data.formulariosSeleccionados ?? data.formularios);
+        const submuestras = this.normalizeSubmuestras(data.submuestras) ?? existingMetadata.submuestras ?? null;
         const nombreSolicitante = data.nombreSolicitante ?? data.nombre_solicitante ?? existingMetadata.nombreSolicitante ?? '';
         const observacionesLaboratorio = data.observacionesLaboratorio ?? data.observaciones_laboratorio ?? existingMetadata.observacionesLaboratorio ?? '';
         const analisisDerivadosSubcontratados = data.analisisDerivadosSubcontratados ?? data.analisis_derivados_subcontratados ?? existingMetadata.analisisDerivadosSubcontratados ?? '';
@@ -316,13 +403,14 @@ class SolicitudService {
         const rutCoordinadora = data.rutCoordinadoraRecepcion ?? data.rut_coordinadora_recepcion ?? existing?.rutCoordinaroraRecepcion ?? usuario.id;
 
         const metadata = {
-            version: 1,
+            version: existingMetadata.version || 1,
             nombreSolicitante,
             observacionesLaboratorio,
             analisisDerivadosSubcontratados,
             subcategoriaId,
             noAplicaMuestreo,
             formularios: formulariosSeleccionados,
+            submuestras: submuestras,
             validacionCoordinadora: existingMetadata.validacionCoordinadora ?? null,
             validacionJefa: existingMetadata.validacionJefa ?? null
         };
@@ -511,6 +599,17 @@ class SolicitudService {
         }));
     }
 
+    normalizeSubmuestras(submuestras) {
+        if (!Array.isArray(submuestras) || submuestras.length === 0) {
+            return null;
+        }
+
+        return submuestras.map((sub) => ({
+            nombre: sub.nombre ?? 'Muestra',
+            formularios: this.normalizeFormularios(sub.formularios ?? [])
+        }));
+    }
+
     resolveNumeroAliManual(data) {
         const numeroAli = data.codigoALI ?? data.codigo_ali ?? data.numeroAli ?? data.numero_ali;
         const parsed = Number(numeroAli);
@@ -578,13 +677,13 @@ class SolicitudService {
         const metadata = this.parseMetadata(solicitud.observacionesGenerales);
         const validationState = this.getValidationState(metadata);
         const dto = {
-            id_solicitud: solicitud.idSolicitud.toString(),
+            id_solicitud: solicitud.idSolicitud?.toString() ?? '',
             anio_ingreso: solicitud.anioIngreso,
             numero_ali: solicitud.numeroAli,
             numero_acta: solicitud.numeroActa,
             codigo_externo: solicitud.codigoExterno,
             categoria: solicitud.categoria
-                ? { id: solicitud.categoria.idCategoria.toString(), nombre: solicitud.categoria.nombre }
+                ? { id: solicitud.categoria.idCategoria?.toString() ?? '', nombre: solicitud.categoria.nombre }
                 : null,
             cliente: solicitud.cliente
                 ? { id: solicitud.cliente.idCliente, nombre: solicitud.cliente.nombre, rut: solicitud.cliente.rut }
@@ -605,11 +704,12 @@ class SolicitudService {
             instructivo_muestreo: solicitud.instructivoMuestreo,
             envases_suministrados_por: solicitud.envasesSuministradosPor,
             muestra_compartida_quimica: solicitud.muestraCompartidaQuimica,
-            notas_cliente: solicitud.notasDelCliente,
+            notes_cliente: solicitud.notasDelCliente,
             nombre_solicitante: metadata.nombreSolicitante ?? '',
             observaciones_laboratorio: metadata.observacionesLaboratorio ?? '',
             analisis_derivados_subcontratados: metadata.analisisDerivadosSubcontratados ?? '',
             formularios_seleccionados: metadata.formularios ?? [],
+            submuestras: metadata.submuestras ?? null,
             subcategoria_id: metadata.subcategoriaId ?? null,
             no_aplica_muestreo: Boolean(metadata.noAplicaMuestreo),
             estado: solicitud.estado,
@@ -624,10 +724,10 @@ class SolicitudService {
             codigo_equipo_manual: solicitud.codigoEquipoManual ?? null,
             updated_at: solicitud.updatedAt,
             muestras: (solicitud.muestras ?? []).map((muestra) => ({
-                id_solicitud_muestra: muestra.idSolicitudMuestra.toString(),
+                id_solicitud_muestra: muestra.idSolicitudMuestra?.toString() ?? '',
                 analisis: (muestra.analisis ?? []).map((analisis) => ({
-                    id_solicitud_analisis: analisis.idSolicitudAnalisis.toString(),
-                    id_formulario_analisis: analisis.idFormularioAnalisis.toString(),
+                    id_solicitud_analisis: analisis.idSolicitudAnalisis?.toString() ?? '',
+                    id_formulario_analisis: analisis.idFormularioAnalisis?.toString() ?? '',
                     codigo_formulario: analisis.formulario?.codigo ?? null,
                     nombre_formulario: analisis.formulario?.nombreAnalisis ?? null
                     ,

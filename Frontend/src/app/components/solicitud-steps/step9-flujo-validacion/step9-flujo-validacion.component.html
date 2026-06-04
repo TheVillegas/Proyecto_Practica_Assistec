@@ -1,0 +1,43 @@
+<div [formGroup]="parentForm">
+  <div class="form-card-header">
+    <div class="form-card-title-group">
+      <ion-icon name="git-network-outline"></ion-icon>
+      <h2 class="form-card-title">Etapa 9 — Flujo de validación</h2>
+    </div>
+  </div>
+  <div class="form-card-body">
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12" size-md="6">
+          <div class="form-group">
+            <label class="form-label">Coordinadora receptora <span class="req">*</span></label>
+            <select class="form-select" formControlName="rutCoordinadoraRecepcion" [class.form-input--error]="campoInvalido('rutCoordinadoraRecepcion')">
+              <option value="" disabled>Seleccione coordinadora</option>
+              <option *ngFor="let coordinadora of coordinadoras" [value]="coordinadora.rut">{{ coordinadora.nombre }}</option>
+            </select>
+          </div>
+        </ion-col>
+        <ion-col size="12" size-md="6">
+          <div class="form-group">
+            <label class="form-label">Jefatura responsable <span class="req">*</span></label>
+            <select class="form-select" formControlName="rutJefaArea" [class.form-input--error]="campoInvalido('rutJefaArea')">
+              <option value="" disabled>Seleccione jefatura</option>
+              <option *ngFor="let jefatura of jefaturas" [value]="jefatura.rut">{{ jefatura.nombre }}</option>
+            </select>
+          </div>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+
+    <div class="flujo-section">
+      <div class="flujo-estado">
+        <span class="flujo-label">Estado actual de la solicitud:</span>
+        <span class="badge" [ngClass]="badgeEstado?.css">{{ badgeEstado?.label }}</span>
+      </div>
+      <div class="flujo-fecha" *ngIf="fechaEnvioValidacion">
+        <ion-icon name="time-outline"></ion-icon>
+        <span>Enviado a validación el: <strong>{{ fechaEnvioValidacion | date:'dd/MM/yyyy HH:mm:ss' }}</strong></span>
+      </div>
+    </div>
+  </div>
+</div>
