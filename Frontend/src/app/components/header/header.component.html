@@ -39,6 +39,14 @@
         <span class="nav-dot" *ngIf="activeSegment === 'busqueda-solicitud'">•</span>
       </li>
 
+      <!-- Validación Solicitudes — visible para Coordinadora (1), Jefe (2) y Admin (4) -->
+      <li *ngIf="canAccessNavigation([1, 2, 4])"
+          class="nav-item" [class.active]="activeSegment === 'validacion-solicitudes'" (click)="validacionSolicitudes()" data-label="Validación Solicitudes">
+        <ion-icon name="checkmark-done-circle-outline"></ion-icon>
+        <span class="nav-item-text">Validación</span>
+        <span class="nav-dot" *ngIf="activeSegment === 'validacion-solicitudes'">•</span>
+      </li>
+
       <!-- Solicitud Ingreso — visible solo para Ingreso (3) -->
       <li *ngIf="canAccessNavigation([3, 4])"
           class="nav-item" [class.active]="activeSegment === 'solicitud'" (click)="solicitudIngreso()" data-label="Solicitud Ingreso">

@@ -83,15 +83,17 @@ class SolicitudRepository {
         });
     }
 
-    async findById(id) {
-        return await prisma.solicitudIngreso.findUnique({
+    async findById(id, tx) {
+        const client = tx || prisma;
+        return await client.solicitudIngreso.findUnique({
             where: { idSolicitud: BigInt(id) },
             include: this.getInclude()
         });
     }
 
-    async update(id, data, expectedUpdatedAt) {
-        const existing = await prisma.solicitudIngreso.findUnique({
+    async update(id, data, expectedUpdatedAt, tx) {
+        const client = tx || prisma;
+        const existing = await client.solicitudIngreso.findUnique({
             where: { idSolicitud: BigInt(id) },
             select: { updatedAt: true }
         });
@@ -105,7 +107,7 @@ class SolicitudRepository {
             throw new Error('CONCURRENCY_ERROR');
         }
 
-        await prisma.solicitudIngreso.update({
+        await client.solicitudIngreso.update({
             where: { idSolicitud: BigInt(id) },
             data: {
                 ...data,
@@ -113,7 +115,7 @@ class SolicitudRepository {
             }
         });
 
-        return this.findById(id);
+        return this.findById(id, tx);
     }
 
     async getNextNumeroAli() {

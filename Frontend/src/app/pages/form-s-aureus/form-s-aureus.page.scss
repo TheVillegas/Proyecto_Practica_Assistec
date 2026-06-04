@@ -1,3 +1,5 @@
+@use "sass:color";
+
 /* =========================================================
    FORM-COLIFORMES — Estilos de página
    Patrón: @apply Tailwind + clases semánticas (Asistec Lab)
@@ -400,7 +402,7 @@ $color-neg:     #dc2626;  // red-600
   background: $brand-blue;
 
   &:hover {
-    background: darken($brand-blue, 8%);
+    background: color.adjust($brand-blue, $lightness: -8%);
   }
 
   &:disabled {
@@ -431,7 +433,7 @@ $color-neg:     #dc2626;  // red-600
   background: #e70101;
 
   &:hover {
-    background: darken(#e70101, 8%);
+    background: color.adjust(#e70101, $lightness: -8%);
     color: white;
   }
 }
@@ -441,6 +443,6 @@ $color-neg:     #dc2626;  // red-600
   background: #16A34A;
 
   &:hover {
-    background: darken(#16A34A, 8%);
+    background: color.adjust(#16A34A, $lightness: -8%);
   }
 }

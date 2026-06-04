@@ -1,0 +1,77 @@
+<div [formGroup]="parentForm">
+  <div class="form-card-header">
+    <div class="form-card-title-group">
+      <ion-icon name="flask-outline"></ion-icon>
+      <h2 class="form-card-title">Etapa 4 — Muestreo</h2>
+    </div>
+  </div>
+  <div class="form-card-body">
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12" size-md="6">
+          <div class="form-group">
+            <div class="no-aplica-section">
+              <label class="toggle-label">
+                <input type="checkbox" class="form-checkbox" formControlName="noAplicaMuestreo" />
+                <span>NO APLICA fechas de muestreo</span>
+              </label>
+            </div>
+            <label class="form-label">
+              Fecha inicio muestreo
+              <span class="req" *ngIf="!parentForm.get('noAplicaMuestreo')?.value">*</span>
+            </label>
+            <input type="datetime-local" class="form-input" formControlName="fechaInicioMuestreo"
+              [class.form-input--error]="campoInvalido('fechaInicioMuestreo')"
+              [disabled]="parentForm.get('noAplicaMuestreo')?.value" />
+            <span class="error-msg" *ngIf="campoInvalido('fechaInicioMuestreo')">Campo obligatorio.</span>
+          </div>
+        </ion-col>
+        <ion-col size="12" size-md="6">
+          <div class="form-group">
+            <label class="form-label">
+              Fecha término muestreo
+              <span class="req" *ngIf="!parentForm.get('noAplicaMuestreo')?.value">*</span>
+            </label>
+            <input type="datetime-local" class="form-input" formControlName="fechaTerminoMuestreo"
+              [class.form-input--error]="campoInvalido('fechaTerminoMuestreo')"
+              [disabled]="parentForm.get('noAplicaMuestreo')?.value" />
+            <span class="error-msg" *ngIf="campoInvalido('fechaTerminoMuestreo')">Campo obligatorio.</span>
+          </div>
+        </ion-col>
+        <ion-col size="12" size-md="3">
+          <div class="form-group">
+            <label class="form-label">N° de muestras <span class="req">*</span></label>
+            <input type="number" class="form-input" formControlName="numeroMuestras" min="1" [class.form-input--error]="campoInvalido('numeroMuestras')" />
+          </div>
+        </ion-col>
+        <ion-col size="12" size-md="3">
+          <div class="form-group">
+            <label class="form-label">N° de envases <span class="req">*</span></label>
+            <input type="number" class="form-input" formControlName="numeroEnvases" min="1" [class.form-input--error]="campoInvalido('numeroEnvases')" />
+          </div>
+        </ion-col>
+        <ion-col size="12" size-md="3">
+          <div class="form-group">
+            <label class="form-label">Analista responsable <span class="req">*</span></label>
+            <select class="form-select" formControlName="analistaResponsable" [class.form-input--error]="campoInvalido('analistaResponsable')">
+              <option value="" disabled>Seleccione analista</option>
+              <option *ngFor="let analista of analistas" [value]="analista.nombre">{{ analista.nombre }}</option>
+            </select>
+          </div>
+        </ion-col>
+        <ion-col size="12" size-md="3">
+          <div class="form-group">
+            <label class="form-label">Lugar de muestreo <span class="req">*</span></label>
+            <input type="text" class="form-input" formControlName="lugarMuestreo" [class.form-input--error]="campoInvalido('lugarMuestreo')" />
+          </div>
+        </ion-col>
+        <ion-col size="12">
+          <div class="form-group">
+            <label class="form-label">Instructivo de muestreo <span class="req">*</span></label>
+            <input type="text" class="form-input" formControlName="instructivoMuestreo" [class.form-input--error]="campoInvalido('instructivoMuestreo')" />
+          </div>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</div>

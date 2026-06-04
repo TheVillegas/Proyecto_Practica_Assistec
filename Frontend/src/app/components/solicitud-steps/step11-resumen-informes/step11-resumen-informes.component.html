@@ -1,0 +1,45 @@
+<div [formGroup]="parentForm">
+  <div class="form-card-header">
+    <div class="form-card-title-group">
+      <ion-icon name="document-attach-outline"></ion-icon>
+      <h2 class="form-card-title">Etapa 11 — Resumen e informes</h2>
+    </div>
+  </div>
+  <div class="form-card-body">
+    <div class="resumen-grid">
+      <div class="resumen-item">
+        <span class="resumen-item__label">Código ALI</span>
+        <span class="resumen-item__value code-text">{{ codigoALI }}</span>
+      </div>
+      <div class="resumen-item">
+        <span class="resumen-item__label">Cliente</span>
+        <span class="resumen-item__value">{{ parentForm.get('nombreCliente')?.value || '—' }}</span>
+      </div>
+      <div class="resumen-item">
+        <span class="resumen-item__label">Categoría</span>
+        <span class="resumen-item__value">{{ parentForm.get('categoria')?.value || '—' }}</span>
+      </div>
+      <div class="resumen-item">
+        <span class="resumen-item__label">Estado</span>
+        <span class="badge" [ngClass]="badgeEstado?.css">{{ badgeEstado?.label }}</span>
+      </div>
+    </div>
+
+    <div class="formularios-consolidados">
+      <h3>Formularios consolidados</h3>
+      <div class="formularios-list">
+        <span class="formulario-tag" *ngFor="let formulario of formulariosConsolidados">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          {{ formulario.codigo }}
+        </span>
+      </div>
+    </div>
+
+    <div class="resumen-acciones">
+      <button type="button" class="btn-validar" *ngIf="!reviewMode && !isReadOnly" (click)="enviarAValidacion()" [disabled]="!canSendToValidation">
+        <ion-icon name="send-outline"></ion-icon>
+        Enviar a validación
+      </button>
+    </div>
+  </div>
+</div>

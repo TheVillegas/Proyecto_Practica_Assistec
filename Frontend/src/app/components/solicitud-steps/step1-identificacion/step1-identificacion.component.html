@@ -1,0 +1,34 @@
+<div [formGroup]="parentForm">
+  <div class="form-card-header">
+    <div class="form-card-title-group">
+      <ion-icon name="finger-print-outline"></ion-icon>
+      <h2 class="form-card-title">Etapa 1 — Identificación de Solicitud</h2>
+    </div>
+  </div>
+  <div class="form-card-body">
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12" size-md="4">
+          <div class="form-group">
+            <label class="form-label">Año de ingreso</label>
+            <input type="text" class="form-input form-input--readonly" formControlName="anioIngreso" readonly />
+          </div>
+        </ion-col>
+        <ion-col size="12" size-md="4">
+          <div class="form-group">
+            <label class="form-label">Codigo ALI <span class="req">*</span></label>
+            <input type="number" class="form-input" formControlName="codigoALI" [class.form-input--error]="campoInvalido('codigoALI')" />
+            <span class="error-msg" *ngIf="campoInvalido('codigoALI')">Ingrese un ALI valido.</span>
+          </div>
+        </ion-col>
+        <ion-col size="12" size-md="4">
+          <div class="form-group">
+            <label class="form-label">Codigo Serna u Otro <span class="req">*</span></label>
+            <input type="text" class="form-input" formControlName="numeroActa" [class.form-input--error]="campoInvalido('numeroActa')" />
+            <span class="error-msg" *ngIf="campoInvalido('numeroActa')">Campo obligatorio.</span>
+          </div>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</div>

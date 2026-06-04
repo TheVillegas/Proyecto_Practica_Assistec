@@ -5,83 +5,91 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 // Mockear Prisma
-jest.mock('../src/config/prisma', () => ({
-    usuario: {
-        findFirst: jest.fn(),
-        findUnique: jest.fn()
-    },
-    categoriaProducto: {
-        findUnique: jest.fn(),
-        findFirst: jest.fn(),
-        create: jest.fn(),
-        findMany: jest.fn()
-    },
-    subcategoriaProducto: {
-        findUnique: jest.fn(),
-        findFirst: jest.fn(),
-        findMany: jest.fn(),
-        create: jest.fn()
-    },
-    cliente: {
-        findUnique: jest.fn(),
-        findFirst: jest.fn(),
-        create: jest.fn()
-    },
-    direccionCliente: {
-        findUnique: jest.fn(),
-        findFirst: jest.fn(),
-        create: jest.fn()
-    },
-    equipoLab: {
-        findUnique: jest.fn(),
-        findFirst: jest.fn()
-    },
-    lugarAlmacenamiento: {
-        findUnique: jest.fn(),
-        findFirst: jest.fn(),
-        create: jest.fn()
-    },
-    solicitudIngreso: {
-        create: jest.fn(),
-        findMany: jest.fn(),
-        findFirst: jest.fn(),
-        findUnique: jest.fn(),
-        update: jest.fn(),
-        aggregate: jest.fn()
-    },
-    solicitudMuestra: {
-        createMany: jest.fn(),
-        findMany: jest.fn(),
-        findUnique: jest.fn()
-    },
-    solicitudAnalisis: {
-        aggregate: jest.fn(),
-        create: jest.fn(),
-        createMany: jest.fn(),
-        findMany: jest.fn()
-    },
-    formularioAnalisis: {
-        findUnique: jest.fn(),
-        findFirst: jest.fn()
-    },
-    tiempoPorCategoria: {
-        findFirst: jest.fn()
-    },
-    alcanceAcreditacion: {
-        findFirst: jest.fn()
-    },
-    $transaction: jest.fn(),
-    muestraAli: {
-        findUnique: jest.fn(),
-        create: jest.fn()
-    },
-    tpaReporte: {
-        create: jest.fn()
-    },
-    ramReporte: {
-        create: jest.fn()
-    }
-}));
+jest.mock('../src/config/prisma', () => {
+    const mockPrisma = {
+        usuario: {
+            findFirst: jest.fn(),
+            findUnique: jest.fn()
+        },
+        categoriaProducto: {
+            findUnique: jest.fn(),
+            findFirst: jest.fn(),
+            create: jest.fn(),
+            findMany: jest.fn()
+        },
+        subcategoriaProducto: {
+            findUnique: jest.fn(),
+            findFirst: jest.fn(),
+            findMany: jest.fn(),
+            create: jest.fn()
+        },
+        cliente: {
+            findUnique: jest.fn(),
+            findFirst: jest.fn(),
+            create: jest.fn()
+        },
+        direccionCliente: {
+            findUnique: jest.fn(),
+            findFirst: jest.fn(),
+            create: jest.fn()
+        },
+        equipoLab: {
+            findUnique: jest.fn(),
+            findFirst: jest.fn()
+        },
+        lugarAlmacenamiento: {
+            findUnique: jest.fn(),
+            findFirst: jest.fn(),
+            create: jest.fn()
+        },
+        solicitudIngreso: {
+            create: jest.fn(),
+            findMany: jest.fn(),
+            findFirst: jest.fn(),
+            findUnique: jest.fn(),
+            update: jest.fn(),
+            aggregate: jest.fn()
+        },
+        solicitudMuestra: {
+            createMany: jest.fn(),
+            findMany: jest.fn(),
+            findUnique: jest.fn()
+        },
+        solicitudAnalisis: {
+            aggregate: jest.fn(),
+            create: jest.fn(),
+            createMany: jest.fn(),
+            findMany: jest.fn()
+        },
+        formularioAnalisis: {
+            findUnique: jest.fn(),
+            findFirst: jest.fn()
+        },
+        tiempoPorCategoria: {
+            findFirst: jest.fn()
+        },
+        alcanceAcreditacion: {
+            findFirst: jest.fn()
+        },
+        $transaction: jest.fn(async (input) => {
+            if (typeof input === 'function') {
+                return input(mockPrisma);
+            }
+            return Promise.all(input);
+        }),
+        muestraAli: {
+            findUnique: jest.fn(),
+            create: jest.fn()
+        },
+        tpaReporte: {
+            create: jest.fn()
+        },
+        ramReporte: {
+            create: jest.fn()
+        }
+    };
+    return mockPrisma;
+});
 
 // Mockear Bcrypt para no demorar los tests
 jest.mock('bcryptjs', () => ({
@@ -108,6 +116,12 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        prisma.$transaction.mockImplementation(async (input) => {
+            if (typeof input === 'function') {
+                return input(prisma);
+            }
+            return Promise.all(input);
+        });
     });
 
     describe('REQ-01: Autenticación y Login', () => {

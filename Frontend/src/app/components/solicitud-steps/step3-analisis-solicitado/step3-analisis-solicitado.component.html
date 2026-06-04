@@ -1,0 +1,45 @@
+<div [formGroup]="parentForm">
+  <div class="form-card-header">
+    <div class="form-card-title-group">
+      <ion-icon name="cube-outline"></ion-icon>
+      <h2 class="form-card-title">Etapa 3 — Recepción</h2>
+    </div>
+  </div>
+  <div class="form-card-body">
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12" size-md="4">
+          <div class="form-group">
+            <label class="form-label">Fecha de recepción <span class="req">*</span></label>
+            <input type="datetime-local" class="form-input" formControlName="fechaRecepcion" [class.form-input--error]="campoInvalido('fechaRecepcion')" />
+            <span class="error-msg" *ngIf="campoInvalido('fechaRecepcion')">Campo obligatorio.</span>
+          </div>
+        </ion-col>
+        <ion-col size="12" size-md="4">
+          <div class="form-group">
+            <label class="form-label">Temperatura recepción (°C) <span class="req">*</span></label>
+            <input type="number" class="form-input" formControlName="temperatura" [class.form-input--error]="campoInvalido('temperatura')" />
+            <span class="error-msg" *ngIf="campoInvalido('temperatura')">Ingrese un valor válido.</span>
+          </div>
+        </ion-col>
+        <ion-col size="12" size-md="6">
+          <div class="form-group">
+            <label class="form-label">Termómetro / equipo <span class="req">*</span></label>
+            <select class="form-select" formControlName="idTermometro" [class.form-input--error]="campoInvalido('idTermometro')">
+              <option [ngValue]="null" disabled>Seleccione equipo</option>
+              <option *ngFor="let equipo of equiposLaboratorio" [ngValue]="equipo.idEquipo">{{ equipo.nombreEquipo }}</option>
+            </select>
+            <span class="error-msg" *ngIf="campoInvalido('idTermometro')">Seleccione un equipo.</span>
+          </div>
+        </ion-col>
+        <ion-col size="12" size-md="6">
+          <div class="form-group">
+            <label class="form-label">Código manual del equipo <span class="req">*</span></label>
+            <input type="text" class="form-input codigo-manual-input" formControlName="codigoEquipoManual" [class.form-input--error]="campoInvalido('codigoEquipoManual')" placeholder="Ej: EQ-001" maxlength="50" />
+            <span class="error-msg" *ngIf="campoInvalido('codigoEquipoManual')">Campo obligatorio.</span>
+          </div>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</div>
