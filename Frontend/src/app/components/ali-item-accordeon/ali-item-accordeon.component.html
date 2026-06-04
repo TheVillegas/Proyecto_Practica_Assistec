@@ -96,49 +96,23 @@
             </div>
           </div>
           <h4 class="doc-section-title">Documentación Asociada</h4>
-          <!-- Reporte TPA -->
-          <div class="doc-card" [ngClass]="getContainerStyle(muestra.reporteTPA.estado)">
-            <div class="doc-icon-wrapper">
-              <ion-icon
-                [name]="muestra.reporteTPA.estado.toUpperCase() === 'VERIFICADO' ? 'checkmark-circle-outline' : 'document-outline'"
-                class="doc-icon"
-                [ngClass]="muestra.reporteTPA.estado.toUpperCase() === 'VERIFICADO' ? 'text-brand-primary' : 'text-gray-400'">
-              </ion-icon>
-              <div class="doc-info">
-                <span class="doc-label"
-                  [ngClass]="muestra.reporteTPA.estado.toUpperCase() === 'VERIFICADO' ? 'text-gray-900' : 'text-gray-700'">
-                  Reporte TPA
-                </span>
-                <a class="doc-link" (click)="goToReporteTPA($event)">
-                  Ver documento
-                </a>
-              </div>
-            </div>
-            <span class="status-badge-custom" [ngClass]="getColorEstado(muestra.reporteTPA.estado)">
-              {{ formatearEstado(muestra.reporteTPA.estado) }}
-            </span>
-          </div>
 
-          <!-- Reporte RAM -->
-          <div class="doc-card" [ngClass]="getContainerStyle(muestra.reporteRAM.estado)">
+          <div *ngFor="let form of muestra.formularios" class="doc-card cursor-pointer" [ngClass]="getContainerStyle(form.estado)" (click)="irAFormulario(form, $event)">
             <div class="doc-icon-wrapper">
               <ion-icon
-                [name]="muestra.reporteRAM.estado.toUpperCase() === 'VERIFICADO' ? 'checkmark-circle-outline' : 'document-outline'"
+                [name]="form.codigo === 'TPA' || form.codigo === 'RAM' ? (form.estado.toUpperCase() === 'VERIFICADO' ? 'checkmark-circle-outline' : 'document-outline') : 'flask-outline'"
                 class="doc-icon"
-                [ngClass]="muestra.reporteRAM.estado.toUpperCase() === 'VERIFICADO' ? 'text-brand-primary' : 'text-gray-400'">
+                [ngClass]="form.estado.toUpperCase() === 'VERIFICADO' ? 'text-brand-primary' : 'text-gray-400'">
               </ion-icon>
               <div class="doc-info">
-                <span class="doc-label"
-                  [ngClass]="muestra.reporteRAM.estado.toUpperCase() === 'VERIFICADO' ? 'text-gray-900' : 'text-gray-700'">
-                  Reporte RAM
+                <span class="doc-label" [ngClass]="form.estado.toUpperCase() === 'VERIFICADO' ? 'text-gray-900' : 'text-gray-700'">
+                  {{ form.nombre }}
                 </span>
-                <a class="doc-link" (click)="goToReporteRAM($event)">
-                  Ver documento
-                </a>
+                <span class="doc-link">Abrir formulario</span>
               </div>
             </div>
-            <span class="status-badge-custom" [ngClass]="getColorEstado(muestra.reporteRAM.estado)">
-              {{ formatearEstado(muestra.reporteRAM.estado) }}
+            <span class="status-badge-custom" [ngClass]="getColorEstado(form.estado)">
+              {{ formatearEstado(form.estado) }}
             </span>
           </div>
 

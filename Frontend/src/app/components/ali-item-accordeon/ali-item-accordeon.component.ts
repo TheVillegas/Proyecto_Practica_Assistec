@@ -239,20 +239,23 @@ export class ALIItemAccordeonComponent implements OnInit {
         return 'hover:bg-gray-50 border-transparent hover:border-gray-100';
     }
   }
-  goToReporteTPA(event?: Event) {
+  irAFormulario(form: any, event?: Event) {
     if (event) event.stopPropagation();
-    console.log("Redirigiendo a Reporte TPA");
-    console.log(this.muestra.ALIMuestra);
-    //cambiar el query params una vez implementado el backend
-    this.router.navigate(["/reporte-tpa", this.muestra.ALIMuestra], { queryParams: { estadoTPA: this.muestra.reporteTPA.estado } });
-  }
+    if (!form.ruta) return;
 
-  goToReporteRAM(event?: Event) {
-    if (event) event.stopPropagation();
-    console.log("Redirigiendo a Reporte RAM");
-    console.log(this.muestra.ALIMuestra);
-    //cambiar el query params una vez implementado el backend
-    this.router.navigate(["/reporte-ram", this.muestra.ALIMuestra], { queryParams: { estadoRAM: this.muestra.reporteRAM.estado } });
+    console.log("Navegando a", form.nombre, "para ALI", this.muestra.ALIMuestra);
+
+    // TPA y RAM usan /ruta/:codigoALI
+    if (form.codigo === 'TPA' || form.codigo === 'RAM') {
+      this.router.navigate([form.ruta, this.muestra.ALIMuestra], { queryParams: { estado: form.estado } });
+    } else {
+      // Formularios microbiológicos usan /ruta?ali=XXX&analisis=ID
+      const queryParams: any = { ali: this.muestra.ALIMuestra };
+      if (form.idSolicitudAnalisis?.length) {
+        queryParams.analisis = form.idSolicitudAnalisis.join(',');
+      }
+      this.router.navigate([form.ruta], { queryParams });
+    }
   }
 
   /**
