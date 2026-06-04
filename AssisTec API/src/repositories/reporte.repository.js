@@ -55,7 +55,7 @@ class ReporteRepository {
                 ram = await tx.ramReporte.create({
                     data: {
                         codigoAli: numeroAli,
-                        estadoRam: 'Borrador'
+                        estadoRam: 'NO_REALIZADO'
                     }
                 });
             }

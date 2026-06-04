@@ -231,7 +231,12 @@ class SolicitudService {
                 await formularioMicrobiologicoService.crearFormulariosParaSolicitud(solicitudActualizada, tx);
                 return solicitudActualizada;
             });
-            return this.serializeSolicitud(updated);
+
+            // Crear MuestraAli + reportes TPA/RAM automáticamente tras validación completa
+            // para que la solicitud aparezca en Búsqueda ALI con sus análisis
+            const resultadoReportes = await reporteService.generarDesdeValidacion(updated, updated.updatedAt, usuario);
+
+            return this.serializeSolicitud(resultadoReportes.solicitudActualizada ?? updated);
         }
 
         const updated = await solicitudRepository.update(id, updateData, expectedUpdatedAt);
