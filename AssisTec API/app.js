@@ -19,6 +19,7 @@ const catalogoRoutes = require('./src/routes/catalogo.routes');
 const saureusRoutes = require('./src/routes/saureus.routes');
 const coliformesRoutes = require('./src/routes/coliformes.routes');
 const salmonellaRoutes = require('./src/routes/salmonella.routes');
+const muestraAliRoutes = require('./src/routes/muestraAli.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/solicitud', solicitudRoutes);
@@ -29,6 +30,7 @@ app.use('/api/catalogo', catalogoRoutes);
 app.use('/api/formulario/sau', saureusRoutes);
 app.use('/api/formulario/coli', coliformesRoutes);
 app.use('/api/formulario/sal', salmonellaRoutes);
+app.use('/api/MuestraALI', muestraAliRoutes);
 
 // Ruta de health check
 app.get('/', (req, res) => {

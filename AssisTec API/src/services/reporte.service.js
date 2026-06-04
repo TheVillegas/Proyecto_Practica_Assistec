@@ -51,13 +51,17 @@ class ReporteService {
             throw new Error('NO_ANALYSIS');
         }
 
+        // Extraer observaciones de laboratorio desde el JSON metadata de la solicitud
+        const metadata = this.parseMetadata(solicitud.observacionesGenerales);
+        const observacionesLaboratorio = metadata.observacionesLaboratorio ?? '';
+
         const resultado = await reporteRepository.crearBridge({
             idSolicitud: solicitud.idSolicitud,
             numeroAli: solicitud.numeroAli,
             reqTpa: requisitos.requiereTpa,
             reqRam: requisitos.requiereRam,
-            observacionesCliente: solicitud.observacionesCliente,
-            observacionesGenerales: solicitud.observacionesGenerales,
+            observacionesCliente: solicitud.notasDelCliente,
+            observacionesGenerales: observacionesLaboratorio,
             expectedUpdatedAt: options.expectedUpdatedAt,
             actualizarSolicitud: options.actualizarSolicitud
         });

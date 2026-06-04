@@ -53,6 +53,7 @@ class FormularioMicrobiologicoService {
             const txModel = tx[`${tipo}Formulario`];
             const creado = await repository.create({
                 idSolicitudAnalisis: analisis.idSolicitudAnalisis,
+                estado: 'NO_REALIZADO',
                 rutAnalista: null,
                 muestras: muestrasPayload
             }, txModel);

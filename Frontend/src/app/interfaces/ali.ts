@@ -1,14 +1,19 @@
-import { ReporteRAM } from './reporte-ram.interface';
-import { ReporteTPA } from './reporte-tpa.interface';
-
 export interface ImagenObservacion {
-    id_imagen?: number;     // ID de la base de datos (si ya está guardada)
+    id_imagen?: number;
     nombre: string;
     tipo: string;
     tamanio: number;
-    s3_key: string;         // Referencia S3
-    url?: string;           // URL firmada temporal (para visualización)
+    s3_key: string;
+    url?: string;
     fechaAdjunto: string;
+}
+
+export interface FormularioAli {
+    codigo: string;
+    nombre: string;
+    estado: string;
+    ruta?: string;
+    idSolicitudAnalisis?: string[];
 }
 
 export interface ALI {
@@ -16,10 +21,6 @@ export interface ALI {
     CodigoSerna: number;
     observacionesCliente: string;
     observacionesGenerales: string;
-    imagenesObservaciones?: ImagenObservacion[]; // Array opcional de imágenes adjuntas
-
-    reporteTPA: ReporteTPA;
-    reporteRAM: ReporteRAM;
-
-    //Aca irian los demas estados de los reportes proximamentes digitalizados
+    imagenesObservaciones?: ImagenObservacion[];
+    formularios: FormularioAli[];
 }
