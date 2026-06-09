@@ -9,28 +9,27 @@
 
 ### ¿Qué hace la Fase 5?
 
-Es la pantalla donde el analista **ingresa los datos de las placas** y el sistema **calcula automáticamente** las UFC/g de S. aureus, usando el mismo método ISO 7218 que ya usamos para RAM pero con pasos extra de confirmación por coagulasa.
+Es la pantalla donde el analista **ingresa los datos validados del flujo S. aureus** y el sistema **calcula automáticamente** las UFC/g. La regla corregida es: desde las colonias posibles S. aureus se toman hasta 5 colonias características, luego se evalúa coagulasa a 4 hrs/24 horas, se calcula un recuento previo y ese valor alimenta la fórmula general.
 
 ### Flujo por muestra
 
 ```
-① El analista cuenta colonias en las placas → ingresa dilución y recuento
+① El analista cuenta colonias posibles S. aureus
        │
        ▼
-② De esas colonias, selecciona cuántas va a confirmar
+② Toma hasta 5 colonias características para coagulasa
        │
        ▼
-③ Hace prueba de coagulasa a las 4-6 horas → anota cuántas dieron positivo
-       │
-       ▼
-④ Vuelve a las 24 horas → anota cuántas más dieron positivo
+③ Hace coagulasa a las 4 hrs
+   • Si sale positiva → se calcula altiro
+   • Si no sale positiva → se espera hasta 24 horas
        │
        ▼
 ⑤ Sistema calcula:
-   • Ratio = colonias confirmadas ÷ colonias seleccionadas
-   • Aplica ese ratio al recuento original
-   • Calcula UFC/g según ISO 7218
-   • Si ningún tiempo dio positivo → SD (Sin Desarrollo)
+   • Ratio = colonias coagulasa positivas ÷ colonias traspasadas
+   • Colonias previas = ratio × colonias posibles S. aureus totales
+   • Aplica la fórmula general con ese resultado previo
+   • Si 4 hrs y 24 horas no dan positivo → SD por coagulasa
 ```
 
 ### Regla del Duplicado
@@ -43,7 +42,7 @@ El duplicado en S. aureus **NO es una siembra duplicada**. Es un **dato históri
 
 ### ¿Qué pasa si no hay desarrollo?
 
-Si a las 24h y 48h no se observan colonias características → se salta toda la confirmación y coagulasa → el resultado es **SD** (Sin Desarrollo). Esto ya se maneja en etapas anteriores; la Fase 5 solo procesa lo que llegó con datos.
+Si a las 24 horas y 48 horas no se observan colonias características → se salta toda la confirmación y coagulasa → el resultado es **SD** (Sin Desarrollo). Esto ya se maneja en etapas anteriores; la Fase 5 solo procesa lo que llegó con datos.
 
 ---
 
@@ -67,13 +66,13 @@ Cada muestra se muestra en una tarjeta independiente. El layout es el mismo para
 │  │  │ 10⁻³ │   —     │   —     │   ← opcional           │    │
 │  │  └──────┴─────────┴─────────┘                        │    │
 │  │                                                       │    │
-│  │  Confirmación                                         │    │
+│  │  Confirmación y coagulasa                             │    │
 │  │  ┌──────────────┬─────────┬─────────┐                │    │
 │  │  │              │ Placa A │ Placa B │                │    │
 │  │  ├──────────────┼─────────┼─────────┤                │    │
-│  │  │ A confirmar  │   15    │   10    │                │    │
-│  │  │ Coagulasa 4h │   12    │    8    │                │    │
-│  │  │ Coagulasa 24h│    3    │    2    │                │    │
+│  │  │ A confirmar  │    3    │    2    │ ← máx. 5       │    │
+│  │  │ Coag. 4 hrs  │    1    │    1    │ ← positivo     │    │
+│  │  │ Coag. 24 h   │    —    │    —    │ ← no aplica    │    │
 │  │  └──────────────┴─────────┴─────────┘                │    │
 │  │                                                       │    │
 │  │  Resultados del cálculo                               │    │
@@ -82,10 +81,11 @@ Cada muestra se muestra en una tarjeta independiente. El layout es el mismo para
 │  │  │  Ʃa (total):         58                     │     │    │
 │  │  │  d (dilución):       0,01  (10⁻²)           │     │    │
 │  │  │  ─────────────────────────────────────      │     │    │
-│  │  │  N S. Aureus:        1,9 x 10⁴ UFC/g   ✓   │     │    │
-│  │  │  NE S. Aureus:       1,9 x 10⁴ UFC/g       │     │    │
+│  │  │  Previas:            (2 ÷ 5) × 58 = 23,2  │     │    │
+│  │  │  N S. Aureus:        1,2 x 10³ UFC/g   ✓   │     │    │
+│  │  │  NE S. Aureus:       1,2 x 10³ UFC/g       │     │    │
 │  │  │  ─────────────────────────────────────      │     │    │
-│  │  │  4h: 1,9 x 10⁴   ·   24h: SD               │     │    │
+│  │  │  Lectura usada: 4 hrs · 24 horas: no aplica │     │    │
 │  │  └─────────────────────────────────────────────┘     │    │
 │  │                                                       │    │
 │  │  [🧮 Calcular muestra]                                │    │
@@ -101,7 +101,7 @@ Cada muestra se muestra en una tarjeta independiente. El layout es el mismo para
 │  │  │  N S. Aureus:        SD                 ⚠  │     │    │
 │  │  │  NE S. Aureus:       SD                     │     │    │
 │  │  │  ─────────────────────────────────────      │     │    │
-│  │  │  4h: SD  ·  24h: SD                         │     │    │
+│  │  │  4 hrs: SD  ·  24 horas: SD                 │     │    │
 │  │  └─────────────────────────────────────────────┘     │    │
 │  │                                                       │    │
 │  │  [🧮 Calcular muestra]                                │    │
@@ -122,13 +122,14 @@ Cada muestra se muestra en una tarjeta independiente. El layout es el mismo para
 │  │  Datos importados de Muestra 1 del ALI-421       │    │
 │  │                                                   │    │
 │  │  Recuento:  Dil -2  │ PA: 28 │ PB: 30            │    │
-│  │  Confirmar: PA: 15  │ PB: 10                     │    │
-│  │  Coag 4h:  PA: 12  │ PB: 8                       │    │
-│  │  Coag 24h: PA: 3   │ PB: 2                       │    │
+│  │  Posibles S.a: PA: 28 │ PB: 30                   │    │
+│  │  A confirmar: PA: 3  │ PB: 2   (máx. 5)          │    │
+│  │  Coag 4 hrs: PA: 1 │ PB: 1  · 24 horas: no aplica│    │
 │  │  ─────────────────────────────────────            │    │
 │  │  a: 58  │  Ʃa: 58  │  d: 0,01                   │    │
-│  │  N S. Aureus:  1,9 x 10⁴ UFC/g  (ref)           │    │
-│  │  NE S. Aureus: 1,9 x 10⁴ UFC/g                  │    │
+│  │  Previas: 23,2                                  │    │
+│  │  N S. Aureus:  1,2 x 10³ UFC/g  (ref)           │    │
+│  │  NE S. Aureus: 1,2 x 10³ UFC/g                  │    │
 │  └──────────────────────────────────────────────────┘    │
 │                                                           │
 │  [🔄 Re-importar]  [✏️ Editar manualmente]                │
@@ -174,17 +175,19 @@ Cuando ya están todas las muestras calculadas, la Etapa 6 muestra el consolidad
 | **d** | Factor de dilución usado para el cálculo | 10 elevado a la -|dilución| (ej: 10⁻² = 0,01) |
 | **n₁** | Número de placas contables en la primera dilución | 1 o 2 placas |
 | **n₂** | Número de placas contables en la segunda dilución | 0, 1 o 2 placas |
-| **N S. Aureus** | Resultado final en UFC/g, aplicando el ratio de confirmación | `(Ʃa / (V × (n₁ + 0,1×n₂) × d)) × ratio_confirmación` |
+| **Colonias previas** | Recuento ajustado antes de aplicar la fórmula general | `(coagulasa positivas ÷ colonias traspasadas) × colonias posibles S. aureus totales` |
+| **N S. Aureus** | Resultado final en UFC/g, usando las colonias previas | `colonias_previas / (V × (n₁ + 0,1×n₂) × d)` |
 | **NE S. Aureus** | Expresión alternativa del resultado (para informes con distinta norma) | Mismo cálculo pero con redondeo distinto si aplica |
 
 ### ¿Qué hace el botón "Calcular"?
 
-1. Toma los datos de la muestra (diluciones, colonias, confirmación, coagulasa 4h y 24h)
-2. Calcula el ratio de confirmación para cada tiempo
-3. Aplica el ratio al recuento de colonias
-4. Ejecuta el algoritmo ISO 7218 (clasificación por prioridades)
-5. Devuelve: `a`, `Ʃa`, `d`, `n₁`, `n₂`, `N`, `NE` y el texto formateado
-6. Si ambos tiempos (4h y 24h) dieron 0 confirmaciones → resultado = **SD**
+1. Toma los datos de la muestra: colonias posibles S. aureus, colonias características traspasadas y coagulasa.
+2. Valida que las colonias traspasadas para coagulasa no superen 5.
+3. Si coagulasa 4 hrs tiene positivos, usa esa lectura y no espera 24 horas para calcular.
+4. Si coagulasa 4 hrs no tiene positivos, usa la lectura 24 horas.
+5. Calcula `colonias_previas = (coagulasa positivas ÷ colonias traspasadas) × colonias posibles S. aureus totales`.
+6. Ejecuta la fórmula general con ese recuento previo.
+7. Si 4 hrs y 24 horas dieron 0 positivos → resultado = **SD** por coagulasa.
 
 ---
 
@@ -193,7 +196,7 @@ Cuando ya están todas las muestras calculadas, la Etapa 6 muestra el consolidad
 ```
                     ┌──────────────────┐
                     │  ¿Hay colonias   │
-                    │  en 24h o 48h?   │
+                    │  en 24 h o 48 h? │
                     └────────┬─────────┘
                              │
               ┌──────────────┴──────────────┐
@@ -207,22 +210,21 @@ Cuando ya están todas las muestras calculadas, la Etapa 6 muestra el consolidad
              │
              ▼
     ┌──────────────────┐
-    │ ¿Confirma por    │
-    │ coagulasa?       │
+    │ Tomar hasta 5    │
+    │ colonias caract. │
     └────────┬─────────┘
              │
       ┌──────┴──────┐
-      │ Sí           │ No (bajo umbral)
+      │ Válido       │ > 5
       ▼              ▼
   ┌──────────┐  ┌──────────────────┐
-  │ Ingresa  │  │ Calculo directo  │
-  │ colonias │  │ ISO 7218 sin     │
-  │ a confir │  │ ajuste           │
+  │ Coagulasa│  │ Corregir selección│
+  │ 4 hrs    │  │ antes de calcular │
   └────┬─────┘  └──────────────────┘
        │
        ▼
   ┌──────────────────┐
-  │ Coagulasa 4-6h   │
+   │ Coagulasa 4 hrs  │
   │ ¿positivo?       │
   └────────┬─────────┘
            │
@@ -230,38 +232,38 @@ Cuando ya están todas las muestras calculadas, la Etapa 6 muestra el consolidad
     │ Sí           │ No
     ▼              ▼
   ┌──────────┐  ┌──────────────────┐
-  │ Ratio 4h │  │ Coagulasa 24h   │
-  │ calcular │  │ ¿positivo?       │
+   │ Usar 4hrs│  │ Coagulasa 24 h  │
+   │ altiro   │  │ ¿positivo?       │
   └────┬─────┘  └────────┬─────────┘
        │                 │
        │          ┌──────┴──────┐
        │          │ Sí           │ No
        │          ▼              ▼
-       │    ┌──────────┐  ┌──────────────────┐
-       │    │ Ratio 24h│  │  SD por          │
-       │    │ calcular │  │  confirmación    │
+        │    ┌──────────┐  ┌──────────────────┐
+        │    │Usar 24 h│  │  SD por          │
+        │    │          │  │  coagulasa       │
        │    └────┬─────┘  └──────────────────┘
        │         │
        └────┬────┘
             ▼
     ┌──────────────────┐
-    │ ¿Ambos SD?       │
+    │ Calcular previas │
     └────────┬─────────┘
              │
-    ┌────────┴────────┐
-    │ Sí               │ No
-    ▼                  ▼
-  ┌──────────┐  ┌──────────────────┐
-  │ Resultado│  │ Tomar el mayor   │
-  │ = SD     │  │ entre 4h y 24h   │
-  └──────────┘  └──────────────────┘
-                       │
-                       ▼
-              ┌──────────────────┐
-              │  N = Ʃa /        │
-              │  (V × n × d)     │
-              │  × ratio         │
-              └──────────────────┘
+             │
+             ▼
+    ┌──────────────────┐
+    │ previas =        │
+    │ positivas /      │
+    │ confirmadas ×    │
+    │ posibles S.a     │
+    └────────┬─────────┘
+             │
+             ▼
+    ┌──────────────────┐
+    │ Fórmula general  │
+    │ con previas      │
+    └──────────────────┘
 ```
 
 ---
@@ -272,7 +274,8 @@ Cuando ya están todas las muestras calculadas, la Etapa 6 muestra el consolidad
 |---|---|
 | Tarjetas de muestra | Colapsables/expandibles para no saturar la pantalla. Por defecto M1 expandida, las demás colapsadas. |
 | Campos de resultado (`a`, `Ʃa`, `d`, `N`, `NE`) | **Solo lectura** — los calcula el sistema. El analista no los toca. |
-| Inputs de recuento y confirmación | Editables. Si se cambia un valor, el resultado se marca como "desactualizado" hasta que se recalcula. |
+| Inputs de recuento y confirmación | Editables. La toma para coagulasa debe permitir máximo 5 colonias características. Si se cambia un valor, el resultado se marca como "desactualizado" hasta que se recalcula. |
+| Coagulasa 24 horas | Se habilita solo si la lectura de 4 hrs no fue positiva. |
 | Botón "Calcular TODAS" | Ejecuta el cálculo para todas las muestras con datos en paralelo. |
 | Duplicado | El selector de ALI busca solo ALIs que tengan datos de S. aureus. Si no hay datos, muestra advertencia. |
 | Resultado SD | Se muestra con badge gris y texto "SD". No como cero. |
@@ -281,7 +284,6 @@ Cuando ya están todas las muestras calculadas, la Etapa 6 muestra el consolidad
 
 ## 6. Preguntas pendientes para la supervisora
 
-- [ ] **Umbral de confirmación**: ¿a partir de cuántas UFC/g se debe hacer confirmación por coagulasa? ¿O es decisión del analista siempre?
 - [ ] **Expresión final**: cuando el resultado es `<10`, ¿se deja como `<10 UFC/g` o se usa otra expresión?
 - [ ] **NE S. Aureus**: ¿se usa siempre o solo para ciertos mercados/destinos?
 - [ ] **Resultado consolidado**: cuando hay múltiples muestras con resultado, ¿se informa el **máximo**, el **promedio** o **cada muestra por separado**?

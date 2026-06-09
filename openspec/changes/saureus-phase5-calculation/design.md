@@ -2,11 +2,19 @@
 
 ## 1. Resumen
 
-Re-diseño de la **Etapa 5 (Resultados S. Aureus)** del formulario S. aureus para que funcione como pantalla de cálculo consolidado, siguiendo el mismo patrón ISO 7218 que RAM pero incorporando los pasos extra de confirmación por coagulasa (4-6h y 24h).
+Re-diseño de la **Etapa 5 (Resultados S. Aureus)** del formulario S. aureus para que funcione como pantalla de cálculo consolidado, siguiendo el mismo patrón ISO 7218 que RAM pero incorporando la secuencia validada: colonias posibles S. aureus, toma de hasta 5 colonias características, coagulasa a 4 hrs/24 horas y cálculo del recuento previo ajustado.
 
 **Diferencia clave con RAM:**
 - RAM: recuento directo de colonias → UFC/g
-- S. aureus: recuento → selección de colonias a confirmar → coagulasa 4-6h + 24h → ratio de confirmación → UFC/g ajustado
+- S. aureus: recuento de colonias posibles S. aureus → toma de hasta 5 colonias características → coagulasa 4 hrs/24 horas → proporción positivas/colonias traspasadas → recuento previo ajustado → fórmula general
+
+**Regla validada con coordinación:**
+- Desde la primera etapa pueden existir `x` colonias posibles S. aureus.
+- Se toman **como máximo 5 colonias características** para pasar a coagulasa.
+- La coagulasa se lee a las **4 hrs**; si ya es positiva, se registra el resultado inmediatamente.
+- Si a las 4 hrs no es positiva, se espera hasta las **24 horas**.
+- Resultado previo = `(colonias coagulasa positivas / colonias traspasadas) × colonias posibles S. aureus totales`.
+- Ese resultado previo alimenta la fórmula general de cálculo UFC/g.
 
 ---
 
@@ -33,7 +41,7 @@ En el Excel `S.AUREUS.xlsx`, la columna "Duplicado" no contiene datos propios. E
 │  │  Datos importados de ALI-2025-00421 · Muestra 1  ││
 │  │                                                  ││
 │  │  Dilución: -2  │  Placa A: 28  │  Placa B: 30   ││
-│  │  A confirmar:  │  4h: 12       │  24h: 3        ││
+│  │  A confirmar:  │  4 hrs: 12    │  24 horas: 3  ││
 │  │  [🔄 Re-importar]                               ││
 │  └──────────────────────────────────────────────────┘│
 │                                                      │
@@ -60,10 +68,10 @@ form-s-aureus.page
 ├── etapa5-resultados                  ← NUEVO: Fase 5 rediseñada
 │   ├── saureus-muestra-card           ← Componente card por muestra
 │   │   ├── recuento-table             ← Tabla padre dilución + colonias
-│   │   ├── confirmacion-section       ← Colonias a confirmar
-│   │   ├── coagulasa-tiempo-section   ← 4-6h (reutilizado ×2)
+│   │   ├── seleccion-confirmacion-section ← Máximo 5 colonias características
+│   │   ├── coagulasa-tiempo-section   ← 4 hrs (primera lectura)
 │   │   │   └── placa-input            ← Input individual placa A/B
-│   │   ├── coagulasa-tiempo-section   ← 24h (mismo componente)
+│   │   ├── coagulasa-tiempo-section   ← 24 horas (mismo componente)
 │   │   └── resultado-badge            ← Badge del resultado calculado
 │   └── saureus-duplicado-card         ← Card especial del duplicado
 │       ├── ali-selector               ← Selector de ALI pasado
@@ -97,7 +105,7 @@ export class SaureusMuestraCardComponent {
 }
 ```
 
-### `coagulasa-tiempo-section` — Reutilizado para 4-6h y 24h
+### `coagulasa-tiempo-section` — Lecturas 4 hrs y 24 horas
 
 ```typescript
 @Component({
@@ -105,7 +113,7 @@ export class SaureusMuestraCardComponent {
   // standalone: true
 })
 export class CoagulasaTiempoSectionComponent {
-  @Input() label!: string;                // "4-6 Hrs" o "24 Hrs"
+  @Input() label!: string;                // "4 hrs" o "24 horas"
   @Input() confirmadas!: [number|null, number|null];  // [Placa A, Placa B]
   @Output() confirmadasChange = new EventEmitter<[number|null, number|null]>();
   
@@ -140,20 +148,22 @@ model SaureusMuestra {
   c3              Int?                                  // Placa A, dilución 2
   c4              Int?                                  // Placa B, dilución 2
 
-  // ── Confirmación ──
-  colConfirmar1   Int?     @map("col_confirmar_1")       // Colonias a confirmar, Placa A
-  colConfirmar2   Int?     @map("col_confirmar_2")       // Colonias a confirmar, Placa B
+  // ── Selección y Confirmación ──
+  coloniasPosibles1 Int? @map("colonias_posibles_1")      // Colonias posibles S. aureus, Placa A
+  coloniasPosibles2 Int? @map("colonias_posibles_2")      // Colonias posibles S. aureus, Placa B
+  colConfirmar1   Int?     @map("col_confirmar_1")       // Colonias características traspasadas, máx. 5 total
+  colConfirmar2   Int?     @map("col_confirmar_2")
 
-  // ── Coagulasa 4-6h ──
-  confirmadas4h1  Int?     @map("confirmadas_4h_1")      // Confirmadas +, Placa A
-  confirmadas4h2  Int?     @map("confirmadas_4h_2")      // Confirmadas +, Placa B
+  // ── Coagulasa 4 hrs ──
+  confirmadas4h1  Int?     @map("confirmadas_4h_1")      // Coagulasa +, Placa A
+  confirmadas4h2  Int?     @map("confirmadas_4h_2")      // Coagulasa +, Placa B
   fechaLectura4h  DateTime? @map("fecha_lectura_4h")
   horaLectura4h   String?  @map("hora_lectura_4h")
   analistaLectura4h String? @map("analista_lectura_4h")
 
-  // ── Coagulasa 24h ──
-  confirmadas24h1 Int?     @map("confirmadas_24h_1")     // Confirmadas +, Placa A
-  confirmadas24h2 Int?     @map("confirmadas_24h_2")     // Confirmadas +, Placa B
+  // ── Coagulasa 24 horas ──
+  confirmadas24h1 Int?     @map("confirmadas_24h_1")     // Coagulasa +, Placa A
+  confirmadas24h2 Int?     @map("confirmadas_24h_2")     // Coagulasa +, Placa B
   fechaLectura24h DateTime? @map("fecha_lectura_24h")
   horaLectura24h  String?  @map("hora_lectura_24h")
   analistaLectura24h String? @map("analista_lectura_24h")
@@ -163,8 +173,8 @@ model SaureusMuestra {
   resultadoTexto  String?  @map("resultado_texto")       // "1,9 x 10⁴ UFC/g"
   operador        String?  @default("=")                 // "=", "<", ">"
   esSd            Boolean  @default(false) @map("es_sd") // Sin desarrollo
-  ratio4h         Decimal? @map("ratio_4h")              // confirmadas4h / colConfirmar
-  ratio24h        Decimal? @map("ratio_24h")
+  ratioCoagulasa  Decimal? @map("ratio_coagulasa")       // coagulasa positivas / colonias traspasadas
+  coloniasPrevias Decimal? @map("colonias_previas")       // ratioCoagulasa × colonias posibles S. aureus totales
   sumaColonias    Int?     @map("suma_colonias")
   n1              Int?                                   // Placas 1ra dilución
   n2              Int?                                   // Placas 2da dilución
@@ -199,9 +209,10 @@ Request:
     { "dil": -2, "colonias": [28, 30] },
     { "dil": -3, "colonias": [null, null] }
   ],
-  "colConfirmar": [15, 10],             // [Placa A, Placa B]
-  "confirmadas4h": [12, 8],             // [Placa A, Placa B]
-  "confirmadas24h": [3, 2]              // [Placa A, Placa B]
+  "coloniasPosibles": [28, 30],         // posibles S. aureus por placa
+  "colConfirmar": [3, 2],               // colonias características traspasadas, máximo 5 total
+  "coagulasa4h": [1, 1],                // positivas a 4 hrs
+  "coagulasa24h": [null, null]          // positivas a 24 horas; solo se usa si 4 hrs no fue positiva
 }
 
 Response 200:
@@ -213,20 +224,9 @@ Response 200:
     "textoRPES": "18500",
     "operador": "=",
     "esSd": false,
-    "resultadosPorTiempo": {
-      "coagulasa4h": {
-        "ufc": 18500,
-        "ratio": 0.8,
-        "texto": "1,9 x 10⁴ UFC/g",
-        "operador": "="
-      },
-      "coagulasa24h": {
-        "ufc": null,
-        "ratio": 0.0,
-        "texto": "SD",
-        "operador": "<"
-      }
-    },
+    "coagulasaUsada": "4 hrs",
+    "ratioCoagulasa": 0.5,
+    "coloniasPrevias": 29,
     "sumaColonias": 58,
     "n1": 2,
     "n2": 0,
@@ -248,9 +248,10 @@ Request:
     {
       "id": "M1",
       "diluciones": [...],
-      "colConfirmar": [15, 10],
-      "confirmadas4h": [12, 8],
-      "confirmadas24h": [3, 2]
+      "coloniasPosibles": [28, 30],
+      "colConfirmar": [3, 2],
+      "coagulasa4h": [1, 1],
+      "coagulasa24h": [null, null]
     },
     {
       "id": "M2",
@@ -285,9 +286,10 @@ Response 200:
   "aliOrigen": 421,
   "muestra1": {
     "diluciones": [{ "dil": -2, "colonias": [28, 30] }],
-    "colConfirmar": [15, 10],
-    "confirmadas4h": [12, 8],
-    "confirmadas24h": [3, 2],
+    "coloniasPosibles": [28, 30],
+    "colConfirmar": [3, 2],
+    "coagulasa4h": [1, 1],
+    "coagulasa24h": [null, null],
     "resultadoTexto": "1,9 x 10⁴ UFC/g"
   },
   "advertencia": null  // o string si no hay datos
@@ -298,30 +300,31 @@ Response 200:
 
 ## 6. Lógica de Cálculo (Backend)
 
-### Algoritmo (misma base ISO 7218 que RAM + ajuste por confirmación)
+### Algoritmo validado (misma base ISO 7218 que RAM + ajuste por confirmación/coagulasa)
 
 ```
 function calcularResultadoSAureus(datos):
-  1. Clasificar colonias en rangos (óptimo/bajo/exceso/sin crecimiento)
-     → Igual que ReporteRAM.clasificarDiluciones()
+  1. Tomar colonias posibles S. aureus de la primera etapa.
 
-  2. Para CADA tiempo (4h y 24h):
-     a. Calcular ratio = sum(confirmadas) / sum(colConfirmar)
-        Si colConfirmar = 0 → ratio = 0
-     b. Si ratio > 0:
-        - Ajustar colonias originales: ajustadas = colonias × ratio
-        - Aplicar ISO 7218 sobre colonias ajustadas
-        - Guardar resultado parcial
-     c. Si ratio = 0:
-        - Resultado parcial = SD (sin desarrollo)
+  2. Validar selección a confirmación:
+     - sum(colConfirmar) <= 5
+     - sum(colConfirmar) <= sum(coloniasPosibles)
 
-  3. Resultado FINAL de la muestra:
-     - Si ALGÚN tiempo (4h o 24h) tiene resultado → usar ese UFC
-     - Si AMBOS son SD → resultado final = SD
-     - El resultado consolidado = el de mayor valor entre los dos tiempos
-       (porque 24h puede detectar lo que 4-6h no capturó)
+  3. Resolver coagulasa:
+     a. Leer a 4 hrs.
+     b. Si coagulasa 4 hrs tiene positivos → usar coagulasa 4 hrs y cerrar resultado.
+     c. Si coagulasa 4 hrs no tiene positivos → esperar/usar lectura 24 horas.
+     d. Si 24 horas tampoco tiene positivos → resultado = SD por coagulasa.
 
-  4. Resultado CONSOLIDADO del ALI (opcional):
+  4. Calcular resultado previo:
+     coloniasPositivas = sum(coagulasa positiva usada)
+     coloniasTraspasadas = sum(colConfirmar)
+     ratioCoagulasa = coloniasPositivas / coloniasTraspasadas
+     coloniasPrevias = ratioCoagulasa × sum(coloniasPosibles)
+
+  5. Aplicar la fórmula general usando coloniasPrevias como recuento ajustado.
+
+  6. Resultado CONSOLIDADO del ALI (opcional):
      - Para informe final: se toma el resultado de la muestra con mayor
        recuento, o se promedia según criterio del laboratorio.
 ```
@@ -331,19 +334,18 @@ function calcularResultadoSAureus(datos):
 ```
 MUESTRA 1:
   Dilución: -2, Colonias: [28, 30]
-  A confirmar: [15, 10] → 25 total
-  Confirmadas 4h: [12, 8] → 20 total → ratio 4h = 20/25 = 0.8
-  Confirmadas 24h: [3, 2] → 5 total → ratio 24h = 5/25 = 0.2
+  Colonias posibles S. aureus totales: 58
+  A confirmar: [3, 2] → 5 total (máximo permitido)
+  Coagulasa 4 hrs: [1, 1] → 2 positivas
+  Coagulasa 24 horas: no aplica, porque 4 hrs ya fue positiva
 
-  → Ratio 4h = 0.8 > 0 → colonias ajustadas = 28×0.8=22, 30×0.8=24
-  → ISO 7218 con [22, 24]:
-     SumaC = 46, n1 = 2, n2 = 0
+  → Ratio coagulasa = 2 / 5 = 0.4
+  → Colonias previas = 0.4 × 58 = 23.2
+  → Fórmula general con recuento ajustado:
+     SumaC = 23.2, n1 = 2, n2 = 0
      d = 0.01 (10^-2)
-     UFC = 46 / (1 × (2 + 0) × 0.01) = 46 / 0.02 = 2300
-     Resultado = "2,3 x 10³ UFC/g"
-
-  → Ratio 24h = 0.2 > 0 → también aplica, pero da menor
-  → Resultado FINAL = 2,3 x 10³ UFC/g (el de 4h que es mayor)
+     UFC = 23.2 / (1 × (2 + 0) × 0.01) = 23.2 / 0.02 = 1160
+     Resultado = "1,2 x 10³ UFC/g"
 ```
 
 ---
@@ -364,18 +366,19 @@ MUESTRA 1:
 │  │  │ 10⁻³ │   —     │   —     │   ← opcional           │    │
 │  │  └──────┴─────────┴─────────┘                        │    │
 │  │                                                       │    │
-│  │  Confirmación                                         │    │
+│  │  Confirmación y coagulasa                             │    │
 │  │  ┌──────────────┬─────────┬─────────┐                │    │
 │  │  │              │ Placa A │ Placa B │                │    │
 │  │  ├──────────────┼─────────┼─────────┤                │    │
-│  │  │ A confirmar  │   15    │   10    │                │    │
-│  │  │ Coagulasa 4h │   12    │    8    │                │    │
-│  │  │ Coagulasa 24h│    3    │    2    │                │    │
+│  │  │ A confirmar  │    3    │    2    │ ← máx. 5       │    │
+│  │  │ Coag. 4 hrs  │    1    │    1    │ ← positivo     │    │
+│  │  │ Coag. 24 h   │    —    │    —    │ ← no aplica    │    │
 │  │  └──────────────┴─────────┴─────────┘                │    │
 │  │                                                       │    │
 │  │  ┌─────────────────────────────────────────────┐     │    │
-│  │  │  Resultado:  1,9 x 10⁴ UFC/g    [✓]         │     │    │
-│  │  │  4h: 1,9 x 10⁴ · 24h: SD                    │     │    │
+│  │  │  Previas: (2 ÷ 5) × 58 = 23,2 colonias      │     │    │
+│  │  │  Resultado:  1,2 x 10³ UFC/g    [✓]         │     │    │
+│  │  │  Lectura usada: 4 hrs                        │     │    │
 │  │  └─────────────────────────────────────────────┘     │    │
 │  │                                                       │    │
 │  │  [🧮 Calcular muestra]                                │    │
@@ -392,8 +395,9 @@ MUESTRA 1:
 │  │  ┌──────────────────────────────────────────────┐    │    │
 │  │  │  Datos importados de Muestra 1 del ALI-421   │    │    │
 │  │  │  Dil: -2  │ PA: 28 │ PB: 30                  │    │    │
-│  │  │  Conf: 15/10  │ 4h: 12/8  │ 24h: 3/2         │    │    │
-│  │  │  Resultado original: 1,9 x 10⁴               │    │    │
+│  │  │  Posibles S.a: 28/30 │ Conf: 3/2             │    │    │
+│  │  │  Coag 4 hrs: 1/1 │ 24 horas: no aplica      │    │    │
+│  │  │  Previas: 23,2 │ Resultado original: 1,2x10³│    │    │
 │  │  └──────────────────────────────────────────────┘    │    │
 │  │  [🔄 Re-importar]  [✏️ Editar]                       │    │
 │  └───────────────────────────────────────────────────────┘    │
@@ -440,14 +444,19 @@ La Etapa 6 (Conclusión Final) mostrará:
 
 | Condición | Acción | Resultado |
 |---|---|---|
-| Sin colonias en 24h y 48h (Etapa 1-2) | Saltar confirmación/coagulasa | SD |
-| Colonias presentes pero coagulasa 4h + 24h = 0 | SD por confirmación | SD |
-| Coagulasa 4h > 0 | Calcular con ratio 4h | UFC/g (4h) |
-| Coagulasa 4h = 0 pero 24h > 0 | Calcular con ratio 24h | UFC/g (24h) |
-| Ambos tiempos > 0 | Calcular ambos, tomar el mayor | UFC/g (mayor) |
+| Sin colonias en 24 horas y 48 horas (Etapa 1-2) | Saltar confirmación/coagulasa | SD |
+| Colonias posibles S. aureus presentes | Seleccionar hasta 5 colonias características | Continúa a coagulasa |
+| Colonias seleccionadas > 5 | Bloquear o advertir corrección | No calcular |
+| Coagulasa 4 hrs > 0 | Usar 4 hrs y cerrar resultado | UFC/g con lectura 4 hrs |
+| Coagulasa 4 hrs = 0 y 24 horas > 0 | Usar lectura 24 horas | UFC/g con lectura 24 horas |
+| Coagulasa 4 hrs = 0 y 24 horas = 0 | SD por coagulasa | SD |
+
+**Validado con coordinación:**
+- [x] A confirmación pasan como máximo 5 colonias.
+- [x] Si coagulasa 4 hrs es positiva, se obtiene el resultado inmediatamente.
+- [x] Si coagulasa 4 hrs no es positiva, se espera hasta 24 horas.
 
 **Pendiente de confirmación con supervisora:**
-- [ ] Umbral exacto que obliga confirmación (hoy es criterio del analista)
 - [ ] Expresión final para `<10` u otra
 
 ---
@@ -460,4 +469,4 @@ Para no hinchar el HTML, se implementa en **3 capas de componentes**:
 2. **Compuestos**: `recuento-table`, `coagulasa-tiempo-section`, `confirmacion-section`
 3. **Contenedores**: `saureus-muestra-card`, `saureus-duplicado-card`, `etapa5-resultados`
 
-Esto permite reutilizar `coagulasa-tiempo-section` para 4-6h y 24h con distinto `@Input() label`, y reutilizar `recuento-table` tanto en muestras normales como en el duplicado.
+Esto permite reutilizar `coagulasa-tiempo-section` para 4 hrs y 24 horas con distinto `@Input() label`, y reutilizar `recuento-table` tanto en muestras normales como en el duplicado.
