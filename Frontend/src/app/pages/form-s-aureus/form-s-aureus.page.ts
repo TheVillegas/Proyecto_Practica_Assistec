@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
 
@@ -7,80 +7,12 @@ import { AlertController, ToastController } from '@ionic/angular';
 type Cumple = 'cumple' | 'no_cumple' | 'sin_registrar';
 type Desfavorable = 'si' | 'no' | 'sin_registrar';
 
-interface MuestraEtapa1 {
-  id: string;
-  esDuplicado: boolean;
-  label: string;
-  lectura24h1: string;
-  lectura24h2: string;
-  lectura48h1: string;
-  lectura48h2: string;
-}
-
-interface MuestraEtapa3 {
-  id: string;
-  label: string;
-  placa1: string;
-  placa2: string;
-}
-
-interface MuestraEtapa4 {
-  id: string;
-  label: string;
-  placa1: string;
-  placa2: string;
-}
-
-interface MuestraEtapa5 {
-  id: string;
-  label: string;
-  numSAureus: string;
-  ufc: string;
-}
-
-const N_MUESTRAS = 6;
 const MOCK_SOLICITUD = {
   codigoAlimento: 'ALI-2025-00421',
   fechaIncubacion: '06/05',
   horaIncubacion: '10:00',
   analistaIncubacion: 'Dra. Valentina Rojas',
 };
-
-function crearMuestrasEtapa1(): MuestraEtapa1[] {
-  const arr: MuestraEtapa1[] = [];
-  for (let i = 1; i <= N_MUESTRAS; i++) {
-    arr.push({ id: `M${i}`, esDuplicado: false, label: `Muestra ${i}`, lectura24h1: '', lectura24h2: '', lectura48h1: '', lectura48h2: '' });
-  }
-  arr.push({ id: 'DUP', esDuplicado: true, label: 'Duplicado', lectura24h1: '', lectura24h2: '', lectura48h1: '', lectura48h2: '' });
-  return arr;
-}
-
-function crearMuestrasEtapa3(): MuestraEtapa3[] {
-  const arr: MuestraEtapa3[] = [];
-  for (let i = 1; i <= N_MUESTRAS; i++) {
-    arr.push({ id: `M${i}`, label: `Muestra ${i}`, placa1: '', placa2: '' });
-  }
-  arr.push({ id: 'DUP', label: 'Duplicado', placa1: '', placa2: '' });
-  return arr;
-}
-
-function crearMuestrasEtapa4(): MuestraEtapa4[] {
-  const arr: MuestraEtapa4[] = [];
-  for (let i = 1; i <= N_MUESTRAS; i++) {
-    arr.push({ id: `M${i}`, label: `Muestra ${i}`, placa1: '', placa2: '' });
-  }
-  arr.push({ id: 'DUP', label: 'Duplicado', placa1: '', placa2: '' });
-  return arr;
-}
-
-function crearMuestrasEtapa5(): MuestraEtapa5[] {
-  const arr: MuestraEtapa5[] = [];
-  for (let i = 1; i <= N_MUESTRAS; i++) {
-    arr.push({ id: `M${i}`, label: `Muestra ${i}`, numSAureus: '', ufc: '' });
-  }
-  arr.push({ id: 'DUP', label: 'Duplicado', numSAureus: '', ufc: '' });
-  return arr;
-}
 
 @Component({
   selector: 'app-form-s-aureus',
@@ -104,21 +36,10 @@ export class FormSAureusPage implements OnInit {
   datosImportados = { ...MOCK_SOLICITUD };
   form!: FormGroup;
 
-  // ─── Etapa 1 ──────────────────────────────────────────────────────────────
-  muestrasEtapa1: MuestraEtapa1[] = crearMuestrasEtapa1();
+  // ─── Etapa 1: controles ALI (los recuentos se manejan en Etapa 5) ─────────
   e1_duplicadoAliCumple: Cumple = 'sin_registrar';
   e1_controlBlancoCumple: Cumple = 'sin_registrar';
   e1_controlSiembraCumple: Cumple = 'sin_registrar';
-
-  // ─── Etapa 3 ──────────────────────────────────────────────────────────────
-  muestrasEtapa3: MuestraEtapa3[] = crearMuestrasEtapa3();
-
-  // ─── Etapa 4 ──────────────────────────────────────────────────────────────
-  muestrasEtapa4_4a6h: MuestraEtapa4[] = crearMuestrasEtapa4();
-  muestrasEtapa4_24h: MuestraEtapa4[] = crearMuestrasEtapa4();
-
-  // ─── Etapa 5 ──────────────────────────────────────────────────────────────
-  muestrasEtapa5: MuestraEtapa5[] = crearMuestrasEtapa5();
 
   // ─── Etapa 6 ──────────────────────────────────────────────────────────────
   e6_desfavorable: Desfavorable = 'sin_registrar';

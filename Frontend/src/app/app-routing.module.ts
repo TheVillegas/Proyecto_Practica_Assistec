@@ -107,6 +107,12 @@ const routes: Routes = [
     data: { allowedRoles: [0, 4] }
   },
   {
+    path: 'form-salmonella',
+    loadChildren: () => import('./pages/form-salmonella/form-salmonella.module').then((m) => m.FormSalmonellaPageModule),
+    canActivate: [AuthGuard],
+    data: { allowedRoles: [0, 4] }
+  },
+  {
     path: 'validacion-solicitudes',
     loadChildren: () => import('./pages/validacion-solicitudes/validacion-solicitudes.module').then((m) => m.ValidacionSolicitudesPageModule),
     canActivate: [AuthGuard],

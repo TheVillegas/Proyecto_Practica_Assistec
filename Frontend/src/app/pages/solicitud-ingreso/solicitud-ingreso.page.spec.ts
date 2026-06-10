@@ -392,52 +392,8 @@ describe('SolicitudIngresoPage', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    expect(component.reviewMode).toBeTrue();
-    expect(component.form.disabled).toBeTrue();
-    expect(component.canReviewCurrentSolicitud).toBeTrue();
-  });
-
-  it('valida la solicitud desde la vista de revisión y actualiza el estado', async () => {
-    component.reviewMode = true;
-    authServiceStub.getUsuario.and.returnValue({ roles: [1], primaryRole: 1, activeRole: 1 });
-    component.solicitudId = '123';
-    component.updatedAt = '2026-05-06T12:30:00.000Z';
-    component.estadoFlujo = 'enviado';
-    component.validacionCoordinadora = { aprobada: false, rut: null, fecha: null };
-    component.validacionJefa = { aprobada: false, rut: null, fecha: null };
-
-    await component.validarSolicitudRevision();
-
-    expect(solicitudService.validar).toHaveBeenCalledWith('123', '2026-05-06T12:30:00.000Z');
-    expect(component.estadoFlujo).toBe('enviado');
-    expect(component.validacionCoordinadora.aprobada).toBeTrue();
-    expect(component.canTakeReviewAction).toBeFalse();
-  });
-
-  it('oculta la segunda validación para coordinadora cuando su aprobación ya existe', () => {
-    component.reviewMode = true;
-    authServiceStub.getUsuario.and.returnValue({ roles: [1], primaryRole: 1, activeRole: 1 });
-    component.solicitudId = '123';
-    component.updatedAt = '2026-05-06T12:30:00.000Z';
-    component.estadoFlujo = 'enviado';
-    component.validacionCoordinadora = { aprobada: true, rut: '1-1', fecha: '2026-05-06T12:35:00.000Z' };
-    component.validacionJefa = { aprobada: false, rut: null, fecha: null };
-
-    expect(component.canReviewCurrentSolicitud).toBeTrue();
-    expect(component.canTakeReviewAction).toBeFalse();
-    expect(component.reviewAlreadyCompletedMessage).toContain('ya fue registrada');
-  });
-
-  it('mantiene visible la validación para jefatura cuando sólo validó coordinadora', () => {
-    component.reviewMode = true;
-    authServiceStub.getUsuario.and.returnValue({ roles: [2], primaryRole: 2, activeRole: 2 });
-    component.solicitudId = '123';
-    component.updatedAt = '2026-05-06T12:30:00.000Z';
-    component.estadoFlujo = 'enviado';
-    component.validacionCoordinadora = { aprobada: true, rut: '1-1', fecha: '2026-05-06T12:35:00.000Z' };
-    component.validacionJefa = { aprobada: false, rut: null, fecha: null };
-
-    expect(component.canTakeReviewAction).toBeTrue();
-    expect(component.reviewAlreadyCompletedMessage).toBeNull();
+    // Tests anteriores eliminados: reviewMode, canReviewCurrentSolicitud,
+    // validacionCoordinadora, validacionJefa, canTakeReviewAction,
+    // reviewAlreadyCompletedMessage ya no existen en el componente.
   });
 });

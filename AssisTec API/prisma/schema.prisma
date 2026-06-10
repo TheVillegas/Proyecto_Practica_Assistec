@@ -301,6 +301,7 @@ model SolicitudAnalisis {
   sauFormularios  SauFormulario[]
   coliFormularios ColiFormulario[]
   salFormularios  SalFormulario[]
+  saureusMuestras SaureusMuestra[]
 
   @@map("solicitud_analisis")
 }
@@ -475,6 +476,74 @@ model SauMuestra {
   etapa5Resultados SauEtapa5Resultado[]
 
   @@map("sau_muestra")
+}
+
+// ──────────────────────────────────────────────
+// NUEVA TABLA: S. aureus Fase 5 - Cálculo
+// ──────────────────────────────────────────────
+
+model SaureusMuestra {
+  id              String   @id @default(uuid())
+  solicitudAnalisisId BigInt @map("solicitud_analisis_id")
+  numeroMuestra   Int      @map("numero_muestra")       // 1-6
+  esDuplicado     Boolean  @default(false) @map("es_duplicado")
+  aliReferencia   Int?     @map("ali_referencia")       // Solo si es duplicado: ALI origen
+
+  // ── Recuento Padre (hasta 2 diluciones, como RAM) ──
+  dil1            Decimal? @map("dil_1")                 // 10^-2 = -2
+  c1              Int?                                  // Placa A, dilución 1
+  c2              Int?                                  // Placa B, dilución 1
+  dil2            Decimal? @map("dil_2")                 // 10^-3 = -3 (opcional)
+  c3              Int?                                  // Placa A, dilución 2
+  c4              Int?                                  // Placa B, dilución 2
+
+  // ── Selección y Confirmación ──
+  coloniasPosibles1 Int? @map("colonias_posibles_1")      // Colonias posibles S. aureus, Placa A
+  coloniasPosibles2 Int? @map("colonias_posibles_2")      // Colonias posibles S. aureus, Placa B
+  colConfirmar1   Int?     @map("col_confirmar_1")       // Colonias características traspasadas, máx. 5 total
+  colConfirmar2   Int?     @map("col_confirmar_2")
+
+  // ── Coagulasa 4 hrs ──
+  confirmadas4h1  Int?     @map("confirmadas_4h_1")      // Coagulasa +, Placa A
+  confirmadas4h2  Int?     @map("confirmadas_4h_2")      // Coagulasa +, Placa B
+  fechaLectura4h  DateTime? @map("fecha_lectura_4h")
+  horaLectura4h   String?  @map("hora_lectura_4h")
+  analistaLectura4h String? @map("analista_lectura_4h")
+
+  // ── Coagulasa 24 horas ──
+  confirmadas24h1 Int?     @map("confirmadas_24h_1")     // Coagulasa +, Placa A
+  confirmadas24h2 Int?     @map("confirmadas_24h_2")     // Coagulasa +, Placa B
+  fechaLectura24h DateTime? @map("fecha_lectura_24h")
+  horaLectura24h  String?  @map("hora_lectura_24h")
+  analistaLectura24h String? @map("analista_lectura_24h")
+
+  // ── Resultado calculado (solo lectura, lo pone el backend) ──
+  resultadoUfc    Decimal? @map("resultado_ufc")
+  resultadoTexto  String?  @map("resultado_texto")       // "1,9 x 10⁴ UFC/g"
+  operador        String?  @default("=")                 // "=", "<", ">"
+  esSd            Boolean  @default(false) @map("es_sd") // Sin desarrollo
+  aPlacaA         Int?       @map("a_placa_a")     // a calculado para placa A
+  aPlacaB         Int?       @map("a_placa_b")     // a calculado para placa B
+  sumaA           Int?       @map("suma_a")         // Σa = aPlacaA + aPlacaB
+  coagulasaUsada  String?    @map("coagulasa_usada") // "4 hrs" | "24 horas" | null (SD)
+  proporcionA     Decimal?   @map("proporcion_a")   // b/A placa A (para depuración)
+  proporcionB     Decimal?   @map("proporcion_b")   // b/A placa B
+  regla80AplicadaA Boolean?  @map("regla_80_a")     // si se aplicó regla 80% en placa A
+  regla80AplicadaB Boolean?  @map("regla_80_b")     // si se aplicó regla 80% en placa B
+  sumaColonias    Int?     @map("suma_colonias")
+  n1              Int?                                   // Placas 1ra dilución
+  n2              Int?                                   // Placas 2da dilución
+  factorDilucion  Decimal? @map("factor_dilucion")
+  casoAplicado    String?  @map("caso_aplicado")         // PRIORIDAD_1-4
+
+  // ── Metadata ──
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // ── Relaciones ──
+  solicitudAnalisis SolicitudAnalisis @relation(fields: [solicitudAnalisisId], references: [idSolicitudAnalisis])
+
+  @@map("saureus_muestras")
 }
 
 model SauEtapa1 {

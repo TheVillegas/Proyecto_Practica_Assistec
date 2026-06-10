@@ -1,8 +1,28 @@
-# Diseño Técnico: Fase 5 — Cálculo y Resultados S. aureus
+# Diseño Técnico: Etapa 5 — Cálculo S. Aureus
 
 ## 1. Resumen
 
-Re-diseño de la **Etapa 5 (Resultados S. Aureus)** del formulario S. aureus para que funcione como pantalla de cálculo consolidado, siguiendo el mismo patrón ISO 7218 que RAM pero incorporando la secuencia validada: colonias posibles S. aureus, toma de hasta 5 colonias características, coagulasa a 4 hrs/24 horas y cálculo del recuento previo ajustado.
+Re-diseño completo del formulario S. aureus para consolidar **TODAS las tablas de cálculo** en la **Etapa 5: Cálculo S. Aureus**, eliminando las tablas individuales de las Etapas 1-4 que actualmente están分散adas.
+
+### Cambio de Arquitectura
+
+**ANTES (actual):**
+- Etapa 1: Tabla "Muestras y Lecturas 24h-48h" (captura manual)
+- Etapa 2: Parámetros y controles
+- Etapa 3: Tabla "Traspaso BHI" (captura manual)
+- Etapa 4: Tablas "Coagulasa 4-6h" y "24h" (captura manual)
+- Etapa 5: Tabla simple de resultados (manual)
+- Etapa 6: Conclusión
+
+**AHORA (nuevo diseño aprobado por cliente):**
+- Etapa 1-4: **Sin tablas** — solo parámetros, fechas, controles
+- **Etapa 5: Cálculo S. Aureus** — CONSOLIDADO de todas las tablas:
+  - 📊 Sección Recuento (diluciones + colonias por placa)
+  - 🧪 Sección Confirmación y Coagulasa (A confirmar, Coag 4h, Coag 24h)
+  - 📈 Sección Resultados del Cálculo (a, Σa, d, previas, N, NE)
+  - Duplicado con importación de ALI pasado
+  - Botones de cálculo individual y global
+- Etapa 6: Consolidado de resultados + campos finales
 
 **Diferencia clave con RAM:**
 - RAM: recuento directo de colonias → UFC/g
@@ -61,24 +81,34 @@ Para evitar el monolito de 900+ líneas en el HTML actual, se aplica el **mismo 
 ```
 form-s-aureus.page
 ├── saureus-stepper                    ← Stepper de etapas (ya existe)
-├── etapa1-inicio-siembra              ← Ya existe, se refactoriza
-├── etapa2-control-lecturas            ← Ya existe, se refactoriza
-├── etapa3-traspaso-bhi                ← Ya existe, se refactoriza
-├── etapa4-coagulasa                   ← Ya existe, se refactoriza
-├── etapa5-resultados                  ← NUEVO: Fase 5 rediseñada
-│   ├── saureus-muestra-card           ← Componente card por muestra
-│   │   ├── recuento-table             ← Tabla padre dilución + colonias
-│   │   ├── seleccion-confirmacion-section ← Máximo 5 colonias características
-│   │   ├── coagulasa-tiempo-section   ← 4 hrs (primera lectura)
-│   │   │   └── placa-input            ← Input individual placa A/B
-│   │   ├── coagulasa-tiempo-section   ← 24 horas (mismo componente)
-│   │   └── resultado-badge            ← Badge del resultado calculado
-│   └── saureus-duplicado-card         ← Card especial del duplicado
+├── etapa1-inicio-siembra              ← SIN TABLAS (solo parámetros, fechas, controles)
+├── etapa2-control-lecturas            ← SIN TABLAS (solo parámetros, fechas, controles)
+├── etapa3-traspaso-bhi                ← SIN TABLAS (solo parámetros, fechas, controles)
+├── etapa4-coagulasa                   ← SIN TABLAS (solo parámetros, fechas, controles)
+├── etapa5-calculo                     ← NUEVO: Cálculo S. Aureus (TODAS las tablas consolidadas)
+│   ├── saureus-muestra-card           ← Componente card por muestra (M1-M6)
+│   │   ├── recuento-section           ← 📊 SECCIÓN 1: Tabla dilución + colonias por placa
+│   │   │   ├── recuento-table         ← Tabla: Dil | Placa A | Placa B
+│   │   │   └── colonias-posibles-input← Inputs colonias posibles S. aureus
+│   │   ├── confirmacion-coagulasa-section ← 🧪 SECCIÓN 2: Tabla confirmación + coagulasa
+│   │   │   ├── confirmacion-table     ← Tabla: A confirmar | Placa A | Placa B
+│   │   │   ├── coagulasa-4h-row       ← Fila: Coag. 4 hrs | Placa A | Placa B
+│   │   │   └── coagulasa-24h-row      ← Fila: Coag. 24 h | Placa A | Placa B
+│   │   ├── resultado-calculo-section  ← 📈 SECCIÓN 3: Panel resultados calculados
+│   │   │   ├── calc-preview           ← a (suma placas), Σa, d (dilución)
+│   │   │   ├── calc-previas           ← Previas: (b ÷ A) × Σa
+│   │   │   ├── calc-resultado         ← N S. Aureus: X x 10^n UFC/g
+│   │   │   └── calc-lectura           ← Lectura usada: 4 hrs / 24 horas / SD
+│   │   └── saureus-calcular-btn       ← Botón [🧮 Calcular muestra]
+│   └── saureus-duplicado-card         ← Card especial del duplicado (ALI pasado)
 │       ├── ali-selector               ← Selector de ALI pasado
-│       ├── ali-data-display           ← Display datos importados
-│       └── recuento-table             ← Misma tabla reutilizada
-├── etapa6-conclusion                  ← Ya existe
-└── saureus-calcular-button            ← Botón calcular global
+│       ├── ali-data-display           ← Display datos importados de Muestra 1
+│       ├── recuento-section           ← Misma sección reutilizada
+│       ├── confirmacion-coagulasa-section ← Misma sección reutilizada
+│       ├── resultado-calculo-section  ← Misma sección reutilizada (solo lectura)
+│       └── duplicado-actions          ← [🔄 Re-importar] [✏️ Editar]
+├── etapa6-conclusion                  ← ACTUALIZADA: Consolidado de resultados M1-M6 + DUP
+└── saureus-calcular-todas-btn         ← Botón [🧮 Calcular TODAS las muestras]
 ```
 
 ### `saureus-muestra-card` — Contrato del Componente
@@ -362,15 +392,15 @@ MUESTRA 1:
 
 ---
 
-## 7. Mockup Visual de la Fase 5
+## 7. Mockup Visual de la Etapa 5: Cálculo S. Aureus
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  ● 5. Resultados S. Aureus                                   │
+│  ● 5. Cálculo S. Aureus                                      │
 │                                                              │
 │  ┌───────────── MUESTRA 1 ──────────────────────────────┐    │
 │  │                                                       │    │
-│  │  Recuento                                             │    │
+│  │  📊 RECUENTO                                          │    │
 │  │  ┌──────┬─────────┬─────────┐                        │    │
 │  │  │ Dil  │ Placa A │ Placa B │                        │    │
 │  │  ├──────┼─────────┼─────────┤                        │    │
@@ -378,7 +408,7 @@ MUESTRA 1:
 │  │  │ 10⁻³ │   —     │   —     │   ← opcional           │    │
 │  │  └──────┴─────────┴─────────┘                        │    │
 │  │                                                       │    │
-│  │  Confirmación y coagulasa                             │    │
+│  │  🧪 CONFIRMACIÓN Y COAGULASA                          │    │
 │  │  ┌──────────────┬─────────┬─────────┐                │    │
 │  │  │              │ Placa A │ Placa B │                │    │
 │  │  ├──────────────┼─────────┼─────────┤                │    │
@@ -387,12 +417,17 @@ MUESTRA 1:
 │  │  │ Coag. 24 h   │    —    │    —    │ ← no aplica    │    │
 │  │  └──────────────┴─────────┴─────────┘                │    │
 │  │                                                       │    │
+│  │  📈 RESULTADOS DEL CÁLCULO                            │    │
 │  │  ┌─────────────────────────────────────────────┐     │    │
-│  │  │  Placa A: a = (1÷3)×28 = 9   [33%]          │     │    │
-│  │  │  Placa B: a = (1÷2)×30 = 15  [50%]          │     │    │
-│  │  │  Σa = 24                                     │     │    │
-│  │  │  Resultado:  2,4 x 10³ UFC/g    [✓]         │     │    │
-│  │  │  Lectura usada: 4 hrs                        │     │    │
+│  │  │  a (suma placas):    58                     │     │    │
+│  │  │  Ʃa (total):         58                     │     │    │
+│  │  │  d (dilución):       0,01  (10⁻²)           │     │    │
+│  │  │  ─────────────────────────────────────      │     │    │
+│  │  │  Previas:            (2 ÷ 5) × 58 = 23,2  │     │    │
+│  │  │  N S. Aureus:        1,2 x 10³ UFC/g   ✓   │     │    │
+│  │  │  NE S. Aureus:       1,2 x 10³ UFC/g       │     │    │
+│  │  │  ─────────────────────────────────────      │     │    │
+│  │  │  Lectura usada: 4 hrs · 24 horas: no aplica │     │    │
 │  │  └─────────────────────────────────────────────┘     │    │
 │  │                                                       │    │
 │  │  [🧮 Calcular muestra]                                │    │
@@ -400,27 +435,75 @@ MUESTRA 1:
 │                                                              │
 │  ┌───────────── MUESTRA 2 ──────────────────────────────┐    │
 │  │  (mismo layout, datos distintos)                      │    │
-│  └───────────────────────────────────────────────────────┘    │
-│                                                              │
-│  ┌───────────── DUPLICADO (ALI-421) ────────────────────┐    │
+│  │  ┌─────────────────────────────────────────────┐     │    │
+│  │  │  a (suma placas):    0                      │     │    │
+│  │  │  Ʃa:                 0                      │     │    │
+│  │  │  d:                  —                      │     │    │
+│  │  │  ─────────────────────────────────────      │     │    │
+│  │  │  N S. Aureus:        SD                 ⚠  │     │    │
+│  │  │  NE S. Aureus:       SD                     │     │    │
+│  │  │  ─────────────────────────────────────      │     │    │
+│  │  │  4 hrs: SD  ·  24 horas: SD                 │     │    │
+│  │  └─────────────────────────────────────────────┘     │    │
 │  │                                                       │    │
-│  │  ALI de referencia: [ALI-2025-00421  ▼]              │    │
-│  │                                                       │    │
-│  │  ┌──────────────────────────────────────────────┐    │    │
-│  │  │  Datos importados de Muestra 1 del ALI-421   │    │    │
-│  │  │  Dil: -2  │ PA: 28 │ PB: 30                  │    │    │
-│  │  │  Posibles S.a: 28/30 │ Conf: 3/2             │    │    │
-│  │  │  Coag 4 hrs: 1/1 │ 24 horas: no aplica      │    │    │
-│  │  │  aA: 9 │ aB: 15 │ Σa: 24 | Resultado: 2,4x10³│    │    │
-│  │  └──────────────────────────────────────────────┘    │    │
-│  │  [🔄 Re-importar]  [✏️ Editar]                       │    │
+│  │  [🧮 Calcular muestra]                                │    │
 │  └───────────────────────────────────────────────────────┘    │
-│                                                              │
-│  ┌──────────────────────────────────────────────────────┐    │
-│  │  [🧮 Calcular TODAS las muestras]                    │    │
-│  └──────────────────────────────────────────────────────┘    │
-│                                                              │
+├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┤
+│  (M3, M4, M5, M6 — misma estructura)                       │
 └──────────────────────────────────────────────────────────────┘
+```
+
+### Sección Duplicado (referencia a ALI pasado)
+
+```
+┌───────────── DUPLICADO (Referencia a ALI anterior) ──────┐
+│                                                           │
+│  ALI de referencia:  [ALI-2025-00421  ▼]                 │
+│                                                           │
+│  ┌──────────────────────────────────────────────────┐    │
+│  │  Datos importados de Muestra 1 del ALI-421       │    │
+│  │                                                   │    │
+│  │  Recuento:  Dil -2  │ PA: 28 │ PB: 30            │    │
+│  │  Posibles S.a: PA: 28 │ PB: 30                   │    │
+│  │  A confirmar: PA: 3  │ PB: 2   (máx. 5)          │    │
+│  │  Coag 4 hrs: PA: 1 │ PB: 1  · 24 horas: no aplica│    │
+│  │  ─────────────────────────────────────            │    │
+│  │  a: 58  │  Ʃa: 58  │  d: 0,01                   │    │
+│  │  Previas: 23,2                                  │    │
+│  │  N S. Aureus:  1,2 x 10³ UFC/g  (ref)           │    │
+│  │  NE S. Aureus: 1,2 x 10³ UFC/g                  │    │
+│  └──────────────────────────────────────────────────┘    │
+│                                                           │
+│  [🔄 Re-importar]  [✏️ Editar manualmente]                │
+└───────────────────────────────────────────────────────────┘
+```
+
+### Resumen Consolidado (visible en Etapa 6)
+
+Cuando ya están todas las muestras calculadas, la Etapa 6 muestra el consolidado:
+
+```
+┌──────────────────────────────────────────────────────┐
+│  RESULTADOS POR MUESTRA                               │
+│                                                       │
+│  ┌──────┬──────────────────────┬──────────┐          │
+│  │  M1  │  1,9 x 10⁴ UFC/g    │  ✓       │          │
+│  │  M2  │  SD                  │  —       │          │
+│  │  M3  │  9,2 x 10³ UFC/g    │  ✓       │          │
+│  │  M4  │  < 10 UFC/g         │  ⚠       │          │
+│  │  M5  │  4,5 x 10⁴ UFC/g    │  ✓       │          │
+│  │  M6  │  SD                  │  —       │          │
+│  │  DUP │  1,9 x 10⁴ UFC/g    │  ref     │          │
+│  ├──────┼──────────────────────┼──────────┤          │
+│  │      │  Máximo: 4,5 x 10⁴  │          │          │
+│  │      │  UFC/g              │          │          │
+│  └──────┴──────────────────────┴──────────┘          │
+│                                                       │
+│  Desfavorable:  [Sí] / [No]    según normativa       │
+│  Límite:        [______________]                      │
+│  Tabla/Página:  [______________]                      │
+│  Fecha entrega: [____]  Hora: [____]                  │
+└──────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -477,12 +560,243 @@ La Etapa 6 (Conclusión Final) mostrará:
 
 ---
 
-## 10. Estrategia de Implementación (futura)
+## 10. Estrategia de Implementación
+
+### 10.0 Motor de Cálculo Universal (Backend)
+
+Para evitar duplicación de lógica entre formularios (RAM, S. aureus, Coliformes, Salmonella), se implementa un **motor de cálculo genérico** que puede ser configurado con diferentes fórmulas y parámetros.
+
+#### Arquitectura del Motor de Cálculo
+
+```
+AssisTec API/src/services/calculators/
+├── calculador.base.ts              ← Interfaz + lógica compartida
+├── calculador-ram.service.ts       ← RAM: recuento directo → UFC/g
+├── calculador-saureus.service.ts   ← S. aureus: coagulasa + fórmula NCh2676 8.2
+├── calculador-coliformes.service.ts← Coliformes: NMP (tabla 3 tubos)
+├── calculador-salmonella.service.ts← Salmonella: Presencia/Ausencia
+├── calculador.factory.ts           ← Fábrica: obtiene calculador por tipo
+└── __tests__/
+    ├── calculador.base.test.ts
+    ├── calculador-ram.test.ts
+    ├── calculador-saureus.test.ts
+    └── calculador.factory.test.ts
+```
+
+#### Interfaz Común (calculador.base.ts)
+
+```typescript
+export interface DatosMuestra {
+  diluciones: Array<{ dil: number; colonias: [number|null, number|null] }>;
+  // Campos adicionales según tipo de formulario
+  coloniasPosibles?: [number|null, number|null];  // S. aureus
+  colConfirmar?: [number|null, number|null];       // S. aureus
+  coagulasa4h?: [number|null, number|null];        // S. aureus
+  coagulasa24h?: [number|null, number|null];       // S. aureus
+  volumen?: number;                                 // RAM
+  tubosPositivosPorDilucion?: number[];             // Coliformes (NMP)
+  lecturasAgar?: string[];                          // Salmonella
+}
+
+export interface ResultadoCalculo {
+  ufc?: number | null;
+  textoReporte: string;           // "1,9 x 10⁴ UFC/g" o "SD" o "Presencia"
+  operador?: string;              // "=", "<", ">"
+  esSd: boolean;
+  // Campos específicos por tipo
+  aPlacaA?: number;               // S. aureus
+  aPlacaB?: number;               // S. aureus
+  sumaA?: number;                 // S. aureus
+  coagulasaUsada?: string;        // S. aureus: "4 hrs" | "24 horas"
+  coliformesTotales?: number;     // Coliformes
+  coliformesFecales?: number;     // Coliformes
+  eColi?: number;                 // Coliformes
+  presencia?: boolean;            // Salmonella
+  // Metadata
+  casoAplicado: string;           // PRIORIDAD_1-4 (RAM) o NCh2676_8.2 (S. aureus)
+  factorDilucion: number;
+  sumaColonias: number;
+}
+
+export abstract class CalculadorBase {
+  abstract calcular(datos: DatosMuestra): ResultadoCalculo;
+  
+  // Métodos compartidos
+  protected resolverCoagulasa(
+    coagulasa4h: [number|null, number|null],
+    coagulasa24h: [number|null, number|null]
+  ): { positivas: [number|null, number|null]; tiempoUsado: string | null };
+  
+  protected aplicarRegla80(b: number, A: number, C: number): number;
+  
+  protected redondearDosCifras(valor: number): string;
+  
+  protected calcularFactorDilucion(dilucion: number): number;
+}
+```
+
+#### Implementación S. Aureus (calculador-saureus.service.ts)
+
+```typescript
+@Injectable()
+export class CalculadorSaureusService extends CalculadorBase {
+  
+  calcular(datos: DatosMuestra): ResultadoCalculo {
+    // 1. Resolver coagulasa por placa
+    const { positivas: coagulasa, tiempoUsado } = this.resolverCoagulasa(
+      datos.coagulasa4h || [null, null],
+      datos.coagulasa24h || [null, null]
+    );
+    
+    // 2. Calcular 'a' por placa individual (NCh2676 8.2.2.1)
+    const aPlacaA = this.calcularPlaca(
+      datos.coloniasPosibles?.[0] || 0,
+      datos.colConfirmar?.[0] || 0,
+      coagulasa[0] || 0
+    );
+    
+    const aPlacaB = this.calcularPlaca(
+      datos.coloniasPosibles?.[1] || 0,
+      datos.colConfirmar?.[1] || 0,
+      coagulasa[1] || 0
+    );
+    
+    // 3. Sumar Σa
+    const sumaA = aPlacaA + aPlacaB;
+    
+    // 4. Aplicar fórmula general NCh2676 8.2.2.2
+    const { n1, n2, factorDilucion } = this.extraerDiluciones(datos.diluciones);
+    const ufc = sumaA / ((n1 + 0.1 * n2) * factorDilucion);
+    
+    // 5. Redondear a 2 cifras significativas
+    const textoReporte = this.formatearResultado(ufc, coagulasa);
+    
+    return {
+      ufc,
+      textoReporte,
+      operador: '=',
+      esSd: sumaA === 0,
+      aPlacaA,
+      aPlacaB,
+      sumaA,
+      coagulasaUsada: tiempoUsado,
+      casoAplicado: 'NCh2676_8.2',
+      factorDilucion,
+      sumaColonias: this.sumarColonias(datos.diluciones)
+    };
+  }
+  
+  private calcularPlaca(C: number, A: number, b: number): number {
+    if (A === 0 || C === 0) return 0;
+    const proporcion = b / A;
+    return this.aplicarRegla80(b, A, C);
+  }
+}
+```
+
+#### Fábrica de Calculadores (calculador.factory.ts)
+
+```typescript
+@Injectable()
+export class CalculadorFactory {
+  private calculadores = new Map<string, CalculadorBase>();
+  
+  constructor(
+    private ramCalculador: CalculadorRamService,
+    private saureusCalculador: CalculadorSaureusService,
+    private coliformesCalculador: CalculadorColiformesService,
+    private salmonellaCalculador: CalculadorSalmonellaService
+  ) {
+    this.calculadores.set('RAM', this.ramCalculador);
+    this.calculadores.set('SAU', this.saureusCalculador);
+    this.calculadores.set('COLI', this.coliformesCalculador);
+    this.calculadores.set('SAL', this.salmonellaCalculador);
+  }
+  
+  obtenerCalculador(tipoFormulario: string): CalculadorBase {
+    const calculador = this.calculadores.get(tipoFormulario);
+    if (!calculador) {
+      throw new Error(`No existe calculador para el tipo: ${tipoFormulario}`);
+    }
+    return calculador;
+  }
+}
+```
+
+#### Ventajas de Esta Arquitectura
+
+| Aspecto | Sin motor universal | Con motor universal |
+|---------|--------------------|--------------------|
+| **Duplicación** | Cada formulario reimplementa cálculos | Lógica compartida en base |
+| **Mantenimiento** | Bug fix en múltiples lugares | Bug fix en UN solo lugar |
+| **Escalabilidad** | Agregar formulario = copiar código | Agregar formulario = extender base |
+| **Testing** | Tests duplicados | Tests base + tests específicos |
+| **Consistencia** | Cálculos pueden divergir | Contrato común garantizado |
+
+#### Formularios que Usarán el Motor
+
+| Formulario | Calculador | Fórmula/Fuente |
+|------------|------------|----------------|
+| **RAM** | `CalculadorRamService` | Recuento directo → media ponderada |
+| **S. aureus** | `CalculadorSaureusService` | NCh2676 8.2.2.1: a = (b/A) × C |
+| **Coliformes** | `CalculadorColiformesService` | Tabla NMP 3 tubos |
+| **Salmonella** | `CalculadorSalmonellaService` | Presencia/Ausencia por agares |
+
+---
+
+### 10.1 Eliminación de Tablas en Etapas 1-4
+
+Las tablas actuales en las Etapas 1-4 serán **eliminadas** porque toda la captura de datos se consolidará en la Etapa 5:
+
+| Etapa | Tabla a Eliminar | Líneas HTML | Acción |
+|-------|------------------|-------------|--------|
+| **Etapa 1** | "Muestras y Lecturas 24h-48h" | 151-178 | **ELIMINAR** |
+| **Etapa 3** | "Traspaso BHI" (placa 1, placa 2) | 425-442 | **ELIMINAR** |
+| **Etapa 4** | "Coagulasa 4-6 Hrs" (placa 1, placa 2) | 561-576 | **ELIMINAR** |
+| **Etapa 4** | "Coagulasa 24 Hrs" (placa 1, placa 2) | 619-634 | **ELIMINAR** |
+| **Etapa 5** | Tabla simple de resultados actual | 641-671 | **REEMPLAZAR** |
+
+### 10.2 Nueva Arquitectura de Componentes
 
 Para no hinchar el HTML, se implementa en **3 capas de componentes**:
 
 1. **Atómicos**: `placa-input`, `resultado-badge`, `ali-selector`
-2. **Compuestos**: `recuento-table`, `coagulasa-tiempo-section`, `confirmacion-section`
-3. **Contenedores**: `saureus-muestra-card`, `saureus-duplicado-card`, `etapa5-resultados`
+2. **Compuestos**: 
+   - `recuento-section` — Tabla dilución + colonias por placa
+   - `confirmacion-coagulasa-section` — Tabla A confirmar, Coag 4h, Coag 24h
+   - `resultado-calculo-section` — Panel a, Σa, d, previas, N, NE
+3. **Contenedores**: 
+   - `saureus-muestra-card` — Contenedor de las 3 secciones + botón calcular
+   - `saureus-duplicado-card` — Duplicado con importación ALI
+   - `etapa5-calculo` — Contenedor principal M1-M6 + Duplicado
 
-Esto permite reutilizar `coagulasa-tiempo-section` para 4 hrs y 24 horas con distinto `@Input() label`, y reutilizar `recuento-table` tanto en muestras normales como en el duplicado.
+### 10.3 Flujo de Datos
+
+```
+Etapa 1-4 (sin tablas)
+    ↓ (solo parámetros, fechas, controles)
+Etapa 5: Cálculo S. Aureus
+    ├── M1: Recuento → Confirmación → Cálculo
+    ├── M2: Recuento → Confirmación → Cálculo
+    ├── ...
+    ├── M6: Recuento → Confirmación → Cálculo
+    └── DUP: Importar ALI → Recuento → Confirmación → Cálculo
+    ↓
+Etapa 6: Consolidado de resultados
+```
+
+### 10.4 Capas de Componentes
+
+| Capa | Componente | Propósito |
+|------|------------|-----------|
+| **Atómico** | `placa-input` | Input individual placa A/B |
+| **Atómico** | `resultado-badge` | Badge del resultado (✓, ⚠, —) |
+| **Atómico** | `ali-selector` | Selector de ALI pasado |
+| **Compuesto** | `recuento-section` | 📊 Tabla: Dil \| Placa A \| Placa B |
+| **Compuesto** | `confirmacion-coagulasa-section` | 🧪 Tabla: A confirmar \| Coag 4h \| Coag 24h |
+| **Compuesto** | `resultado-calculo-section` | 📈 Panel: a, Σa, d, previas, N, NE |
+| **Contenedor** | `saureus-muestra-card` | Card por muestra con las 3 secciones |
+| **Contenedor** | `saureus-duplicado-card` | Duplicado con importación ALI |
+| **Contenedor** | `etapa5-calculo` | Contenedor principal de la Etapa 5 |
+
+Esto permite reutilizar `recuento-section` y `confirmacion-coagulasa-section` tanto en muestras normales como en el duplicado, evitando duplicación de código.
