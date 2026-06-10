@@ -13,8 +13,8 @@ Re-diseño de la **Etapa 5 (Resultados S. Aureus)** del formulario S. aureus par
 - Se toman **como máximo 5 colonias características** para pasar a coagulasa.
 - La coagulasa se lee a las **4 hrs**; si ya es positiva, se registra el resultado inmediatamente.
 - Si a las 4 hrs no es positiva, se espera hasta las **24 horas**.
-- Resultado previo = `(colonias coagulasa positivas / colonias traspasadas) × colonias posibles S. aureus totales`.
-- Ese resultado previo alimenta la fórmula general de cálculo UFC/g.
+- El cálculo se hace **por placa individual** según NCh2676 8.2.2.1: `a = (b / A) × C` para cada placa (A y B), donde b = colonias coagulasa positivas de esa placa, A = colonias traspasadas de esa placa, C = colonias posibles S. aureus de esa placa.
+- La suma `Σa = a_placaA + a_placaB` alimenta la fórmula general de cálculo UFC/g (NCh2676 8.2.2.2).
 
 ---
 
@@ -173,8 +173,14 @@ model SaureusMuestra {
   resultadoTexto  String?  @map("resultado_texto")       // "1,9 x 10⁴ UFC/g"
   operador        String?  @default("=")                 // "=", "<", ">"
   esSd            Boolean  @default(false) @map("es_sd") // Sin desarrollo
-  ratioCoagulasa  Decimal? @map("ratio_coagulasa")       // coagulasa positivas / colonias traspasadas
-  coloniasPrevias Decimal? @map("colonias_previas")       // ratioCoagulasa × colonias posibles S. aureus totales
+  aPlacaA         Int?       @map("a_placa_a")     // a calculado para placa A
+  aPlacaB         Int?       @map("a_placa_b")     // a calculado para placa B
+  sumaA           Int?       @map("suma_a")         // Σa = aPlacaA + aPlacaB
+  coagulasaUsada  String?    @map("coagulasa_usada") // "4 hrs" | "24 horas" | null (SD)
+  proporcionA     Decimal?   @map("proporcion_a")   // b/A placa A (para depuración)
+  proporcionB     Decimal?   @map("proporcion_b")   // b/A placa B
+  regla80AplicadaA Boolean?  @map("regla_80_a")     // si se aplicó regla 80% en placa A
+  regla80AplicadaB Boolean?  @map("regla_80_b")     // si se aplicó regla 80% en placa B
   sumaColonias    Int?     @map("suma_colonias")
   n1              Int?                                   // Placas 1ra dilución
   n2              Int?                                   // Placas 2da dilución
@@ -219,16 +225,18 @@ Response 200:
 {
   "muestraId": "M1",
   "resultado": {
-    "ufc": 18500,
-    "textoReporte": "1,9 x 10⁴ UFC/g",
-    "textoRPES": "18500",
-    "operador": "=",
-    "esSd": false,
+    "aPlacaA": 9,
+    "aPlacaB": 15,
+    "sumaA": 24,
     "coagulasaUsada": "4 hrs",
-    "ratioCoagulasa": 0.5,
-    "coloniasPrevias": 29,
-    "sumaColonias": 58,
-    "n1": 2,
+    "proporcionA": 0.33,
+    "proporcionB": 0.5,
+    "regla80AplicadaA": false,
+    "regla80AplicadaB": false,
+    "ufc": 2400,
+    "textoReporte": "2,4 x 10³ UFC/g",
+    "sumaColonias": 24,
+    "n1": 1,
     "n2": 0,
     "factorDilucion": 0.01,
     "casoAplicado": "PRIORIDAD_1"
@@ -300,33 +308,34 @@ Response 200:
 
 ## 6. Lógica de Cálculo (Backend)
 
-### Algoritmo validado (misma base ISO 7218 que RAM + ajuste por confirmación/coagulasa)
+### Algoritmo validado (basado en NCh2676 8.2 — cálculo por placa individual)
 
 ```
 function calcularResultadoSAureus(datos):
-  1. Tomar colonias posibles S. aureus de la primera etapa.
+  1. Por cada placa (A y B), resolver coagulasa:
+     a. Leer coagulasa 4 hrs.
+     b. Si 4 hrs tiene positivos → usar esa lectura, cerrar.
+     c. Si 4 hrs no tiene positivos → usar lectura 24 horas.
+     d. Si 24 horas tampoco tiene positivos → a_placa = 0 (SD).
+     e. Validar: sum(colConfirmar) <= 5
 
-  2. Validar selección a confirmación:
-     - sum(colConfirmar) <= 5
-     - sum(colConfirmar) <= sum(coloniasPosibles)
+  2. Por cada placa, calcular "a" individual (NCh2676 8.2.2.1):
+     a_placa = (b / A) × C
+     Donde:
+     - C = colonias posibles S. aureus de esa placa
+     - A = colonias traspasadas de esa placa
+     - b = colonias coagulasa positivas de esa placa
 
-  3. Resolver coagulasa:
-     a. Leer a 4 hrs.
-     b. Si coagulasa 4 hrs tiene positivos → usar coagulasa 4 hrs y cerrar resultado.
-     c. Si coagulasa 4 hrs no tiene positivos → esperar/usar lectura 24 horas.
-     d. Si 24 horas tampoco tiene positivos → resultado = SD por coagulasa.
+  3. Aplicar regla del 80% (NCh2676 8.2.1):
+     Si (b / A) >= 0.8 → a_placa = C (se usa el total sin ajustar)
 
-  4. Calcular resultado previo:
-     coloniasPositivas = sum(coagulasa positiva usada)
-     coloniasTraspasadas = sum(colConfirmar)
-     ratioCoagulasa = coloniasPositivas / coloniasTraspasadas
-     coloniasPrevias = ratioCoagulasa × sum(coloniasPosibles)
+  4. Sumar todas las "a":
+     Σa = a_placaA + a_placaB
 
-  5. Aplicar la fórmula general usando coloniasPrevias como recuento ajustado.
+  5. Aplicar fórmula general (NCh2676 8.2.2.2):
+     N = Σa / ((n₁ + 0.1 × n₂) × d)
 
-  6. Resultado CONSOLIDADO del ALI (opcional):
-     - Para informe final: se toma el resultado de la muestra con mayor
-       recuento, o se promedia según criterio del laboratorio.
+  6. Aproximar a 2 cifras significativas (NCh2676 8.2.2.3)
 ```
 
 ### Ejemplo concreto
@@ -334,18 +343,21 @@ function calcularResultadoSAureus(datos):
 ```
 MUESTRA 1:
   Dilución: -2, Colonias: [28, 30]
-  Colonias posibles S. aureus totales: 58
-  A confirmar: [3, 2] → 5 total (máximo permitido)
-  Coagulasa 4 hrs: [1, 1] → 2 positivas
-  Coagulasa 24 horas: no aplica, porque 4 hrs ya fue positiva
 
-  → Ratio coagulasa = 2 / 5 = 0.4
-  → Colonias previas = 0.4 × 58 = 23.2
-  → Fórmula general con recuento ajustado:
-     SumaC = 23.2, n1 = 2, n2 = 0
-     d = 0.01 (10^-2)
-     UFC = 23.2 / (1 × (2 + 0) × 0.01) = 23.2 / 0.02 = 1160
-     Resultado = "1,2 x 10³ UFC/g"
+  Placa A: C=28, A=3, coag+4h=1 → a = (1/3)×28 = 9  [33%, no aplica 80%]
+  Placa B: C=30, A=2, coag+4h=1 → a = (1/2)×30 = 15 [50%, no aplica 80%]
+
+  Σa = 9 + 15 = 24
+
+  n₁ = 1 (solo dil -2 tiene placas seleccionables)
+  n₂ = 0
+  d = 0.01 (10⁻²)
+
+  N = 24 / (1 × (1 + 0.1×0) × 0.01)
+  N = 24 / 0.01 = 2400
+
+  Aproximado → 2,4 × 10³ UFC/g
+  Redondeo: 2400 ≈ 2,4 × 10³ (dos cifras significativas)
 ```
 
 ---
@@ -376,8 +388,10 @@ MUESTRA 1:
 │  │  └──────────────┴─────────┴─────────┘                │    │
 │  │                                                       │    │
 │  │  ┌─────────────────────────────────────────────┐     │    │
-│  │  │  Previas: (2 ÷ 5) × 58 = 23,2 colonias      │     │    │
-│  │  │  Resultado:  1,2 x 10³ UFC/g    [✓]         │     │    │
+│  │  │  Placa A: a = (1÷3)×28 = 9   [33%]          │     │    │
+│  │  │  Placa B: a = (1÷2)×30 = 15  [50%]          │     │    │
+│  │  │  Σa = 24                                     │     │    │
+│  │  │  Resultado:  2,4 x 10³ UFC/g    [✓]         │     │    │
 │  │  │  Lectura usada: 4 hrs                        │     │    │
 │  │  └─────────────────────────────────────────────┘     │    │
 │  │                                                       │    │
@@ -397,7 +411,7 @@ MUESTRA 1:
 │  │  │  Dil: -2  │ PA: 28 │ PB: 30                  │    │    │
 │  │  │  Posibles S.a: 28/30 │ Conf: 3/2             │    │    │
 │  │  │  Coag 4 hrs: 1/1 │ 24 horas: no aplica      │    │    │
-│  │  │  Previas: 23,2 │ Resultado original: 1,2x10³│    │    │
+│  │  │  aA: 9 │ aB: 15 │ Σa: 24 | Resultado: 2,4x10³│    │    │
 │  │  └──────────────────────────────────────────────┘    │    │
 │  │  [🔄 Re-importar]  [✏️ Editar]                       │    │
 │  └───────────────────────────────────────────────────────┘    │
@@ -450,6 +464,8 @@ La Etapa 6 (Conclusión Final) mostrará:
 | Coagulasa 4 hrs > 0 | Usar 4 hrs y cerrar resultado | UFC/g con lectura 4 hrs |
 | Coagulasa 4 hrs = 0 y 24 horas > 0 | Usar lectura 24 horas | UFC/g con lectura 24 horas |
 | Coagulasa 4 hrs = 0 y 24 horas = 0 | SD por coagulasa | SD |
+| Proporción confirmación ≥ 80% en una placa | Usar C directo (sin ajuste) | a = C |
+| Proporción confirmación < 80% | Ajuste proporcional | a = (b/A) × C |
 
 **Validado con coordinación:**
 - [x] A confirmación pasan como máximo 5 colonias.
