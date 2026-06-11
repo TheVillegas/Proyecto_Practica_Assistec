@@ -72,6 +72,7 @@ export class CalculadorSaureusService extends CalculadorBase {
       aPlacaA,
       aPlacaB,
       sumaA,
+      previas,
       coagulasaUsada: tiempoUsado,
       casoAplicado: 'NCh2676_8.2',
       factorDilucion,

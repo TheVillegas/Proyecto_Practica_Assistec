@@ -9,9 +9,11 @@
 import { Router, Request, Response } from 'express';
 import { CalculadorFactory } from '../services/calculators/calculador.factory';
 import { DatosMuestra } from '../services/calculators/calculador.base';
+import { ImportDuplicadoService } from '../services/saureus/import-duplicado.service';
 
 const router = Router();
 const calculadorFactory = new CalculadorFactory();
+const importDuplicadoService = new ImportDuplicadoService();
 
 /**
  * POST /api/saureus/calcular-muestra
@@ -175,20 +177,10 @@ router.get('/importar-duplicado', async (req: Request, res: Response) => {
       });
     }
 
-    // TODO: Implementar lógica de importación desde base de datos
-    // Por ahora, retornar mock de respuesta
-    const respuesta = {
-      aliOrigen: Number(aliOrigen),
-      muestra1: {
-        diluciones: [{ dil: -2, colonias: [28, 30] }],
-        coloniasPosibles: [28, 30],
-        colConfirmar: [3, 2],
-        coagulasa4h: [1, 1],
-        coagulasa24h: [null, null],
-        resultadoTexto: '1,2 x 10³ UFC/g'
-      },
-      advertencia: null
-    };
+    const respuesta = await importDuplicadoService.importarDesdeAli(
+      Number(aliOrigen),
+      solicitudActualId as string
+    );
 
     return res.status(200).json(respuesta);
   } catch (error) {

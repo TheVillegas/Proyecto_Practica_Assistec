@@ -38,6 +38,7 @@ export interface ResultadoCalculo {
   aPlacaA?: number;
   aPlacaB?: number;
   sumaA?: number;
+  previas?: number;
   coagulasaUsada?: string | null; // "4 hrs" | "24 horas" | null (SD)
   // Campos específicos Coliformes
   coliformesTotales?: number;
