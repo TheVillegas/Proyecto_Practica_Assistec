@@ -79,11 +79,11 @@ Chain strategy: stacked-to-main
 - [x] 3.10 Create `Frontend/src/app/features/saureus/components/compounds/confirmacion-coagulasa-section/` — 🧪 Tabla: A confirmar | Coag 4 hrs | Coag 24 h (por placa A/B)
 - [x] 3.11 Create `Frontend/src/app/features/saureus/components/compounds/resultado-calculo-section/` — 📈 Panel: a (suma placas), Σa, d, previas, N S. Aureus, NE S. Aureus, Lectura usada
 
-### 3D: Crear Componentes Contenedor
+### 3D: Crear Componentes Contenedor (Rediseñado)
 
-- [x] 3.12 Create `Frontend/src/app/features/saureus/components/containers/saureus-muestra-card/` — Card por muestra: recuento-section + confirmacion-coagulasa-section + resultado-calculo-section + botón [🧮 Calcular muestra]
-- [x] 3.13 Create `Frontend/src/app/features/saureus/components/containers/saureus-duplicado-card/` — Duplicado: ali-selector + datos importados + recuento-section + confirmacion-coagulasa-section + resultado-calculo-section + [🔄 Re-importar] [✏️ Editar]
-- [x] 3.14 Create `Frontend/src/app/features/saureus/components/containers/etapa5-calculo/` — Contenedor: M1-M6 (saureus-muestra-card) + DUP (saureus-duplicado-card) + botón [🧮 Calcular TODAS las muestras]
+- [x] 3.12 ~~Create `saureus-muestra-card`~~ — **ELIMINADO**: funcionalidad integrada en `etapa5-calculo` (ion-accordion por muestra)
+- [x] 3.13 ~~Create `saureus-duplicado-card`~~ — **ELIMINADO**: duplicado integrado dentro del acordeón M1
+- [x] 3.14 Rediseñar `etapa5-calculo` — ion-accordion por muestra (M1-M6) con layout RAM, duplicado dentro de M1, botón calcular por muestra
 
 ### 3E: Integración y Actualización
 
@@ -96,8 +96,9 @@ Chain strategy: stacked-to-main
 - [x] 3.18 TDD: Unit tests for `recuento-section` — 9 tests, GREEN a nivel type-check
 - [x] 3.19 TDD: Unit tests for `confirmacion-coagulasa-section` — 11 tests, GREEN a nivel type-check
 - [x] 3.20 TDD: Unit tests for `resultado-calculo-section` — 10 tests, GREEN a nivel type-check
-- [x] 3.21 TDD: Unit tests for `saureus-muestra-card` — 10 tests, GREEN a nivel type-check
-- [x] 3.22 TDD: Unit tests for `saureus-duplicado-card` — 8 tests, GREEN a nivel type-check
+- [x] 3.21 ~~TDD: Unit tests for `saureus-muestra-card`~~ — **ELIMINADO** con el componente
+- [x] 3.22 ~~TDD: Unit tests for `saureus-duplicado-card`~~ — **ELIMINADO** con el componente
+- [x] 3.23 TDD: Unit tests for `etapa5-calculo` (rediseñado) — 9 tests, GREEN a nivel type-check
 
 > NOTA TDD: Los specs compilan limpio (verificado con `tsconfig.spec.json` filtrado a `src/app/features/saureus/**/*.spec.ts`). Ejecución runtime bloqueada por errores pre-existentes en `src/app/pages/solicitud-ingreso/solicitud-ingreso.page.spec.ts` (no son de este cambio) y por la falta de `ts-jest` para los specs `.ts` del backend (Tasks 1.4, 1.7, 1.10, 2.2, 2.5 ya estaban escritos en TS pero Jest no los compila).
 
