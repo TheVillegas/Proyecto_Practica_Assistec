@@ -25,7 +25,7 @@ dev: ## Levantar entorno completo + migraciones + seed
 	docker compose up --build -d
 	@echo "⏳ Esperando a que PostgreSQL esté listo..."
 	@sleep 8
-	$(MAKE) migrate
+	$(MAKE) db-push
 	@echo ""
 	@echo "✅ Entorno listo!"
 	@echo "   Backend:  http://localhost:3001"
@@ -46,7 +46,7 @@ restart: ## Reiniciar todos los contenedores
 	docker compose restart
 
 down: ## Detener y eliminar volúmenes
-	docker compose down -v
+	docker compose down
 
 # ══════════════════════════════════════════════════════════════════
 # BASE DE DATOS
@@ -67,6 +67,11 @@ migrate-reset: ## Resetear base de datos (ELIMINA TODOS LOS DATOS)
 	@read -p "¿Estás seguro? (s/N): " confirm && [ "$$confirm" = "s" ] || exit 1
 	docker compose exec backend_asistec npx prisma migrate reset --force
 
+db-push: ## Sincronizar schema Prisma con la DB (shadow DB safe)
+	@echo "📦 Sincronizando schema con la base de datos..."
+	docker compose exec backend_asistec npx prisma db push
+	@echo "✅ Schema sincronizado"
+
 seed: ## Ejecutar seed de la base de datos
 	@echo "🌱 Ejecutando seed..."
 	docker compose exec backend_asistec npx prisma db seed
@@ -85,6 +90,10 @@ test: test-backend test-frontend ## Ejecutar todos los tests
 test-backend: ## Ejecutar tests del backend (Jest)
 	@echo "🧪 Ejecutando tests del backend..."
 	docker compose exec backend_asistec pnpm test
+
+test-import-duplicado: ## Test: importación de duplicado S. aureus (9 tests)
+	@echo "🧪 Test: Importación de Duplicado S. aureus"
+	docker compose exec backend_asistec npx jest --testPathPatterns='import-duplicado.test.js' --verbose --no-coverage
 
 test-frontend: ## Ejecutar tests del frontend (Karma)
 	@echo "🧪 Ejecutando tests del frontend..."
