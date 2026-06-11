@@ -1,7 +1,29 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { MuestraData } from '../components/containers/saureus-muestra-card/saureus-muestra-card.component';
+
+export interface ResultadoCalculo {
+  aPlacaA?: number;
+  aPlacaB?: number;
+  sumaA?: number;
+  ufc?: number | null;
+  textoReporte: string;
+  esSd: boolean;
+  coagulasaUsada?: string | null;
+  factorDilucion?: number;
+  previas?: number | null;
+  coloniasSeleccionadas?: number;
+  coloniasPosiblesTotal?: number;
+}
+
+export interface MuestraData {
+  diluciones: Array<{ dil: number; colonias: [number | null, number | null] }>;
+  coloniasPosibles: [number | null, number | null];
+  colConfirmar: [number | null, number | null];
+  coagulasa4h: [number | null, number | null];
+  coagulasa24h: [number | null, number | null];
+  resultado?: ResultadoCalculo;
+}
 
 export interface CalcularMuestraRequest {
   solicitudAnalisisId: string;
