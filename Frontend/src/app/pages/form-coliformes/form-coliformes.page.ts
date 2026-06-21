@@ -4,11 +4,11 @@ import { Router } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
 
 // ─── Tipos e Interfaces ──────────────────────────────────────────────────────
-type ResultadoSubmuestra = 'positivo' | 'negativo' | 'sin_registrar';
-type Dilucion = '1ml' | '0.1ml' | '0.01ml';
-type ControlPresencia = 'presencia' | 'ausencia' | 'sin_registrar';
+export type ResultadoSubmuestra = 'positivo' | 'negativo' | 'sin_registrar';
+export type Dilucion = '1ml' | '0.1ml' | '0.01ml';
+export type ControlPresencia = 'presencia' | 'ausencia' | 'sin_registrar';
 
-interface EntradaMuestra {
+export interface EntradaMuestra {
   id: string;
   esDuplicado: boolean;
   label: string;
@@ -19,7 +19,7 @@ interface EntradaMuestra {
   };
 }
 
-interface BloqueTabla {
+export interface BloqueTabla {
   fechaLectura: string;
   horaLectura: string;
   analistaResponsable: string;

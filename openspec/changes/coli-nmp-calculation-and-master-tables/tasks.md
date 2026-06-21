@@ -29,10 +29,10 @@ Chain strategy: pending
 
 ## Phase 2: Core — API Service
 
-- [ ] 2.1 Crear `Frontend/src/app/services/coliformes-api.service.ts` usando `inject(HttpClient)`. Implementar `getFormulario(id)`, `saveFase1..4(id, payload)`, `saveFase35(id, payload)`.
-- [ ] 2.2 Implementar `mapPresencia(valor: string): boolean | null` y `mapSubmuestrasToPayload(tabla: BloqueTabla, tiempo: number): ColiFase3Submuestra[]` en el servicio.
-- [ ] 2.3 Agregar manejo de errores con `catchError` + `delay(2000)` + `retry(1)` en métodos save (spec CFI-02).
-- [ ] 2.4 Completar tests de `coliformes-api.service.spec.ts`: verificar URLs correctas, payloads mapeados, y retry en error de red.
+- [x] 2.1 Crear `Frontend/src/app/services/coliformes-api.service.ts` usando `inject(HttpClient)`. Implementar `getFormulario(id)`, `saveFase1..4(id, payload)`, `saveFase35(id, payload)`.
+- [x] 2.2 Implementar `mapPresencia(valor: string): boolean | null` y `mapSubmuestrasToPayload(tabla: BloqueTabla, tiempo: number): ColiFase3Submuestra[]` en el servicio.
+- [x] 2.3 Agregar manejo de errores con `catchError` + `delay(2000)` + `retry(1)` en métodos save (spec CFI-02).
+- [x] 2.4 Completar tests de `coliformes-api.service.spec.ts`: verificar URLs correctas, payloads mapeados, y retry en error de red.
 
 ## Phase 3: Integration — Page Component & Template
 
