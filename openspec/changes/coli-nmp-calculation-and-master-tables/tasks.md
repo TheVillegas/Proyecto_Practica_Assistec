@@ -36,19 +36,19 @@ Chain strategy: pending
 
 ## Phase 3: Integration — Page Component & Template
 
-- [ ] 3.1 Modificar `form-coliformes.page.ts`: migrar de constructor a `inject()` para `FormBuilder`, `Router`, `AlertController`, `ToastController`, `ActivatedRoute`. Inyectar `CatalogosService` y `ColiformesApiService`.
-- [ ] 3.2 Reemplazar `MOCK_SOLICITUD` y `crearEntradas()` por carga real: `forkJoin({ catalogos, formulario })` en `ngOnInit` — cargar `getEquiposIncubacion()`, `getMicroPipetas()`, `getResponsables()`, y `getFormulario(id)` (specs CFI-01, CDS-01).
-- [ ] 3.3 Agregar propiedades de catálogo: `listaEquiposIncubacion`, `listaPipetas`, `listaResponsables`, `muestras` (desde backend).
-- [ ] 3.4 Implementar `avanzarEtapa()` con guardado real: llamar `saveFase{N}()` según etapa, manejar 409 (concurrencia) y errores de red (spec CFI-02).
-- [ ] 3.5 Agregar auto-save: `Subject<void>` + `debounceTime(30000)` + `switchMap` → `saveFase{N}(id, {completada: false})`. Track `hasChanges` para no-op sin cambios (spec DSI-01).
-- [ ] 3.6 Agregar `lastSaveTime: Date | null` y `lastSaveText: string` con contador incremental cada 1s (spec DSI-02).
-- [ ] 3.7 Reemplazar `calcularNMP()` mock por `saveFase4(id)` real; poblar `resultadosFinales` desde `response.fase4Resultado` (specs CFI-04, CFI-05).
-- [ ] 3.8 Reemplazar `enviarFormulario()` mock por flujo real multi-fase; agregar `guardarBorrador()` con `PUT` + `completada: false` + toast (spec DSI-03).
-- [ ] 3.9 Modificar `form-coliformes.page.html`: reemplazar radios de estufa por `<ion-select multiple>` con `listaEquiposIncubacion`.
-- [ ] 3.10 Reemplazar radios de micropipetas por `<ion-select>` con `listaPipetas` (mostrar `nombrePipeta` + `capacidad`).
-- [ ] 3.11 Reemplazar inputs de analista por `<ion-select>` con `listaResponsables` (mostrar `nombreApellido`).
-- [ ] 3.12 Agregar indicador "Guardado hace X segundos" en toolbar y botón "Guardar Borrador" en nav-footer.
-- [ ] 3.13 Actualizar etapa 5: botón "Calcular" (deshabilitado si tablas incompletas) + tabla de resultados desde `fase4Resultado` con unidad "NMP/100ml".
+- [x] 3.1 Modificar `form-coliformes.page.ts`: migrar de constructor a `inject()` para `FormBuilder`, `Router`, `AlertController`, `ToastController`, `ActivatedRoute`. Inyectar `CatalogosService` y `ColiformesApiService`.
+- [x] 3.2 Reemplazar `MOCK_SOLICITUD` y `crearEntradas()` por carga real: `forkJoin({ catalogos, formulario })` en `ngOnInit` — cargar `getEquiposIncubacion()`, `getMicroPipetas()`, `getResponsables()`, y `getFormulario(id)` (specs CFI-01, CDS-01).
+- [x] 3.3 Agregar propiedades de catálogo: `listaEquiposIncubacion`, `listaPipetas`, `listaResponsables`, `muestras` (desde backend).
+- [x] 3.4 Implementar `avanzarEtapa()` con guardado real: llamar `saveFase{N}()` según etapa, manejar 409 (concurrencia) y errores de red (spec CFI-02).
+- [x] 3.5 Agregar auto-save: `Subject<void>` + `debounceTime(30000)` + `switchMap` → `saveFase{N}(id, {completada: false})`. Track `hasChanges` para no-op sin cambios (spec DSI-01).
+- [x] 3.6 Agregar `lastSaveTime: Date | null` y `lastSaveText: string` con contador incremental cada 1s (spec DSI-02).
+- [x] 3.7 Reemplazar `calcularNMP()` mock por `saveFase4(id)` real; poblar `resultadosFinales` desde `response.fase4Resultado` (specs CFI-04, CFI-05).
+- [x] 3.8 Reemplazar `enviarFormulario()` mock por flujo real multi-fase; agregar `guardarBorrador()` con `PUT` + `completada: false` + toast (spec DSI-03).
+- [x] 3.9 Modificar `form-coliformes.page.html`: reemplazar radios de estufa por `<ion-select multiple>` con `listaEquiposIncubacion`.
+- [x] 3.10 Reemplazar radios de micropipetas por `<ion-select>` con `listaPipetas` (mostrar `nombrePipeta` + `capacidad`).
+- [x] 3.11 Reemplazar inputs de analista por `<ion-select>` con `listaResponsables` (mostrar `nombreApellido`).
+- [x] 3.12 Agregar indicador "Guardado hace X segundos" en toolbar y botón "Guardar Borrador" en nav-footer.
+- [x] 3.13 Actualizar etapa 5: botón "Calcular" (deshabilitado si tablas incompletas) + tabla de resultados desde `fase4Resultado` con unidad "NMP/100ml".
 
 ## Phase 4: Testing & Verification
 
