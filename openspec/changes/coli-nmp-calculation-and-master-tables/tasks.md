@@ -52,9 +52,9 @@ Chain strategy: pending
 
 ## Phase 4: Testing & Verification
 
-- [ ] 4.1 Actualizar `form-coliformes.page.spec.ts`: configurar providers para `CatalogosService`, `ColiformesApiService`, `ActivatedRoute` con mock `idFormulario`.
-- [ ] 4.2 Test: `ngOnInit` carga catálogos vía forkJoin y formulario desde backend (spec CFI-01).
-- [ ] 4.3 Test: 409 muestra alerta de concurrencia y NO avanza etapa (spec CFI-02).
-- [ ] 4.4 Test: auto-save dispara PUT tras 30s con `fakeAsync` + `tick(30000)` (spec DSI-01).
-- [ ] 4.5 Test: `guardarBorrador()` envía PUT con `completada: false` (spec DSI-03).
-- [ ] 4.6 Verificar que no hay `console.log`, `any` types, ni constructor injection en archivos modificados.
+- [x] 4.1 Actualizar `form-coliformes.page.spec.ts`: configurar providers para `CatalogosService`, `ColiformesApiService`, `ActivatedRoute` con mock `idFormulario`.
+- [x] 4.2 Test: `ngOnInit` carga catálogos vía forkJoin y formulario desde backend (spec CFI-01).
+- [x] 4.3 Test: 409 muestra alerta de concurrencia y NO avanza etapa (spec CFI-02).
+- [x] 4.4 Test: auto-save dispara PUT tras 30s con `fakeAsync` + `tick(30000)` (spec DSI-01).
+- [x] 4.5 Test: `guardarBorrador()` envía PUT con `completada: false` (spec DSI-03).
+- [x] 4.6 Verificar que no hay `console.log`, `any` types, ni constructor injection en archivos modificados.
