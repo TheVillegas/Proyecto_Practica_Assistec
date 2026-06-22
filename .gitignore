@@ -45,3 +45,6 @@ AssisTec API/package-lock.json
 Documentos_Assistec/
 temp_memories.json
 .obsidian/
+
+# --- Engram memory export (auto-generated, contains API keys) ---
+engram-export.json

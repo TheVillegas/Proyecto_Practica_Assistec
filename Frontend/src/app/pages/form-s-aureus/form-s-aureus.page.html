@@ -148,33 +148,14 @@
               </div>
             </div>
 
-            <!-- Tabla de muestras Etapa 1 -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2 mb-3">
+            <!-- Tabla de muestras Etapa 1 ELIMINADA: el recuento de colonias se ingresa en Etapa 5 (Cálculo S. Aureus) -->
+            <div class="control-card mb-6 border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3">
                 Muestras y Lecturas (24h - 48h)
               </p>
-              <div class="tabla-wrapper overflow-x-auto">
-                <table class="tabla-submuestras w-full text-center text-xs">
-                  <thead>
-                    <tr class="bg-[#29588C] text-white">
-                      <th class="p-2 border font-semibold">Nº Muestra (o Duplicado)</th>
-                      <th class="p-2 border font-semibold">(C) 24 Hrs 1</th>
-                      <th class="p-2 border font-semibold">(C) 24 Hrs 2</th>
-                      <th class="p-2 border font-semibold">(C) 48 Hrs 1</th>
-                      <th class="p-2 border font-semibold">(C) 48 Hrs 2</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let m of muestrasEtapa1; let i = index" [class.bg-slate-50]="m.esDuplicado">
-                      <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
-                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.lectura24h1" [ngModelOptions]="{standalone: true}" /></td>
-                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.lectura24h2" [ngModelOptions]="{standalone: true}" /></td>
-                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.lectura48h1" [ngModelOptions]="{standalone: true}" /></td>
-                      <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.lectura48h2" [ngModelOptions]="{standalone: true}" /></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <p class="text-xs text-slate-500">
+                El recuento de colonias y lecturas se ingresa en la Etapa 5 — Cálculo S. Aureus.
+              </p>
             </div>
 
             <!-- Controles ALI -->
@@ -422,24 +403,7 @@
               </div>
             </div>
 
-            <div class="control-card mb-6 overflow-x-auto">
-              <table class="tabla-submuestras w-full text-center text-xs">
-                <thead>
-                  <tr class="bg-[#29588C] text-white">
-                    <th class="p-2 border font-semibold">Nº de Muestra (o Duplicado)</th>
-                    <th class="p-2 border font-semibold">(A) placa 1</th>
-                    <th class="p-2 border font-semibold">(A) placa 2</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let m of muestrasEtapa3; let i = index" [class.bg-slate-50]="m.id === 'DUP'">
-                    <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
-                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.placa1" [ngModelOptions]="{standalone: true}" /></td>
-                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.placa2" [ngModelOptions]="{standalone: true}" /></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <!-- Tabla Traspaso BHI ELIMINADA: el traspaso se ingresa en Etapa 5 -->
 
           </div>
         </div>
@@ -558,22 +522,7 @@
                 </div>
               </div>
 
-              <table class="tabla-submuestras w-full text-center text-xs mt-4">
-                <thead>
-                  <tr class="bg-[#29588C] text-white">
-                    <th class="p-2 border font-semibold">Nº Muestra</th>
-                    <th class="p-2 border font-semibold">(b) placa 1</th>
-                    <th class="p-2 border font-semibold">(b) placa 2</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let m of muestrasEtapa4_4a6h; let i = index" [class.bg-slate-50]="m.id === 'DUP'">
-                    <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
-                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.placa1" [ngModelOptions]="{standalone: true}" /></td>
-                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.placa2" [ngModelOptions]="{standalone: true}" /></td>
-                  </tr>
-                </tbody>
-              </table>
+              <!-- Tabla Coagulasa 4-6 Hrs ELIMINADA: el conteo se ingresa en Etapa 5 -->
             </div>
 
             <!-- Lectura 24h -->
@@ -616,58 +565,16 @@
                 </div>
               </div>
 
-              <table class="tabla-submuestras w-full text-center text-xs mt-4">
-                <thead>
-                  <tr class="bg-[#29588C] text-white">
-                    <th class="p-2 border font-semibold">Nº Muestra</th>
-                    <th class="p-2 border font-semibold">(b) placa 1</th>
-                    <th class="p-2 border font-semibold">(b) placa 2</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let m of muestrasEtapa4_24h; let i = index" [class.bg-slate-50]="m.id === 'DUP'">
-                    <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
-                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.placa1" [ngModelOptions]="{standalone: true}" /></td>
-                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.placa2" [ngModelOptions]="{standalone: true}" /></td>
-                  </tr>
-                </tbody>
-              </table>
+              <!-- Tabla Coagulasa 24 Hrs ELIMINADA: el conteo se ingresa en Etapa 5 -->
             </div>
 
           </div>
         </div>
       </div>
 
-      <!-- ════════ ETAPA 5: RESULTADOS ════════ -->
+      <!-- ════════ ETAPA 5: CÁLCULO S. AUREUS (NCh2676 8.2) ════════ -->
       <div *ngIf="etapaActual === 5" class="etapa-panel animate__animated animate__fadeIn">
-        <div class="form-card">
-          <div class="form-card-header">
-            <div class="form-card-title-group">
-              <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">5. Resultados S. Aureus</h2>
-            </div>
-          </div>
-          <div class="form-card-body">
-            <div class="overflow-x-auto">
-              <table class="tabla-submuestras w-full text-center text-xs">
-                <thead>
-                  <tr class="bg-[#29588C] text-white">
-                    <th class="p-2 border font-semibold">Nº de Muestra (o Duplicado)</th>
-                    <th class="p-2 border font-semibold">Nº S. Aureus</th>
-                    <th class="p-2 border font-semibold">UFC/gr</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let m of muestrasEtapa5; let i = index" [class.bg-slate-50]="m.id === 'DUP'">
-                    <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
-                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.numSAureus" [ngModelOptions]="{standalone: true}" /></td>
-                    <td class="p-2 border"><input type="text" class="form-input-sm mx-auto" [(ngModel)]="m.ufc" [ngModelOptions]="{standalone: true}" /></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <app-etapa5-calculo></app-etapa5-calculo>
       </div>
 
       <!-- ════════ ETAPA 6: CONCLUSIÓN FINAL ════════ -->

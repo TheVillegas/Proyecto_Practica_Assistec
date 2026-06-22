@@ -63,3 +63,10 @@ or
 STATUS: FAILED
 
 If FAILED, list: `file:line - rule violated - issue`
+
+---
+
+## Project Skills
+
+- `.agent/skills/linear-activity-creation/SKILL.md` — use for creating detailed AsisTec activities/issues in Linear.
+- `.agent/skills/linear-cycle-assignment/SKILL.md` — use for assigning AsisTec issues to Linear cycles/sprints.
