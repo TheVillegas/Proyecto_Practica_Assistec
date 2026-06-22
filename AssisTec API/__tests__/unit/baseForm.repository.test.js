@@ -45,29 +45,6 @@ describe('T-002: BaseFormRepository', () => {
         });
     });
 
-    describe('assertConcurrency', () => {
-        it('debe lanzar NOT_FOUND si el registro no existe', async () => {
-            mockModel.findUnique.mockResolvedValue(null);
-
-            await expect(repo.assertConcurrency(1, new Date(), null))
-                .rejects.toThrow('NOT_FOUND');
-        });
-
-        it('debe lanzar CONCURRENCY_ERROR si updatedAt no coincide', async () => {
-            mockModel.findUnique.mockResolvedValue({ updatedAt: new Date('2024-02-01') });
-
-            await expect(repo.assertConcurrency(1, new Date('2024-01-01'), null))
-                .rejects.toThrow('CONCURRENCY_ERROR');
-        });
-
-        it('debe permitir continuar si updatedAt coincide', async () => {
-            const expected = new Date('2024-01-01');
-            mockModel.findUnique.mockResolvedValue({ updatedAt: expected });
-
-            await expect(repo.assertConcurrency(1, expected, null)).resolves.toBeUndefined();
-        });
-    });
-
     describe('touchFormulario', () => {
         it('debe actualizar updatedAt y campos extras', async () => {
             const tx = {

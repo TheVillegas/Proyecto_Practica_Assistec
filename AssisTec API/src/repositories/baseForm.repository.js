@@ -22,25 +22,8 @@ class BaseFormRepository {
         });
     }
 
-    async assertConcurrency(id, expectedUpdatedAt, tx) {
-        const client = tx || this.model;
-        const record = await client.findUnique({
-            where: { [this.idField]: BigInt(id) },
-            select: { updatedAt: true }
-        });
-
-        if (!record) {
-            throw new Error('NOT_FOUND');
-        }
-
-        const recordTime = record.updatedAt instanceof Date ? record.updatedAt.getTime() : new Date(record.updatedAt).getTime();
-        const expectedTime = expectedUpdatedAt instanceof Date ? expectedUpdatedAt.getTime() : new Date(expectedUpdatedAt).getTime();
-
-        if (recordTime !== expectedTime) {
-            throw new Error('CONCURRENCY_ERROR');
-        }
-    }
-
+    // touchFormulario base: fallback sin verificación de concurrencia.
+    // Las subclases (Coli, Sal, Sau) sobreescriben con updateMany + expectedUpdatedAt.
     async touchFormulario(id, extra = {}, tx) {
         const client = tx || this.model;
         return client.update({
