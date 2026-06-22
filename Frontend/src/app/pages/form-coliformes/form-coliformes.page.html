@@ -13,6 +13,9 @@
       <span class="badge-etapa">{{ etapaActual }}/{{ TOTAL_ETAPAS }}</span>
     </ion-buttons>
   </ion-toolbar>
+  <ion-toolbar *ngIf="lastSaveText" class="sub-toolbar">
+    <ion-label class="save-indicator">{{ lastSaveText }}</ion-label>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content class="page-content">
@@ -75,8 +78,12 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
-                  <input type="text" class="form-input" formControlName="ct_analistaInicio"
-                    placeholder="Nombre analista" [class.input-error]="campoInvalido('ct_analistaInicio')" />
+                  <ion-select formControlName="ct_analistaInicio" interface="popover"
+                    [class.input-error]="campoInvalido('ct_analistaInicio')" placeholder="Seleccione analista">
+                    <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
+                      {{ r.nombreApellido }}
+                    </ion-select-option>
+                  </ion-select>
                 </div>
               </div>
 
@@ -93,8 +100,12 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
-                  <input type="text" class="form-input" formControlName="ct_analistaTermino"
-                    placeholder="Nombre analista" [class.input-error]="campoInvalido('ct_analistaTermino')" />
+                  <ion-select formControlName="ct_analistaTermino" interface="popover"
+                    [class.input-error]="campoInvalido('ct_analistaTermino')" placeholder="Seleccione analista">
+                    <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
+                      {{ r.nombreApellido }}
+                    </ion-select-option>
+                  </ion-select>
                 </div>
               </div>
             </div>
@@ -118,8 +129,12 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
-                  <input type="text" class="form-input" formControlName="cf_analistaInicio"
-                    placeholder="Nombre analista" [class.input-error]="campoInvalido('cf_analistaInicio')" />
+                  <ion-select formControlName="cf_analistaInicio" interface="popover"
+                    [class.input-error]="campoInvalido('cf_analistaInicio')" placeholder="Seleccione analista">
+                    <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
+                      {{ r.nombreApellido }}
+                    </ion-select-option>
+                  </ion-select>
                 </div>
               </div>
 
@@ -136,8 +151,12 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
-                  <input type="text" class="form-input" formControlName="cf_analistaTermino"
-                    placeholder="Nombre analista" [class.input-error]="campoInvalido('cf_analistaTermino')" />
+                  <ion-select formControlName="cf_analistaTermino" interface="popover"
+                    [class.input-error]="campoInvalido('cf_analistaTermino')" placeholder="Seleccione analista">
+                    <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
+                      {{ r.nombreApellido }}
+                    </ion-select-option>
+                  </ion-select>
                 </div>
               </div>
             </div>
@@ -161,8 +180,12 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
-                  <input type="text" class="form-input" formControlName="ec_analistaInicio"
-                    placeholder="Nombre analista" [class.input-error]="campoInvalido('ec_analistaInicio')" />
+                  <ion-select formControlName="ec_analistaInicio" interface="popover"
+                    [class.input-error]="campoInvalido('ec_analistaInicio')" placeholder="Seleccione analista">
+                    <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
+                      {{ r.nombreApellido }}
+                    </ion-select-option>
+                  </ion-select>
                 </div>
               </div>
 
@@ -179,8 +202,12 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
-                  <input type="text" class="form-input" formControlName="ec_analistaTermino"
-                    placeholder="Nombre analista" [class.input-error]="campoInvalido('ec_analistaTermino')" />
+                  <ion-select formControlName="ec_analistaTermino" interface="popover"
+                    [class.input-error]="campoInvalido('ec_analistaTermino')" placeholder="Seleccione analista">
+                    <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
+                      {{ r.nombreApellido }}
+                    </ion-select-option>
+                  </ion-select>
                 </div>
               </div>
             </div>
@@ -225,31 +252,24 @@
             <!-- Estufa Utilizada -->
             <div class="form-group mt-4 border-t border-slate-100 pt-4">
               <label class="form-label">Estufa <span class="required-star">*</span></label>
-              <div class="form-radio-group">
-                <label class="form-check-label">
-                  <input type="radio" class="form-radio" name="estufaUtilizada" value="Estufa 73-M (35.0+/-0.5°C)"
-                    formControlName="estufaUtilizada" />
-                  <span>Estufa 73-M (35.0+/-0.5°C)</span>
-                </label>
-                <label class="form-check-label">
-                  <input type="radio" class="form-radio" name="estufaUtilizada" value="Estufa 2-M (35.5+/-0.5°C)"
-                    formControlName="estufaUtilizada" />
-                  <span>Estufa 2-M (35.5+/-0.5°C)</span>
-                </label>
-              </div>
-              <span class="error-msg" *ngIf="campoInvalido('estufaUtilizada')">Debe seleccionar una estufa.</span>
+              <ion-select formControlName="estufas" [multiple]="true" interface="popover"
+                placeholder="Seleccione estufa(s)">
+                <ion-select-option *ngFor="let eq of listaEquiposIncubacion" [value]="eq.idIncubacion">
+                  {{ eq.nombreEquipo }} ({{ eq.temperaturaRef }})
+                </ion-select-option>
+              </ion-select>
+              <span class="error-msg" *ngIf="campoInvalido('estufas')">Debe seleccionar al menos una estufa.</span>
             </div>
 
             <!-- Micropipeta 1ml -->
             <div class="form-group mt-4 border-t border-slate-100 pt-4">
               <label class="form-label">Micropipetas 1ml <span class="required-star">*</span></label>
-              <div class="form-radio-group">
-                <label class="form-check-label" *ngFor="let mic of ['22-M', '72-M', '98-M', '100-M', '102-M']">
-                  <input type="radio" class="form-radio" name="micropipeta1ml" [value]="mic"
-                    formControlName="micropipeta1ml" />
-                  <span>{{ mic }}</span>
-                </label>
-              </div>
+              <ion-select formControlName="micropipeta1ml" interface="popover"
+                placeholder="Seleccione micropipeta 1ml">
+                <ion-select-option *ngFor="let mic of listaPipetas" [value]="mic">
+                  {{ mic.nombrePipeta }} ({{ mic.capacidad }})
+                </ion-select-option>
+              </ion-select>
               <span class="error-msg" *ngIf="campoInvalido('micropipeta1ml')">Debe seleccionar una micropipeta de
                 1ml.</span>
             </div>
@@ -257,13 +277,12 @@
             <!-- Micropipeta 10ml -->
             <div class="form-group mt-4 border-t border-slate-100 pt-4">
               <label class="form-label">Micropipetas 10ml <span class="required-star">*</span></label>
-              <div class="form-radio-group">
-                <label class="form-check-label" *ngFor="let mic of ['32-M', '103-M', '75-M', '94-M', '106-M']">
-                  <input type="radio" class="form-radio" name="micropipeta10ml" [value]="mic"
-                    formControlName="micropipeta10ml" />
-                  <span>{{ mic }}</span>
-                </label>
-              </div>
+              <ion-select formControlName="micropipeta10ml" interface="popover"
+                placeholder="Seleccione micropipeta 10ml">
+                <ion-select-option *ngFor="let mic of listaPipetas" [value]="mic">
+                  {{ mic.nombrePipeta }} ({{ mic.capacidad }})
+                </ion-select-option>
+              </ion-select>
               <span class="error-msg" *ngIf="campoInvalido('micropipeta10ml')">Debe seleccionar una micropipeta de
                 10ml.</span>
             </div>
@@ -298,8 +317,12 @@
               </div>
               <div class="form-group">
                 <label class="form-label text-xs">Analista Responsable <span class="required-star">*</span></label>
-                <input type="text" class="form-input" [(ngModel)]="tabla24h.analistaResponsable"
-                  [ngModelOptions]="{standalone: true}" placeholder="Nombre del analista" />
+                <ion-select [(ngModel)]="tabla24h.analistaResponsable" [ngModelOptions]="{standalone: true}"
+                  interface="popover" placeholder="Seleccione analista">
+                  <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
+                    {{ r.nombreApellido }}
+                  </ion-select-option>
+                </ion-select>
               </div>
             </div>
 
@@ -373,8 +396,12 @@
               </div>
               <div class="form-group">
                 <label class="form-label text-xs">Analista Responsable<span class="required-star">*</span></label>
-                <input type="text" class="form-input" [(ngModel)]="tabla48h.analistaResponsable"
-                  [ngModelOptions]="{standalone: true}" placeholder="Nombre del analista" />
+                <ion-select [(ngModel)]="tabla48h.analistaResponsable" [ngModelOptions]="{standalone: true}"
+                  interface="popover" placeholder="Seleccione analista">
+                  <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
+                    {{ r.nombreApellido }}
+                  </ion-select-option>
+                </ion-select>
               </div>
             </div>
 
@@ -585,29 +612,39 @@
           <div class="form-card-body">
 
             <!-- Tabla de Resultados Finales por Muestra -->
-            <p class="form-label mb-3">Resultados Finales por Muestra</p>
+            <p class="form-label mb-3">Resultados Finales por Muestra (NMP/100ml)</p>
             <div class="tabla-wrapper mb-6">
               <table class="tabla-submuestras w-full text-xs">
                 <thead>
                   <tr class="bg-[#29588C] text-white">
                     <th class="py-2 px-3 text-left font-semibold">N° Muestra</th>
+                    <th class="py-2 px-3 text-left font-semibold">CT</th>
+                    <th class="py-2 px-3 text-left font-semibold">CF</th>
+                    <th class="py-2 px-3 text-left font-semibold">E. coli</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <td class="py-2 px-3 font-semibold">CT</td>
-                  <td class="py-2 px-3 font-semibold">CF</td>
-                  <td class="py-2 px-3 font-semibold">E. coli</td>
+                  <tr *ngFor="let res of resultadosFinales" class="border-b border-slate-200">
+                    <td class="py-2 px-3 font-semibold">{{ res.label }}</td>
+                    <td class="py-2 px-3">{{ res.ct }}</td>
+                    <td class="py-2 px-3">{{ res.cf }}</td>
+                    <td class="py-2 px-3">{{ res.ecoli }}</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
 
-            <!-- Botón calcular simulación de laboratorio -->
+            <!-- Botón calcular NMP -->
             <div class="flex justify-end mb-6">
-              <ion-button fill="outline" color="primary" (click)="calcularNMP()" class="btn-calcular-nmp">
+              <ion-button fill="outline" color="primary" (click)="calcularNMP()" class="btn-calcular-nmp"
+                [disabled]="!puedeCalcularNMP">
                 <ion-icon name="calculator-outline" slot="start"></ion-icon>
-                Simular Cálculo NMP
+                Calcular NMP
               </ion-button>
             </div>
+            <p *ngIf="!puedeCalcularNMP" class="text-xs text-amber-600 mb-4">
+              Complete todas las lecturas de 24h y 48h para habilitar el cálculo.
+            </p>
 
             <!-- Observaciones finales -->
             <div class="form-group border-t border-slate-100 pt-4">
@@ -629,6 +666,10 @@
         Cancelar
       </button>
       <div class="nav-footer__actions">
+        <button type="button" class="btn-draft" (click)="guardarBorrador()">
+          <ion-icon name="document-outline"></ion-icon>
+          Guardar Borrador
+        </button>
         <button type="button" class="btn-secondary" (click)="retrocederEtapa()" *ngIf="etapaActual > 1">
           <ion-icon name="arrow-back-outline"></ion-icon>
           Anterior
