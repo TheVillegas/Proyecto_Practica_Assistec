@@ -161,7 +161,12 @@ export class FormColiformesPage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('idFormulario') || this.route.snapshot.queryParamMap.get('idFormulario');
-    this.idFormulario = idParam ? Number(idParam) : 1; // fallback a ID de prueba
+    if (!idParam) {
+      this.mostrarAlerta('Error', 'No se encontró el identificador del formulario.');
+      this.router.navigate(['/home']);
+      return;
+    }
+    this.idFormulario = Number(idParam);
 
     this.initForm();
     this.setupAutoSave();
