@@ -8,6 +8,7 @@
 
 const { Router } = require('express');
 const { PrismaClient } = require('@prisma/client');
+const winston = require('winston');
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -131,7 +132,7 @@ router.post('/calcular-muestra', (req, res) => {
     const resultado = calcularSAureus({ diluciones, coloniasPosibles, colConfirmar, coagulasa4h, coagulasa24h });
     return res.status(200).json(resultado);
   } catch (error) {
-    console.error('Error en /calcular-muestra:', error);
+    winston.error('Error en /calcular-muestra:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -172,7 +173,7 @@ router.post('/calcular-todo', (req, res) => {
 
     return res.status(200).json({ solicitudAnalisisId, resultados, consolidado });
   } catch (error) {
-    console.error('Error en /calcular-todo:', error);
+    winston.error('Error en /calcular-todo:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -272,7 +273,7 @@ router.get('/importar-duplicado', async (req, res) => {
       advertencia: null
     });
   } catch (error) {
-    console.error('Error en /importar-duplicado:', error);
+    winston.error('Error en /importar-duplicado:', error);
     return res.status(500).json({
       aliOrigen: Number(req.query.aliOrigen),
       muestra1: null,

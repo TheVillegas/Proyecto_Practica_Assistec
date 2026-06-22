@@ -574,7 +574,7 @@ export class Etapa5CalculoComponent implements OnInit {
 
       muestra.data.resultado = resultado;
     } catch (error) {
-      console.error('Error al calcular muestra:', error);
+      // Error manejado — el estado isLoading se resetea en finally
     } finally {
       muestra.isLoading = false;
     }
@@ -637,7 +637,6 @@ export class Etapa5CalculoComponent implements OnInit {
         };
       }
     } catch (error) {
-      console.error('Error al importar duplicado:', error);
       this.duplicado.advertencia = 'Error al importar datos del ALI origen';
     } finally {
       this.duplicadoIsLoading = false;
@@ -666,7 +665,7 @@ export class Etapa5CalculoComponent implements OnInit {
 
       this.duplicado.resultado = resultado;
     } catch (error) {
-      console.error('Error al calcular duplicado:', error);
+      // Error manejado — el estado isLoading se resetea en finally
     } finally {
       this.duplicadoIsLoading = false;
     }

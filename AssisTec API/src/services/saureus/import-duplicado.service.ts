@@ -6,6 +6,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import winston from 'winston';
 
 const prisma = new PrismaClient();
 
@@ -120,7 +121,7 @@ export class ImportDuplicadoService {
         advertencia: null
       };
     } catch (error) {
-      console.error('Error al importar duplicado:', error);
+      winston.error('Error al importar duplicado:', error);
       return {
         aliOrigen,
         muestra1: null,
