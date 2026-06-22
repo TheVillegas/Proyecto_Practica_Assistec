@@ -574,7 +574,8 @@ export class Etapa5CalculoComponent implements OnInit {
 
       muestra.data.resultado = resultado;
     } catch (error) {
-      // Error manejado — el estado isLoading se resetea en finally
+      // TODO: mostrar error al usuario vía toast/alert cuando se integre AlertController
+      console.warn('Error en cálculo:', error);
     } finally {
       muestra.isLoading = false;
     }
@@ -665,7 +666,8 @@ export class Etapa5CalculoComponent implements OnInit {
 
       this.duplicado.resultado = resultado;
     } catch (error) {
-      // Error manejado — el estado isLoading se resetea en finally
+      // TODO: mostrar error al usuario vía toast/alert cuando se integre AlertController
+      console.warn('Error en cálculo:', error);
     } finally {
       this.duplicadoIsLoading = false;
     }

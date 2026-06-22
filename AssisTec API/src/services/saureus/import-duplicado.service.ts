@@ -133,7 +133,7 @@ export class ImportDuplicadoService {
   /**
    * Extrae diluciones de la muestra
    */
-  private extraerDiluciones(muestra: any): Array<{ dil: number; colonias: [number | null, number | null] }> {
+  private extraerDiluciones(muestra: { dil1: number | null; c1: number | null; dil2: number | null; c2: number | null; dil3: number | null; c3: number | null }): Array<{ dil: number; colonias: [number | null, number | null] }> {
     const diluciones: Array<{ dil: number; colonias: [number | null, number | null] }> = [];
 
     if (muestra.dil1 !== null) {
