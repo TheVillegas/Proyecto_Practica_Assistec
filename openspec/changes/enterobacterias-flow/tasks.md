@@ -4,7 +4,7 @@
 
 Decision needed before apply: Yes
 Chained PRs recommended: Yes
-Chain strategy: pending
+Chain strategy: feature-branch-chain
 400-line budget risk: High
 
 **Work units (4 chained PRs, base=main):**
