@@ -7,6 +7,6 @@
 module.exports = {
   testEnvironment: 'node',
   moduleFileExtensions: ['js', 'json'],
-  testMatch: ['**/__tests__/**/*.test.js'],
+  testMatch: ['**/__tests__/**/*.test.js', '**/validators/__tests__/**/*.test.js'],
   testPathIgnorePatterns: ['/node_modules/']
 };
