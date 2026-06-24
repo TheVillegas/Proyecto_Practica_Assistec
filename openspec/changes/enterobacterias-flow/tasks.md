@@ -39,12 +39,12 @@ Chain strategy: feature-branch-chain
 
 ## Phase 3: Frontend Wizard Refactor (PR #3)
 
-- [ ] 3.1 Create 8 sub-componentes (`EntPesadoComponent`...`EntResultadosComponent`); `FormGroup` + `(subetapaCompleta)`
-- [ ] 3.2 Rewrite `form-enterobacterias.page.ts` — container state, paso↔etapa map, `onSiguiente()` local salvo 4/5/8
-- [ ] 3.3 Rewrite `form-enterobacterias.page.html` — 3-etapa card (`*ngIf="etapaActual===n"`), sub-etapas inline
-- [ ] 3.4 Add `ModoLecturaPipe` — disable inputs si `rol ∉ [0,4]`, oculta Siguiente/Anterior/Borrador (EFW-04)
-- [ ] 3.5 Update `app-routing.module.ts` — `allowedRoles:[0,1,2,4]` para `/form-enterobacterias/:id` (EFW-05)
-- [ ] 3.6 Test: paso 1→2→3 sin HTTP; paso 4 llama `guardarEtapa(1, true)`
+- [x] 3.1 Create 8 sub-componentes (`EntPesadoComponent`...`EntResultadosComponent`); `FormGroup` + `(subetapaCompleta)`
+- [x] 3.2 Rewrite `form-enterobacterias.page.ts` — container state, paso↔etapa map, `onSiguiente()` local salvo 4/5/8
+- [x] 3.3 Rewrite `form-enterobacterias.page.html` — 3-etapa card (`*ngIf="etapaActual===n"`), sub-etapas inline
+- [x] 3.4 Add `ModoLecturaPipe` — disable inputs si `rol ∉ [0,4]`, oculta Siguiente/Anterior/Borrador (EFW-04)
+- [x] 3.5 Update `app-routing.module.ts` — `allowedRoles:[0,1,2,4]` para `/form-enterobacterias/:id` (EFW-05)
+- [x] 3.6 Test: paso 1→2→3 sin HTTP; paso 4 llama `guardarEtapa(1, true)`
 
 ## Phase 4: Wiring, Auto-Save & Dynamic Catalog (PR #4)
 
