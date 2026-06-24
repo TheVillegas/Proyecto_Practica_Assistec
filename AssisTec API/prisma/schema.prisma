@@ -993,7 +993,7 @@ model SalFase1 {
   tipoMatriz                String    @map("tipo_matriz") @db.VarChar(20)
   pesoMuestra               String    @map("peso_muestra") @db.VarChar(20)
   caldoHomogeneizacion      String    @map("caldo_homogeneizacion") @db.VarChar(30)
-  caldoAsignadoAuto         Boolean   @default(false) @map("caldo_asignado_auto")
+  caldoAsignadoAuto         String?   @map("caldo_asignado_auto") @db.VarChar(30)
   horaInicioHidratacion     DateTime? @map("hora_inicio_hidratacion") @db.Time()
   horaTerminoHidratacion    DateTime? @map("hora_termino_hidratacion") @db.Time()
   hidratacionValida         Boolean?  @map("hidratacion_valida")

@@ -240,6 +240,57 @@ class SalService {
         return body.fase_actual ?? body.faseActual ?? defaultValue;
     }
 
+    _asignarCaldoPorMatriz(tipoMatriz) {
+        if (tipoMatriz === undefined || tipoMatriz === null) {
+            throw new Error('TIPO_MATRIZ_REQUERIDO');
+        }
+        if (tipoMatriz === 'Chocolate') {
+            return 'Leche descremada';
+        }
+        return 'Caldo APT';
+    }
+
+    _validarHidratacion(horaInicio, horaTermino) {
+        if (!horaInicio || !horaTermino) {
+            return { hidratacionValida: false };
+        }
+        const minutosInicio = this._minutosDesdeMedianoche(horaInicio);
+        const minutosTermino = this._minutosDesdeMedianoche(horaTermino);
+
+        if (minutosTermino < minutosInicio) {
+            throw new Error('HIDRATACION_INTERVALO_INVALIDO');
+        }
+
+        const delta = minutosTermino - minutosInicio;
+        return { hidratacionValida: delta >= 5 };
+    }
+
+    _calcularAlerta25min(horaTerminoHomo, horaIngresoEstufa) {
+        const minutosHomo = this._minutosDesdeMedianoche(horaTerminoHomo);
+        const minutosEstufa = this._minutosDesdeMedianoche(horaIngresoEstufa);
+
+        if (minutosEstufa < minutosHomo) {
+            throw new Error('HOMO_ESTUFA_INTERVALO_INVALIDO');
+        }
+
+        const minutosHomoAEstufa = minutosEstufa - minutosHomo;
+        return {
+            minutosHomoAEstufa,
+            alertaTiempo25min: minutosHomoAEstufa > 25
+        };
+    }
+
+    _minutosDesdeMedianoche(hora) {
+        if (hora instanceof Date) {
+            return hora.getHours() * 60 + hora.getMinutes();
+        }
+        if (typeof hora === 'string') {
+            const [h, m] = hora.split(':').map(Number);
+            return h * 60 + m;
+        }
+        return 0;
+    }
+
     async guardarFase(id, fase, body, expectedUpdatedAt, usuario) {
         this.assertCanWrite(usuario);
         const faseNum = Number(fase);
@@ -253,16 +304,35 @@ class SalService {
         let actualizado;
 
         switch (faseNum) {
-            case 1:
+            case 1: {
+                const fase1Payload = this.mapFase1Payload(body);
+                fase1Payload.caldoAsignadoAuto = this._asignarCaldoPorMatriz(fase1Payload.tipoMatriz);
+
+                const raw = resolvePayloadSection(body, 'fase');
+                const hidratacion = this._validarHidratacion(
+                    raw.hora_inicio_hidratacion ?? raw.horaInicioHidratacion,
+                    raw.hora_termino_hidratacion ?? raw.horaTerminoHidratacion
+                );
+                fase1Payload.hidratacionValida = hidratacion.hidratacionValida;
+
                 actualizado = await salRepository.upsertFase1(id, {
-                    etapa: this.stripUndefined(this.mapFase1Payload(body)),
+                    etapa: this.stripUndefined(fase1Payload),
                     faseActual: this._resolveFaseActual(body, 1)
                 }, expectedUpdatedAt);
                 break;
+            }
             case 2: {
                 const fase2aData = body.fase2a || body.fase || {};
+                const fase2aPayload = this.mapFase2aPayload({ fase: fase2aData });
+                const alerta = this._calcularAlerta25min(
+                    fase2aData.hora_termino_homo ?? fase2aData.horaTerminoHomo,
+                    fase2aData.hora_ingreso_estufa ?? fase2aData.horaIngresoEstufa
+                );
+                fase2aPayload.minutosHomoAEstufa = alerta.minutosHomoAEstufa;
+                fase2aPayload.alertaTiempo25min = alerta.alertaTiempo25min;
+
                 actualizado = await salRepository.upsertFase2a(id, {
-                    etapa: this.stripUndefined(this.mapFase2aPayload({ fase: fase2aData })),
+                    etapa: this.stripUndefined(fase2aPayload),
                     faseActual: this._resolveFaseActual(body, 2)
                 }, expectedUpdatedAt);
                 break;
