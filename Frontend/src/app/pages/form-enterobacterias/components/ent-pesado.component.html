@@ -27,13 +27,16 @@
     <!-- Tipo de muestra -->
     <div class="form-group">
       <label class="form-label" for="tipoMuestra">Tipo de muestra <span class="required-star">*</span></label>
-      <select id="tipoMuestra" class="form-select"
+      <ion-select id="tipoMuestra" class="form-select"
         [class.input-error]="campoInvalido('tipoMuestra')"
         formControlName="tipoMuestra"
-        [attr.disabled]="(rol | modoLectura) ? true : null">
-        <option value="">— Seleccionar —</option>
-        <option *ngFor="let opt of opcionesTipoMuestra" [value]="opt">{{ opt }}</option>
-      </select>
+        [disabled]="(rol | modoLectura)"
+        interface="popover"
+        placeholder="— Seleccionar —">
+        <ion-select-option value="">— Seleccionar —</ion-select-option>
+        <ion-select-option value="Mixta">Mixta</ion-select-option>
+        <ion-select-option value="Homogénea">Homogénea</ion-select-option>
+      </ion-select>
       <span class="error-msg" *ngIf="campoInvalido('tipoMuestra')">El campo Tipo de muestra es obligatorio.</span>
     </div>
 
@@ -81,10 +84,15 @@
     </div>
     <div class="form-group">
       <label class="form-label" for="analistaInicio">Analista de inicio <span class="required-star">*</span></label>
-      <input id="analistaInicio" type="text" class="form-input"
+      <ion-select id="analistaInicio"
         [class.input-error]="campoInvalido('analistaInicio')"
-        formControlName="analistaInicio" placeholder="Nombre del analista"
-        [attr.readonly]="(rol | modoLectura) ? true : null" />
+        formControlName="analistaInicio"
+        [disabled]="(rol | modoLectura)"
+        interface="popover"
+        placeholder="— Seleccionar analista —">
+        <ion-select-option value="">— Seleccionar analista —</ion-select-option>
+        <ion-select-option *ngFor="let r of responsables" [value]="r.rut">{{ r.nombreApellido }}</ion-select-option>
+      </ion-select>
       <span class="error-msg" *ngIf="campoInvalido('analistaInicio')">El campo Analista de inicio es obligatorio.</span>
     </div>
   </div>

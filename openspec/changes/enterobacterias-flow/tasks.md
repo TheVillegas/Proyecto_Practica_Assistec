@@ -48,13 +48,13 @@ Chain strategy: feature-branch-chain
 
 ## Phase 4: Wiring, Auto-Save & Dynamic Catalog (PR #4)
 
-- [ ] 4.1 `ngOnInit` `forkJoin`: equipos incub, responsables, micropipetas, `lotes_reactivo` agar_vrbg+tween_80 (EFW-03)
-- [ ] 4.2 Bind `ion-select` en 8 sub-componentes a signals de catálogo; **borrar todas las `OPCIONES_*` hardcoded**
-- [ ] 4.3 `onSiguiente()` paso 4: `PUT /:id/etapa/1` con payload aplanado `{pesado, homog, sembrado, incub}` + `expectedUpdatedAt`
-- [ ] 4.4 `onSiguiente()` paso 5: `PUT /:id/etapa/2` con banner 24h; paso 8: `PUT etapa/3`
-- [ ] 4.5 `onGuardarBorrador()`: `PUT` con `completada:false`, sin avanzar
+- [x] 4.1 `ngOnInit` `forkJoin`: equipos incub, responsables, micropipetas, `lotes_reactivo` agar_vrbg+tween_80 (EFW-03)
+- [x] 4.2 Bind `ion-select` en 8 sub-componentes a signals de catálogo; **borrar todas las `OPCIONES_*` hardcoded**
+- [x] 4.3 `onSiguiente()` paso 4: `PUT /:id/etapa/1` con payload aplanado `{pesado, homog, sembrado, incub}` + `expectedUpdatedAt`
+- [x] 4.4 `onSiguiente()` paso 5: `PUT /:id/etapa/2` con banner 24h; paso 8: `PUT etapa/3`
+- [x] 4.5 `onGuardarBorrador()`: `PUT` con `completada:false`, sin avanzar
 - [x] 4.6 Wire `solicitud.service.js::validar()` — crear `EntFormulario` idempotente + `EntMuestra` (ECB-01)
-- [ ] 4.7 E2E test: flujo 1→8 graba 3 etapas; re-load devuelve nuevo `updated_at`
+- [x] 4.7 E2E test: flujo 1→8 graba 3 etapas; re-load devuelve nuevo `updated_at`
 
 ## Phase 5: Verification & Cleanup
 

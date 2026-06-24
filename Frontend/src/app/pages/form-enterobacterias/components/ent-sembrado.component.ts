@@ -1,5 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import {
+  EquipoIncubacion,
+  Micropipeta,
+  Responsable,
+  LoteReactivo
+} from '../../../interfaces/catalogo.interfaces';
 
 @Component({
   selector: 'app-ent-sembrado',
@@ -9,12 +15,12 @@ import { FormGroup } from '@angular/forms';
 export class EntSembradoComponent {
   @Input() formGroup!: FormGroup;
   @Input() rol?: number;
+  @Input() equiposIncubacion: EquipoIncubacion[] = [];
+  @Input() micropipetas: Micropipeta[] = [];
+  @Input() lotesAgarVRBG: LoteReactivo[] = [];
+  @Input() lotesTween80: LoteReactivo[] = [];
+  @Input() responsables: Responsable[] = [];
   @Output() subetapaCompleta = new EventEmitter<void>();
-
-  readonly opcionesEstufa = [
-    { valor: 'Estufa 73-M (35.0 +/- 0.5 °C)', label: 'Estufa 73-M (35.0 +/- 0.5 °C)' },
-    { valor: 'Estufa 2-M (35.5 +/- 0.5 °C)', label: 'Estufa 2-M (35.5 +/- 0.5 °C)' },
-  ];
 
   onSubetapaCompleta(): void {
     this.subetapaCompleta.emit();

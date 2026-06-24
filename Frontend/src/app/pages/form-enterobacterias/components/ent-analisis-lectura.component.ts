@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import { Responsable } from '../../../interfaces/catalogo.interfaces';
 
 @Component({
   selector: 'app-ent-analisis-lectura',
@@ -9,6 +10,7 @@ import { FormGroup } from '@angular/forms';
 export class EntAnalisisLecturaComponent {
   @Input() formGroup!: FormGroup;
   @Input() rol?: number;
+  @Input() responsables: Responsable[] = [];
   @Output() subetapaCompleta = new EventEmitter<void>();
 
   onSubetapaCompleta(): void {

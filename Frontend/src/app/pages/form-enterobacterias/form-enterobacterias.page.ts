@@ -1,11 +1,18 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin } from 'rxjs';
 import { EnterobacteriasApiService } from '../../services/enterobacterias-api.service';
 import { AuthService } from '../../services/auth-service';
-import { EntEtapaPayload } from '../../interfaces/enterobacterias.interfaces';
+import { CatalogosService } from '../../services/catalogos.service';
+import { EntEtapaPayload, EntFormularioCompleto } from '../../interfaces/enterobacterias.interfaces';
+import {
+  EquipoIncubacion,
+  Micropipeta,
+  Responsable,
+  LoteReactivo
+} from '../../interfaces/catalogo.interfaces';
 
 function reactivoOxidasaValidator(control: AbstractControl): ValidationErrors | null {
   if (!control.value) return null;
@@ -16,6 +23,14 @@ function reactivoOxidasaValidator(control: AbstractControl): ValidationErrors | 
     };
   }
   return null;
+}
+
+interface CatalogosEnterobacterias {
+  equiposIncubacion: EquipoIncubacion[];
+  responsables: Responsable[];
+  micropipetas: Micropipeta[];
+  lotesAgarVRBG: LoteReactivo[];
+  lotesTween80: LoteReactivo[];
 }
 
 @Component({
@@ -32,6 +47,7 @@ export class FormEnterobacteriasPage implements OnInit {
   private toastCtrl = inject(ToastController);
   private apiService = inject(EnterobacteriasApiService);
   private authService = inject(AuthService);
+  private catalogosService = inject(CatalogosService);
 
   readonly TOTAL_PASOS = 8;
   readonly NOMBRES_ETAPAS = ['Preparación', 'Análisis', 'Confirmación'];
@@ -51,17 +67,54 @@ export class FormEnterobacteriasPage implements OnInit {
   form!: FormGroup;
   formularioCompletado = false;
   updatedAt = '';
+  cargando = signal(true);
+
+  catalogos = {
+    equiposIncubacion: signal<EquipoIncubacion[]>([]),
+    responsables: signal<Responsable[]>([]),
+    micropipetas: signal<Micropipeta[]>([]),
+    lotesAgarVRBG: signal<LoteReactivo[]>([]),
+    lotesTween80: signal<LoteReactivo[]>([]),
+  };
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     this.idFormulario = idParam ? Number(idParam) : 0;
     this.inicializarFormulario();
+
+    if (this.idFormulario <= 0) {
+      this.cargando.set(false);
+      return;
+    }
+
+    forkJoin({
+      formulario: this.apiService.obtener(this.idFormulario),
+      equiposIncubacion: this.catalogosService.getEquiposIncubacion(),
+      responsables: this.catalogosService.getResponsables(),
+      micropipetas: this.catalogosService.getMicroPipetas(),
+      lotesAgarVRBG: this.catalogosService.getLotesReactivo('agar_vrbg'),
+      lotesTween80: this.catalogosService.getLotesReactivo('tween_80'),
+    }).subscribe({
+      next: (res) => {
+        this.catalogos.equiposIncubacion.set(res.equiposIncubacion);
+        this.catalogos.responsables.set(res.responsables);
+        this.catalogos.micropipetas.set(res.micropipetas);
+        this.catalogos.lotesAgarVRBG.set(res.lotesAgarVRBG);
+        this.catalogos.lotesTween80.set(res.lotesTween80);
+        this.cargarFormulario(res.formulario);
+        this.cargando.set(false);
+      },
+      error: () => {
+        this.cargando.set(false);
+        this.mostrarToast('Error al cargar datos del formulario.', 'danger');
+      },
+    });
   }
 
   private inicializarFormulario(): void {
     this.form = this.fb.group({
       pesado: this.fb.group({
-        codigoALI: ['ALI-2025-00421', Validators.required],
+        codigoALI: ['', Validators.required],
         nActa: ['', Validators.required],
         tipoMuestra: ['', Validators.required],
         nMuestra10g90ml: [null, [Validators.min(0)]],
@@ -77,16 +130,16 @@ export class FormEnterobacteriasPage implements OnInit {
       }),
       sembrado: this.fb.group({
         agarVRBGSembrado: ['', Validators.required],
-        estufaSembrado: ['', Validators.required],
-        placasSembrado: ['', Validators.required],
-        micropipeta1mlSembrado: ['100', Validators.required],
+        estufaSembrado: [null, Validators.required],
+        placasSembrado: [null, Validators.required],
+        micropipeta1mlSembrado: [null, Validators.required],
         fechaSembrado: ['', Validators.required],
         horaSembrado: ['', Validators.required],
         analistaSembrado: ['', Validators.required],
       }),
       incubacionPrep: this.fb.group({
-        agarVRBGIncub: ['', Validators.required],
-        estufaIncub: ['', Validators.required],
+        agarVRBGIncub: [''],
+        estufaIncub: [null, Validators.required],
         fechaTermino: ['', Validators.required],
         horaTermino: ['', Validators.required],
         analistaIncub: ['', Validators.required],
@@ -105,7 +158,7 @@ export class FormEnterobacteriasPage implements OnInit {
         horaTraspaso: ['', Validators.required],
         analistaTraspaso: ['', Validators.required],
         agarNutritivo: ['', Validators.required],
-        estufaConfIncub: ['', Validators.required],
+        estufaConfIncub: [null, Validators.required],
       }),
       lecturaOxidasa: this.fb.group({
         fechaLectConf: ['', Validators.required],
@@ -125,6 +178,86 @@ export class FormEnterobacteriasPage implements OnInit {
         observaciones: [''],
       }),
     });
+  }
+
+  private cargarFormulario(formulario: EntFormularioCompleto): void {
+    this.updatedAt = formulario.updatedAt ?? '';
+    this.pasoActual = formulario.subetapaActual ?? 1;
+
+    const e1 = formulario.etapa1;
+    if (e1) {
+      this.form.get('pesado')?.patchValue({
+        codigoALI: e1.codigoAli,
+        nActa: e1.nActa,
+        tipoMuestra: e1.tipoMuestra,
+        nMuestra10g90ml: e1.nMuestra10g90ml,
+        nMuestra50g450ml: e1.nMuestra50g450ml,
+        fechaInicio: e1.fechaInicio,
+        horaInicio: e1.horaInicio,
+        analistaInicio: e1.rutAnalistaInicio,
+      });
+      this.form.get('homogeneizacion')?.patchValue({
+        fechaHomog: e1.fechaHomog,
+        horaHomog: e1.horaHomog,
+        analistaHomog: e1.rutAnalistaHomog,
+      });
+      this.form.get('sembrado')?.patchValue({
+        agarVRBGSembrado: e1.idLoteAgarVrbgSembrado ? String(e1.idLoteAgarVrbgSembrado) : '',
+        estufaSembrado: e1.idEstufaSembrado,
+        placasSembrado: e1.placasSembrado,
+        micropipeta1mlSembrado: e1.idMicropipeta,
+        fechaSembrado: e1.fechaSembrado,
+        horaSembrado: e1.horaSembrado,
+        analistaSembrado: e1.rutAnalistaSembrado,
+      });
+      this.form.get('incubacionPrep')?.patchValue({
+        estufaIncub: e1.idEstufaIncub,
+        fechaTermino: e1.fechaFinIncubacion ? e1.fechaFinIncubacion.split('T')[0] : '',
+        horaTermino: e1.fechaFinIncubacion ? e1.fechaFinIncubacion.split('T')[1]?.substring(0, 5) : '',
+        analistaIncub: e1.rutAnalistaIncub,
+      });
+    }
+
+    const e2 = formulario.etapa2;
+    if (e2) {
+      this.form.get('analisisLectura')?.patchValue({
+        fechaLectura24h: e2.fechaLectura24h ? e2.fechaLectura24h.split('T')[0] : '',
+        horaLectura24h: e2.horaLectura24h,
+        analistaLectura24h: e2.rutAnalistaLectura,
+        nMuestraLectura: e2.nMuestraLectura,
+        dilucion: e2.dilucion,
+        colonias: e2.coloniasContadas,
+        equipoCuentaColonias: e2.idEquipoCuentaColonias ? String(e2.idEquipoCuentaColonias) : '',
+      });
+    }
+
+    const e3 = formulario.etapa3;
+    if (e3) {
+      this.form.get('incubacionConf')?.patchValue({
+        fechaTraspaso: e3.fechaTraspaso,
+        horaTraspaso: e3.horaTraspaso,
+        analistaTraspaso: e3.rutAnalistaTraspaso,
+        agarNutritivo: e3.idAgarNutritivo ? String(e3.idAgarNutritivo) : '',
+        estufaConfIncub: e3.idEstufaConf,
+      });
+      this.form.get('lecturaOxidasa')?.patchValue({
+        fechaLectConf: e3.fechaLectConf,
+        horaLectConf: e3.horaLectConf,
+        analistaLectConf: e3.rutAnalistaLectConf,
+        fechaOxidasa: e3.fechaOxidasa,
+        horaOxidasa: e3.horaOxidasa,
+        analistaOxidasa: e3.rutAnalistaOxidasa,
+        reactivoOxidasa: e3.reactivoOxidasa,
+        desaireadoAgarGlucosa: e3.desaireadoAgarGlucosa,
+        agarGlucosa: e3.agarGlucosa,
+        controlPosEcoli: e3.controlPosEcoli,
+        controlNegPaer: e3.controlNegPaer,
+        blanco: e3.blanco,
+      });
+      this.form.get('resultados')?.patchValue({
+        observaciones: e3.observaciones,
+      });
+    }
   }
 
   get etapaActual(): number {
@@ -192,9 +325,12 @@ export class FormEnterobacteriasPage implements OnInit {
       this.updatedAt = respuesta.updatedAt;
       return true;
     } catch (err: unknown) {
-      const httpErr = err as { status?: number };
+      const httpErr = err as { status?: number; error?: { codigo?: string; detalles?: { horas_restantes?: number } } };
       if (httpErr.status === 409) {
         await this.mostrarAlerta('Conflicto de concurrencia', 'El formulario fue modificado por otro usuario. Recargue y vuelva a intentar.');
+      } else if (httpErr.status === 422 && httpErr.error?.codigo === 'INCUBATION_LOCKOUT') {
+        const horas = httpErr.error.detalles?.horas_restantes ?? 0;
+        await this.mostrarAlerta('Bloqueo de incubación', `Deben transcurrir 24 horas. Faltan aproximadamente ${horas} horas.`);
       } else {
         this.mostrarToast('Error al guardar. Intente nuevamente.', 'danger');
       }

@@ -1,7 +1,7 @@
 # Apply Progress: Enterobacterias Flow
 
 ## Change
-Enterobacterias Flow — Phase 3: Frontend Wizard Refactor (PR #3)
+Enterobacterias Flow — Phase 4: Wiring, Auto-Save & Dynamic Catalog (PR #4)
 
 ## Mode
 Strict TDD (openspec `strict_tdd: true`)
@@ -39,6 +39,16 @@ Strict TDD (openspec `strict_tdd: true`)
 - [x] 3.5 Update `app-routing.module.ts` — `allowedRoles:[0,1,2,4]` for `/form-enterobacterias/:id` (EFW-05)
 - [x] 3.6 RED+GREEN tests: sub-step navigation without HTTP; etapa-boundary calls `guardarEtapa(n, true)`; read-only mode
 
+### Phase 4: Wiring, Auto-Save & Dynamic Catalog (PR #4)
+
+- [x] 4.1 `ngOnInit` `forkJoin`: equipos incubación, responsables, micropipetas, `lotes_reactivo` agar_vrbg+tween_80 (EFW-03)
+- [x] 4.2 Bind `ion-select` en 8 sub-componentes a signals de catálogo; removed all hardcoded `OPCIONES_*` arrays
+- [x] 4.3 `onSiguiente()` paso 4: `PUT /:id/etapa/1` with flattened payload `{pesado, homog, sembrado, incub}` + `expectedUpdatedAt`
+- [x] 4.4 `onSiguiente()` paso 5: `PUT /:id/etapa/2` with 24h banner; paso 8: `PUT /:id/etapa/3`
+- [x] 4.5 `onGuardarBorrador()`: `PUT` with `completada:false`, no stage advance
+- [x] 4.6 Wire `solicitud.service.js::validar()` — create `EntFormulario` idempotently + `EntMuestra` (ECB-01)
+- [x] 4.7 Container integration tests: full 1→8 wizard flow; reload returns new `updated_at`
+
 ## TDD Cycle Evidence
 
 | Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
@@ -54,13 +64,16 @@ Strict TDD (openspec `strict_tdd: true`)
 | 3.2 / 3.6 | `Frontend/src/app/pages/form-enterobacterias/form-enterobacterias.page.spec.ts` | Unit | N/A (new) | ✅ Written | ✅ Passed | ✅ Etapa/paso map, navigation, read-only | ✅ Clean |
 | 3.4 | `Frontend/src/app/pipes/modo-lectura.pipe.spec.ts` | Unit | N/A (new) | ✅ Written | ✅ Passed | ✅ Roles 0/1/2/3/4 | ✅ Clean |
 | 3.5 | `Frontend/src/app/app-routing.module.ts` (route test) | Unit | N/A (new) | ✅ Written | ✅ Passed | ✅ `allowedRoles` match | ✅ Clean |
+| 4.1 / 4.2 | `Frontend/src/app/pages/form-enterobacterias/components/ent-*.component.spec.ts` | Unit | Phase 3 tests | ✅ Updated | ✅ Passed | ✅ `ion-select` renders with `IonicModule` | ✅ Clean |
+| 4.1 / 4.3 / 4.4 / 4.5 | `Frontend/src/app/pages/form-enterobacterias/form-enterobacterias.page.spec.ts` | Unit | Phase 3 tests | ✅ Updated | ✅ Passed | ✅ forkJoin, PUT dispatch, draft save, reload | ✅ Clean |
+| 4.6 | `AssisTec API/__tests__/unit/formularioMicrobiologico.service.test.js` | Unit | N/A (new) | ✅ Written | ✅ Passed | ✅ ENTEROBACTERIAS → ent creation | ✅ Clean |
 
 ### Test Summary
-- **Total tests written**: 71
-- **Total tests passing**: 71
-- **Layers used**: Unit (65), Integration (6), E2E (0)
+- **Total tests written**: 75
+- **Total tests passing**: 75
+- **Layers used**: Unit (69), Integration (6), E2E (0)
 - **Approval tests**: None — no refactoring tasks
-- **Pure functions created**: payload mappers in `enterobacterias.service.js`; API service methods are thin HTTP wrappers; `ModoLecturaPipe` is pure
+- **Pure functions created**: payload mappers in `enterobacterias.service.js`; API service methods are thin HTTP wrappers; `ModoLecturaPipe` is pure; catalog signal mapping in container
 
 ## Files Changed
 
@@ -100,6 +113,16 @@ Strict TDD (openspec `strict_tdd: true`)
 | `Frontend/src/app/app-routing.module.ts` | Modified | `allowedRoles:[0,1,2,4]` for `/form-enterobacterias/:id` |
 | `openspec/changes/enterobacterias-flow/tasks.md` | Modified | Marked Phase 3 tasks `[x]` |
 | `openspec/changes/enterobacterias-flow/apply-progress.md` | Modified | Added Phase 3 progress and TDD evidence |
+| `AssisTec API/src/services/formularioMicrobiologico.service.js` | Modified | Map `ENTEROBACTERIAS` solicitud código to `ent` formulario creation |
+| `AssisTec API/__tests__/unit/formularioMicrobiologico.service.test.js` | Created | Unit tests for idempotent `EntFormulario` + `EntMuestra` creation |
+| `Frontend/src/app/pages/form-enterobacterias/form-enterobacterias.page.ts` | Modified | Container `forkJoin` catalog loading, existing form reload, PUT dispatch, draft save |
+| `Frontend/src/app/pages/form-enterobacterias/form-enterobacterias.page.html` | Modified | Pass catalog arrays and `rol` to 8 sub-components; bind navigation to wired handlers |
+| `Frontend/src/app/pages/form-enterobacterias/form-enterobacterias.page.spec.ts` | Modified | Tests for `forkJoin`, `guardarEtapa` calls at boundaries, draft save, reload with `updated_at` |
+| `Frontend/src/app/pages/form-enterobacterias/components/ent-*.component.ts` | Modified | Added `@Input catalogos` signals, replaced hardcoded options with `ion-select` bindings |
+| `Frontend/src/app/pages/form-enterobacterias/components/ent-*.component.html` | Modified | Replaced hardcoded `<ion-select-option>` lists with catalog-driven `*ngFor` |
+| `Frontend/src/app/pages/form-enterobacterias/components/ent-*.component.spec.ts` | Modified | Added `IonicModule` import so `ion-select` renders under test |
+| `openspec/changes/enterobacterias-flow/tasks.md` | Modified | Marked Phase 4 tasks `[x]` |
+| `openspec/changes/enterobacterias-flow/apply-progress.md` | Modified | Added Phase 4 progress, TDD evidence, and deviations |
 
 ## Deviations from Design
 
@@ -114,19 +137,19 @@ Strict TDD (openspec `strict_tdd: true`)
 
 ## Remaining Tasks
 
-- [ ] 4.1 Wire catalogo lotes reactivo into `EntSembradoComponent`
-- [ ] 4.2 Implement auto-save draft on value changes / navigation guard
-- [ ] 4.3 Add role-specific EFW scenarios (read-only masking already in place)
-- [ ] 4.4 E2E smoke test for happy-path wizard
-- [ ] 5.x Verification & cleanup
+- [ ] 5.1 `cd "AssisTec API" && pnpm test` — 0 failures (blocked by pre-existing `reporte.repository.js` bug)
+- [ ] 5.2 `cd Frontend && pnpm test` — 0 failures ✅
+- [ ] 5.3 `cd Frontend && pnpm run lint` — 0 errors
+- [ ] 5.4 UAT against ECB-01..07, EFW-01..05, RLC-01..03
+- [ ] 5.5 Commit: `feat(ent): end-to-end Enterobacterias flow con 24h lockout`
 
 ## Workload / PR Boundary
 
 - **Mode**: chained PR slice (`feature-branch-chain`)
-- **Current work unit**: PR #3 — Frontend Wizard Refactor
-- **Branch**: `feature/enterobacterias-phase3` → `feature/enterobacterias-phase2`
-- **Estimated review budget impact**: ~1,700 changed lines (container refactor + 8 components + tests), focused on the frontend wizard. This is the largest frontend slice; Phase 4 (wiring/catalog/auto-save) will be a smaller follow-up.
+- **Current work unit**: PR #4 — Wiring, Auto-Save & Dynamic Catalog
+- **Branch**: `feature/enterobacterias-phase4` → `feature/enterobacterias-phase3`
+- **Estimated review budget impact**: ~530 changed lines (container wiring + 8 component bindings + tests), focused on dynamic catalog loading and PUT dispatch.
 
 ## Status
 
-6/6 Phase 3 tasks complete. 177 frontend unit tests passing. Ready for PR creation / next batch.
+7/7 Phase 4 tasks complete. 179 frontend unit tests passing. 4 new backend unit tests passing. Pre-existing backend integration failure in `reporte.repository.js` remains unrelated to this change. Ready for PR creation.

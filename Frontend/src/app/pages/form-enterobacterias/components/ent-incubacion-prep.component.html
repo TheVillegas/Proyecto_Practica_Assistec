@@ -3,25 +3,29 @@
 
   <!-- Agar VRBG -->
   <div class="form-group max-w-sm">
-    <label class="form-label" for="agarVRBGIncub">Agar VRBG <span class="required-star">*</span></label>
-    <input id="agarVRBGIncub" type="text" class="form-input"
-      [class.input-error]="campoInvalido('agarVRBGIncub')"
-      formControlName="agarVRBGIncub" placeholder="Ej: VRBG-045"
-      [attr.readonly]="(rol | modoLectura) ? true : null" />
-    <span class="error-msg" *ngIf="campoInvalido('agarVRBGIncub')">El campo Agar VRBG es obligatorio.</span>
+    <label class="form-label" for="agarVRBGIncub">Agar VRBG <span class="optional-tag">(referencia)</span></label>
+    <ion-select id="agarVRBGIncub"
+      formControlName="agarVRBGIncub"
+      [disabled]="(rol | modoLectura)"
+      interface="popover"
+      placeholder="— Seleccionar lote —">
+      <ion-select-option value="">— Seleccionar lote —</ion-select-option>
+      <ion-select-option *ngFor="let lote of lotesAgarVRBG" [value]="lote.idLoteReactivo">{{ lote.codigoLote }}</ion-select-option>
+    </ion-select>
   </div>
 
   <!-- Estufa -->
   <div class="form-group mt-4 pt-4 border-t border-slate-100">
-    <label class="form-label">Estufa <span class="required-star">*</span></label>
-    <div class="form-radio-group">
-      <label class="form-check-label" *ngFor="let est of opcionesEstufa">
-        <input type="radio" class="form-radio" [value]="est.valor"
-          formControlName="estufaIncub"
-          [attr.disabled]="(rol | modoLectura) ? true : null" />
-        <span>{{ est.label }}</span>
-      </label>
-    </div>
+    <label class="form-label" for="estufaIncub">Estufa <span class="required-star">*</span></label>
+    <ion-select id="estufaIncub"
+      [class.input-error]="campoInvalido('estufaIncub')"
+      formControlName="estufaIncub"
+      [disabled]="(rol | modoLectura)"
+      interface="popover"
+      placeholder="— Seleccionar estufa —">
+      <ion-select-option value="">— Seleccionar estufa —</ion-select-option>
+      <ion-select-option *ngFor="let est of equiposIncubacion" [value]="est.idIncubacion">{{ est.nombreEquipo }} ({{ est.temperaturaRef }} °C)</ion-select-option>
+    </ion-select>
     <span class="error-msg" *ngIf="campoInvalido('estufaIncub')">Debe seleccionar una estufa.</span>
   </div>
 
@@ -48,10 +52,15 @@
     </div>
     <div class="form-group">
       <label class="form-label" for="analistaIncub">Analista <span class="required-star">*</span></label>
-      <input id="analistaIncub" type="text" class="form-input"
+      <ion-select id="analistaIncub"
         [class.input-error]="campoInvalido('analistaIncub')"
-        formControlName="analistaIncub" placeholder="Nombre del analista"
-        [attr.readonly]="(rol | modoLectura) ? true : null" />
+        formControlName="analistaIncub"
+        [disabled]="(rol | modoLectura)"
+        interface="popover"
+        placeholder="— Seleccionar analista —">
+        <ion-select-option value="">— Seleccionar analista —</ion-select-option>
+        <ion-select-option *ngFor="let r of responsables" [value]="r.rut">{{ r.nombreApellido }}</ion-select-option>
+      </ion-select>
       <span class="error-msg" *ngIf="campoInvalido('analistaIncub')">El campo Analista es obligatorio.</span>
     </div>
   </div>

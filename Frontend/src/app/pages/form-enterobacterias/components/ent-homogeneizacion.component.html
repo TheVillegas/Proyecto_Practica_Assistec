@@ -20,10 +20,15 @@
     </div>
     <div class="form-group">
       <label class="form-label" for="analistaHomog">Analista de homogeneización <span class="required-star">*</span></label>
-      <input id="analistaHomog" type="text" class="form-input"
+      <ion-select id="analistaHomog"
         [class.input-error]="campoInvalido('analistaHomog')"
-        formControlName="analistaHomog" placeholder="Nombre del analista"
-        [attr.readonly]="(rol | modoLectura) ? true : null" />
+        formControlName="analistaHomog"
+        [disabled]="(rol | modoLectura)"
+        interface="popover"
+        placeholder="— Seleccionar analista —">
+        <ion-select-option value="">— Seleccionar analista —</ion-select-option>
+        <ion-select-option *ngFor="let r of responsables" [value]="r.rut">{{ r.nombreApellido }}</ion-select-option>
+      </ion-select>
       <span class="error-msg" *ngIf="campoInvalido('analistaHomog')">El campo Analista de homogeneización es obligatorio.</span>
     </div>
   </div>

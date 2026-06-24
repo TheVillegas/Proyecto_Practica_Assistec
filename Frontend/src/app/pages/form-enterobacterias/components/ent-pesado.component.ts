@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import { Responsable } from '../../../interfaces/catalogo.interfaces';
 
 @Component({
   selector: 'app-ent-pesado',
@@ -9,9 +10,8 @@ import { FormGroup } from '@angular/forms';
 export class EntPesadoComponent {
   @Input() formGroup!: FormGroup;
   @Input() rol?: number;
+  @Input() responsables: Responsable[] = [];
   @Output() subetapaCompleta = new EventEmitter<void>();
-
-  readonly opcionesTipoMuestra = ['Mixta', 'Homogénea'];
 
   onSubetapaCompleta(): void {
     this.subetapaCompleta.emit();

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
+import { IonicModule } from '@ionic/angular';
 import { EntLecturaOxidasaComponent } from './ent-lectura-oxidasa.component';
 import { ModoLecturaPipe } from '../../../pipes/modo-lectura.pipe';
 
@@ -12,7 +13,7 @@ describe('EntLecturaOxidasaComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [EntLecturaOxidasaComponent, ModoLecturaPipe],
-      imports: [ReactiveFormsModule, FormsModule],
+      imports: [ReactiveFormsModule, FormsModule, IonicModule],
     }).compileComponents();
 
     fb = TestBed.inject(FormBuilder);

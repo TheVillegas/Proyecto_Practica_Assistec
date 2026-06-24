@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import { EquipoIncubacion, Responsable } from '../../../interfaces/catalogo.interfaces';
 
 @Component({
   selector: 'app-ent-incubacion-conf',
@@ -9,12 +10,9 @@ import { FormGroup } from '@angular/forms';
 export class EntIncubacionConfComponent {
   @Input() formGroup!: FormGroup;
   @Input() rol?: number;
+  @Input() equiposIncubacion: EquipoIncubacion[] = [];
+  @Input() responsables: Responsable[] = [];
   @Output() subetapaCompleta = new EventEmitter<void>();
-
-  readonly opcionesEstufa = [
-    { valor: 'Estufa 73-M (35.0 +/- 0.5 °C)', label: 'Estufa 73-M (35.0 +/- 0.5 °C)' },
-    { valor: 'Estufa 2-M (35.5 +/- 0.5 °C)', label: 'Estufa 2-M (35.5 +/- 0.5 °C)' },
-  ];
 
   onSubetapaCompleta(): void {
     this.subetapaCompleta.emit();

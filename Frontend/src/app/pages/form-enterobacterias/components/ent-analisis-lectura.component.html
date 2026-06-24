@@ -21,10 +21,15 @@
     </div>
     <div class="form-group">
       <label class="form-label" for="analistaLectura24h">Analista de lectura 24 hrs <span class="required-star">*</span></label>
-      <input id="analistaLectura24h" type="text" class="form-input"
+      <ion-select id="analistaLectura24h"
         [class.input-error]="campoInvalido('analistaLectura24h')"
-        formControlName="analistaLectura24h" placeholder="Nombre del analista"
-        [attr.readonly]="(rol | modoLectura) ? true : null" />
+        formControlName="analistaLectura24h"
+        [disabled]="(rol | modoLectura)"
+        interface="popover"
+        placeholder="— Seleccionar analista —">
+        <ion-select-option value="">— Seleccionar analista —</ion-select-option>
+        <ion-select-option *ngFor="let r of responsables" [value]="r.rut">{{ r.nombreApellido }}</ion-select-option>
+      </ion-select>
       <span class="error-msg" *ngIf="campoInvalido('analistaLectura24h')">El campo Analista de lectura 24 hrs es obligatorio.</span>
     </div>
   </div>
@@ -63,14 +68,10 @@
   <!-- Equipo Cuenta Colonias -->
   <div class="form-group mt-4 pt-4 border-t border-slate-100">
     <label class="form-label" for="equipoCuentaColonias">Equipo Cuenta Colonias <span class="required-star">*</span></label>
-    <select id="equipoCuentaColonias" class="form-select"
+    <input id="equipoCuentaColonias" type="text" class="form-input"
       [class.input-error]="campoInvalido('equipoCuentaColonias')"
-      formControlName="equipoCuentaColonias"
-      [attr.disabled]="(rol | modoLectura) ? true : null">
-      <option value="">— Seleccionar equipo —</option>
-      <option value="ECC-001">ECC-001 (Principal)</option>
-      <option value="ECC-002">ECC-002 (Respaldo)</option>
-    </select>
-    <span class="error-msg" *ngIf="campoInvalido('equipoCuentaColonias')">Debe seleccionar un equipo cuenta colonias.</span>
+      formControlName="equipoCuentaColonias" placeholder="Ej: ECC-001"
+      [attr.readonly]="(rol | modoLectura) ? true : null" />
+    <span class="error-msg" *ngIf="campoInvalido('equipoCuentaColonias')">El campo Equipo Cuenta Colonias es obligatorio.</span>
   </div>
 </div>

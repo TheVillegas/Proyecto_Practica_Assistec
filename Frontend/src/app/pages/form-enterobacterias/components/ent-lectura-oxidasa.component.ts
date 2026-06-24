@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { AbstractControl, FormGroup, ValidationErrors } from '@angular/forms';
+import { Responsable } from '../../../interfaces/catalogo.interfaces';
 
 interface TablaPlacas {
   muestraPlaca1: string;
@@ -27,6 +28,7 @@ function reactivoOxidasaValidator(control: AbstractControl): ValidationErrors | 
 export class EntLecturaOxidasaComponent {
   @Input() formGroup!: FormGroup;
   @Input() rol?: number;
+  @Input() responsables: Responsable[] = [];
   @Output() subetapaCompleta = new EventEmitter<void>();
 
   tablaPlacas: TablaPlacas = {

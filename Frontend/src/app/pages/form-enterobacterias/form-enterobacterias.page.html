@@ -18,111 +18,133 @@
 <ion-content class="page-content">
   <div class="wizard-container">
 
-    <!-- Banner modo lectura -->
-    <div *ngIf="modoLectura" class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg mb-4 flex items-center gap-3">
-      <ion-icon name="eye-outline"></ion-icon>
-      <span>Modo lectura — solo Analista o Admin pueden editar.</span>
+    <!-- Spinner de carga -->
+    <div *ngIf="cargando()" class="flex justify-center items-center py-12">
+      <ion-spinner name="crescent"></ion-spinner>
+      <span class="ml-3 text-slate-600">Cargando catálogos y datos del formulario...</span>
     </div>
 
-    <!-- ═══════════ BARRA DE PROGRESO + STEPPER (3 etapas) ══════════ -->
-    <div class="stepper-wrapper">
-      <div class="stepper-bar">
-        <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
-      </div>
-      <div class="stepper-steps">
-        <button *ngFor="let nombre of NOMBRES_ETAPAS; let i = index" class="step-btn"
-          [class.step-btn--active]="etapaActual === i + 1" [class.step-btn--done]="etapaActual > i + 1">
-          <span class="step-circle">{{ i + 1 }}</span>
-          <span class="step-label">{{ nombre }}</span>
-        </button>
+    <ng-container *ngIf="!cargando()">
+      <!-- Banner modo lectura -->
+      <div *ngIf="modoLectura" class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg mb-4 flex items-center gap-3">
+        <ion-icon name="eye-outline"></ion-icon>
+        <span>Modo lectura — solo Analista o Admin pueden editar.</span>
       </div>
 
-      <!-- Subetapa activa -->
-      <div class="subetapa-indicator">
-        <ion-icon name="chevron-forward-outline" class="sub-icon"></ion-icon>
-        <span>{{ subetapaActualLabel }}</span>
-      </div>
-    </div>
+      <!-- ═══════════ BARRA DE PROGRESO + STEPPER (3 etapas) ══════════ -->
+      <div class="stepper-wrapper">
+        <div class="stepper-bar">
+          <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
+        </div>
+        <div class="stepper-steps">
+          <button *ngFor="let nombre of NOMBRES_ETAPAS; let i = index" class="step-btn"
+            [class.step-btn--active]="etapaActual === i + 1" [class.step-btn--done]="etapaActual > i + 1">
+            <span class="step-circle">{{ i + 1 }}</span>
+            <span class="step-label">{{ nombre }}</span>
+          </button>
+        </div>
 
-    <form [formGroup]="form">
-
-      <!-- ════════ ETAPA 1: PREPARACIÓN ════════ -->
-      <div *ngIf="etapaActual === 1" class="etapa-panel animate__animated animate__fadeIn">
-        <div class="form-card">
-          <div class="form-card-header">
-            <div class="form-card-title-group">
-              <ion-icon name="flask-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">1. Preparación</h2>
-            </div>
-          </div>
-          <div class="form-card-body">
-            <app-ent-pesado *ngIf="pasoActual === 1" [formGroup]="form.get('pesado')!" [rol]="rol"></app-ent-pesado>
-            <app-ent-homogeneizacion *ngIf="pasoActual === 2" [formGroup]="form.get('homogeneizacion')!" [rol]="rol"></app-ent-homogeneizacion>
-            <app-ent-sembrado *ngIf="pasoActual === 3" [formGroup]="form.get('sembrado')!" [rol]="rol"></app-ent-sembrado>
-            <app-ent-incubacion-prep *ngIf="pasoActual === 4" [formGroup]="form.get('incubacionPrep')!" [rol]="rol"></app-ent-incubacion-prep>
-          </div>
+        <!-- Subetapa activa -->
+        <div class="subetapa-indicator">
+          <ion-icon name="chevron-forward-outline" class="sub-icon"></ion-icon>
+          <span>{{ subetapaActualLabel }}</span>
         </div>
       </div>
 
-      <!-- ════════ ETAPA 2: ANÁLISIS ════════ -->
-      <div *ngIf="etapaActual === 2" class="etapa-panel animate__animated animate__fadeIn">
-        <div class="form-card">
-          <div class="form-card-header header-analisis">
-            <div class="form-card-title-group">
-              <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">2. Análisis</h2>
+      <form [formGroup]="form">
+
+        <!-- ════════ ETAPA 1: PREPARACIÓN ════════ -->
+        <div *ngIf="etapaActual === 1" class="etapa-panel animate__animated animate__fadeIn">
+          <div class="form-card">
+            <div class="form-card-header">
+              <div class="form-card-title-group">
+                <ion-icon name="flask-outline" class="card-header-icon"></ion-icon>
+                <h2 class="form-card-title">1. Preparación</h2>
+              </div>
+            </div>
+            <div class="form-card-body">
+              <app-ent-pesado *ngIf="pasoActual === 1" [formGroup]="form.get('pesado')!" [rol]="rol"
+                [responsables]="catalogos.responsables()"></app-ent-pesado>
+              <app-ent-homogeneizacion *ngIf="pasoActual === 2" [formGroup]="form.get('homogeneizacion')!" [rol]="rol"
+                [responsables]="catalogos.responsables()"></app-ent-homogeneizacion>
+              <app-ent-sembrado *ngIf="pasoActual === 3" [formGroup]="form.get('sembrado')!" [rol]="rol"
+                [equiposIncubacion]="catalogos.equiposIncubacion()"
+                [micropipetas]="catalogos.micropipetas()"
+                [lotesAgarVRBG]="catalogos.lotesAgarVRBG()"
+                [lotesTween80]="catalogos.lotesTween80()"
+                [responsables]="catalogos.responsables()"></app-ent-sembrado>
+              <app-ent-incubacion-prep *ngIf="pasoActual === 4" [formGroup]="form.get('incubacionPrep')!" [rol]="rol"
+                [equiposIncubacion]="catalogos.equiposIncubacion()"
+                [lotesAgarVRBG]="catalogos.lotesAgarVRBG()"
+                [responsables]="catalogos.responsables()"></app-ent-incubacion-prep>
             </div>
           </div>
-          <div class="form-card-body">
-            <app-ent-analisis-lectura [formGroup]="form.get('analisisLectura')!" [rol]="rol"></app-ent-analisis-lectura>
-          </div>
         </div>
-      </div>
 
-      <!-- ════════ ETAPA 3: CONFIRMACIÓN ════════ -->
-      <div *ngIf="etapaActual === 3" class="etapa-panel animate__animated animate__fadeIn">
-        <div class="form-card">
-          <div class="form-card-header header-confirmacion">
-            <div class="form-card-title-group">
-              <ion-icon name="checkmark-done-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">3. Confirmación</h2>
+        <!-- ════════ ETAPA 2: ANÁLISIS ════════ -->
+        <div *ngIf="etapaActual === 2" class="etapa-panel animate__animated animate__fadeIn">
+          <div class="form-card">
+            <div class="form-card-header header-analisis">
+              <div class="form-card-title-group">
+                <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
+                <h2 class="form-card-title">2. Análisis</h2>
+              </div>
+            </div>
+            <div class="form-card-body">
+              <app-ent-analisis-lectura [formGroup]="form.get('analisisLectura')!" [rol]="rol"
+                [responsables]="catalogos.responsables()"></app-ent-analisis-lectura>
             </div>
           </div>
-          <div class="form-card-body">
-            <app-ent-incubacion-conf *ngIf="pasoActual === 6" [formGroup]="form.get('incubacionConf')!" [rol]="rol"></app-ent-incubacion-conf>
-            <app-ent-lectura-oxidasa *ngIf="pasoActual === 7" [formGroup]="form.get('lecturaOxidasa')!" [rol]="rol"></app-ent-lectura-oxidasa>
-            <app-ent-resultados *ngIf="pasoActual === 8" [formGroup]="form.get('resultados')!" [rol]="rol"></app-ent-resultados>
+        </div>
+
+        <!-- ════════ ETAPA 3: CONFIRMACIÓN ════════ -->
+        <div *ngIf="etapaActual === 3" class="etapa-panel animate__animated animate__fadeIn">
+          <div class="form-card">
+            <div class="form-card-header header-confirmacion">
+              <div class="form-card-title-group">
+                <ion-icon name="checkmark-done-outline" class="card-header-icon"></ion-icon>
+                <h2 class="form-card-title">3. Confirmación</h2>
+              </div>
+            </div>
+            <div class="form-card-body">
+              <app-ent-incubacion-conf *ngIf="pasoActual === 6" [formGroup]="form.get('incubacionConf')!" [rol]="rol"
+                [equiposIncubacion]="catalogos.equiposIncubacion()"
+                [responsables]="catalogos.responsables()"></app-ent-incubacion-conf>
+              <app-ent-lectura-oxidasa *ngIf="pasoActual === 7" [formGroup]="form.get('lecturaOxidasa')!" [rol]="rol"
+                [responsables]="catalogos.responsables()"></app-ent-lectura-oxidasa>
+              <app-ent-resultados *ngIf="pasoActual === 8" [formGroup]="form.get('resultados')!" [rol]="rol"></app-ent-resultados>
+            </div>
           </div>
         </div>
-      </div>
 
-    </form>
+      </form>
 
-    <!-- ═════════════════ BARRA DE NAVEGACIÓN INFERIOR ═══════════════════════ -->
-    <div class="nav-footer">
-      <button type="button" class="btn-cancel" (click)="confirmarCancelar()">
-        <ion-icon name="close-outline"></ion-icon>
-        Cancelar
-      </button>
-      <div class="nav-footer__actions">
-        <button type="button" class="btn-draft" (click)="onGuardarBorrador()" *ngIf="!modoLectura">
-          <ion-icon name="document-outline"></ion-icon>
-          Guardar Borrador
+      <!-- ═════════════════ BARRA DE NAVEGACIÓN INFERIOR ═══════════════════════ -->
+      <div class="nav-footer">
+        <button type="button" class="btn-cancel" (click)="confirmarCancelar()">
+          <ion-icon name="close-outline"></ion-icon>
+          Cancelar
         </button>
-        <button type="button" class="btn-secondary" (click)="onAnterior()" *ngIf="pasoActual > 1 && !modoLectura">
-          <ion-icon name="arrow-back-outline"></ion-icon>
-          Anterior
-        </button>
-        <button type="button" class="btn-save" (click)="onSiguiente()" *ngIf="pasoActual === TOTAL_PASOS && !modoLectura && !formularioCompletado">
-          <ion-icon name="save-outline"></ion-icon>
-          Finalizar
-        </button>
-        <button type="button" class="btn-primary" (click)="onSiguiente()" *ngIf="pasoActual < TOTAL_PASOS && !modoLectura">
-          Siguiente
-          <ion-icon name="arrow-forward-outline"></ion-icon>
-        </button>
+        <div class="nav-footer__actions">
+          <button type="button" class="btn-draft" (click)="onGuardarBorrador()" *ngIf="!modoLectura">
+            <ion-icon name="document-outline"></ion-icon>
+            Guardar Borrador
+          </button>
+          <button type="button" class="btn-secondary" (click)="onAnterior()" *ngIf="pasoActual > 1 && !modoLectura">
+            <ion-icon name="arrow-back-outline"></ion-icon>
+            Anterior
+          </button>
+          <button type="button" class="btn-save" (click)="onSiguiente()" *ngIf="pasoActual === TOTAL_PASOS && !modoLectura && !formularioCompletado">
+            <ion-icon name="save-outline"></ion-icon>
+            Finalizar
+          </button>
+          <button type="button" class="btn-primary" (click)="onSiguiente()" *ngIf="pasoActual < TOTAL_PASOS && !modoLectura">
+            Siguiente
+            <ion-icon name="arrow-forward-outline"></ion-icon>
+          </button>
+        </div>
       </div>
-    </div>
+    </ng-container>
 
   </div>
 </ion-content>
