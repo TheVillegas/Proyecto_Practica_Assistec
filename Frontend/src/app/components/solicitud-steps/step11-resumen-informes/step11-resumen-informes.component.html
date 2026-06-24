@@ -36,7 +36,7 @@
     </div>
 
     <div class="resumen-acciones">
-      <button type="button" class="btn-validar" *ngIf="!reviewMode && !isReadOnly" (click)="enviarAValidacion()" [disabled]="!canSendToValidation">
+      <button type="button" class="btn-validar" *ngIf="!reviewMode && !isReadOnly" (click)="onEnviarAValidacion()" [disabled]="!canSendToValidation">
         <ion-icon name="send-outline"></ion-icon>
         Enviar a validación
       </button>

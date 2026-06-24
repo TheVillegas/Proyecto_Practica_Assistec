@@ -678,6 +678,9 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
                     fechaEnvioValidacion: mockDate,
                     updatedAt: new Date('2024-01-02T00:00:00.000Z'),
                     muestras: []
+                })
+                .mockResolvedValueOnce({
+                    updatedAt: new Date('2024-01-02T00:00:00.000Z')
                 });
 
             const res = await request(app)

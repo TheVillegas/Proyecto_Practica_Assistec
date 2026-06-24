@@ -17,9 +17,9 @@ export class Step11ResumenInformesComponent {
   @Input() formulariosConsolidados: FormularioSeleccionadoPayload[] = [];
   @Input() canSendToValidation = false;
 
-  @Output('enviarAValidacion') enviarAValidacionEmitter = new EventEmitter<void>();
+  @Output() enviarAValidacion = new EventEmitter<void>();
 
-  enviarAValidacion(): void {
-    this.enviarAValidacionEmitter.emit();
+  onEnviarAValidacion(): void {
+    this.enviarAValidacion.emit();
   }
 }

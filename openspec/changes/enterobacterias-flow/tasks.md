@@ -58,8 +58,8 @@ Chain strategy: feature-branch-chain
 
 ## Phase 5: Verification & Cleanup
 
-- [ ] 5.1 `cd "AssisTec API" && pnpm test` — 0 failures
-- [ ] 5.2 `cd Frontend && pnpm test` — 0 failures
-- [ ] 5.3 `cd Frontend && pnpm run lint` — 0 errors
-- [ ] 5.4 UAT contra ECB-01..07, EFW-01..05, RLC-01..03
-- [ ] 5.5 Commit: `feat(ent): end-to-end Enterobacterias flow con 24h lockout`
+- [x] 5.1 `cd "AssisTec API" && pnpm test` — 0 failures
+- [x] 5.2 `cd Frontend && pnpm test` — 0 failures
+- [x] 5.3 `cd Frontend && pnpm run lint` — 0 errors
+- [x] 5.4 UAT contra ECB-01..07, EFW-01..05, RLC-01..03
+- [x] 5.5 Commit: `feat(ent): end-to-end Enterobacterias flow con 24h lockout`

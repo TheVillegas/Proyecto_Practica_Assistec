@@ -24,8 +24,13 @@ class ReporteRepository {
                     throw new Error('NOT_FOUND');
                 }
 
-                if (expectedUpdatedAt && actual.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
-                    throw new Error('CONCURRENCY_ERROR');
+                if (expectedUpdatedAt) {
+                    const expectedTime = expectedUpdatedAt instanceof Date
+                        ? expectedUpdatedAt.getTime()
+                        : new Date(expectedUpdatedAt).getTime();
+                    if (actual.updatedAt.getTime() !== expectedTime) {
+                        throw new Error('CONCURRENCY_ERROR');
+                    }
                 }
             }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
@@ -44,12 +44,10 @@ export class FormSAureusPage implements OnInit {
   // ─── Etapa 6 ──────────────────────────────────────────────────────────────
   e6_desfavorable: Desfavorable = 'sin_registrar';
 
-  constructor(
-    private fb: FormBuilder,
-    private router: Router,
-    private alertCtrl: AlertController,
-    private toastCtrl: ToastController,
-  ) { }
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly alertCtrl = inject(AlertController);
+  private readonly toastCtrl = inject(ToastController);
 
   ngOnInit(): void {
     this.form = this.fb.group({
