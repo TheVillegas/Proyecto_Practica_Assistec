@@ -10,7 +10,7 @@
       Análisis de Salmonella
     </ion-title>
     <ion-buttons slot="end">
-      <span class="badge-etapa">{{ etapaActual }}/{{ TOTAL_ETAPAS }}</span>
+      <span class="badge-etapa">{{ pasoActual() }}/{{ TOTAL_PASOS }}</span>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
@@ -24,19 +24,19 @@
         <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
       </div>
       <div class="stepper-steps">
-        <button *ngFor="let nombre of NOMBRES_ETAPAS; let i = index" class="step-btn"
-          [class.step-btn--active]="etapaActual === i + 1" [class.step-btn--done]="etapaActual > i + 1"
-          (click)="irAEtapa(i + 1)">
+        <button *ngFor="let etiqueta of ETIQUETAS_PASOS; let i = index" class="step-btn"
+          [class.step-btn--active]="pasoActual() === i + 1" [class.step-btn--done]="pasoActual() > i + 1"
+          (click)="irAPaso(i + 1)">
           <span class="step-circle">{{ i + 1 }}</span>
-          <span class="step-label">{{ nombre }}</span>
+          <span class="step-label">{{ etiqueta }}</span>
         </button>
       </div>
     </div>
 
     <form [formGroup]="form">
 
-      <!-- ════════ ETAPA 1: INICIO Y TRAZABILIDAD ════════ -->
-      <div *ngIf="etapaActual === 1" class="etapa-panel animate__animated animate__fadeIn">
+      <!-- ════════ PASOS 1-4: INICIO Y TRAZABILIDAD ════════ -->
+      <div *ngIf="pasoActual() >= 1 && pasoActual() <= 4" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
@@ -46,7 +46,7 @@
           </div>
           <div class="form-card-body">
             <!-- Fase 1: Configuracion inicial de la muestra -->
-            <div class="control-card mb-6">
+            <div class="control-card mb-6" *ngIf="pasoActual() === 1">
               <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
                 Fase 1: Configuración Inicial
               </p>
@@ -122,7 +122,7 @@
             </div>
 
             <!-- Fase 2A: Datos de tiempo y trazabilidad -->
-            <div class="control-card mb-6">
+            <div class="control-card mb-6" *ngIf="pasoActual() === 2">
               <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
                 Fase 2A: Trazabilidad
               </p>
@@ -160,8 +160,8 @@
         </div>
       </div>
 
-      <!-- ════════ ETAPA 2: INSUMOS Y CALIDAD ════════ -->
-      <div *ngIf="etapaActual === 2" class="etapa-panel animate__animated animate__fadeIn">
+      <!-- ════════ PASOS 3-4: INSUMOS Y CALIDAD ════════ -->
+      <div *ngIf="pasoActual() >= 3 && pasoActual() <= 4" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
@@ -171,7 +171,7 @@
           </div>
           <div class="form-card-body">
             <!-- Fase 2B: Insumos utilizados -->
-            <div class="control-card mb-6">
+            <div class="control-card mb-6" *ngIf="pasoActual() === 3">
               <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
                 Fase 2B: Insumos
               </p>
@@ -207,7 +207,7 @@
             </div>
 
             <!-- Fase 2C: Controles de Calidad -->
-            <div class="control-card mb-6">
+            <div class="control-card mb-6" *ngIf="pasoActual() === 4">
               <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
                 Fase 2C: Controles de Calidad
               </p>
@@ -276,8 +276,8 @@
         </div>
       </div>
 
-      <!-- ════════ ETAPA 3: TRASPASO A CALDOS ════════ -->
-      <div *ngIf="etapaActual === 3" class="etapa-panel animate__animated animate__fadeIn">
+      <!-- ════════ PASOS 5-7: TRASPASO A CALDOS ════════ -->
+      <div *ngIf="pasoActual() >= 5 && pasoActual() <= 7" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
@@ -287,7 +287,7 @@
           </div>
           <div class="form-card-body">
             <!-- Fase 3A: Datos de tiempo -->
-            <div class="control-card mb-6">
+            <div class="control-card mb-6" *ngIf="pasoActual() === 5">
               <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
                 Fase 3A: Tiempos de Traspaso
               </p>
@@ -318,7 +318,7 @@
             </div>
 
             <!-- Fase 3B: Insumos de traspaso -->
-            <div class="control-card mb-6">
+            <div class="control-card mb-6" *ngIf="pasoActual() === 6">
               <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
                 Fase 3B: Insumos
               </p>
@@ -360,7 +360,7 @@
             </div>
 
             <!-- Fase 3C: Tabla de muestras -->
-            <div class="control-card mb-6">
+            <div class="control-card mb-6" *ngIf="pasoActual() === 7">
               <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
                 Fase 3C: Muestras en Caldos
               </p>
@@ -441,8 +441,8 @@
         </div>
       </div>
 
-      <!-- ════════ ETAPA 4: RESULTADOS EN AGAR ════════ -->
-      <div *ngIf="etapaActual === 4" class="etapa-panel animate__animated animate__fadeIn">
+      <!-- ════════ PASOS 8-9: RESULTADOS EN AGAR ════════ -->
+      <div *ngIf="pasoActual() >= 8 && pasoActual() <= 9" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
@@ -452,7 +452,7 @@
           </div>
           <div class="form-card-body">
             <!-- Fase 4A: Datos de tiempo y Agares -->
-            <div class="control-card mb-6">
+            <div class="control-card mb-6" *ngIf="pasoActual() === 8">
               <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
                 Fase 4A: Traspaso y Lectura
               </p>
@@ -524,7 +524,7 @@
             </div>
 
             <!-- Fase 4B: Tabla de resultados en Agar -->
-            <div class="control-card mb-6">
+            <div class="control-card mb-6" *ngIf="pasoActual() === 9">
               <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
                 Fase 4B: Muestras en Agar
               </p>
@@ -675,8 +675,8 @@
         </div>
       </div>
 
-      <!-- ════════ ETAPA 5: CONCLUSION FINAL ════════ -->
-      <div *ngIf="etapaActual === 5" class="etapa-panel animate__animated animate__fadeIn">
+      <!-- ════════ PASO 10: CONCLUSION FINAL ════════ -->
+      <div *ngIf="pasoActual() === 10" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
@@ -725,16 +725,16 @@
         Cancelar
       </button>
       <div class="nav-footer__actions">
-        <button type="button" class="btn-secondary" (click)="retrocederEtapa()" *ngIf="etapaActual > 1">
+        <button type="button" class="btn-secondary" (click)="retrocederPaso()" *ngIf="pasoActual() > 1">
           <ion-icon name="arrow-back-outline"></ion-icon>
           Anterior
         </button>
-        <button type="button" class="btn-save" (click)="enviarFormulario()" *ngIf="etapaActual === TOTAL_ETAPAS">
+        <button type="button" class="btn-save" (click)="enviarFormulario()" *ngIf="pasoActual() === TOTAL_PASOS">
           <ion-icon name="save-outline"></ion-icon>
           Enviar Registro
         </button>
-        <button type="button" class="btn-primary" (click)="avanzarEtapa()" *ngIf="etapaActual < TOTAL_ETAPAS">
-          Siguiente
+        <button type="button" class="btn-primary" (click)="guardarPaso()" *ngIf="pasoActual() < TOTAL_PASOS">
+          Guardar y continuar
           <ion-icon name="arrow-forward-outline"></ion-icon>
         </button>
       </div>
