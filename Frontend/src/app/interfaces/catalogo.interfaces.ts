@@ -113,3 +113,11 @@ export interface FormularioAnalisisCatalogo {
     area: string;
     generaTpaDefault: boolean;
 }
+
+export interface LoteReactivo {
+    idLoteReactivo: string;
+    tipo: 'agar_vrbg' | 'tween_80';
+    codigoLote: string;
+    fechaVencimiento?: string;
+    activo: boolean;
+}

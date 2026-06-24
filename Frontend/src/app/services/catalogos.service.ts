@@ -10,6 +10,7 @@ import {
     FormularioAnalisisCatalogo,
     FormaCalculo,
     ItemChecklistLimpieza,
+    LoteReactivo,
     LugarAlmacenamiento,
     MaterialPesado,
     MaterialSiembra,
@@ -87,5 +88,9 @@ export class CatalogosService {
 
     getSubcategorias(): Observable<SubcategoriaProducto[]> {
         return this.http.get<SubcategoriaProducto[]>(`${this.apiUrl}/subcategorias`);
+    }
+
+    getLotesReactivo(tipo: string): Observable<LoteReactivo[]> {
+        return this.http.get<LoteReactivo[]>(`${this.apiUrl}/lotes_reactivo?tipo=${encodeURIComponent(tipo)}`);
     }
 }
