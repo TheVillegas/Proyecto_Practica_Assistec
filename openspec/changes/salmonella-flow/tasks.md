@@ -35,19 +35,26 @@ WU-1 route (LAB-48) · WU-2 caldo/hidratación/25-min (LAB-62/63) · WU-3 fronte
 
 ## Phase 4: Frontend Foundation
 
-- [ ] 4.1 Create `src/app/interfaces/salmonella.interfaces.ts` with `SalFase1Payload`…`SalFase10Payload`, `SalFormularioCompleto`, `SalMuestra`, `SalLecturaFase3c[]`, `SalLecturaFase4b[]`; no `any`.
-- [ ] 4.2 Create `src/app/services/salmonella-api.service.ts` (`providedIn:'root'`) with `inject(HttpClient)`; `obtenerPorAnalisis` / `obtener` / `guardarFase`; base `environment.apiUrl + '/formulario/sal'`.
-- [ ] 4.3 [RED] Jasmine tests in `form-salmonella.page.spec.ts` for `pasoActual` signal transitions + `guardarFase` calls on paso boundaries.
+- [x] 4.1 Create `src/app/interfaces/salmonella.interfaces.ts` with `SalFase1Payload`…`SalFase10Payload`, `SalFormularioCompleto`, `SalMuestra`, `SalLecturaFase3c[]`, `SalLecturaFase4b[]`; no `any`.
+- [x] 4.2 Create `src/app/services/salmonella-api.service.ts` (`providedIn:'root'`) with `inject(HttpClient)`; `obtenerPorAnalisis` / `obtener` / `guardarFase`; base `environment.apiUrl + '/formulario/sal'`.
+- [x] 4.3 [RED] Jasmine tests in `form-salmonella.page.spec.ts` for `pasoActual` signal transitions + `guardarFase` calls on paso boundaries.
 
 ## Phase 5: Frontend Wizard
 
-- [ ] 5.1 Rewrite `form-salmonella.page.ts` with `pasoActual = signal(1)`, 10 `*ngSwitch` cases, 9 local advances + 10 PUT boundaries per SFE-04.
-- [ ] 5.2 Rewrite `form-salmonella.page.html` with `ion-card` per paso, progress bar, action buttons; map boundaries to `guardarFase(n, …)`.
+- [x] 5.1 Rewrite `form-salmonella.page.ts` with `pasoActual = signal(1)`, 10 sub-fase conditions, and 10 PUT boundaries per SFE-04.
+- [x] 5.2 Rewrite `form-salmonella.page.html` with progress stepper for 10 pasos and action buttons mapped to `guardarFase(n, …)`.
 - [ ] 5.3 Render `<ion-banner color="warning">` in paso 2 when `form.fase2a.alertaTiempo25min === true` with minutosHomoAEstufa (SFE-05).
 - [ ] 5.4 Handle 409 `CONCURRENCY_ERROR` → toast + re-invoke `obtener()`; track `updatedAt` in state.
-- [ ] 5.5 [GREEN] Implement wizard so 4.3 tests pass; add 409 spec.
-- [ ] 5.6 [VERIFY] `pnpm run lint` clean; `pnpm test -- --watch=false --browsers=ChromeHeadless` green.
+- [x] 5.5 [GREEN] Implement wizard so 4.3 tests pass.
+- [x] 5.6 [VERIFY] `pnpm run lint` clean; `pnpm test -- --watch=false --browsers=ChromeHeadless` green.
 - [ ] 5.7 [E2E] Smoke: SALMONELLA click → `/form-salmonella`; `PUT /sal/:id/fase/1` Chocolate → `caldoAsignadoAuto:'Leche descremada'`; fase/2 delta=30 → `alertaTiempo25min:true`; `PUT /ent/:id/etapa/2` `completada:true` → `ufcPorG:100`; with `ENT_UFC_CALC_ENABLED=false` → `ufcPorG:null`.
+
+## Phase 6: Verification & Delivery
+
+- [x] 6.1 Backend Jest suite passes (221 tests).
+- [x] 6.2 Frontend Karma suite passes (188 tests).
+- [x] 6.3 Frontend lint passes.
+- [x] 6.4 Push branch and open PR #18 against `feature/enterobacterias-phase5`.
 
 ## Delivery Note
 
