@@ -1,7 +1,7 @@
 const prisma = require('../config/prisma');
 
 class CatalogoRepository {
-    async findAll(tipo) {
+    async findAll(tipo, query = {}) {
         // Mapeo simple del tipo de catálogo al modelo de Prisma
         const map = {
             'clientes': prisma.cliente,
@@ -19,7 +19,8 @@ class CatalogoRepository {
             'tipos_analisis': prisma.maestroTiposAnalisis,
             'material_siembra': prisma.materialSiembra,
             'micropipetas': prisma.micropipeta,
-            'subcategorias': prisma.subcategoriaProducto
+            'subcategorias': prisma.subcategoriaProducto,
+            'lotes_reactivo': prisma.loteReactivo
         };
 
         const model = map[tipo.toLowerCase()];
@@ -27,7 +28,12 @@ class CatalogoRepository {
             throw new Error('INVALID_CATALOG_TYPE');
         }
 
-        return await model.findMany();
+        const where = {};
+        if (tipo.toLowerCase() === 'lotes_reactivo' && query.tipo) {
+            where.tipo = query.tipo;
+        }
+
+        return await model.findMany({ where });
     }
 }
 

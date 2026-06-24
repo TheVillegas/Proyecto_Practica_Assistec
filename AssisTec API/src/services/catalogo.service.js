@@ -1,9 +1,9 @@
 const catalogoRepository = require('../repositories/catalogo.repository');
 
 class CatalogoService {
-    async listar(tipo) {
-        const list = await catalogoRepository.findAll(tipo);
-        
+    async listar(tipo, query = {}) {
+        const list = await catalogoRepository.findAll(tipo, query);
+
         // Convertir BigInt a String para evitar errores de serialización
         return list.map(item => {
             const parsed = {};

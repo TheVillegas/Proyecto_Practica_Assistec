@@ -4,7 +4,7 @@ class CatalogoController {
     async listar(req, res) {
         try {
             const { tipo } = req.params;
-            const result = await catalogoService.listar(tipo);
+            const result = await catalogoService.listar(tipo, req.query);
             res.status(200).json(result);
         } catch (error) {
             if (error.message === 'INVALID_CATALOG_TYPE') {
