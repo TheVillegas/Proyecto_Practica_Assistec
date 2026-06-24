@@ -53,7 +53,7 @@ Chain strategy: feature-branch-chain
 - [ ] 4.3 `onSiguiente()` paso 4: `PUT /:id/etapa/1` con payload aplanado `{pesado, homog, sembrado, incub}` + `expectedUpdatedAt`
 - [ ] 4.4 `onSiguiente()` paso 5: `PUT /:id/etapa/2` con banner 24h; paso 8: `PUT etapa/3`
 - [ ] 4.5 `onGuardarBorrador()`: `PUT` con `completada:false`, sin avanzar
-- [ ] 4.6 Wire `solicitud.service.js::validar()` — crear `EntFormulario` idempotente + `EntMuestra` (ECB-01)
+- [x] 4.6 Wire `solicitud.service.js::validar()` — crear `EntFormulario` idempotente + `EntMuestra` (ECB-01)
 - [ ] 4.7 E2E test: flujo 1→8 graba 3 etapas; re-load devuelve nuevo `updated_at`
 
 ## Phase 5: Verification & Cleanup

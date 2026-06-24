@@ -1,6 +1,7 @@
 const saureusRepository = require('../repositories/saureus.repository');
 const coliformesRepository = require('../repositories/coliformes.repository');
 const salmonellaRepository = require('../repositories/salmonella.repository');
+const enterobacteriasRepository = require('../repositories/enterobacterias.repository');
 
 const CODIGO_MAP = {
     SAUREUS: 'sau',
@@ -8,13 +9,15 @@ const CODIGO_MAP = {
     COLIFORMES_FECALES: 'coli',
     ECOLI_NCH3056: 'coli',
     SALMONELLA: 'sal',
-    SALMONELLA_ISO: 'sal'
+    SALMONELLA_ISO: 'sal',
+    ENTEROBACTERIAS: 'ent'
 };
 
 const REPOSITORY_MAP = {
     sau: saureusRepository,
     coli: coliformesRepository,
-    sal: salmonellaRepository
+    sal: salmonellaRepository,
+    ent: enterobacteriasRepository
 };
 
 class FormularioMicrobiologicoService {
@@ -49,11 +52,13 @@ class FormularioMicrobiologicoService {
             }));
 
             // Pasar el modelo específico desde la transacción, no el tx completo
-            // tx.salFormulario / tx.coliFormulario / tx.sauFormulario
+            // tx.salFormulario / tx.coliFormulario / tx.sauFormulario / tx.entFormulario
             const txModel = tx[`${tipo}Formulario`];
             const creado = await repository.create({
                 idSolicitudAnalisis: analisis.idSolicitudAnalisis,
-                estado: 'NO_REALIZADO',
+                estado: tipo === 'ent' ? 'en_proceso' : 'NO_REALIZADO',
+                etapaActual: tipo === 'ent' ? 1 : undefined,
+                subetapaActual: tipo === 'ent' ? 1 : undefined,
                 rutAnalista: null,
                 muestras: muestrasPayload
             }, txModel);
