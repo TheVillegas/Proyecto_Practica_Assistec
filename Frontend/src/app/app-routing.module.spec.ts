@@ -20,4 +20,9 @@ describe('AppRoutingModule', () => {
     expect(router.config.find((route) => route.path === 'dashboard-analista')?.data?.['allowedRoles']).toEqual([0, 4]);
     expect(router.config.find((route) => route.path === 'dashboard-ingreso')?.data?.['allowedRoles']).toEqual([3, 4]);
   });
+
+  it('permite lectura a Coordinadora y Jefe Área en form-enterobacterias', () => {
+    const entRoute = router.config.find((route) => route.path === 'form-enterobacterias');
+    expect(entRoute?.data?.['allowedRoles']).toEqual([0, 1, 2, 4]);
+  });
 });

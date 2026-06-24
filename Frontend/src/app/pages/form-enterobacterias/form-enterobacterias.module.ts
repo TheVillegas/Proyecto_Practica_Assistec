@@ -5,6 +5,7 @@ import { IonicModule } from '@ionic/angular';
 import { FormEnterobacteriasPageRoutingModule } from './form-enterobacterias-routing.module';
 import { FormEnterobacteriasPage } from './form-enterobacterias.page';
 import { ComponentsModule } from 'src/app/components/components-module/components.module';
+import { ModoLecturaPipe } from '../../pipes/modo-lectura.pipe';
 
 @NgModule({
   imports: [
@@ -15,6 +16,6 @@ import { ComponentsModule } from 'src/app/components/components-module/component
     FormEnterobacteriasPageRoutingModule,
     ComponentsModule,
   ],
-  declarations: [FormEnterobacteriasPage]
+  declarations: [FormEnterobacteriasPage, ModoLecturaPipe]
 })
 export class FormEnterobacteriasPageModule { }
