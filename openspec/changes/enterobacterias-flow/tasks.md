@@ -31,11 +31,11 @@ Chain strategy: feature-branch-chain
 
 ## Phase 2: Frontend Service & Catálogo (PR #2)
 
-- [ ] 2.1 Add `getLotesReactivo(tipo)` to `services/catalogos.service.ts`
-- [ ] 2.2 Add `LoteReactivo` to `interfaces/catalogo.interfaces.ts`
-- [ ] 2.3 Create `interfaces/enterobacterias.interfaces.ts`
-- [ ] 2.4 Create `services/enterobacterias-api.service.ts` (`providedIn:'root'`, `inject(HttpClient)`)
-- [ ] 2.5 RED+GREEN: `enterobacterias-api.service.spec.ts` (happy + 409/422)
+- [x] 2.1 Add `getLotesReactivo(tipo)` to `services/catalogos.service.ts`
+- [x] 2.2 Add `LoteReactivo` to `interfaces/catalogo.interfaces.ts`
+- [x] 2.3 Create `interfaces/enterobacterias.interfaces.ts`
+- [x] 2.4 Create `services/enterobacterias-api.service.ts` (`providedIn:'root'`, `inject(HttpClient)`)
+- [x] 2.5 RED+GREEN: `enterobacterias-api.service.spec.ts` (happy + 409/422)
 
 ## Phase 3: Frontend Wizard Refactor (PR #3)
 

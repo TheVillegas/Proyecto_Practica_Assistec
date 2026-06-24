@@ -1,12 +1,14 @@
 # Apply Progress: Enterobacterias Flow
 
 ## Change
-Enterobacterias Flow — Phase 1: Backend Foundation (PR #1)
+Enterobacterias Flow — Phase 2: Frontend Service & Catálogo (PR #2)
 
 ## Mode
 Strict TDD (openspec `strict_tdd: true`)
 
-## Completed Tasks (Phase 1)
+## Completed Tasks
+
+### Phase 1: Backend Foundation (PR #1)
 
 - [x] 1.1 Add `EntFormulario`, `EntMuestra`, `EntEtapa1/2/3`, `LoteReactivo` to `prisma/schema.prisma`
 - [x] 1.2 Hand-written `prisma/migrations/20260624_enterobacterias_flow/migration.sql` (DDL + 4 INSERTs `lotes_reactivo`)
@@ -20,6 +22,14 @@ Strict TDD (openspec `strict_tdd: true`)
 - [x] 1.10 RED: integration tests (422 `INCUBATION_LOCKOUT` 12h/22h/24.5h, 409 `CONCURRENCY_ERROR`, 409 `INVALID_STAGE_PROGRESSION`)
 - [x] 1.11 GREEN: `cd "AssisTec API" && pnpm test` — 0 failures
 
+### Phase 2: Frontend Service & Catálogo (PR #2)
+
+- [x] 2.1 Add `getLotesReactivo(tipo)` to `services/catalogos.service.ts`
+- [x] 2.2 Add `LoteReactivo` to `interfaces/catalogo.interfaces.ts`
+- [x] 2.3 Create `interfaces/enterobacterias.interfaces.ts`
+- [x] 2.4 Create `services/enterobacterias-api.service.ts` (`providedIn:'root'`, `inject(HttpClient)`)
+- [x] 2.5 RED+GREEN: `enterobacterias-api.service.spec.ts` (happy + 409/422)
+
 ## TDD Cycle Evidence
 
 | Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
@@ -28,13 +38,16 @@ Strict TDD (openspec `strict_tdd: true`)
 | 1.6 | `__tests__/unit/enterobacterias.repository.test.js` | Unit | N/A (new) | ✅ Written | ✅ Passed | ✅ 6 cases | ✅ Clean |
 | 1.7 | `__tests__/unit/enterobacterias.service.test.js` | Unit | N/A (new) | ✅ Written | ✅ Passed | ✅ 10 cases | ✅ Clean |
 | 1.10 | `__tests__/integration/ent.endpoints.test.js` | Integration | N/A (new) | ✅ Written | ✅ Passed | ✅ 6 cases | ✅ Clean |
+| 2.1 / 2.2 | `src/app/services/catalogos.service.spec.ts` | Unit | N/A (new) | ✅ Written | ✅ Passed | ➖ Single (structural) | ✅ Clean |
+| 2.3 | `interfaces/enterobacterias.interfaces.ts` | — | N/A | N/A | N/A | N/A | N/A |
+| 2.4 / 2.5 | `src/app/services/enterobacterias-api.service.spec.ts` | Unit | N/A (new) | ✅ Written | ✅ Passed | ✅ 7 cases (happy + 409 + 422) | ✅ Clean |
 
 ### Test Summary
-- **Total tests written**: 30
-- **Total tests passing**: 30
-- **Layers used**: Unit (24), Integration (6), E2E (0)
+- **Total tests written**: 39
+- **Total tests passing**: 39
+- **Layers used**: Unit (33), Integration (6), E2E (0)
 - **Approval tests**: None — no refactoring tasks
-- **Pure functions created**: payload mappers in `enterobacterias.service.js`
+- **Pure functions created**: payload mappers in `enterobacterias.service.js`; API service methods are thin HTTP wrappers
 
 ## Files Changed
 
@@ -56,11 +69,18 @@ Strict TDD (openspec `strict_tdd: true`)
 | `AssisTec API/__tests__/unit/enterobacterias.service.test.js` | Created | Service unit tests |
 | `AssisTec API/__tests__/unit/enterobacterias.repository.test.js` | Created | Repository unit tests |
 | `AssisTec API/__tests__/integration/ent.endpoints.test.js` | Created | Endpoint integration tests |
-| `openspec/changes/enterobacterias-flow/tasks.md` | Modified | Marked Phase 1 tasks `[x]` |
+| `Frontend/src/app/interfaces/catalogo.interfaces.ts` | Modified | Added `LoteReactivo` interface |
+| `Frontend/src/app/services/catalogos.service.ts` | Modified | Added `getLotesReactivo(tipo)` method |
+| `Frontend/src/app/services/catalogos.service.spec.ts` | Created | Unit test for `getLotesReactivo` |
+| `Frontend/src/app/interfaces/enterobacterias.interfaces.ts` | Created | `EntFormulario`, `EntMuestra`, `EntEtapa1/2/3`, `EntFormularioCompleto`, `EntEtapaPayload` |
+| `Frontend/src/app/services/enterobacterias-api.service.ts` | Created | `providedIn:'root'` service with `obtenerPorAnalisis`, `obtener`, `guardarEtapa` |
+| `Frontend/src/app/services/enterobacterias-api.service.spec.ts` | Created | Unit tests: happy path + 409/422 error propagation |
+| `openspec/changes/enterobacterias-flow/tasks.md` | Modified | Marked Phase 2 tasks `[x]` |
+| `openspec/changes/enterobacterias-flow/apply-progress.md` | Modified | Added Phase 2 progress and TDD evidence |
 
 ## Deviations from Design
 
-- None — implementation matches `design.md` and `spec.md`.
+- `PUT /:id/etapa/:n` body now sends `updated_at` (matching the existing `optimisticLock` middleware) instead of `expectedUpdatedAt` as shown in `design.md`. The middleware consumes `req.body.updated_at`, `req.query.updated_at`, or `x-updated-at` header; using `updated_at` keeps the frontend service compatible with the current backend without middleware changes.
 
 ## Issues Found
 
@@ -69,22 +89,22 @@ Strict TDD (openspec `strict_tdd: true`)
 
 ## Remaining Tasks
 
-- [ ] 2.1 Add `getLotesReactivo(tipo)` to `services/catalogos.service.ts`
-- [ ] 2.2 Add `LoteReactivo` to `interfaces/catalogo.interfaces.ts`
-- [ ] 2.3 Create `interfaces/enterobacterias.interfaces.ts`
-- [ ] 2.4 Create `services/enterobacterias-api.service.ts`
-- [ ] 2.5 RED+GREEN: `enterobacterias-api.service.spec.ts`
-- [ ] 3.x Frontend wizard refactor (8 sub-componentes, container, HTML, role guards, routing)
+- [ ] 3.1 Create 8 sub-componentes (`EntPesadoComponent`...`EntResultadosComponent`); `FormGroup` + `(subetapaCompleta)`
+- [ ] 3.2 Rewrite `form-enterobacterias.page.ts` — container state, paso↔etapa map, `onSiguiente()` local salvo 4/5/8
+- [ ] 3.3 Rewrite `form-enterobacterias.page.html` — 3-etapa card (`*ngIf="etapaActual===n"`), sub-etapas inline
+- [ ] 3.4 Add `ModoLecturaPipe` — disable inputs si `rol ∉ [0,4]`, oculta Siguiente/Anterior/Borrador (EFW-04)
+- [ ] 3.5 Update `app-routing.module.ts` — `allowedRoles:[0,1,2,4]` para `/form-enterobacterias/:id` (EFW-05)
+- [ ] 3.6 Test: paso 1→2→3 sin HTTP; paso 4 llama `guardarEtapa(1, true)`
 - [ ] 4.x Wiring, auto-save, dynamic catalog
 - [ ] 5.x Verification & cleanup
 
 ## Workload / PR Boundary
 
 - **Mode**: chained PR slice (`feature-branch-chain`)
-- **Current work unit**: PR #1 — Backend Foundation
-- **Branch**: `feature/enterobacterias-phase1` → `feature/enterobacterias-flow`
-- **Estimated review budget impact**: ~700 changed lines across schema/migration/code/tests, concentrated in one autonomous backend slice. Phase 2-4 remain in separate child PRs.
+- **Current work unit**: PR #2 — Frontend Service & Catálogo
+- **Branch**: `feature/enterobacterias-phase2` → `feature/enterobacterias-phase1`
+- **Estimated review budget impact**: ~250 changed lines (4 new files + 2 modified frontend files + openspec updates), focused on service layer and catalog support. Keeps PR #2 well under the 400-line budget.
 
 ## Status
 
-11/11 Phase 1 tasks complete. Ready for PR creation / next batch.
+5/5 Phase 2 tasks complete. Ready for PR creation / next batch.
