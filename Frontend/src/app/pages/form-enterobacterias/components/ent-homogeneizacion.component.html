@@ -1,0 +1,30 @@
+<div [formGroup]="formGroup" class="subetapa-section">
+  <p class="subseccion-title">Homogeneización</p>
+  <div class="grid-3col">
+    <div class="form-group">
+      <label class="form-label" for="fechaHomog">Fecha de homogeneización <span class="required-star">*</span></label>
+      <input id="fechaHomog" type="date" class="form-input"
+        [class.input-error]="campoInvalido('fechaHomog')"
+        formControlName="fechaHomog"
+        [max]="hoy()"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('fechaHomog')">El campo Fecha de homogeneización es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaHomog">Hora de homogeneización <span class="required-star">*</span></label>
+      <input id="horaHomog" type="time" class="form-input"
+        [class.input-error]="campoInvalido('horaHomog')"
+        formControlName="horaHomog"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('horaHomog')">El campo Hora de homogeneización es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="analistaHomog">Analista de homogeneización <span class="required-star">*</span></label>
+      <input id="analistaHomog" type="text" class="form-input"
+        [class.input-error]="campoInvalido('analistaHomog')"
+        formControlName="analistaHomog" placeholder="Nombre del analista"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('analistaHomog')">El campo Analista de homogeneización es obligatorio.</span>
+    </div>
+  </div>
+</div>

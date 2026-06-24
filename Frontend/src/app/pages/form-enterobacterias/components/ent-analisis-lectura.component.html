@@ -1,0 +1,76 @@
+<div [formGroup]="formGroup" class="subetapa-section">
+  <p class="subseccion-title">Lectura a 24 horas</p>
+
+  <div class="grid-3col">
+    <div class="form-group">
+      <label class="form-label" for="fechaLectura24h">Fecha de lectura 24 hrs <span class="required-star">*</span></label>
+      <input id="fechaLectura24h" type="date" class="form-input"
+        [class.input-error]="campoInvalido('fechaLectura24h')"
+        formControlName="fechaLectura24h"
+        [max]="hoy()"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('fechaLectura24h')">El campo Fecha de lectura 24 hrs es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaLectura24h">Hora de lectura 24 hrs <span class="required-star">*</span></label>
+      <input id="horaLectura24h" type="time" class="form-input"
+        [class.input-error]="campoInvalido('horaLectura24h')"
+        formControlName="horaLectura24h"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('horaLectura24h')">El campo Hora de lectura 24 hrs es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="analistaLectura24h">Analista de lectura 24 hrs <span class="required-star">*</span></label>
+      <input id="analistaLectura24h" type="text" class="form-input"
+        [class.input-error]="campoInvalido('analistaLectura24h')"
+        formControlName="analistaLectura24h" placeholder="Nombre del analista"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('analistaLectura24h')">El campo Analista de lectura 24 hrs es obligatorio.</span>
+    </div>
+  </div>
+
+  <div class="seccion-divider"></div>
+
+  <!-- Datos de medición -->
+  <p class="subseccion-title">Datos de medición</p>
+  <div class="grid-3col">
+    <div class="form-group">
+      <label class="form-label" for="nMuestraLectura">N° de muestra <span class="required-star">*</span></label>
+      <input id="nMuestraLectura" type="number" min="0" class="form-input"
+        [class.input-error]="campoInvalido('nMuestraLectura')"
+        formControlName="nMuestraLectura" placeholder="0"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('nMuestraLectura')">Ingrese un valor numérico válido.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="dilucion">Dilución <span class="required-star">*</span></label>
+      <input id="dilucion" type="number" min="0" class="form-input"
+        [class.input-error]="campoInvalido('dilucion')"
+        formControlName="dilucion" placeholder="0"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('dilucion')">Ingrese un valor numérico válido.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="colonias">(C) Colonias <span class="required-star">*</span></label>
+      <input id="colonias" type="number" min="0" class="form-input"
+        [class.input-error]="campoInvalido('colonias')"
+        formControlName="colonias" placeholder="0"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('colonias')">Ingrese un valor numérico válido.</span>
+    </div>
+  </div>
+
+  <!-- Equipo Cuenta Colonias -->
+  <div class="form-group mt-4 pt-4 border-t border-slate-100">
+    <label class="form-label" for="equipoCuentaColonias">Equipo Cuenta Colonias <span class="required-star">*</span></label>
+    <select id="equipoCuentaColonias" class="form-select"
+      [class.input-error]="campoInvalido('equipoCuentaColonias')"
+      formControlName="equipoCuentaColonias"
+      [attr.disabled]="(rol | modoLectura) ? true : null">
+      <option value="">— Seleccionar equipo —</option>
+      <option value="ECC-001">ECC-001 (Principal)</option>
+      <option value="ECC-002">ECC-002 (Respaldo)</option>
+    </select>
+    <span class="error-msg" *ngIf="campoInvalido('equipoCuentaColonias')">Debe seleccionar un equipo cuenta colonias.</span>
+  </div>
+</div>

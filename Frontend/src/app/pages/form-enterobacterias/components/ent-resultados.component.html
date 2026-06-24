@@ -1,0 +1,44 @@
+<div [formGroup]="formGroup" class="subetapa-section">
+  <p class="subseccion-title">Resultados finales</p>
+
+  <!-- Tabla de resultados -->
+  <p class="subseccion-title">Tabla de resultados finales</p>
+  <div class="tabla-wrapper">
+    <table class="tabla-resultados">
+      <thead>
+        <tr>
+          <th>N° muestra / b</th>
+          <th>N° muestra / a</th>
+          <th>d</th>
+          <th>n1</th>
+          <th>n2</th>
+          <th>m</th>
+          <th>Σa</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td *ngFor="let key of resultadosKeys">
+            <input type="number" min="0" class="form-input-sm"
+              [class.input-error]="erroresTablaResultados[key]"
+              [(ngModel)]="tablaResultados[key]"
+              [ngModelOptions]="{standalone: true}" placeholder="0"
+              [attr.readonly]="(rol | modoLectura) ? true : null" />
+            <span class="error-msg block" *ngIf="erroresTablaResultados[key]">
+              {{ erroresTablaResultados[key] }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Observaciones -->
+  <div class="form-group mt-6">
+    <label class="form-label" for="observaciones">Observaciones <span class="optional-tag">(opcional)</span></label>
+    <textarea id="observaciones" class="form-textarea" rows="4"
+      placeholder="Escriba comentarios, notas o incidencias del análisis..."
+      formControlName="observaciones"
+      [attr.readonly]="(rol | modoLectura) ? true : null"></textarea>
+  </div>
+</div>

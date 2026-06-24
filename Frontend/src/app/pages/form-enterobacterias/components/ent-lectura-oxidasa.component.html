@@ -1,0 +1,178 @@
+<div [formGroup]="formGroup" class="subetapa-section">
+  <p class="subseccion-title">Lectura y prueba de oxidasa</p>
+
+  <!-- Datos generales de lectura -->
+  <p class="subseccion-title">Datos generales de lectura</p>
+  <div class="grid-3col">
+    <div class="form-group">
+      <label class="form-label" for="fechaLectConf">Fecha de lectura <span class="required-star">*</span></label>
+      <input id="fechaLectConf" type="date" class="form-input"
+        [class.input-error]="campoInvalido('fechaLectConf')"
+        formControlName="fechaLectConf"
+        [max]="hoy()"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('fechaLectConf')">El campo Fecha de lectura es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaLectConf">Hora de lectura <span class="required-star">*</span></label>
+      <input id="horaLectConf" type="time" class="form-input"
+        [class.input-error]="campoInvalido('horaLectConf')"
+        formControlName="horaLectConf"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('horaLectConf')">El campo Hora de lectura es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="analistaLectConf">Analista de lectura <span class="required-star">*</span></label>
+      <input id="analistaLectConf" type="text" class="form-input"
+        [class.input-error]="campoInvalido('analistaLectConf')"
+        formControlName="analistaLectConf" placeholder="Nombre del analista"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('analistaLectConf')">El campo Analista de lectura es obligatorio.</span>
+    </div>
+  </div>
+
+  <div class="seccion-divider"></div>
+
+  <!-- Fecha / Hora / Analista de Prueba Oxidasa -->
+  <p class="subseccion-title">Fecha, hora y analista de prueba de oxidasa</p>
+  <div class="grid-3col">
+    <div class="form-group">
+      <label class="form-label" for="fechaOxidasa">Fecha de Prueba Oxidasa <span class="required-star">*</span></label>
+      <input id="fechaOxidasa" type="date" class="form-input"
+        [class.input-error]="campoInvalido('fechaOxidasa')"
+        formControlName="fechaOxidasa"
+        [max]="hoy()"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('fechaOxidasa')">El campo Fecha de Prueba Oxidasa es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaOxidasa">Hora de Prueba Oxidasa <span class="required-star">*</span></label>
+      <input id="horaOxidasa" type="time" class="form-input"
+        [class.input-error]="campoInvalido('horaOxidasa')"
+        formControlName="horaOxidasa"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('horaOxidasa')">El campo Hora de Prueba Oxidasa es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="analistaOxidasa">Analista de Prueba Oxidasa <span class="required-star">*</span></label>
+      <input id="analistaOxidasa" type="text" class="form-input"
+        [class.input-error]="campoInvalido('analistaOxidasa')"
+        formControlName="analistaOxidasa" placeholder="Nombre del analista"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('analistaOxidasa')">El campo Analista de Prueba Oxidasa es obligatorio.</span>
+    </div>
+  </div>
+
+  <div class="seccion-divider"></div>
+
+  <!-- Test Oxidasa / Reactivo -->
+  <div class="form-group max-w-sm">
+    <label class="form-label" for="reactivoOxidasa">
+      Test Oxidasa / Reactivo de Oxidasa <span class="required-star">*</span>
+    </label>
+    <input id="reactivoOxidasa" type="text" class="form-input"
+      [class.input-error]="campoInvalido('reactivoOxidasa')"
+      formControlName="reactivoOxidasa"
+      placeholder="R69-AA-NN  (Ej: R69-25-01)"
+      [attr.readonly]="(rol | modoLectura) ? true : null" />
+    <span class="error-msg" *ngIf="campoInvalido('reactivoOxidasa')">
+      {{ mensajeErrorReactivo() }}
+    </span>
+    <p class="campo-hint">Formato: R69-AA-NN. Donde AA = año (2 dígitos), NN = 01 o 02.</p>
+  </div>
+
+  <!-- Desaireado de Agar Glucosa -->
+  <div class="form-group mt-4 pt-4 border-t border-slate-100">
+    <label class="form-label" for="desaireadoAgarGlucosa">Desaireado de Agar Glucosa <span class="required-star">*</span></label>
+    <select id="desaireadoAgarGlucosa" class="form-select"
+      [class.input-error]="campoInvalido('desaireadoAgarGlucosa')"
+      formControlName="desaireadoAgarGlucosa"
+      [attr.disabled]="(rol | modoLectura) ? true : null">
+      <option value="">— Seleccionar —</option>
+      <option value="DAG-001">DAG-001</option>
+      <option value="DAG-002">DAG-002</option>
+    </select>
+    <span class="error-msg" *ngIf="campoInvalido('desaireadoAgarGlucosa')">Debe seleccionar un desaireado de Agar Glucosa.</span>
+  </div>
+
+  <!-- Controles -->
+  <div class="seccion-divider"></div>
+  <p class="subseccion-title">Controles y referencias</p>
+  <div class="grid-2col">
+    <div class="form-group">
+      <label class="form-label" for="agarGlucosa">Agar Glucosa <span class="required-star">*</span></label>
+      <input id="agarGlucosa" type="text" class="form-input"
+        [class.input-error]="campoInvalido('agarGlucosa')"
+        formControlName="agarGlucosa" placeholder="Código o descripción"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('agarGlucosa')">El campo Agar Glucosa es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="controlPosEcoli">Control (+) E. coli <span class="required-star">*</span></label>
+      <input id="controlPosEcoli" type="text" class="form-input"
+        [class.input-error]="campoInvalido('controlPosEcoli')"
+        formControlName="controlPosEcoli" placeholder="Resultado control positivo"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('controlPosEcoli')">El campo Control (+) E. coli es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="controlNegPaer">Control (-) P. aeruginosa <span class="required-star">*</span></label>
+      <input id="controlNegPaer" type="text" class="form-input"
+        [class.input-error]="campoInvalido('controlNegPaer')"
+        formControlName="controlNegPaer" placeholder="Resultado control negativo"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('controlNegPaer')">El campo Control (-) P. aeruginosa es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="blanco">Blanco <span class="required-star">*</span></label>
+      <input id="blanco" type="text" class="form-input"
+        [class.input-error]="campoInvalido('blanco')"
+        formControlName="blanco" placeholder="Resultado blanco"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('blanco')">El campo Blanco es obligatorio.</span>
+    </div>
+  </div>
+
+  <!-- Tabla de lectura de placas -->
+  <div class="form-card mt-6">
+    <div class="form-card-header header-placas">
+      <div class="form-card-title-group">
+        <ion-icon name="grid-outline" class="card-header-icon"></ion-icon>
+        <h2 class="form-card-title">Tabla de Lectura de Placas</h2>
+      </div>
+    </div>
+    <div class="form-card-body">
+      <div class="tabla-wrapper">
+        <table class="tabla-placas">
+          <thead>
+            <tr>
+              <th>Muestra / Placa 1</th>
+              <th>Muestra / Placa 2</th>
+              <th>Duplicado / Placa 1</th>
+              <th>Duplicado / Placa 2</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td *ngFor="let key of placasKeys">
+                <input type="number" min="0" class="form-input-sm"
+                  [class.input-error]="erroresTablaPlacas[key]"
+                  [(ngModel)]="tablaPlacas[key]"
+                  [ngModelOptions]="{standalone: true}"
+                  placeholder="0"
+                  [attr.readonly]="(rol | modoLectura) ? true : null" />
+                <span class="error-msg block" *ngIf="erroresTablaPlacas[key]">
+                  {{ erroresTablaPlacas[key] }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="tabla-hint">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        Los campos de esta tabla son opcionales. Si los completa, deben contener valores numéricos válidos.
+      </p>
+    </div>
+  </div>
+</div>

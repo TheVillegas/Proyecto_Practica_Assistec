@@ -1,0 +1,87 @@
+<div [formGroup]="formGroup" class="subetapa-section">
+  <p class="subseccion-title">Sembrado</p>
+
+  <div class="grid-2col">
+    <div class="form-group">
+      <label class="form-label" for="agarVRBGSembrado">Agar VRBG <span class="required-star">*</span></label>
+      <input id="agarVRBGSembrado" type="text" class="form-input"
+        [class.input-error]="campoInvalido('agarVRBGSembrado')"
+        formControlName="agarVRBGSembrado" placeholder="Ej: VRBG-045"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('agarVRBGSembrado')">El campo Agar VRBG es obligatorio.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="placasSembrado">Placas <span class="required-star">*</span></label>
+      <select id="placasSembrado" class="form-select"
+        [class.input-error]="campoInvalido('placasSembrado')"
+        formControlName="placasSembrado"
+        [attr.disabled]="(rol | modoLectura) ? true : null">
+        <option value="">— Seleccionar placa —</option>
+        <option value="PL-001">PL-001</option>
+        <option value="PL-002">PL-002</option>
+        <option value="PL-003">PL-003</option>
+      </select>
+      <span class="error-msg" *ngIf="campoInvalido('placasSembrado')">Debe seleccionar una placa.</span>
+    </div>
+  </div>
+
+  <!-- Estufa -->
+  <div class="form-group mt-4 pt-4 border-t border-slate-100">
+    <label class="form-label">Estufa <span class="required-star">*</span></label>
+    <div class="form-radio-group">
+      <label class="form-check-label" *ngFor="let est of opcionesEstufa">
+        <input type="radio" class="form-radio" [value]="est.valor"
+          formControlName="estufaSembrado"
+          [attr.disabled]="(rol | modoLectura) ? true : null" />
+        <span>{{ est.label }}</span>
+      </label>
+    </div>
+    <span class="error-msg" *ngIf="campoInvalido('estufaSembrado')">Debe seleccionar una estufa.</span>
+  </div>
+
+  <!-- Micropipetas 1 ml -->
+  <div class="form-group mt-4 pt-4 border-t border-slate-100">
+    <label class="form-label">Micropipetas 1 ml <span class="required-star">*</span></label>
+    <div class="form-radio-group">
+      <label class="form-check-label">
+        <input type="radio" class="form-radio" value="100"
+          formControlName="micropipeta1mlSembrado"
+          [attr.disabled]="(rol | modoLectura) ? true : null" />
+        <span>100</span>
+      </label>
+    </div>
+    <span class="error-msg" *ngIf="campoInvalido('micropipeta1mlSembrado')">Debe seleccionar la micropipeta.</span>
+  </div>
+
+  <!-- Fecha / Hora / Analista de sembrado -->
+  <div class="seccion-divider"></div>
+  <p class="subseccion-title">Fecha, hora y analista de sembrado</p>
+  <div class="grid-3col">
+    <div class="form-group">
+      <label class="form-label" for="fechaSembrado">Fecha de sembrado <span class="required-star">*</span></label>
+      <input id="fechaSembrado" type="date" class="form-input"
+        [class.input-error]="campoInvalido('fechaSembrado')"
+        formControlName="fechaSembrado"
+        [max]="hoy()"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('fechaSembrado')">El campo Fecha de sembrado es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaSembrado">Hora de sembrado <span class="required-star">*</span></label>
+      <input id="horaSembrado" type="time" class="form-input"
+        [class.input-error]="campoInvalido('horaSembrado')"
+        formControlName="horaSembrado"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('horaSembrado')">El campo Hora de sembrado es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="analistaSembrado">Analista de sembrado <span class="required-star">*</span></label>
+      <input id="analistaSembrado" type="text" class="form-input"
+        [class.input-error]="campoInvalido('analistaSembrado')"
+        formControlName="analistaSembrado" placeholder="Nombre del analista"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('analistaSembrado')">El campo Analista de sembrado es obligatorio.</span>
+    </div>
+  </div>
+</div>

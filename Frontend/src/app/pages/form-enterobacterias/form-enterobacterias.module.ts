@@ -6,6 +6,14 @@ import { FormEnterobacteriasPageRoutingModule } from './form-enterobacterias-rou
 import { FormEnterobacteriasPage } from './form-enterobacterias.page';
 import { ComponentsModule } from 'src/app/components/components-module/components.module';
 import { ModoLecturaPipe } from '../../pipes/modo-lectura.pipe';
+import { EntPesadoComponent } from './components/ent-pesado.component';
+import { EntHomogeneizacionComponent } from './components/ent-homogeneizacion.component';
+import { EntSembradoComponent } from './components/ent-sembrado.component';
+import { EntIncubacionPrepComponent } from './components/ent-incubacion-prep.component';
+import { EntAnalisisLecturaComponent } from './components/ent-analisis-lectura.component';
+import { EntIncubacionConfComponent } from './components/ent-incubacion-conf.component';
+import { EntLecturaOxidasaComponent } from './components/ent-lectura-oxidasa.component';
+import { EntResultadosComponent } from './components/ent-resultados.component';
 
 @NgModule({
   imports: [
@@ -16,6 +24,17 @@ import { ModoLecturaPipe } from '../../pipes/modo-lectura.pipe';
     FormEnterobacteriasPageRoutingModule,
     ComponentsModule,
   ],
-  declarations: [FormEnterobacteriasPage, ModoLecturaPipe]
+  declarations: [
+    FormEnterobacteriasPage,
+    ModoLecturaPipe,
+    EntPesadoComponent,
+    EntHomogeneizacionComponent,
+    EntSembradoComponent,
+    EntIncubacionPrepComponent,
+    EntAnalisisLecturaComponent,
+    EntIncubacionConfComponent,
+    EntLecturaOxidasaComponent,
+    EntResultadosComponent,
+  ]
 })
 export class FormEnterobacteriasPageModule { }

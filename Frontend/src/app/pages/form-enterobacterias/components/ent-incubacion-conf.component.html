@@ -1,0 +1,59 @@
+<div [formGroup]="formGroup" class="subetapa-section">
+  <p class="subseccion-title">Incubación de confirmación</p>
+
+  <!-- Fecha / Hora / Analista de traspaso -->
+  <p class="subseccion-title">Traspaso</p>
+  <div class="grid-3col">
+    <div class="form-group">
+      <label class="form-label" for="fechaTraspaso">Fecha de traspaso <span class="required-star">*</span></label>
+      <input id="fechaTraspaso" type="date" class="form-input"
+        [class.input-error]="campoInvalido('fechaTraspaso')"
+        formControlName="fechaTraspaso"
+        [max]="hoy()"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('fechaTraspaso')">El campo Fecha de traspaso es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaTraspaso">Hora de traspaso <span class="required-star">*</span></label>
+      <input id="horaTraspaso" type="time" class="form-input"
+        [class.input-error]="campoInvalido('horaTraspaso')"
+        formControlName="horaTraspaso"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('horaTraspaso')">El campo Hora de traspaso es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="analistaTraspaso">Analista de traspaso <span class="required-star">*</span></label>
+      <input id="analistaTraspaso" type="text" class="form-input"
+        [class.input-error]="campoInvalido('analistaTraspaso')"
+        formControlName="analistaTraspaso" placeholder="Nombre del analista"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('analistaTraspaso')">El campo Analista de traspaso es obligatorio.</span>
+    </div>
+  </div>
+
+  <div class="seccion-divider"></div>
+
+  <!-- Agar Nutritivo -->
+  <div class="form-group max-w-sm">
+    <label class="form-label" for="agarNutritivo">Agar Nutritivo <span class="required-star">*</span></label>
+    <input id="agarNutritivo" type="text" class="form-input"
+      [class.input-error]="campoInvalido('agarNutritivo')"
+      formControlName="agarNutritivo" placeholder="Ej: AN-032"
+      [attr.readonly]="(rol | modoLectura) ? true : null" />
+    <span class="error-msg" *ngIf="campoInvalido('agarNutritivo')">El campo Agar Nutritivo es obligatorio.</span>
+  </div>
+
+  <!-- Estufa de Confirmación -->
+  <div class="form-group mt-4 pt-4 border-t border-slate-100">
+    <label class="form-label">Estufa <span class="required-star">*</span></label>
+    <div class="form-radio-group">
+      <label class="form-check-label" *ngFor="let est of opcionesEstufa">
+        <input type="radio" class="form-radio" [value]="est.valor"
+          formControlName="estufaConfIncub"
+          [attr.disabled]="(rol | modoLectura) ? true : null" />
+        <span>{{ est.label }}</span>
+      </label>
+    </div>
+    <span class="error-msg" *ngIf="campoInvalido('estufaConfIncub')">Debe seleccionar una estufa.</span>
+  </div>
+</div>

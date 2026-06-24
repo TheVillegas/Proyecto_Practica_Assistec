@@ -1,0 +1,91 @@
+<div [formGroup]="formGroup" class="subetapa-section">
+  <p class="subseccion-title">Pesado de la muestra</p>
+
+  <!-- Código ALI (autocompletado) -->
+  <div class="seccion-importada mb-6">
+    <div class="seccion-tag">
+      <ion-icon name="cloud-download-outline"></ion-icon>
+      <span>Datos importados del sistema</span>
+    </div>
+    <div class="form-group max-w-xs">
+      <label class="form-label">Código ALI <span class="required-star">*</span></label>
+      <input type="text" class="form-input input-locked" formControlName="codigoALI" readonly />
+    </div>
+  </div>
+
+  <div class="grid-2col">
+    <!-- N° Acta -->
+    <div class="form-group">
+      <label class="form-label" for="nActa">N° Acta <span class="required-star">*</span></label>
+      <input id="nActa" type="text" class="form-input"
+        [class.input-error]="campoInvalido('nActa')"
+        formControlName="nActa" placeholder="Ej: ACT-2025-001"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('nActa')">El campo N° Acta es obligatorio.</span>
+    </div>
+
+    <!-- Tipo de muestra -->
+    <div class="form-group">
+      <label class="form-label" for="tipoMuestra">Tipo de muestra <span class="required-star">*</span></label>
+      <select id="tipoMuestra" class="form-select"
+        [class.input-error]="campoInvalido('tipoMuestra')"
+        formControlName="tipoMuestra"
+        [attr.disabled]="(rol | modoLectura) ? true : null">
+        <option value="">— Seleccionar —</option>
+        <option *ngFor="let opt of opcionesTipoMuestra" [value]="opt">{{ opt }}</option>
+      </select>
+      <span class="error-msg" *ngIf="campoInvalido('tipoMuestra')">El campo Tipo de muestra es obligatorio.</span>
+    </div>
+
+    <!-- N° de Muestra (10g/90ml) -->
+    <div class="form-group">
+      <label class="form-label" for="nMuestra10g">N° de Muestra (10 g / 90 ml) <span class="optional-tag">(opcional)</span></label>
+      <input id="nMuestra10g" type="number" min="0" class="form-input"
+        [class.input-error]="campoInvalido('nMuestra10g90ml')"
+        formControlName="nMuestra10g90ml" placeholder="0"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('nMuestra10g90ml')">Ingrese un valor numérico válido.</span>
+    </div>
+
+    <!-- N° de Muestra (50g/450ml) -->
+    <div class="form-group">
+      <label class="form-label" for="nMuestra50g">N° de Muestra (50 g / 450 ml) <span class="optional-tag">(opcional)</span></label>
+      <input id="nMuestra50g" type="number" min="0" class="form-input"
+        [class.input-error]="campoInvalido('nMuestra50g450ml')"
+        formControlName="nMuestra50g450ml" placeholder="0"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('nMuestra50g450ml')">Ingrese un valor numérico válido.</span>
+    </div>
+  </div>
+
+  <!-- Fecha / Hora / Analista de Inicio -->
+  <div class="seccion-divider"></div>
+  <p class="subseccion-title">Fecha, hora y analista de inicio</p>
+  <div class="grid-3col">
+    <div class="form-group">
+      <label class="form-label" for="fechaInicio">Fecha de inicio <span class="required-star">*</span></label>
+      <input id="fechaInicio" type="date" class="form-input"
+        [class.input-error]="campoInvalido('fechaInicio')"
+        formControlName="fechaInicio"
+        [max]="hoy()"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('fechaInicio')">El campo Fecha de inicio es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaInicio">Hora de inicio <span class="required-star">*</span></label>
+      <input id="horaInicio" type="time" class="form-input"
+        [class.input-error]="campoInvalido('horaInicio')"
+        formControlName="horaInicio"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('horaInicio')">El campo Hora de inicio es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="analistaInicio">Analista de inicio <span class="required-star">*</span></label>
+      <input id="analistaInicio" type="text" class="form-input"
+        [class.input-error]="campoInvalido('analistaInicio')"
+        formControlName="analistaInicio" placeholder="Nombre del analista"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido('analistaInicio')">El campo Analista de inicio es obligatorio.</span>
+    </div>
+  </div>
+</div>
