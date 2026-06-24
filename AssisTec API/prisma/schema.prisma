@@ -1325,6 +1325,7 @@ model EntEtapa2 {
   nMuestraLectura         Int       @map("n_muestra_lectura")
   dilucion                Decimal   @map("dilucion") @db.Decimal(10, 2)
   coloniasContadas        Int       @map("colonias_contadas")
+  ufcPorG                 Decimal?  @map("ufc_por_g") @db.Decimal(15, 4)
   completada              Boolean   @default(false)
   updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 

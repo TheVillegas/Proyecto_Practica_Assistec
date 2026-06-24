@@ -2,9 +2,15 @@ const enterobacteriasRepository = require('../repositories/enterobacterias.repos
 const ROLES = require('../config/roles');
 const { serializePrismaRecord } = require('../utils/prismaSerialize');
 const { parseDate, resolvePayloadSection } = require('../utils/formularioPayload');
+const { calcularUfcEnt } = require('../calculators/ufcEnt.calculator');
 
 const WRITE_ROLES = [ROLES.ANALISTA, ROLES.ADMINISTRATOR];
 const HOURS_24_MS = 24 * 60 * 60 * 1000;
+
+function isEntUfcCalcEnabled() {
+    const env = process.env.ENT_UFC_CALC_ENABLED;
+    return env === undefined || env === null || env === 'true';
+}
 
 class EnterobacteriasService {
     assertCanWrite(usuario) {
@@ -19,8 +25,10 @@ class EnterobacteriasService {
             return null;
         }
         const serialized = serializePrismaRecord(formulario);
+        const ufcPorG = serialized.etapa2?.ufcPorG ?? null;
         return {
             ...serialized,
+            ufcPorG,
             id_ent_formulario: formulario.idEntFormulario?.toString?.(),
             id_solicitud_analisis: formulario.idSolicitudAnalisis?.toString?.(),
             updated_at: formulario.updatedAt instanceof Date ? formulario.updatedAt.toISOString() : formulario.updatedAt
@@ -170,6 +178,24 @@ class EnterobacteriasService {
         return body.subetapa_actual ?? body.subetapaActual ?? defaultValue;
     }
 
+    _adaptarParaUfcEnt(etapa2) {
+        const dilucion = etapa2?.dilucion;
+        const colonias = etapa2?.coloniasContadas;
+
+        if (dilucion === null || dilucion === undefined || colonias === null || colonias === undefined) {
+            return { volumen: 1, diluciones: [] };
+        }
+
+        const c = Number(colonias);
+        return {
+            volumen: 1,
+            diluciones: [{
+                dil: Math.log10(Number(dilucion)),
+                colonias: [c, c]
+            }]
+        };
+    }
+
     async guardarEtapa(id, etapa, body, expectedUpdatedAt, usuario) {
         this.assertCanWrite(usuario);
         const etapaNum = Number(etapa);
@@ -196,14 +222,23 @@ class EnterobacteriasService {
                     subetapaActual: this._resolveSubetapaActual(body, 1)
                 }, expectedUpdatedAt);
                 break;
-            case 2:
+            case 2: {
                 this._assertIncubationLockout(formulario, etapaNum, completada);
+                const etapa2Payload = this.mapEtapa2Payload(body);
+
+                if (completada && isEntUfcCalcEnabled()) {
+                    const inputUfc = this._adaptarParaUfcEnt(etapa2Payload);
+                    const resultadoUfc = calcularUfcEnt(inputUfc);
+                    etapa2Payload.ufcPorG = resultadoUfc.ufcPorG;
+                }
+
                 actualizado = await enterobacteriasRepository.upsertEtapa2(id, {
-                    etapa: this.stripUndefined(this.mapEtapa2Payload(body)),
+                    etapa: this.stripUndefined(etapa2Payload),
                     etapaActual: this._resolveEtapaActual(body, 3),
                     subetapaActual: this._resolveSubetapaActual(body, 5)
                 }, expectedUpdatedAt);
                 break;
+            }
             case 3:
                 actualizado = await enterobacteriasRepository.upsertEtapa3(id, {
                     etapa: this.stripUndefined(this.mapEtapa3Payload(body)),
