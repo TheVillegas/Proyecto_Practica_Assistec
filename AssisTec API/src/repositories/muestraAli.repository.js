@@ -90,7 +90,7 @@ class MuestraAliRepository {
             const mapa = {
                 SAUREUS: '/form-s-aureus',
                 COLIFORMES: '/form-coliformes',
-                SALMONELLA: '/form-enterobacterias'
+                SALMONELLA: '/form-salmonella'
             };
             return mapa[codigo] ?? null;
         };
