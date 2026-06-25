@@ -637,6 +637,10 @@
         Cancelar
       </button>
       <div class="nav-footer__actions">
+        <button type="button" class="btn-draft" (click)="guardarBorrador()">
+          <ion-icon name="document-outline"></ion-icon>
+          Guardar Borrador
+        </button>
         <button type="button" class="btn-secondary" (click)="retrocederEtapa()" *ngIf="etapaActual > 1">
           <ion-icon name="arrow-back-outline"></ion-icon>
           Anterior

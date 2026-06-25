@@ -162,6 +162,10 @@ export class FormSAureusPage implements OnInit {
     this.router.navigate(['/home']);
   }
 
+  async guardarBorrador(): Promise<void> {
+    await this.mostrarToast('Borrador guardado (mock)', 'success');
+  }
+
   async confirmarCancelar(): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Cancelar registro',

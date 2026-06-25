@@ -412,7 +412,7 @@ export class FormSalmonellaPage implements OnInit {
     return this.form.valid || !this.form.touched;
   }
 
-  async guardarPaso(): Promise<void> {
+  async guardarPaso(avanzar: boolean = true): Promise<void> {
     if (!this.formulario) {
       await this.mostrarAlerta('Error', 'No existe formulario asociado para guardar.');
       return;
@@ -434,8 +434,8 @@ export class FormSalmonellaPage implements OnInit {
         next: (f) => {
           this.cargando.set(false);
           this.formulario = f;
-          this.mostrarToast('Paso guardado correctamente', 'success');
-          if (this.pasoActual() < this.TOTAL_PASOS) {
+          this.mostrarToast(avanzar ? 'Paso guardado correctamente' : 'Borrador guardado', 'success');
+          if (avanzar && this.pasoActual() < this.TOTAL_PASOS) {
             this.avanzarPaso();
           }
         },
@@ -446,13 +446,16 @@ export class FormSalmonellaPage implements OnInit {
               'El formulario fue modificado por otro usuario. Recargue y vuelva a intentar.',
               'warning'
             );
-            // Recargar para sincronizar updatedAt (SFE-04 / task 5.4)
             this.cargarFormulario();
           } else {
             this.mostrarToast('Error al guardar el paso', 'danger');
           }
         }
       });
+  }
+
+  async guardarBorrador(): Promise<void> {
+    await this.guardarPaso(false);
   }
 
   private construirPayload(paso: number): unknown {
