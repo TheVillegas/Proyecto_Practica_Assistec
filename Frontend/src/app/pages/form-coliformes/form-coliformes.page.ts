@@ -557,7 +557,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   // ══════════════════════════════════════════════════════════════════════════════
   private async guardarFaseActual(completada: boolean): Promise<boolean> {
     try {
-      await firstValueFrom(this.ejecutarGuardadoFaseActual(completada));
+      await firstValueFrom(this.ejecutarGuardadoFase(this.etapaActual, completada));
       return true;
     } catch (err: unknown) {
       const httpErr = err as { status?: number };
@@ -573,12 +573,12 @@ export class FormColiformesPage implements OnInit, OnDestroy {
     }
   }
 
-  private ejecutarGuardadoFaseActual(completada: boolean) {
+  private ejecutarGuardadoFase(fase: number, completada: boolean) {
     if (!this.idFormulario) {
       return of(undefined);
     }
 
-    switch (this.etapaActual) {
+    switch (fase) {
       case 1: {
         const payload: SaveFase1Payload = {
           ctAnalistaInicio: this.form.value.ct_analistaInicio,
@@ -699,9 +699,29 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   }
 
   async guardarBorrador(): Promise<void> {
-    const exito = await this.guardarFaseActual(false);
+    const exito = await this.guardarBorradorCompleto();
     if (exito) {
-      this.mostrarToast('Borrador guardado', 'success');
+      this.mostrarToast('Borrador completo guardado', 'success');
+    }
+  }
+
+  private async guardarBorradorCompleto(): Promise<boolean> {
+    try {
+      for (let fase = 1; fase <= this.etapaActual; fase++) {
+        await firstValueFrom(this.ejecutarGuardadoFase(fase, false));
+      }
+      return true;
+    } catch (err: unknown) {
+      const httpErr = err as { status?: number };
+      if (httpErr.status === 409) {
+        await this.mostrarAlerta(
+          'Conflicto de concurrencia',
+          'El formulario fue modificado por otro usuario. Recargue y vuelva a intentar.'
+        );
+      } else {
+        this.mostrarToast('Error al guardar el borrador completo.', 'danger');
+      }
+      return false;
     }
   }
 

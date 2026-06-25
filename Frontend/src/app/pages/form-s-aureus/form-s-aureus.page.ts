@@ -346,7 +346,7 @@ export class FormSAureusPage implements OnInit {
 
   async avanzarEtapa(): Promise<void> {
     if (!this.validarEtapaActual()) return;
-    const ok = await this.guardarEtapa(true);
+    const ok = await this.guardarEtapa(this.etapaActual, true);
     if (ok && this.etapaActual < this.TOTAL_ETAPAS) {
       this.etapaActual++;
     }
@@ -372,7 +372,7 @@ export class FormSAureusPage implements OnInit {
   }
 
   async enviarFormulario(): Promise<void> {
-    const ok = await this.guardarEtapa(true);
+    const ok = await this.guardarEtapa(this.etapaActual, true);
     if (ok) {
       await this.mostrarAlerta(
         'Éxito',
@@ -383,26 +383,34 @@ export class FormSAureusPage implements OnInit {
   }
 
   async guardarBorrador(): Promise<void> {
-    const ok = await this.guardarEtapa(false);
+    const ok = await this.guardarBorradorCompleto();
     if (ok) {
-      this.mostrarToast('Borrador guardado', 'success');
+      this.mostrarToast('Borrador completo guardado', 'success');
     }
   }
 
-  private async guardarEtapa(completada: boolean): Promise<boolean> {
+  private async guardarBorradorCompleto(): Promise<boolean> {
+    for (let etapa = 1; etapa <= this.etapaActual; etapa++) {
+      const ok = await this.guardarEtapa(etapa, false);
+      if (!ok) return false;
+    }
+    return true;
+  }
+
+  private async guardarEtapa(etapa: number, completada: boolean): Promise<boolean> {
     if (!this.idFormulario) {
       this.mostrarToast('No hay formulario activo para guardar.', 'danger');
       return false;
     }
 
     try {
-      const payload = this.construirPayload(completada);
+      const payload = this.construirPayload(etapa, completada);
       payload['updated_at'] = this.formularioUpdatedAt;
 
       const result = await firstValueFrom(
         this.saureusApi.saveEtapa(
           this.idFormulario,
-          this.etapaActual,
+          etapa,
           payload
         )
       );
@@ -424,14 +432,14 @@ export class FormSAureusPage implements OnInit {
     }
   }
 
-  private construirPayload(completada: boolean): Record<string, unknown> {
+  private construirPayload(etapa: number, completada: boolean): Record<string, unknown> {
     const v = this.form.value;
     const payload: Record<string, unknown> = {
       completada,
-      etapaActual: this.etapaActual,
+      etapaActual: etapa,
     };
 
-    if (this.etapaActual === 1) {
+    if (etapa === 1) {
       Object.assign(payload, {
         fechaInicioIncubacion:
           v.e1_fechaInicio && v.e1_horaInicio
@@ -465,7 +473,7 @@ export class FormSAureusPage implements OnInit {
       });
     }
 
-    if (this.etapaActual === 2) {
+    if (etapa === 2) {
       Object.assign(payload, {
         ctrlSiembraSAureusUfc: v.e2_controlSAureusUFC
           ? Number(v.e2_controlSAureusUFC)
@@ -489,7 +497,7 @@ export class FormSAureusPage implements OnInit {
       });
     }
 
-    if (this.etapaActual === 3) {
+    if (etapa === 3) {
       Object.assign(payload, {
         fechaHoraTraspaso:
           v.e3_fechaTraspaso && v.e3_horaTraspaso
@@ -509,7 +517,7 @@ export class FormSAureusPage implements OnInit {
       });
     }
 
-    if (this.etapaActual === 4) {
+    if (etapa === 4) {
       Object.assign(payload, {
         fechaHoraPrueba:
           v.e4_fechaPrueba && v.e4_horaPrueba
@@ -543,11 +551,11 @@ export class FormSAureusPage implements OnInit {
       });
     }
 
-    if (this.etapaActual === 5) {
+    if (etapa === 5) {
       payload['resultados'] = [];
     }
 
-    if (this.etapaActual === 6) {
+    if (etapa === 6) {
       Object.assign(payload, {
         desfavorable:
           this.e6_desfavorable === 'si'

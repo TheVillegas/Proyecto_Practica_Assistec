@@ -323,11 +323,18 @@ export class FormEnterobacteriasPage implements OnInit {
 
   async onGuardarBorrador(): Promise<void> {
     if (this.modoLectura) return;
-    const etapa = this.etapaActual;
-    const exito = await this.guardarEtapa(etapa, false);
+    const exito = await this.guardarBorradorCompleto();
     if (exito) {
-      this.mostrarToast('Borrador guardado.', 'success');
+      this.mostrarToast('Borrador completo guardado.', 'success');
     }
+  }
+
+  private async guardarBorradorCompleto(): Promise<boolean> {
+    for (let etapa = 1; etapa <= this.etapaActual; etapa++) {
+      const exito = await this.guardarEtapa(etapa, false);
+      if (!exito) return false;
+    }
+    return true;
   }
 
   private async guardarEtapa(etapa: number, completada: boolean): Promise<boolean> {

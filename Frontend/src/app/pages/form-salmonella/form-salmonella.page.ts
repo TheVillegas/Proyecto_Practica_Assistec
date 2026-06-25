@@ -455,10 +455,56 @@ export class FormSalmonellaPage implements OnInit {
   }
 
   async guardarBorrador(): Promise<void> {
-    await this.guardarPaso(false);
+    const ok = await this.guardarBorradorCompleto();
+    if (ok) {
+      this.mostrarToast('Borrador completo guardado', 'success');
+    }
   }
 
-  private construirPayload(paso: number): unknown {
+  private async guardarBorradorCompleto(): Promise<boolean> {
+    if (!this.formulario) {
+      await this.mostrarAlerta('Error', 'No existe formulario asociado para guardar.');
+      return false;
+    }
+
+    const pasoActual = this.pasoActual();
+    this.cargando.set(true);
+
+    try {
+      for (let paso = 1; paso <= pasoActual; paso++) {
+        const payload = this.construirPayload(paso, false);
+        if (!payload) continue;
+
+        const actualizado = await firstValueFrom(
+          this.api.guardarFase(
+            this.formulario.idSalFormulario,
+            paso,
+            payload as SalFasePayload,
+            this.formulario.updatedAt
+          )
+        );
+        this.formulario = actualizado;
+      }
+
+      this.cargando.set(false);
+      return true;
+    } catch (err: unknown) {
+      this.cargando.set(false);
+      const httpErr = err as { status?: number };
+      if (httpErr.status === 409) {
+        this.mostrarToast(
+          'El formulario fue modificado por otro usuario. Recargue y vuelva a intentar.',
+          'warning'
+        );
+        this.cargarFormulario();
+      } else {
+        this.mostrarToast('Error al guardar el borrador completo', 'danger');
+      }
+      return false;
+    }
+  }
+
+  private construirPayload(paso: number, completada: boolean = true): unknown {
     const v = this.form.value;
     switch (paso) {
       case 1:
@@ -469,7 +515,7 @@ export class FormSalmonellaPage implements OnInit {
           caldoHomogeneizacion: v.e1_caldoAPT,
           horaInicioHidratacion: v.e1_horaInicioHidratacion || undefined,
           horaTerminoHidratacion: v.e1_horaTerminoHidratacion || undefined,
-          completada: true
+          completada
         };
       case 2:
         return {
@@ -479,13 +525,13 @@ export class FormSalmonellaPage implements OnInit {
           horaIngresoEstufa: v.e1_horaIngresoEstufa,
           rutAnalistaResponsable: v.e1_analistaResponsable,
           fechaTerminoAnalisis: v.e1_fechaTerminoAnalisis,
-          completada: true
+          completada
         };
       case 3:
         return {
           codigoCaldoAptLeche: v.e2_loteCaldo,
           idEstufa: Number(v.e2_estufaIncubacion),
-          completada: true
+          completada
         };
       case 4:
         return {
@@ -495,7 +541,7 @@ export class FormSalmonellaPage implements OnInit {
           resultadoCtrlPositivo: this.cumpleABooleano(this.e2_resultadoControlBlanco),
           ctrlSiembraAli: v.e2_controlSiembraAli || undefined,
           resultadoCtrlSiembra: this.cumpleABooleano(this.e2_resultadoControlSiembra),
-          completada: true
+          completada
         };
       case 5:
         return {
@@ -504,12 +550,12 @@ export class FormSalmonellaPage implements OnInit {
           rutAnalistaCaldoApt: v.e3_analistaLecturaAPT,
           horaLecturaCaldosFinales: v.e3_horaLecturaCaldos || undefined,
           rutAnalistaCaldosFinales: v.e3_analistaLecturaCaldos || undefined,
-          completada: true
+          completada
         };
       case 6:
         return {
           idEstufaSelenito: Number(v.e3_selenitoEstufa),
-          completada: true
+          completada
         };
       case 7:
         return {
@@ -519,7 +565,7 @@ export class FormSalmonellaPage implements OnInit {
             resultadoseLenito: m.selenito,
             resultadoRappaport: m.rappaport
           })),
-          completada: true
+          completada
         };
       case 8:
         return {
@@ -536,26 +582,26 @@ export class FormSalmonellaPage implements OnInit {
             ? `${v.e4_fechaLectura48h}T${v.e4_horaLectura48h}:00.000Z`
             : undefined,
           rutAnalistaLectura48h: v.e4_analistaLectura48h || undefined,
-          completada: true
+          completada
         };
       case 9:
         return {
           lecturas: this.muestrasEtapa4.map((m) => ({
             idSalMuestra: m.idSalMuestra,
-            resXld24hSelenito: m.xld24hSel,
-            resSs24hSelenito: m.ss24hSel,
-            resXld48hSelenito: m.xld48hSel,
-            resSs48hSelenito: m.ss48hSel,
-            resXld24hRappaport: m.xld24hRap,
-            resSs24hRappaport: m.ss24hRap,
-            resXld48hRappaport: m.xld48hRap,
-            resSs48hRappaport: m.ss48hRap
+            resXld24hSelenito: this.mapResultadoAgarToBackend(m.xld24hSel),
+            resSs24hSelenito: this.mapResultadoAgarToBackend(m.ss24hSel),
+            resXld48hSelenito: this.mapResultadoAgarToBackend(m.xld48hSel),
+            resSs48hSelenito: this.mapResultadoAgarToBackend(m.ss48hSel),
+            resXld24hRappaport: this.mapResultadoAgarToBackend(m.xld24hRap),
+            resSs24hRappaport: this.mapResultadoAgarToBackend(m.ss24hRap),
+            resXld48hRappaport: this.mapResultadoAgarToBackend(m.xld48hRap),
+            resSs48hRappaport: this.mapResultadoAgarToBackend(m.ss48hRap)
           })),
-          completada: true
+          completada
         };
       case 10:
         return {
-          completada: true
+          completada
         };
       default:
         return null;
@@ -565,6 +611,12 @@ export class FormSalmonellaPage implements OnInit {
   private cumpleABooleano(valor: Cumple): boolean | undefined {
     if (valor === 'cumple') return true;
     if (valor === 'no_cumple') return false;
+    return undefined;
+  }
+
+  private mapResultadoAgarToBackend(valor: string): string | undefined {
+    if (valor === '+') return 'tipico';
+    if (valor === '-') return 'atipico';
     return undefined;
   }
 
