@@ -181,6 +181,31 @@ async function main() {
   });
   console.log(`\n  ✅ Solicitud validada: ${codigoDemo}`);
 
+  // 8b. Crear bridge ALI + reportes para que aparezca en Búsqueda ALI
+  const bridgeExistente = await prisma.muestraAli.findUnique({ where: { codigoAli: numeroAli } });
+  if (!bridgeExistente) {
+    await prisma.muestraAli.create({
+      data: {
+        codigoAli: numeroAli,
+        observacionesCliente: solicitud.observacionesCliente,
+        observacionesGenerales: solicitud.observacionesGenerales
+      }
+    });
+    await prisma.tpaReporte.create({
+      data: {
+        codigoAli: numeroAli,
+        estadoActual: 'NO_REALIZADO'
+      }
+    });
+    await prisma.ramReporte.create({
+      data: {
+        codigoAli: numeroAli,
+        estadoRam: 'NO_REALIZADO'
+      }
+    });
+    console.log('  ✅ Bridge MuestraAli + TPA/RAM creado');
+  }
+
   // 9. Crear formularios microbiológicos manualmente (findOrCreate ya lo maneja,
   //    pero los creamos explícitamente para el seed)
   console.log('\n📋 Creando formularios microbiológicos...');
