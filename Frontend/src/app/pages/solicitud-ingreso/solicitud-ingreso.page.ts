@@ -115,15 +115,24 @@ const FORMULARIOS_DIGITALIZADOS = new Set([
   'HONGOS_LEVADURAS'
 ]);
 
+const COLIFORMES_CODES = new Set(['COLIFORMES_TOTALES', 'COLIFORMES_FECALES', 'ECOLI_NCH3056']);
+const COLIFORMES_UI_CODE = 'COLIFORMES';
+
 const NOMBRES_FORMULARIOS_UI: Record<string, string> = {
   TPA: 'Trazabilidad de Pesado y Analisis',
   RAM35: 'RAM 35C',
   RAM: 'RAM',
+  COLIFORMES: 'E. coli / Coliformes Totales / Fecales',
   SALMONELLA_ISO: 'Salmonella',
   HONGOS_LEVADURAS: 'Mohos y Levaduras',
   ECOLI_NCH3056: 'E. coli',
   SAUREUS: 'S. Aureus'
 };
+
+function normalizarCodigoFormularioUI(codigo: string): string {
+  const normalized = String(codigo || '').toUpperCase();
+  return COLIFORMES_CODES.has(normalized) ? COLIFORMES_UI_CODE : normalized;
+}
 
 @Component({
   selector: 'app-solicitud-ingreso',
@@ -411,16 +420,17 @@ export class SolicitudIngresoPage implements OnInit {
       const creadas: Muestra[] = [];
       for (let i = 1; i < solicitud.submuestras.length; i++) {
         const sub = solicitud.submuestras[i];
-        const codigosSubmuestra = new Set((sub.formularios ?? []).map((f: any) => f.codigo));
-        const detallesSub = new Map((sub.formularios ?? []).map((f: any) => [f.codigo, f]));
+        const codigosSubmuestra = new Set((sub.formularios ?? []).map((f: any) => normalizarCodigoFormularioUI(f.codigo)));
+        const detallesSub = new Map((sub.formularios ?? []).map((f: any) => [normalizarCodigoFormularioUI(f.codigo), f]));
         const formularios = this.formulariosDisponibles.map((f) => {
-          const detalle = detallesSub.get(f.codigo);
+          const codigoUi = normalizarCodigoFormularioUI(f.codigo);
+          const detalle = detallesSub.get(codigoUi);
           return {
             id: f.idFormularioAnalisis,
-            codigo: f.codigo,
+            codigo: codigoUi,
             nombre: f.nombreAnalisis,
             area: f.area,
-            seleccionado: codigosSubmuestra.has(f.codigo) || Boolean(f.generaTpaDefault),
+            seleccionado: codigosSubmuestra.has(codigoUi) || Boolean(f.generaTpaDefault),
             obligatorio: Boolean(f.generaTpaDefault),
             acreditado: detalle?.acreditado ?? undefined,
             codigoLe: detalle?.codigo_le ?? undefined,
@@ -442,10 +452,11 @@ export class SolicitudIngresoPage implements OnInit {
       // LEGACY: restaurar desde solicitud_analisis (solo TPA)
       const creadas: Muestra[] = solicitud.muestras.map((muestra: any, index: number) => {
         const formularios = this.formulariosDisponibles.map((f) => {
-          const matchingAnalisis = muestra.analisis?.find((a: any) => String(a.id_formulario_analisis) === String(f.idFormularioAnalisis) || a.codigo_formulario === f.codigo);
+          const codigoUi = normalizarCodigoFormularioUI(f.codigo);
+          const matchingAnalisis = muestra.analisis?.find((a: any) => String(a.id_formulario_analisis) === String(f.idFormularioAnalisis) || normalizarCodigoFormularioUI(a.codigo_formulario) === codigoUi);
           return {
             id: f.idFormularioAnalisis,
-            codigo: f.codigo,
+            codigo: codigoUi,
             nombre: f.nombreAnalisis,
             area: f.area,
             seleccionado: !!matchingAnalisis || Boolean(f.generaTpaDefault),
@@ -476,22 +487,43 @@ export class SolicitudIngresoPage implements OnInit {
   }
 
   private marcarFormulariosSeleccionados(formulariosSeleccionados: FormularioSeleccionadoPayload[]): void {
-    const codigos = new Set(formulariosSeleccionados.map((formulario) => formulario.codigo));
+    const codigos = new Set(formulariosSeleccionados.map((formulario) => normalizarCodigoFormularioUI(formulario.codigo)));
     this.formulariosCatalogo = this.formulariosCatalogo.map((formulario) => ({
       ...formulario,
-      seleccionado: codigos.has(formulario.codigo) || formulario.obligatorio
+      seleccionado: codigos.has(normalizarCodigoFormularioUI(formulario.codigo)) || formulario.obligatorio
     }));
     this.refrescarDetallesFormularios();
   }
 
   private filtrarFormulariosDigitalizados(formularios: FormularioAnalisisCatalogo[]): FormularioAnalisisCatalogo[] {
-    return formularios
+    const base = formularios
       .filter((formulario) => FORMULARIOS_DIGITALIZADOS.has(String(formulario.codigo).toUpperCase()))
       .filter((formulario) => this.normalizarTexto(formulario.area).includes('microbiologia') || String(formulario.codigo).toUpperCase() === 'TPA')
       .map((formulario) => ({
         ...formulario,
         nombreAnalisis: NOMBRES_FORMULARIOS_UI[String(formulario.codigo).toUpperCase()] ?? formulario.nombreAnalisis
       }));
+
+    const resultado: FormularioAnalisisCatalogo[] = [];
+    const canonicalColi = base.find((f) => String(f.codigo).toUpperCase() === 'COLIFORMES_TOTALES')
+      || base.find((f) => COLIFORMES_CODES.has(String(f.codigo).toUpperCase()));
+
+    for (const formulario of base) {
+      const codigo = String(formulario.codigo).toUpperCase();
+      if (COLIFORMES_CODES.has(codigo)) {
+        if (canonicalColi && !resultado.some((f) => String(f.codigo).toUpperCase() === COLIFORMES_UI_CODE)) {
+          resultado.push({
+            ...canonicalColi,
+            codigo: COLIFORMES_UI_CODE,
+            nombreAnalisis: NOMBRES_FORMULARIOS_UI[COLIFORMES_UI_CODE]
+          });
+        }
+        continue;
+      }
+      resultado.push(formulario);
+    }
+
+    return resultado;
   }
 
   private normalizarTexto(value: string): string {
@@ -620,10 +652,11 @@ export class SolicitudIngresoPage implements OnInit {
     const mapa = new Map<string, FormularioSeleccionadoPayload>();
     const agregar = (formularios: FormularioUI[]) => {
       formularios.filter((formulario) => formulario.seleccionado).forEach((formulario) => {
-        mapa.set(formulario.codigo, {
+        const codigoUi = normalizarCodigoFormularioUI(formulario.codigo);
+        mapa.set(codigoUi, {
           id: formulario.id,
-          codigo: formulario.codigo,
-          nombre: formulario.nombre,
+          codigo: codigoUi,
+          nombre: codigoUi === COLIFORMES_UI_CODE ? NOMBRES_FORMULARIOS_UI[COLIFORMES_UI_CODE] : formulario.nombre,
           genera_tpa_default: formulario.obligatorio,
           acreditado: formulario.acreditado,
           codigo_le: formulario.codigoLe ?? null,
