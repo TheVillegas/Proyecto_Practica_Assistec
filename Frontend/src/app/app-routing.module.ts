@@ -101,13 +101,13 @@ const routes: Routes = [
     data: { allowedRoles: [0, 4] }
   },
   {
-    path: 'form-enterobacterias',
+    path: 'form-enterobacterias/:id',
     loadChildren: () => import('./pages/form-enterobacterias/form-enterobacterias.module').then((m) => m.FormEnterobacteriasPageModule),
     canActivate: [AuthGuard],
     data: { allowedRoles: [0, 1, 2, 4] }
   },
   {
-    path: 'form-salmonella',
+    path: 'form-salmonella/:id',
     loadChildren: () => import('./pages/form-salmonella/form-salmonella.module').then((m) => m.FormSalmonellaPageModule),
     canActivate: [AuthGuard],
     data: { allowedRoles: [0, 4] }

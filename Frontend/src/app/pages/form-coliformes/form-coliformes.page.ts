@@ -149,6 +149,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   hasChanges = false;
   lastSaveTime: Date | null = null;
   lastSaveText = '';
+  lastSaveError = false;
   private saveIndicatorInterval?: ReturnType<typeof setInterval>;
 
   // ─── Datos importados de solicitud ────────────────────────────────────────────
@@ -162,7 +163,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('idFormulario')
       || this.route.snapshot.queryParamMap.get('idFormulario')
-      || this.route.snapshot.queryParamMap.get('analisis');
+      || this.route.snapshot.queryParamMap.get('analisis')?.split(',')[0];
 
     if (!idParam) {
       this.mostrarAlerta('Error', 'No se encontró el identificador del formulario.');
@@ -181,10 +182,26 @@ export class FormColiformesPage implements OnInit, OnDestroy {
       ? this.coliService.obtenerPorAnalisis(this.idFormulario)
       : this.coliService.getFormulario(this.idFormulario);
 
+    // LAB-65 CDS-01: catchError por catálogo individual para carga parcial
     forkJoin({
-      equipos: this.catalogosService.getEquiposIncubacion(),
-      pipetas: this.catalogosService.getMicroPipetas(),
-      responsables: this.catalogosService.getResponsables(),
+      equipos: this.catalogosService.getEquiposIncubacion().pipe(
+        catchError(() => {
+          console.warn('[Coli] Catálogo equipos_incubacion no disponible');
+          return of([] as EquipoIncubacion[]);
+        })
+      ),
+      pipetas: this.catalogosService.getMicroPipetas().pipe(
+        catchError(() => {
+          console.warn('[Coli] Catálogo micropipetas no disponible');
+          return of([] as Micropipeta[]);
+        })
+      ),
+      responsables: this.catalogosService.getResponsables().pipe(
+        catchError(() => {
+          console.warn('[Coli] Catálogo responsables no disponible');
+          return of([] as Responsable[]);
+        })
+      ),
       formulario: formulario$,
     }).subscribe({
       next: (res) => {
@@ -193,7 +210,16 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         this.listaResponsables = res.responsables;
         this.cargarFormulario(res.formulario);
       },
-      error: () => {
+      error: (err: { status?: number }) => {
+        // LAB-65 CFI-01: No inicializar wizard si formulario no existe (404)
+        if (err.status === 404) {
+          this.mostrarAlerta(
+            'Formulario no encontrado',
+            'El formulario solicitado no existe o fue eliminado. Será redirigido al inicio.'
+          );
+          this.router.navigate(['/home']);
+          return;
+        }
         this.mostrarToast('Error al cargar datos del formulario.', 'danger');
       },
     });
@@ -237,8 +263,14 @@ export class FormColiformesPage implements OnInit, OnDestroy {
           if (!this.hasChanges || this.idFormulario <= 0) {
             return of(undefined);
           }
+          // LAB-65 DSI-02: indicador visual de error
+          this.lastSaveError = false;
           return this.ejecutarGuardadoFaseActual(false).pipe(
-            catchError(() => of(undefined))
+            catchError(() => {
+              this.lastSaveError = true;
+              this.actualizarTextoGuardado();
+              return of(undefined);
+            })
           );
         })
       )
@@ -250,6 +282,11 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   }
 
   private actualizarTextoGuardado(): void {
+    // LAB-65 DSI-02: mostrar estado de error si auto-save falló
+    if (this.lastSaveError) {
+      this.lastSaveText = 'Guardado fallido — intente nuevamente';
+      return;
+    }
     if (!this.lastSaveTime) {
       this.lastSaveText = '';
       return;
@@ -541,6 +578,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         return this.coliService.saveFase1(this.idFormulario, payload).pipe(
           switchMap(() => {
             this.hasChanges = false;
+            this.lastSaveError = false;
             this.lastSaveTime = new Date();
             this.actualizarTextoGuardado();
             return of(undefined);
@@ -563,6 +601,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         return this.coliService.saveFase2(this.idFormulario, payload).pipe(
           switchMap(() => {
             this.hasChanges = false;
+            this.lastSaveError = false;
             this.lastSaveTime = new Date();
             this.actualizarTextoGuardado();
             return of(undefined);
@@ -580,6 +619,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         return this.coliService.saveFase3(this.idFormulario, payload).pipe(
           switchMap(() => {
             this.hasChanges = false;
+            this.lastSaveError = false;
             this.lastSaveTime = new Date();
             this.actualizarTextoGuardado();
             return of(undefined);
@@ -605,6 +645,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         return this.coliService.saveFase35(this.idFormulario, payload).pipe(
           switchMap(() => {
             this.hasChanges = false;
+            this.lastSaveError = false;
             this.lastSaveTime = new Date();
             this.actualizarTextoGuardado();
             return of(undefined);
@@ -622,6 +663,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         return this.coliService.saveFase4(this.idFormulario, payload).pipe(
           switchMap((res) => {
             this.hasChanges = false;
+            this.lastSaveError = false;
             this.lastSaveTime = new Date();
             this.actualizarTextoGuardado();
             if (res.fase4Resultado) {

@@ -2,8 +2,11 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
-import { take } from 'rxjs/operators';
+import { forkJoin, of, take } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { SalmonellaApiService } from '../../services/salmonella-api.service';
+import { CatalogosService } from '../../services/catalogos.service';
+import { EquipoIncubacion, LoteReactivo } from '../../interfaces/catalogo.interfaces';
 import {
   SalFormularioCompleto,
   SalMuestra,
@@ -97,12 +100,12 @@ export class FormSalmonellaPage implements OnInit {
   pasoActual = signal<number>(1);
 
   readonly NOMBRES_ETAPAS = [
-    'Preparación',
-    'Análisis',
+    'Inoculación',
+    'Incubación y Aislamiento',
     'Resultados'
   ];
 
-  readonly PASOS_POR_ETAPA = [4, 3, 3];
+  readonly PASOS_POR_ETAPA = [4, 5, 1];
   readonly ETIQUETAS_PASOS = [
     'Fase 1: Configuración',
     'Fase 2A: Trazabilidad',
@@ -146,10 +149,36 @@ export class FormSalmonellaPage implements OnInit {
   private readonly alertCtrl = inject(AlertController);
   private readonly toastCtrl = inject(ToastController);
   private readonly api = inject(SalmonellaApiService);
+  private readonly catalogos = inject(CatalogosService);
+
+  // ─── Catálogos dinámicos ───
+  listaEstufas: EquipoIncubacion[] = [];
+  listaLotesReactivo: LoteReactivo[] = [];
 
   ngOnInit(): void {
     this.construirFormulario();
-    const idParam = this.route.snapshot.paramMap.get('id');
+
+    // Cargar catálogos con tolerancia a fallos individuales
+    forkJoin({
+      estufas: this.catalogos.getEquiposIncubacion().pipe(
+        catchError(() => {
+          console.warn('[Salmonella] Catálogo estufas no disponible');
+          return of([] as EquipoIncubacion[]);
+        })
+      ),
+      lotes: this.catalogos.getLotesReactivo('todos').pipe(
+        catchError(() => {
+          console.warn('[Salmonella] Catálogo lotes no disponible');
+          return of([] as LoteReactivo[]);
+        })
+      ),
+    }).subscribe((res) => {
+      this.listaEstufas = res.estufas;
+      this.listaLotesReactivo = res.lotes;
+    });
+
+    const idParam = this.route.parent?.snapshot.paramMap.get('id')
+      || this.route.snapshot.paramMap.get('id');
     this.idSolicitudAnalisis = idParam ? Number(idParam) : 0;
     if (this.idSolicitudAnalisis > 0) {
       this.cargarFormulario();
@@ -177,7 +206,7 @@ export class FormSalmonellaPage implements OnInit {
       e2_loteCaldo: ['', Validators.required],
       e2_tween80: [false],
       e2_micropipetas: [false],
-      e2_estufaIncubacion: ['', Validators.required],
+      e2_estufaIncubacion: [null as number | null, Validators.required],
       e2_analisisDescripcion: [''],
       e2_controlBlancoAli: [''],
       e2_controlSiembraAli: [''],
@@ -187,7 +216,7 @@ export class FormSalmonellaPage implements OnInit {
       e3_analistaLecturaAPT: ['', Validators.required],
       e3_horaLecturaCaldos: [''],
       e3_analistaLecturaCaldos: [''],
-      e3_selenitoEstufa: ['', Validators.required],
+      e3_selenitoEstufa: [null as number | null, Validators.required],
       e3_puntas1ml: [false],
       e3_micropipetasUtilizadas: [false],
       e3_pipetasDesechables: [false],
@@ -198,7 +227,7 @@ export class FormSalmonellaPage implements OnInit {
       e4_analistaTraspasoAgares: ['', Validators.required],
       e4_loteAgarXLD: ['', Validators.required],
       e4_loteAgarSS: ['', Validators.required],
-      e4_estufaIncubacionAgares: ['', Validators.required],
+      e4_estufaIncubacionAgares: [null as number | null, Validators.required],
       e4_fechaLectura24h: [''],
       e4_horaLectura24h: [''],
       e4_analistaLectura24h: [''],
@@ -294,7 +323,7 @@ export class FormSalmonellaPage implements OnInit {
     if (f.fase2b) {
       this.form.patchValue({
         e2_loteCaldo: f.fase2b.codigoCaldoAptLeche,
-        e2_estufaIncubacion: String(f.fase2b.idEstufa)
+        e2_estufaIncubacion: f.fase2b.idEstufa
       });
     }
     if (f.fase2c) {
@@ -315,7 +344,7 @@ export class FormSalmonellaPage implements OnInit {
     }
     if (f.fase3b) {
       this.form.patchValue({
-        e3_selenitoEstufa: String(f.fase3b.idEstufaSelenito)
+        e3_selenitoEstufa: f.fase3b.idEstufaSelenito
       });
     }
     if (f.fase4a) {
@@ -325,7 +354,7 @@ export class FormSalmonellaPage implements OnInit {
         e4_analistaTraspasoAgares: f.fase4a.rutAnalistaTraspaso,
         e4_loteAgarXLD: f.fase4a.codigoAgarXld,
         e4_loteAgarSS: f.fase4a.codigoAgarSs,
-        e4_estufaIncubacionAgares: String(f.fase4a.idEstufaAgares),
+        e4_estufaIncubacionAgares: f.fase4a.idEstufaAgares,
         e4_fechaLectura24h: f.fase4a.fechaHoraLectura24h?.slice(0, 10) ?? '',
         e4_horaLectura24h: f.fase4a.fechaHoraLectura24h?.slice(11, 16) ?? '',
         e4_analistaLectura24h: f.fase4a.rutAnalistaLectura24h ?? '',
@@ -410,9 +439,18 @@ export class FormSalmonellaPage implements OnInit {
             this.avanzarPaso();
           }
         },
-        error: () => {
+        error: (err: { status?: number }) => {
           this.cargando.set(false);
-          this.mostrarToast('Error al guardar el paso', 'danger');
+          if (err.status === 409) {
+            this.mostrarToast(
+              'El formulario fue modificado por otro usuario. Recargue y vuelva a intentar.',
+              'warning'
+            );
+            // Recargar para sincronizar updatedAt (SFE-04 / task 5.4)
+            this.cargarFormulario();
+          } else {
+            this.mostrarToast('Error al guardar el paso', 'danger');
+          }
         }
       });
   }

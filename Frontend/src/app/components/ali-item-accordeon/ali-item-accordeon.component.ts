@@ -248,13 +248,21 @@ export class ALIItemAccordeonComponent implements OnInit {
     // TPA y RAM usan /ruta/:codigoALI
     if (form.codigo === 'TPA' || form.codigo === 'RAM') {
       this.router.navigate([form.ruta, this.muestra.ALIMuestra], { queryParams: { estado: form.estado } });
-    } else {
-      // Formularios microbiológicos usan /ruta?ali=XXX&analisis=ID
+    } else if (form.ruta === '/form-coliformes') {
+      // Coliformes usa query param (idFormulario viene del ColiFormulario agrupado)
       const queryParams: any = { ali: this.muestra.ALIMuestra };
       if (form.idSolicitudAnalisis?.length) {
         queryParams.analisis = form.idSolicitudAnalisis.join(',');
       }
       this.router.navigate([form.ruta], { queryParams });
+    } else {
+      // Enterobacterias y Salmonella: el ID va en el path (/:id)
+      const idAnalisis = form.idSolicitudAnalisis?.[0];
+      if (!idAnalisis) {
+        console.warn('No se encontró idSolicitudAnalisis para', form.nombre);
+        return;
+      }
+      this.router.navigate([form.ruta, idAnalisis], { queryParams: { ali: this.muestra.ALIMuestra } });
     }
   }
 

@@ -38,17 +38,17 @@ services:
       BD_AsisTec:
         condition: service_healthy
 
-  # Frontend (Angular + nginx)
-  frontend_asistec:
-    build:
-      context: "./Frontend"
-      dockerfile: Dockerfile
-    container_name: contenedor_asistec_frontend
-    restart: always
-    ports:
-      - "8000:80"
-    depends_on:
-      - backend_asistec
+  # Frontend (Angular + nginx) — DESACTIVADO: se levanta en local con `ng serve`
+  # frontend_asistec:
+  #   build:
+  #     context: "./Frontend"
+  #     dockerfile: Dockerfile
+  #   container_name: contenedor_asistec_frontend
+  #   restart: always
+  #   ports:
+  #     - "8000:80"
+  #   depends_on:
+  #     - backend_asistec
 
 volumes:
   pgdata:

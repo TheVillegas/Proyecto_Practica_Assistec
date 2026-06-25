@@ -88,7 +88,8 @@ export class FormEnterobacteriasPage implements OnInit {
   };
 
   ngOnInit(): void {
-    const idParam = this.route.snapshot.paramMap.get('id');
+    const idParam = this.route.parent?.snapshot.paramMap.get('id')
+      || this.route.snapshot.paramMap.get('id');
     this.idFormulario = idParam ? Number(idParam) : 0;
     this.inicializarFormulario();
 
@@ -98,7 +99,7 @@ export class FormEnterobacteriasPage implements OnInit {
     }
 
     forkJoin({
-      formulario: this.apiService.obtener(this.idFormulario),
+      formularioResp: this.apiService.obtenerPorAnalisis(this.idFormulario),
       equiposIncubacion: this.catalogosService.getEquiposIncubacion(),
       responsables: this.catalogosService.getResponsables(),
       micropipetas: this.catalogosService.getMicroPipetas(),
@@ -111,7 +112,10 @@ export class FormEnterobacteriasPage implements OnInit {
         this.catalogos.micropipetas.set(res.micropipetas);
         this.catalogos.lotesAgarVRBG.set(res.lotesAgarVRBG);
         this.catalogos.lotesTween80.set(res.lotesTween80);
-        this.cargarFormulario(res.formulario);
+        if (res.formularioResp.existe && res.formularioResp.formulario) {
+          this.idFormulario = Number(res.formularioResp.formulario.idEntFormulario) || this.idFormulario;
+          this.cargarFormulario(res.formularioResp.formulario);
+        }
         this.cargando.set(false);
       },
       error: () => {

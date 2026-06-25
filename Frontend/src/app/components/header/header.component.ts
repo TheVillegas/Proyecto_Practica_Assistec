@@ -76,7 +76,7 @@ export class HeaderComponent implements OnInit {
       this.activeSegment = 'solicitud';
     } else if (url.includes('/validacion-solicitudes')) {
       this.activeSegment = 'validacion-solicitudes';
-    } else if (url.includes('/form-coliformes') || url.includes('/form-enterobacterias') || url.includes('/form-s-aureus')) {
+    } else if (url.includes('/form-coliformes') || url.includes('/form-enterobacterias') || url.includes('/form-s-aureus') || url.includes('/form-salmonella')) {
       this.activeSegment = 'formularios';
       this.formulariosMenuOpen = true; // Abrir auto el menú si estamos en estas rutas
     } else if (url === '/') {

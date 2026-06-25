@@ -413,3 +413,35 @@ $color-neg:     #dc2626;  // red-600
     background: color.adjust(#16A34A, $lightness: -8%);
   }
 }
+
+// ─── Alert Banner (SFE-05 / task 5.3) ────────────────────────────────────────
+.alert-banner {
+  @apply flex items-start gap-3 rounded-lg p-4 border;
+
+  &--warning {
+    background: #fffbeb;
+    border-color: #fcd34d;
+    color: #92400e;
+  }
+
+  &__icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #d97706;
+  }
+
+  &__content {
+    @apply flex flex-col gap-1;
+
+    strong {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    span {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  }
+}
