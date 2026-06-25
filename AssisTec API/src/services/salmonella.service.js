@@ -1,4 +1,5 @@
 const salRepository = require('../repositories/salmonella.repository');
+const prisma = require('../config/prisma');
 const ROLES = require('../config/roles');
 const { serializePrismaRecord } = require('../utils/prismaSerialize');
 const { parseDate, resolvePayloadSection } = require('../utils/formularioPayload');
@@ -36,11 +37,39 @@ class SalService {
     }
 
     async obtenerPorAnalisis(idSolicitudAnalisis) {
-        const formulario = await salRepository.findBySolicitudAnalisis(idSolicitudAnalisis);
+        let formulario = await salRepository.findBySolicitudAnalisis(idSolicitudAnalisis);
+        if (!formulario) {
+            formulario = await this._crearDesdeSolicitud(idSolicitudAnalisis);
+        }
         if (!formulario) {
             return { existe: false, formulario: null };
         }
         return { existe: true, formulario: this.serializeFormulario(formulario) };
+    }
+
+    async _crearDesdeSolicitud(idSolicitudAnalisis) {
+        try {
+            const solicitud = await prisma.solicitudAnalisis.findUnique({
+                where: { idSolicitudAnalisis: BigInt(idSolicitudAnalisis) },
+                include: { muestra: true }
+            });
+            if (!solicitud || !solicitud.muestra) return null;
+
+            const muestrasPayload = [{
+                idSolicitudMuestra: solicitud.muestra.idSolicitudMuestra,
+                numeroMuestra: '1',
+                esDuplicado: false,
+                orden: 1
+            }];
+
+            return await salRepository.create({
+                idSolicitudAnalisis: BigInt(idSolicitudAnalisis),
+                estado: 'NO_REALIZADO',
+                muestras: muestrasPayload
+            });
+        } catch (_) {
+            return null;
+        }
     }
 
     mapFase1Payload(body) {

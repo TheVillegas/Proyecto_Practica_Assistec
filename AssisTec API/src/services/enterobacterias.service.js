@@ -1,4 +1,5 @@
 const enterobacteriasRepository = require('../repositories/enterobacterias.repository');
+const prisma = require('../config/prisma');
 const ROLES = require('../config/roles');
 const { serializePrismaRecord } = require('../utils/prismaSerialize');
 const { parseDate, resolvePayloadSection } = require('../utils/formularioPayload');
@@ -44,11 +45,42 @@ class EnterobacteriasService {
     }
 
     async obtenerPorAnalisis(idSolicitudAnalisis) {
-        const formulario = await enterobacteriasRepository.findBySolicitudAnalisis(idSolicitudAnalisis);
+        let formulario = await enterobacteriasRepository.findBySolicitudAnalisis(idSolicitudAnalisis);
+        if (!formulario) {
+            formulario = await this._crearDesdeSolicitud(idSolicitudAnalisis);
+        }
         if (!formulario) {
             return { existe: false, formulario: null };
         }
         return { existe: true, formulario: this.serializeFormulario(formulario) };
+    }
+
+    async _crearDesdeSolicitud(idSolicitudAnalisis) {
+        try {
+            const solicitud = await prisma.solicitudAnalisis.findUnique({
+                where: { idSolicitudAnalisis: BigInt(idSolicitudAnalisis) },
+                include: { muestra: true }
+            });
+            if (!solicitud || !solicitud.muestra) return null;
+
+            const muestrasPayload = [{
+                idSolicitudMuestra: solicitud.muestra.idSolicitudMuestra,
+                numeroMuestra: '1',
+                esDuplicado: false,
+                orden: 1
+            }];
+
+            return await enterobacteriasRepository.create({
+                idSolicitudAnalisis: BigInt(idSolicitudAnalisis),
+                estado: 'en_proceso',
+                etapaActual: 1,
+                subetapaActual: 1,
+                rutAnalista: null,
+                muestras: muestrasPayload
+            });
+        } catch (_) {
+            return null;
+        }
     }
 
     mapEtapa1Payload(body) {

@@ -14,6 +14,7 @@ import {
   SolicitudIngresoResponse,
   SolicitudIngresoService,
   SubmuestraPayload,
+  ValidacionRevisionState,
 } from 'src/app/services/solicitud-ingreso.service';
 import {
   CategoriaProducto,
@@ -167,6 +168,7 @@ export class SolicitudIngresoPage implements OnInit {
   fechaEnvioValidacion: string | null = null;
   plazoEstimado: PlazoEstimadoResponse | null = null;
   solicitudGuardada = false;
+  reviewMode = false;
   cargando = false;
 
   categorias: CategoriaProducto[] = [];

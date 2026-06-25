@@ -1,4 +1,5 @@
 const saureusRepository = require('../repositories/saureus.repository');
+const prisma = require('../config/prisma');
 const ROLES = require('../config/roles');
 const { serializePrismaRecord } = require('../utils/prismaSerialize');
 const { parseDate, resolvePayloadSection } = require('../utils/formularioPayload');
@@ -68,11 +69,39 @@ class SaureusService {
     }
 
     async obtenerPorAnalisis(idSolicitudAnalisis) {
-        const formulario = await saureusRepository.findBySolicitudAnalisis(idSolicitudAnalisis);
+        let formulario = await saureusRepository.findBySolicitudAnalisis(idSolicitudAnalisis);
+        if (!formulario) {
+            formulario = await this._crearDesdeSolicitud(idSolicitudAnalisis);
+        }
         if (!formulario) {
             return { existe: false, formulario: null };
         }
         return { existe: true, formulario: this.serializeFormulario(formulario) };
+    }
+
+    async _crearDesdeSolicitud(idSolicitudAnalisis) {
+        try {
+            const solicitud = await prisma.solicitudAnalisis.findUnique({
+                where: { idSolicitudAnalisis: BigInt(idSolicitudAnalisis) },
+                include: { muestra: true }
+            });
+            if (!solicitud || !solicitud.muestra) return null;
+
+            const muestrasPayload = [{
+                idSolicitudMuestra: solicitud.muestra.idSolicitudMuestra,
+                numeroMuestra: '1',
+                esDuplicado: false,
+                orden: 1
+            }];
+
+            return await saureusRepository.create({
+                idSolicitudAnalisis: BigInt(idSolicitudAnalisis),
+                estado: 'NO_REALIZADO',
+                muestras: muestrasPayload
+            });
+        } catch (_) {
+            return null;
+        }
     }
 
     mapEtapaPayload(body) {

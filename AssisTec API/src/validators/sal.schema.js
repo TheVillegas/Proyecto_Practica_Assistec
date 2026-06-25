@@ -120,5 +120,11 @@ module.exports = {
     fase4Schema,
     fase4aSchema: fase4Schema,
     fase4bSchema: fase4Schema,
-    fase5Schema
+    fase5Schema,
+    // Alias para wizard 10-pasos → fases internas
+    fase6Schema: fase3Schema,
+    fase7Schema: fase3Schema,
+    fase8Schema: fase4Schema,
+    fase9Schema: fase4Schema,
+    fase10Schema: fase5Schema
 };
