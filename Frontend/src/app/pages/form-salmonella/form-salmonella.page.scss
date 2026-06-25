@@ -377,6 +377,19 @@ $color-neg:     #dc2626;  // red-600
   }
 }
 
+.btn-draft {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-all;
+  border-color: #d1d5db;
+  color: #6b7280;
+  background: transparent;
+
+  &:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+    color: #374151;
+  }
+}
+
 .btn-secondary {
   @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold border-2 transition-all;
   border-color: $brand-navy;
