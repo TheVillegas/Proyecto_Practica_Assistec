@@ -67,6 +67,7 @@ class EnterobacteriasService {
                 idSolicitudMuestra: solicitud.muestra.idSolicitudMuestra,
                 numeroMuestra: '1',
                 esDuplicado: false,
+                pesoMuestraTipo: '10g/90ml',
                 orden: 1
             }];
 
