@@ -26,18 +26,14 @@ import {
 } from '../../interfaces/coliformes.interfaces';
 
 export type ResultadoSubmuestra = 'positivo' | 'negativo' | 'sin_registrar';
-export type Dilucion = '1ml' | '0.1ml' | '0.01ml';
+export type Dilucion = string;
 export type ControlPresencia = 'presencia' | 'ausencia' | 'sin_registrar';
 
 export interface EntradaMuestra {
   id: string;
   esDuplicado: boolean;
   label: string;
-  submuestras: {
-    '1ml': [ResultadoSubmuestra, ResultadoSubmuestra, ResultadoSubmuestra];
-    '0.1ml': [ResultadoSubmuestra, ResultadoSubmuestra, ResultadoSubmuestra];
-    '0.01ml': [ResultadoSubmuestra, ResultadoSubmuestra, ResultadoSubmuestra];
-  };
+  submuestras: Record<string, [ResultadoSubmuestra, ResultadoSubmuestra, ResultadoSubmuestra]>;
 }
 
 export interface BloqueTabla {
@@ -55,19 +51,19 @@ export interface ResultadoMuestraFinal {
   ecoli: string;
 }
 
-const DILUCIONES: Dilucion[] = ['1ml', '0.1ml', '0.01ml'];
+const DILUCIONES_FALLBACK: string[] = ['1ml', '0.1ml', '0.01ml'];
 const RESULTADO_DEFAULT: ResultadoSubmuestra = 'sin_registrar';
 
-function crearEntradaDesdeMuestra(muestra: ColiMuestra): EntradaMuestra {
+function crearEntradaDesdeMuestra(muestra: ColiMuestra, diluciones: string[]): EntradaMuestra {
+  const submuestras: EntradaMuestra['submuestras'] = {};
+  diluciones.forEach(d => {
+    submuestras[d] = [RESULTADO_DEFAULT, RESULTADO_DEFAULT, RESULTADO_DEFAULT];
+  });
   return {
     id: String(muestra.idColiMuestra),
     esDuplicado: muestra.esDuplicado,
     label: muestra.numeroMuestra,
-    submuestras: {
-      '1ml': [RESULTADO_DEFAULT, RESULTADO_DEFAULT, RESULTADO_DEFAULT],
-      '0.1ml': [RESULTADO_DEFAULT, RESULTADO_DEFAULT, RESULTADO_DEFAULT],
-      '0.01ml': [RESULTADO_DEFAULT, RESULTADO_DEFAULT, RESULTADO_DEFAULT],
-    },
+    submuestras,
   };
 }
 
@@ -119,7 +115,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   // ─── Etapa 3: tablas de lectura ───────────────────────────────────────────────
   tabla24h: BloqueTabla = crearBloqueTabla();
   tabla48h: BloqueTabla = crearBloqueTabla();
-  readonly DILUCIONES = DILUCIONES;
+  DILUCIONES: string[] = [...DILUCIONES_FALLBACK];
 
   // ─── Errores de hora ──────────────────────────────────────────────────────────
   errorHora24h = '';
@@ -208,6 +204,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         this.listaEquiposIncubacion = res.equipos;
         this.listaPipetas = res.pipetas;
         this.listaResponsables = res.responsables;
+        this.actualizarDiluciones();
         this.cargarFormulario(res.formulario);
       },
       error: (err: { status?: number }) => {
@@ -300,8 +297,8 @@ export class FormColiformesPage implements OnInit, OnDestroy {
     this.muestras = formulario.muestras || [];
 
     if (this.muestras.length > 0) {
-      this.tabla24h.entradas = this.muestras.map((m) => crearEntradaDesdeMuestra(m));
-      this.tabla48h.entradas = this.muestras.map((m) => crearEntradaDesdeMuestra(m));
+      this.tabla24h.entradas = this.muestras.map((m) => crearEntradaDesdeMuestra(m, this.DILUCIONES));
+      this.tabla48h.entradas = this.muestras.map((m) => crearEntradaDesdeMuestra(m, this.DILUCIONES));
     }
 
     if (formulario.fase1) {
@@ -317,12 +314,17 @@ export class FormColiformesPage implements OnInit, OnDestroy {
 
     if (formulario.fase2) {
       const f2 = formulario.fase2;
+      const normCap = (c: string) => c.replace(/\s+/g, '').toLowerCase();
       this.form.patchValue({
         caldoLauril: f2.codigoCaldoLauril,
         tween80: f2.codigoTween80,
         estufas: f2.estufas.map((e) => e.idIncubacion),
-        micropipeta1ml: f2.micropipetas.find((p) => p.capacidad.includes('1')) || null,
-        micropipeta10ml: f2.micropipetas.find((p) => p.capacidad.includes('10')) || null,
+        micropipeta1ml: this.listaPipetas.find(p =>
+          f2.micropipetas.some(mp => mp.idPipeta === p.idPipeta && normCap(mp.capacidad) === '1ml')
+        ) || null,
+        micropipeta10ml: this.listaPipetas.find(p =>
+          f2.micropipetas.some(mp => mp.idPipeta === p.idPipeta && normCap(mp.capacidad) === '10ml')
+        ) || null,
       });
     }
 
@@ -362,6 +364,18 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   private obtenerLabelMuestra(idColiMuestra: number): string {
     const muestra = this.muestras.find((m) => m.idColiMuestra === idColiMuestra);
     return muestra?.numeroMuestra || `Muestra ${idColiMuestra}`;
+  }
+
+  private actualizarDiluciones(): void {
+    const capacidades = [...new Set(
+      this.listaPipetas
+        .filter(p => /^\d+(\.\d+)?\s*ml$/i.test(p.capacidad))
+        .map(p => p.capacidad.toLowerCase().replace(/\s+/g, ''))
+    )];
+    if (capacidades.length > 0) {
+      capacidades.sort((a, b) => parseFloat(b) - parseFloat(a));
+      this.DILUCIONES = capacidades;
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
@@ -497,7 +511,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   // ══════════════════════════════════════════════════════════════════════════════
   // TABLA DE SUBMUESTRAS
   // ══════════════════════════════════════════════════════════════════════════════
-  ciclarResultado(entrada: EntradaMuestra, dilucion: Dilucion, idx: number): void {
+  ciclarResultado(entrada: EntradaMuestra, dilucion: string, idx: number): void {
     const orden: ResultadoSubmuestra[] = ['sin_registrar', 'positivo', 'negativo'];
     const actual = entrada.submuestras[dilucion][idx];
     const siguiente = orden[(orden.indexOf(actual) + 1) % orden.length];
@@ -611,8 +625,8 @@ export class FormColiformesPage implements OnInit, OnDestroy {
       case 3: {
         const payload: SaveFase3Payload = {
           submuestras: [
-            ...this.coliService.mapSubmuestrasToPayload(this.tabla24h, 24),
-            ...this.coliService.mapSubmuestrasToPayload(this.tabla48h, 48),
+            ...this.coliService.mapSubmuestrasToPayload(this.tabla24h, 24, this.DILUCIONES),
+            ...this.coliService.mapSubmuestrasToPayload(this.tabla48h, 48, this.DILUCIONES),
           ],
           completada,
         };
@@ -655,8 +669,8 @@ export class FormColiformesPage implements OnInit, OnDestroy {
       case 5: {
         const payload: SaveFase4Payload = {
           submuestras: [
-            ...this.coliService.mapSubmuestrasToPayload(this.tabla24h, 24),
-            ...this.coliService.mapSubmuestrasToPayload(this.tabla48h, 48),
+            ...this.coliService.mapSubmuestrasToPayload(this.tabla24h, 24, this.DILUCIONES),
+            ...this.coliService.mapSubmuestrasToPayload(this.tabla48h, 48, this.DILUCIONES),
           ],
           completada,
         };

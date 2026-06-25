@@ -133,17 +133,11 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Estufa</label>
-                  <div class="form-radio-group">
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e1_estufa" formControlName="e1_estufa" value="73-M" />
-                      <span>73-M</span>
-                    </label>
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e1_estufa" formControlName="e1_estufa" value="2-M" />
-                      <span>2-M</span>
-                    </label>
-                  </div>
+                  <label class="form-label">Estufa <span class="required-star">*</span></label>
+                  <select class="form-select" formControlName="e1_estufa" [class.input-error]="campoInvalido('e1_estufa')">
+                    <option [ngValue]="null">Seleccionar estufa...</option>
+                    <option *ngFor="let eq of listaEquiposIncubacion" [ngValue]="eq.idIncubacion">{{ eq.nombreEquipo }}</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -353,16 +347,10 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Estufa <span class="required-star">*</span></label>
-                  <div class="form-radio-group">
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e3_estufa" formControlName="e3_estufa" value="73-M" />
-                      <span>73-M</span>
-                    </label>
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e3_estufa" formControlName="e3_estufa" value="2-M" />
-                      <span>2-M</span>
-                    </label>
-                  </div>
+                  <select class="form-select" formControlName="e3_estufa" [class.input-error]="campoInvalido('e3_estufa')">
+                    <option [ngValue]="null">Seleccionar estufa...</option>
+                    <option *ngFor="let eq of listaEquiposIncubacion" [ngValue]="eq.idIncubacion">{{ eq.nombreEquipo }}</option>
+                  </select>
                 </div>
               </div>
               
@@ -455,29 +443,17 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Micropipeta <span class="required-star">*</span></label>
-                  <div class="form-radio-group">
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e4_micropipeta" formControlName="e4_micropipeta" value="22-M" />
-                      <span>22-M</span>
-                    </label>
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e4_micropipeta" formControlName="e4_micropipeta" value="23-M" />
-                      <span>23-M</span>
-                    </label>
-                  </div>
+                  <select class="form-select" formControlName="e4_micropipeta" [class.input-error]="campoInvalido('e4_micropipeta')">
+                    <option [ngValue]="null">Seleccionar micropipeta...</option>
+                    <option *ngFor="let pip of listaPipetas" [ngValue]="pip.idPipeta">{{ pip.codigoPipeta }} — {{ pip.nombrePipeta }}</option>
+                  </select>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Estufa <span class="required-star">*</span></label>
-                  <div class="form-radio-group">
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e4_estufa" formControlName="e4_estufa" value="73-M" />
-                      <span>73-M</span>
-                    </label>
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e4_estufa" formControlName="e4_estufa" value="2-M" />
-                      <span>2-M</span>
-                    </label>
-                  </div>
+                  <select class="form-select" formControlName="e4_estufa" [class.input-error]="campoInvalido('e4_estufa')">
+                    <option [ngValue]="null">Seleccionar estufa...</option>
+                    <option *ngFor="let eq of listaEquiposIncubacion" [ngValue]="eq.idIncubacion">{{ eq.nombreEquipo }}</option>
+                  </select>
                 </div>
               </div>
             </div>

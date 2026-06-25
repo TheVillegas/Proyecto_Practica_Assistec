@@ -62,8 +62,9 @@ describe('ColiformesApiService', () => {
           },
         ],
       };
+      const diluciones = ['1ml', '0.1ml', '0.01ml'];
 
-      const result = service.mapSubmuestrasToPayload(tabla, 24);
+      const result = service.mapSubmuestrasToPayload(tabla, 24, diluciones);
 
       expect(result.length).toBe(9); // 1 entrada × 3 diluciones × 3 tubos
       expect(result[0]).toEqual({
@@ -78,6 +79,7 @@ describe('ColiformesApiService', () => {
     });
 
     it('should resolve tipoLectura from label', () => {
+      const diluciones = ['1ml', '0.1ml', '0.01ml'];
       const tabla: BloqueTabla = {
         fechaLectura: '',
         horaLectura: '',
@@ -88,7 +90,7 @@ describe('ColiformesApiService', () => {
         ],
       };
 
-      const result = service.mapSubmuestrasToPayload(tabla, 24);
+      const result = service.mapSubmuestrasToPayload(tabla, 24, diluciones);
       expect(result[0].tipoLectura).toBe('fecales');
       expect(result[9].tipoLectura).toBe('ecoli');
     });

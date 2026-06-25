@@ -89,14 +89,10 @@ export class ColiformesApiService {
 
   mapSubmuestrasToPayload(
     tabla: BloqueTabla,
-    tiempo: number
+    tiempo: number,
+    diluciones: string[]
   ): ColiFase3Submuestra[] {
     const submuestras: ColiFase3Submuestra[] = [];
-    const diluciones: Array<'1ml' | '0.1ml' | '0.01ml'> = [
-      '1ml',
-      '0.1ml',
-      '0.01ml',
-    ];
 
     tabla.entradas.forEach((entrada) => {
       const idColiMuestra = Number(entrada.id) || 0;
