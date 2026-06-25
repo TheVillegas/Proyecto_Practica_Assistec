@@ -5,6 +5,7 @@ import { EquipoIncubacion, Responsable } from '../../../interfaces/catalogo.inte
 @Component({
   selector: 'app-ent-incubacion-conf',
   templateUrl: './ent-incubacion-conf.component.html',
+  styleUrls: ['../components/ent-forms-shared.scss'],
   standalone: false,
 })
 export class EntIncubacionConfComponent {

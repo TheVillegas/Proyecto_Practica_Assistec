@@ -14,6 +14,7 @@ interface TablaResultados {
 @Component({
   selector: 'app-ent-resultados',
   templateUrl: './ent-resultados.component.html',
+  styleUrls: ['../components/ent-forms-shared.scss'],
   standalone: false,
 })
 export class EntResultadosComponent {

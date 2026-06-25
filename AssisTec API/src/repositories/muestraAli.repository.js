@@ -69,8 +69,8 @@ class MuestraAliRepository {
 
         const idsAnalisis = analisis.map(a => a.idSolicitudAnalisis);
 
-        // 4. Buscar formularios SAU, COLI, SAL
-        const [sauForms, coliForms, salForms] = await Promise.all([
+        // 4. Buscar formularios SAU, COLI, SAL, ENT
+        const [sauForms, coliForms, salForms, entForms] = await Promise.all([
             prisma.sauFormulario.findMany({
                 where: { idSolicitudAnalisis: { in: idsAnalisis } },
                 select: { idSauFormulario: true, idSolicitudAnalisis: true, estado: true, etapaActual: true, rutAnalista: true }
@@ -82,6 +82,10 @@ class MuestraAliRepository {
             prisma.salFormulario.findMany({
                 where: { idSolicitudAnalisis: { in: idsAnalisis } },
                 select: { idSalFormulario: true, idSolicitudAnalisis: true, estado: true, faseActual: true, rutAnalista: true }
+            }),
+            prisma.entFormulario.findMany({
+                where: { idSolicitudAnalisis: { in: idsAnalisis } },
+                select: { idEntFormulario: true, idSolicitudAnalisis: true, estado: true, etapaActual: true, rutAnalista: true }
             })
         ]);
 
@@ -90,7 +94,8 @@ class MuestraAliRepository {
             const mapa = {
                 SAUREUS: '/form-s-aureus',
                 COLIFORMES: '/form-coliformes',
-                SALMONELLA: '/form-salmonella'
+                SALMONELLA: '/form-salmonella',
+                ENTEROBACTERIAS: '/form-enterobacterias'
             };
             return mapa[codigo] ?? null;
         };
@@ -111,7 +116,7 @@ class MuestraAliRepository {
         if (coliForms.length > 0) {
             formularios.push({
                 codigo: 'COLIFORMES',
-                nombre: 'Coliformes',
+                nombre: 'Coliformes Tot./Fec./E.coli',
                 estado: this.mergeFormEstado(coliForms),
                 ruta: getRuta('COLIFORMES'),
                 idSolicitudAnalisis: coliForms.map(f => String(f.idSolicitudAnalisis))
@@ -125,6 +130,16 @@ class MuestraAliRepository {
                 estado: this.mergeFormEstado(salForms),
                 ruta: getRuta('SALMONELLA'),
                 idSolicitudAnalisis: salForms.map(f => String(f.idSolicitudAnalisis))
+            });
+        }
+
+        if (entForms.length > 0) {
+            formularios.push({
+                codigo: 'ENTEROBACTERIAS',
+                nombre: 'Enterobacterias',
+                estado: this.mergeFormEstado(entForms),
+                ruta: getRuta('ENTEROBACTERIAS'),
+                idSolicitudAnalisis: entForms.map(f => String(f.idSolicitudAnalisis))
             });
         }
 

@@ -23,6 +23,7 @@ function reactivoOxidasaValidator(control: AbstractControl): ValidationErrors | 
 @Component({
   selector: 'app-ent-lectura-oxidasa',
   templateUrl: './ent-lectura-oxidasa.component.html',
+  styleUrls: ['../components/ent-forms-shared.scss'],
   standalone: false,
 })
 export class EntLecturaOxidasaComponent {

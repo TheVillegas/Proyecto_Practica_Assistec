@@ -5,6 +5,7 @@ import { Responsable } from '../../../interfaces/catalogo.interfaces';
 @Component({
   selector: 'app-ent-pesado',
   templateUrl: './ent-pesado.component.html',
+  styleUrls: ['../components/ent-forms-shared.scss'],
   standalone: false,
 })
 export class EntPesadoComponent {

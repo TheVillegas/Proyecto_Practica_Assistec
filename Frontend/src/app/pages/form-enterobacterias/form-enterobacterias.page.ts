@@ -69,6 +69,16 @@ export class FormEnterobacteriasPage implements OnInit {
   updatedAt = '';
   cargando = signal(true);
 
+  /** Getters tipados para el template — form.get() retorna AbstractControl */
+  get pesadoGroup(): FormGroup { return this.form.get('pesado') as FormGroup; }
+  get homogeneizacionGroup(): FormGroup { return this.form.get('homogeneizacion') as FormGroup; }
+  get sembradoGroup(): FormGroup { return this.form.get('sembrado') as FormGroup; }
+  get incubacionPrepGroup(): FormGroup { return this.form.get('incubacionPrep') as FormGroup; }
+  get analisisLecturaGroup(): FormGroup { return this.form.get('analisisLectura') as FormGroup; }
+  get incubacionConfGroup(): FormGroup { return this.form.get('incubacionConf') as FormGroup; }
+  get lecturaOxidasaGroup(): FormGroup { return this.form.get('lecturaOxidasa') as FormGroup; }
+  get resultadosGroup(): FormGroup { return this.form.get('resultados') as FormGroup; }
+
   catalogos = {
     equiposIncubacion: signal<EquipoIncubacion[]>([]),
     responsables: signal<Responsable[]>([]),

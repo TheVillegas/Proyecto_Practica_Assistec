@@ -181,6 +181,10 @@ export class SolicitudIngresoPage implements OnInit {
   ngOnInit(): void {
     this.inicializarFormulario();
     this.cargarCatalogos();
+    this.authService.currentUser$.subscribe(() => {
+      this.reviewMode = this.shouldOpenAsReview();
+      this.syncFormInteractivity();
+    });
   }
 
   private inicializarFormulario(): void {
@@ -1007,6 +1011,29 @@ export class SolicitudIngresoPage implements OnInit {
     const toast = await this.toastCtrl.create({ message, duration: 2500, color, position: 'top' });
     await toast.present();
   }
+
+  private shouldOpenAsReview(): boolean {
+    const solicitudId = this.route.snapshot.queryParamMap.get('id');
+    const role = this.currentReviewRole;
+    const isAllowedRole = role !== null && SolicitudIngresoPage.REVIEW_ALLOWED_ROLES.includes(role);
+    return !!solicitudId && isAllowedRole;
+  }
+
+  private normalizeValidationState(state?: ValidacionRevisionState | null): ValidacionRevisionState {
+    return {
+      aprobada: Boolean(state?.aprobada),
+      rut: state?.rut ?? null,
+      fecha: state?.fecha ?? null
+    };
+  }
+
+  private get currentReviewRole(): number | null {
+    const user = this.authService.getUsuario();
+    const role = user?.activeRole ?? user?.primaryRole ?? user?.role ?? user?.rol;
+    const parsed = Number(role);
+    return Number.isInteger(parsed) ? parsed : null;
+  }
+
 
   private syncFormInteractivity(): void {
     if (!this.form) {

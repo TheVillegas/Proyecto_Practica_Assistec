@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, timer, EMPTY } from 'rxjs';
-import { catchError, retry } from 'rxjs/operators';
+import { catchError, map, retry } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   ColiFormulario,
@@ -23,6 +23,17 @@ export class ColiformesApiService {
 
   getFormulario(id: number): Observable<ColiFormulario> {
     return this.http.get<ColiFormulario>(`${this.apiUrl}/${id}`).pipe(
+      catchError((err: HttpErrorResponse) => this.handleError(err))
+    );
+  }
+
+  /** Obtener formulario por ID de solicitud de análisis (desde ALI card) */
+  obtenerPorAnalisis(idAnalisis: number): Observable<ColiFormulario> {
+    return this.http.get<{ existe: boolean; formulario: ColiFormulario }>(`${this.apiUrl}/por-analisis/${idAnalisis}`).pipe(
+      map(resp => {
+        if (!resp.existe) throw new Error('NOT_FOUND');
+        return resp.formulario;
+      }),
       catchError((err: HttpErrorResponse) => this.handleError(err))
     );
   }

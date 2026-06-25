@@ -63,17 +63,17 @@
               </div>
             </div>
             <div class="form-card-body">
-              <app-ent-pesado *ngIf="pasoActual === 1" [formGroup]="form.get('pesado')!" [rol]="rol"
+              <app-ent-pesado *ngIf="pasoActual === 1" [formGroup]="pesadoGroup" [rol]="rol"
                 [responsables]="catalogos.responsables()"></app-ent-pesado>
-              <app-ent-homogeneizacion *ngIf="pasoActual === 2" [formGroup]="form.get('homogeneizacion')!" [rol]="rol"
+              <app-ent-homogeneizacion *ngIf="pasoActual === 2" [formGroup]="homogeneizacionGroup" [rol]="rol"
                 [responsables]="catalogos.responsables()"></app-ent-homogeneizacion>
-              <app-ent-sembrado *ngIf="pasoActual === 3" [formGroup]="form.get('sembrado')!" [rol]="rol"
+              <app-ent-sembrado *ngIf="pasoActual === 3" [formGroup]="sembradoGroup" [rol]="rol"
                 [equiposIncubacion]="catalogos.equiposIncubacion()"
                 [micropipetas]="catalogos.micropipetas()"
                 [lotesAgarVRBG]="catalogos.lotesAgarVRBG()"
                 [lotesTween80]="catalogos.lotesTween80()"
                 [responsables]="catalogos.responsables()"></app-ent-sembrado>
-              <app-ent-incubacion-prep *ngIf="pasoActual === 4" [formGroup]="form.get('incubacionPrep')!" [rol]="rol"
+              <app-ent-incubacion-prep *ngIf="pasoActual === 4" [formGroup]="incubacionPrepGroup" [rol]="rol"
                 [equiposIncubacion]="catalogos.equiposIncubacion()"
                 [lotesAgarVRBG]="catalogos.lotesAgarVRBG()"
                 [responsables]="catalogos.responsables()"></app-ent-incubacion-prep>
@@ -91,7 +91,7 @@
               </div>
             </div>
             <div class="form-card-body">
-              <app-ent-analisis-lectura [formGroup]="form.get('analisisLectura')!" [rol]="rol"
+              <app-ent-analisis-lectura [formGroup]="analisisLecturaGroup" [rol]="rol"
                 [responsables]="catalogos.responsables()"></app-ent-analisis-lectura>
             </div>
           </div>
@@ -107,12 +107,12 @@
               </div>
             </div>
             <div class="form-card-body">
-              <app-ent-incubacion-conf *ngIf="pasoActual === 6" [formGroup]="form.get('incubacionConf')!" [rol]="rol"
+              <app-ent-incubacion-conf *ngIf="pasoActual === 6" [formGroup]="incubacionConfGroup" [rol]="rol"
                 [equiposIncubacion]="catalogos.equiposIncubacion()"
                 [responsables]="catalogos.responsables()"></app-ent-incubacion-conf>
-              <app-ent-lectura-oxidasa *ngIf="pasoActual === 7" [formGroup]="form.get('lecturaOxidasa')!" [rol]="rol"
+              <app-ent-lectura-oxidasa *ngIf="pasoActual === 7" [formGroup]="lecturaOxidasaGroup" [rol]="rol"
                 [responsables]="catalogos.responsables()"></app-ent-lectura-oxidasa>
-              <app-ent-resultados *ngIf="pasoActual === 8" [formGroup]="form.get('resultados')!" [rol]="rol"></app-ent-resultados>
+              <app-ent-resultados *ngIf="pasoActual === 8" [formGroup]="resultadosGroup" [rol]="rol"></app-ent-resultados>
             </div>
           </div>
         </div>

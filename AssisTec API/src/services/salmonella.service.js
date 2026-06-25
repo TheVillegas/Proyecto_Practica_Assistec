@@ -291,6 +291,7 @@ class SalService {
         return 0;
     }
 
+
     async guardarFase(id, fase, body, expectedUpdatedAt, usuario) {
         this.assertCanWrite(usuario);
         const faseNum = Number(fase);

@@ -160,7 +160,10 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   };
 
   ngOnInit(): void {
-    const idParam = this.route.snapshot.paramMap.get('idFormulario') || this.route.snapshot.queryParamMap.get('idFormulario');
+    const idParam = this.route.snapshot.paramMap.get('idFormulario')
+      || this.route.snapshot.queryParamMap.get('idFormulario')
+      || this.route.snapshot.queryParamMap.get('analisis');
+
     if (!idParam) {
       this.mostrarAlerta('Error', 'No se encontró el identificador del formulario.');
       this.router.navigate(['/home']);
@@ -172,11 +175,17 @@ export class FormColiformesPage implements OnInit, OnDestroy {
     this.setupAutoSave();
     this.startSaveIndicator();
 
+    // Usar endpoint correcto según el tipo de ID recibido
+    const vieneDeAliCard = !!this.route.snapshot.queryParamMap.get('analisis');
+    const formulario$ = vieneDeAliCard
+      ? this.coliService.obtenerPorAnalisis(this.idFormulario)
+      : this.coliService.getFormulario(this.idFormulario);
+
     forkJoin({
       equipos: this.catalogosService.getEquiposIncubacion(),
       pipetas: this.catalogosService.getMicroPipetas(),
       responsables: this.catalogosService.getResponsables(),
-      formulario: this.coliService.getFormulario(this.idFormulario),
+      formulario: formulario$,
     }).subscribe({
       next: (res) => {
         this.listaEquiposIncubacion = res.equipos;

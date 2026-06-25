@@ -10,6 +10,7 @@ import {
 @Component({
   selector: 'app-ent-sembrado',
   templateUrl: './ent-sembrado.component.html',
+  styleUrls: ['../components/ent-forms-shared.scss'],
   standalone: false,
 })
 export class EntSembradoComponent {

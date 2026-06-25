@@ -9,6 +9,7 @@ import {
 @Component({
   selector: 'app-ent-incubacion-prep',
   templateUrl: './ent-incubacion-prep.component.html',
+  styleUrls: ['../components/ent-forms-shared.scss'],
   standalone: false,
 })
 export class EntIncubacionPrepComponent {

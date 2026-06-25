@@ -97,11 +97,9 @@ export class FormSalmonellaPage implements OnInit {
   pasoActual = signal<number>(1);
 
   readonly NOMBRES_ETAPAS = [
-    'Inicio y Trazabilidad',
-    'Insumos y Calidad',
-    'Traspaso a Caldos',
-    'Resultados en Agar',
-    'Conclusión Final'
+    'Preparación',
+    'Análisis',
+    'Resultados'
   ];
 
   readonly PASOS_POR_ETAPA = [4, 3, 3];

@@ -61,7 +61,7 @@ class ColiRepository extends BaseFormRepository {
                     idSolicitudMuestra: BigInt(m.idSolicitudMuestra),
                     numeroMuestra: String(m.numeroMuestra),
                     esDuplicado: Boolean(m.esDuplicado),
-                    pesoMuestraTipo: m.pesoMuestraTipo ? String(m.pesoMuestraTipo) : 'No informado',
+                    pesoMuestraTipo: m.pesoMuestraTipo ? String(m.pesoMuestraTipo) : undefined,
                     orden: Number(m.orden)
                 }))
             } : undefined

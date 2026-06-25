@@ -565,6 +565,7 @@ model SaureusMuestra {
   @@map("saureus_muestras")
 }
 
+
 model SauEtapa1 {
   idSauEtapa1           BigInt    @id @default(autoincrement()) @map("id_sau_etapa1")
   idSauFormulario       BigInt    @unique @map("id_sau_formulario")
@@ -1212,7 +1213,6 @@ model SalFase5Resultado {
 
   @@map("sal_fase5_resultado")
 }
-
 // ============================================================
 // FORMULARIO ENTEROBACTERIAS (ent_)
 // ============================================================

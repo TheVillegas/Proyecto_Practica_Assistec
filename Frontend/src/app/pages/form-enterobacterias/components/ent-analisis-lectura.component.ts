@@ -5,6 +5,7 @@ import { Responsable } from '../../../interfaces/catalogo.interfaces';
 @Component({
   selector: 'app-ent-analisis-lectura',
   templateUrl: './ent-analisis-lectura.component.html',
+  styleUrls: ['../components/ent-forms-shared.scss'],
   standalone: false,
 })
 export class EntAnalisisLecturaComponent {

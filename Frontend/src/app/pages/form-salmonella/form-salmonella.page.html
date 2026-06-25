@@ -441,13 +441,13 @@
         </div>
       </div>
 
-      <!-- ════════ PASOS 8-9: RESULTADOS EN AGAR ════════ -->
-      <div *ngIf="pasoActual() >= 8 && pasoActual() <= 9" class="etapa-panel animate__animated animate__fadeIn">
+      <!-- ════════ PASOS 8-10: RESULTADOS ════════ -->
+      <div *ngIf="pasoActual() >= 8 && pasoActual() <= 10" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
               <ion-icon name="albums-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">4. Resultados en Agar</h2>
+              <h2 class="form-card-title">3. Resultados</h2>
             </div>
           </div>
           <div class="form-card-body">
@@ -671,32 +671,23 @@
               </div>
             </div>
 
-          </div>
-        </div>
-      </div>
-
-      <!-- ════════ PASO 10: CONCLUSION FINAL ════════ -->
-      <div *ngIf="pasoActual() === 10" class="etapa-panel animate__animated animate__fadeIn">
-        <div class="form-card">
-          <div class="form-card-header">
-            <div class="form-card-title-group">
-              <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">5. Conclusión Final</h2>
-            </div>
-          </div>
-          <div class="form-card-body">
-            <div class="overflow-x-auto">
-              <table class="tabla-submuestras w-full text-center text-xs">
-                <thead>
-                  <tr class="bg-[#29588C] text-white">
-                    <th class="p-2 border font-semibold">Nº de Muestra (o Duplicado)</th>
-                    <th class="p-2 border font-semibold">Resultado Final (Presencia / Ausencia)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let m of muestrasEtapa5; let i = index" [class.bg-slate-50]="m.esDuplicado">
-                    <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
-                    <td class="p-2 border">
+            <!-- Fase 5: Conclusión Final -->
+            <div class="control-card mb-6" *ngIf="pasoActual() === 10">
+              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
+                Fase 5: Conclusión Final
+              </p>
+              <div class="overflow-x-auto mt-3">
+                <table class="tabla-submuestras w-full text-center text-xs">
+                  <thead>
+                    <tr class="bg-[#29588C] text-white">
+                      <th class="p-2 border font-semibold">Nº de Muestra (o Duplicado)</th>
+                      <th class="p-2 border font-semibold">Resultado Final (Presencia / Ausencia)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let m of muestrasEtapa5; let i = index" [class.bg-slate-50]="m.esDuplicado">
+                      <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
+                      <td class="p-2 border">
                       <div class="form-radio-group justify-center">
                         <label class="form-check-label text-xs">
                           <input type="radio" class="form-radio" name="resultadoFinal_{{i}}" [(ngModel)]="m.resultadoFinal" value="Presencia" [ngModelOptions]="{standalone: true}" />
@@ -711,6 +702,7 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
             </div>
           </div>
         </div>
