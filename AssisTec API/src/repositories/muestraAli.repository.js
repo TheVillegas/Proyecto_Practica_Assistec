@@ -142,7 +142,6 @@ class MuestraAliRepository {
                 idSolicitudAnalisis: entForms.map(f => String(f.idSolicitudAnalisis))
             });
         }
-
         return formularios;
     }
 

@@ -21,6 +21,7 @@ import {
   FormularioAnalisisCatalogo,
   SubcategoriaProducto,
 } from 'src/app/interfaces/catalogo.interfaces';
+import { AuthService } from 'src/app/services/auth-service';
 import { canSendToValidationStateFamily, resolveSolicitudStateMeta } from './solicitud-estado-families';
 
 interface FormularioUI {
@@ -137,6 +138,9 @@ export class SolicitudIngresoPage implements OnInit {
   private toastCtrl = inject(ToastController);
   private catalogosService = inject(CatalogosService);
   private solicitudIngresoService = inject(SolicitudIngresoService);
+  private authService = inject(AuthService);
+
+  private static readonly REVIEW_ALLOWED_ROLES = [1, 2, 4];
 
   readonly TOTAL_ETAPAS = 11;
   readonly NOMBRES_ETAPAS = [
