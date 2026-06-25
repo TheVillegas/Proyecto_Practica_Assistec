@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
-import { forkJoin, of, take } from 'rxjs';
+import { firstValueFrom, forkJoin, of, take } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { SalmonellaApiService } from '../../services/salmonella-api.service';
 import { CatalogosService } from '../../services/catalogos.service';
@@ -468,6 +468,7 @@ export class FormSalmonellaPage implements OnInit {
     }
 
     const pasoActual = this.pasoActual();
+    let formularioActual: SalFormularioCompleto = this.formulario;
     this.cargando.set(true);
 
     try {
@@ -475,14 +476,15 @@ export class FormSalmonellaPage implements OnInit {
         const payload = this.construirPayload(paso, false);
         if (!payload) continue;
 
-        const actualizado = await firstValueFrom(
+        const actualizado: SalFormularioCompleto = await firstValueFrom(
           this.api.guardarFase(
-            this.formulario.idSalFormulario,
+            formularioActual.idSalFormulario,
             paso,
             payload as SalFasePayload,
-            this.formulario.updatedAt
+            formularioActual.updatedAt
           )
         );
+        formularioActual = actualizado;
         this.formulario = actualizado;
       }
 

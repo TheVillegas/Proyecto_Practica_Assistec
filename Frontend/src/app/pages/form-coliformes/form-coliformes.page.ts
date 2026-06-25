@@ -262,7 +262,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
           }
           // LAB-65 DSI-02: indicador visual de error
           this.lastSaveError = false;
-          return this.ejecutarGuardadoFaseActual(false).pipe(
+          return this.ejecutarGuardadoFase(this.etapaActual, false).pipe(
             catchError(() => {
               this.lastSaveError = true;
               this.actualizarTextoGuardado();
