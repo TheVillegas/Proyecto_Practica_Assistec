@@ -6,7 +6,8 @@ import { firstValueFrom, forkJoin } from 'rxjs';
 import { EnterobacteriasApiService } from '../../services/enterobacterias-api.service';
 import { AuthService } from '../../services/auth-service';
 import { CatalogosService } from '../../services/catalogos.service';
-import { EntEtapaPayload, EntFormularioCompleto } from '../../interfaces/enterobacterias.interfaces';
+import { EntEtapaPayload, EntFormularioCompleto, EntMuestraLectura } from '../../interfaces/enterobacterias.interfaces';
+import { crearMuestraVacia } from './components/ent-analisis-lectura.component';
 import {
   EquipoIncubacion,
   Micropipeta,
@@ -25,14 +26,6 @@ function reactivoOxidasaValidator(control: AbstractControl): ValidationErrors | 
   return null;
 }
 
-interface CatalogosEnterobacterias {
-  equiposIncubacion: EquipoIncubacion[];
-  responsables: Responsable[];
-  micropipetas: Micropipeta[];
-  lotesAgarVRBG: LoteReactivo[];
-  lotesTween80: LoteReactivo[];
-}
-
 @Component({
   selector: 'app-form-enterobacterias',
   templateUrl: './form-enterobacterias.page.html',
@@ -49,35 +42,32 @@ export class FormEnterobacteriasPage implements OnInit {
   private authService = inject(AuthService);
   private catalogosService = inject(CatalogosService);
 
-  readonly TOTAL_PASOS = 8;
-  readonly NOMBRES_ETAPAS = ['Preparación', 'Análisis', 'Confirmación'];
-  readonly SUBETAPAS = [
-    'Pesado',
-    'Homogeneización',
-    'Sembrado',
+  readonly TOTAL_ETAPAS = 4;
+  readonly NOMBRES_ETAPAS = [
+    'Pesado y Siembra',
     'Incubación',
     'Lectura 24h',
-    'Incubación confirmación',
-    'Lectura oxidasa',
-    'Resultados',
+    'Traspaso',
   ];
 
   idFormulario = 0;
-  pasoActual = 1;
+  etapaActual = signal<number>(1);
   form!: FormGroup;
   formularioCompletado = false;
   updatedAt = '';
   cargando = signal(true);
 
-  /** Getters tipados para el template — form.get() retorna AbstractControl */
+  muestrasLectura: EntMuestraLectura[] = [
+    crearMuestraVacia('M1'),
+    crearMuestraVacia('Duplicado'),
+  ];
+
   get pesadoGroup(): FormGroup { return this.form.get('pesado') as FormGroup; }
   get homogeneizacionGroup(): FormGroup { return this.form.get('homogeneizacion') as FormGroup; }
   get sembradoGroup(): FormGroup { return this.form.get('sembrado') as FormGroup; }
   get incubacionPrepGroup(): FormGroup { return this.form.get('incubacionPrep') as FormGroup; }
   get analisisLecturaGroup(): FormGroup { return this.form.get('analisisLectura') as FormGroup; }
   get incubacionConfGroup(): FormGroup { return this.form.get('incubacionConf') as FormGroup; }
-  get lecturaOxidasaGroup(): FormGroup { return this.form.get('lecturaOxidasa') as FormGroup; }
-  get resultadosGroup(): FormGroup { return this.form.get('resultados') as FormGroup; }
 
   catalogos = {
     equiposIncubacion: signal<EquipoIncubacion[]>([]),
@@ -101,7 +91,7 @@ export class FormEnterobacteriasPage implements OnInit {
     forkJoin({
       formularioResp: this.apiService.obtenerPorAnalisis(this.idFormulario),
       equiposIncubacion: this.catalogosService.getEquiposIncubacion(),
-      responsables: this.catalogosService.getResponsables(),
+      responsables: this.catalogosService.getResponsables('analista'),
       micropipetas: this.catalogosService.getMicroPipetas(),
       lotesAgarVRBG: this.catalogosService.getLotesReactivo('agar_vrbg'),
       lotesTween80: this.catalogosService.getLotesReactivo('tween_80'),
@@ -128,81 +118,61 @@ export class FormEnterobacteriasPage implements OnInit {
   private inicializarFormulario(): void {
     this.form = this.fb.group({
       pesado: this.fb.group({
-        codigoALI: ['', Validators.required],
-        nActa: ['', Validators.required],
-        tipoMuestra: ['', Validators.required],
+        tipoMuestra: [''],
         nMuestra10g90ml: [null, [Validators.min(0)]],
         nMuestra50g450ml: [null, [Validators.min(0)]],
-        fechaInicio: ['', Validators.required],
-        horaInicio: ['', Validators.required],
-        analistaInicio: ['', Validators.required],
+        fechaInicio: [''],
+        horaInicio: [''],
+        analistaInicio: [''],
       }),
       homogeneizacion: this.fb.group({
-        fechaHomog: ['', Validators.required],
-        horaHomog: ['', Validators.required],
-        analistaHomog: ['', Validators.required],
+        fechaHomog: [''],
+        horaHomog: [''],
+        analistaHomog: [''],
       }),
       sembrado: this.fb.group({
-        agarVRBGSembrado: ['', Validators.required],
-        estufaSembrado: [null, Validators.required],
-        placasSembrado: [null, Validators.required],
-        micropipeta1mlSembrado: [null, Validators.required],
-        fechaSembrado: ['', Validators.required],
-        horaSembrado: ['', Validators.required],
-        analistaSembrado: ['', Validators.required],
+        agarVRBGSembrado: [''],
+        estufaSembrado: [null],
+        placasSembrado: [null],
+        micropipeta1mlSembrado: [null],
+        fechaSembrado: [''],
+        horaSembrado: [''],
+        analistaSembrado: [''],
       }),
       incubacionPrep: this.fb.group({
         agarVRBGIncub: [''],
-        estufaIncub: [null, Validators.required],
-        fechaTermino: ['', Validators.required],
-        horaTermino: ['', Validators.required],
-        analistaIncub: ['', Validators.required],
+        estufaIncub: [null],
+        fechaTermino: [''],
+        horaTermino: [''],
+        analistaIncub: [''],
       }),
       analisisLectura: this.fb.group({
-        fechaLectura24h: ['', Validators.required],
-        horaLectura24h: ['', Validators.required],
-        analistaLectura24h: ['', Validators.required],
-        nMuestraLectura: [null, [Validators.required, Validators.min(0)]],
-        dilucion: [null, [Validators.required, Validators.min(0)]],
-        colonias: [null, [Validators.required, Validators.min(0)]],
-        equipoCuentaColonias: ['', Validators.required],
+        fechaLectura24h: [''],
+        horaLectura24h: [''],
+        analistaLectura24h: [''],
+        equipoCuentaColonias: [''],
+        controlPosEcoli: [''],
+        controlNegPaer: [''],
+        blanco: [''],
+        observaciones: [''],
       }),
       incubacionConf: this.fb.group({
-        fechaTraspaso: ['', Validators.required],
-        horaTraspaso: ['', Validators.required],
-        analistaTraspaso: ['', Validators.required],
-        agarNutritivo: ['', Validators.required],
-        estufaConfIncub: [null, Validators.required],
-      }),
-      lecturaOxidasa: this.fb.group({
-        fechaLectConf: ['', Validators.required],
-        horaLectConf: ['', Validators.required],
-        analistaLectConf: ['', Validators.required],
-        fechaOxidasa: ['', Validators.required],
-        horaOxidasa: ['', Validators.required],
-        analistaOxidasa: ['', Validators.required],
-        reactivoOxidasa: ['', [Validators.required, reactivoOxidasaValidator]],
-        desaireadoAgarGlucosa: ['', Validators.required],
-        agarGlucosa: ['', Validators.required],
-        controlPosEcoli: ['', Validators.required],
-        controlNegPaer: ['', Validators.required],
-        blanco: ['', Validators.required],
-      }),
-      resultados: this.fb.group({
-        observaciones: [''],
+        fechaTraspaso: [''],
+        horaTraspaso: [''],
+        analistaTraspaso: [''],
+        agarNutritivo: [''],
+        estufaConfIncub: [null],
       }),
     });
   }
 
   private cargarFormulario(formulario: EntFormularioCompleto): void {
     this.updatedAt = formulario.updatedAt ?? '';
-    this.pasoActual = formulario.subetapaActual ?? 1;
+    this.etapaActual.set(this.uiEtapaFromFormulario(formulario));
 
     const e1 = formulario.etapa1;
     if (e1) {
       this.form.get('pesado')?.patchValue({
-        codigoALI: e1.codigoAli,
-        nActa: e1.nActa,
         tipoMuestra: e1.tipoMuestra,
         nMuestra10g90ml: e1.nMuestra10g90ml,
         nMuestra50g450ml: e1.nMuestra50g450ml,
@@ -238,11 +208,11 @@ export class FormEnterobacteriasPage implements OnInit {
         fechaLectura24h: e2.fechaLectura24h ? e2.fechaLectura24h.split('T')[0] : '',
         horaLectura24h: e2.horaLectura24h,
         analistaLectura24h: e2.rutAnalistaLectura,
-        nMuestraLectura: e2.nMuestraLectura,
-        dilucion: e2.dilucion,
-        colonias: e2.coloniasContadas,
         equipoCuentaColonias: e2.idEquipoCuentaColonias ? String(e2.idEquipoCuentaColonias) : '',
       });
+      if ((e2 as unknown as { muestras?: EntMuestraLectura[] }).muestras?.length) {
+        this.muestrasLectura = (e2 as unknown as { muestras: EntMuestraLectura[] }).muestras;
+      }
     }
 
     const e3 = formulario.etapa3;
@@ -254,38 +224,29 @@ export class FormEnterobacteriasPage implements OnInit {
         agarNutritivo: e3.idAgarNutritivo ? String(e3.idAgarNutritivo) : '',
         estufaConfIncub: e3.idEstufaConf,
       });
-      this.form.get('lecturaOxidasa')?.patchValue({
-        fechaLectConf: e3.fechaLectConf,
-        horaLectConf: e3.horaLectConf,
-        analistaLectConf: e3.rutAnalistaLectConf,
-        fechaOxidasa: e3.fechaOxidasa,
-        horaOxidasa: e3.horaOxidasa,
-        analistaOxidasa: e3.rutAnalistaOxidasa,
-        reactivoOxidasa: e3.reactivoOxidasa,
-        desaireadoAgarGlucosa: e3.desaireadoAgarGlucosa,
-        agarGlucosa: e3.agarGlucosa,
-        controlPosEcoli: e3.controlPosEcoli,
-        controlNegPaer: e3.controlNegPaer,
-        blanco: e3.blanco,
-      });
-      this.form.get('resultados')?.patchValue({
-        observaciones: e3.observaciones,
+      // Controls and observaciones were previously stored in e3; keep loading them
+      this.form.get('analisisLectura')?.patchValue({
+        controlPosEcoli: e3.controlPosEcoli ?? '',
+        controlNegPaer: e3.controlNegPaer ?? '',
+        blanco: e3.blanco ?? '',
+        observaciones: e3.observaciones ?? '',
       });
     }
   }
 
-  get etapaActual(): number {
-    if (this.pasoActual <= 4) return 1;
-    if (this.pasoActual === 5) return 2;
-    return 3;
-  }
-
-  get subetapaActualLabel(): string {
-    return this.SUBETAPAS[this.pasoActual - 1];
+  private uiEtapaFromFormulario(formulario: EntFormularioCompleto): number {
+    const e1 = formulario.etapa1;
+    const e2 = formulario.etapa2;
+    const e3 = formulario.etapa3;
+    if (!e1) return 1;
+    if (!e1.completada) return 2;
+    if (!e2 || !e2.completada) return 3;
+    if (!e3 || !e3.completada) return 4;
+    return 4;
   }
 
   get progresoPorcentaje(): number {
-    return Math.round(((this.pasoActual - 1) / (this.TOTAL_PASOS - 1)) * 100);
+    return Math.round(((this.etapaActual() - 1) / (this.TOTAL_ETAPAS - 1)) * 100);
   }
 
   get rol(): number {
@@ -296,52 +257,55 @@ export class FormEnterobacteriasPage implements OnInit {
     return ![0, 4].includes(this.rol);
   }
 
-  get pasoEsFinDeEtapa(): boolean {
-    return this.pasoActual === 4 || this.pasoActual === 5 || this.pasoActual === this.TOTAL_PASOS;
+  get muestrasConResultado(): EntMuestraLectura[] {
+    return this.muestrasLectura.filter(m => m.resultado !== undefined);
   }
 
-  async onSiguiente(): Promise<void> {
-    if (!this.validarPasoActual()) return;
-
-    if (this.pasoEsFinDeEtapa && !this.modoLectura) {
-      const etapa = this.etapaActual;
-      const exito = await this.guardarEtapa(etapa, true);
-      if (!exito) return;
+  onSiguiente(): void {
+    if (this.etapaActual() < this.TOTAL_ETAPAS) {
+      this.etapaActual.update(e => e + 1);
     }
+  }
 
-    if (this.pasoActual < this.TOTAL_PASOS) {
-      this.pasoActual++;
-    } else {
+  onAnterior(): void {
+    if (this.etapaActual() > 1) this.etapaActual.update(e => e - 1);
+  }
+
+  async finalizarFormulario(): Promise<void> {
+    // Save all API etapas in order so completada flags are correct
+    let ok = await this.guardarEtapa(1, true);
+    if (!ok) return;
+    ok = await this.guardarEtapa(2, true);
+    if (!ok) return;
+    ok = await this.guardarEtapa(3, true);
+    if (ok) {
       this.formularioCompletado = true;
       this.mostrarToast('Registro de análisis completado correctamente.', 'success');
     }
   }
 
-  onAnterior(): void {
-    if (this.pasoActual > 1) this.pasoActual--;
-  }
-
-  async onGuardarBorrador(): Promise<void> {
+  async guardarFormularioBorrador(): Promise<void> {
     if (this.modoLectura) return;
-    const exito = await this.guardarBorradorCompleto();
-    if (exito) {
-      this.mostrarToast('Borrador completo guardado.', 'success');
+    const ui = this.etapaActual();
+    // Mark prior API etapas as completed so backend stage-progression check passes
+    let ok = await this.guardarEtapa(1, ui > 2);
+    if (!ok) return;
+    if (ui >= 3) {
+      ok = await this.guardarEtapa(2, ui > 3);
+      if (!ok) return;
     }
+    if (ui >= 4) {
+      ok = await this.guardarEtapa(3, false);
+      if (!ok) return;
+    }
+    this.mostrarToast('Borrador guardado correctamente.', 'success');
   }
 
-  private async guardarBorradorCompleto(): Promise<boolean> {
-    for (let etapa = 1; etapa <= this.etapaActual; etapa++) {
-      const exito = await this.guardarEtapa(etapa, false);
-      if (!exito) return false;
-    }
-    return true;
-  }
-
-  private async guardarEtapa(etapa: number, completada: boolean): Promise<boolean> {
+  private async guardarEtapa(etapa: 1 | 2 | 3, completada: boolean): Promise<boolean> {
     try {
       const payload = this.construirPayloadEtapa(etapa, completada);
       const respuesta = await firstValueFrom(
-        this.apiService.guardarEtapa(this.idFormulario, etapa as 1 | 2 | 3, payload, this.updatedAt)
+        this.apiService.guardarEtapa(this.idFormulario, etapa, payload, this.updatedAt)
       );
       this.updatedAt = respuesta.updatedAt;
       return true;
@@ -359,44 +323,15 @@ export class FormEnterobacteriasPage implements OnInit {
     }
   }
 
-  private construirPayloadEtapa(etapa: number, completada: boolean): EntEtapaPayload {
+  private construirPayloadEtapa(etapa: 1 | 2 | 3, completada: boolean): EntEtapaPayload {
     switch (etapa) {
       case 1:
         return { completada, etapa: { ...this.form.value.pesado, ...this.form.value.homogeneizacion, ...this.form.value.sembrado, ...this.form.value.incubacionPrep } };
       case 2:
-        return { completada, etapa: { ...this.form.value.analisisLectura } };
+        return { completada, etapa: { ...this.form.value.analisisLectura, muestras: this.muestrasLectura } };
       case 3:
-        return { completada, etapa: { ...this.form.value.incubacionConf, ...this.form.value.lecturaOxidasa, ...this.form.value.resultados } };
-      default:
-        return { completada, etapa: {} };
+        return { completada, etapa: { ...this.form.value.incubacionConf } };
     }
-  }
-
-  private validarPasoActual(): boolean {
-    let grupo: string | null = null;
-
-    switch (this.pasoActual) {
-      case 1: grupo = 'pesado'; break;
-      case 2: grupo = 'homogeneizacion'; break;
-      case 3: grupo = 'sembrado'; break;
-      case 4: grupo = 'incubacionPrep'; break;
-      case 5: grupo = 'analisisLectura'; break;
-      case 6: grupo = 'incubacionConf'; break;
-      case 7: grupo = 'lecturaOxidasa'; break;
-      case 8: grupo = 'resultados'; break;
-    }
-
-    if (!grupo) return true;
-
-    const fg = this.form.get(grupo) as FormGroup;
-    fg.markAllAsTouched();
-
-    if (fg.invalid) {
-      this.mostrarToast('Complete los campos obligatorios correctamente.', 'warning');
-      return false;
-    }
-
-    return true;
   }
 
   async confirmarCancelar(): Promise<void> {

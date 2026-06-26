@@ -184,3 +184,162 @@
     @apply text-base text-slate-400;
   }
 }
+
+// ─── MULTI-MUESTRA CARDS (Lectura 24h) ───────────────────────────────────────
+.muestra-card {
+  @apply rounded-xl border border-slate-200 mb-5 overflow-hidden;
+  background: #f8fafc;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.muestra-card-header {
+  @apply flex items-center justify-between px-4 py-3 border-b border-slate-200;
+  background: var(--brand-navy);
+}
+
+.muestra-card-label {
+  @apply text-sm font-semibold text-white;
+}
+
+.muestra-remove-btn {
+  @apply flex items-center justify-center w-6 h-6 rounded-full text-white opacity-70;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+
+  &:hover { opacity: 1; }
+}
+
+.dilucion-row {
+  @apply px-4 py-3 border-b border-slate-100 last:border-b-0;
+}
+
+.dilucion-header {
+  @apply flex items-end gap-3 mb-3;
+}
+
+.dilucion-exp-group {
+  flex: 1;
+  max-width: 180px;
+}
+
+.dilucion-select {
+  @apply rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none;
+
+  &:focus { @apply border-blue-600 ring-1 ring-blue-600; }
+}
+
+.dilucion-remove-btn {
+  @apply flex items-center text-slate-400 text-xl mb-1;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover { @apply text-red-400; }
+}
+
+.placas-grid {
+  @apply grid grid-cols-2 gap-3 mb-3;
+}
+
+.confirm-details {
+  @apply mt-1;
+
+  summary.confirm-summary {
+    @apply text-xs text-slate-500 cursor-pointer select-none font-medium mb-2;
+
+    &:hover { @apply text-slate-700; }
+  }
+}
+
+.confirm-grid {
+  @apply grid grid-cols-2 gap-3;
+
+  @media (min-width: 640px) {
+    @apply grid-cols-4;
+  }
+}
+
+.muestra-card-actions {
+  @apply flex px-4 py-2 border-t border-slate-100;
+}
+
+.btn-add-dil {
+  @apply flex items-center gap-1.5 text-xs text-slate-500 font-medium px-3 py-1.5 rounded-lg border border-dashed border-slate-300;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    @apply text-blue-600 border-blue-300 bg-blue-50;
+  }
+
+  ion-icon { font-size: 0.875rem; }
+}
+
+.resultado-panel {
+  @apply mx-4 mb-3 mt-1 p-4 rounded-lg border border-slate-200 bg-white;
+}
+
+.resultado-title {
+  @apply text-xs font-bold text-slate-600 uppercase tracking-wide mb-3;
+}
+
+.resultado-grid {
+  @apply space-y-1.5;
+}
+
+.resultado-row {
+  @apply flex justify-between items-center text-sm py-1 border-b border-slate-100 last:border-0;
+
+  &--highlight {
+    @apply border-t-2 border-slate-200 pt-2 mt-1;
+  }
+}
+
+.resultado-label {
+  @apply text-slate-500 text-xs;
+}
+
+.resultado-value {
+  @apply text-slate-800 text-sm;
+}
+
+.muestra-card-footer {
+  @apply flex justify-center px-4 py-3 border-t border-slate-100;
+}
+
+.btn-calcular {
+  @apply flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold text-white;
+  background: var(--brand-blue);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { background: #005a94; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  ion-icon { font-size: 1rem; }
+}
+
+.add-muestra-row {
+  @apply flex justify-center mb-4;
+}
+
+.btn-add-muestra {
+  @apply flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold border-2;
+  border-color: var(--brand-navy);
+  color: var(--brand-navy);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: var(--brand-navy);
+    @apply text-white;
+  }
+
+  ion-icon { font-size: 1rem; }
+}

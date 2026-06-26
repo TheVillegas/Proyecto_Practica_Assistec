@@ -108,3 +108,32 @@ export interface EntEtapaPayload {
   completada: boolean;
   etapa: Partial<EntEtapa1> | Partial<EntEtapa2> | Partial<EntEtapa3>;
 }
+
+// ── Multi-sample reading model (Lectura 24h) ─────────────────────────────────
+
+export interface EntDilucionLectura {
+  exponent: number;           // e.g., -1 → d = 10⁻¹ = 0.1
+  coloniasA: number | null;   // C value – Placa A
+  coloniasB: number | null;   // C value – Placa B
+  confirmA: number | null;    // A – colonies selected for confirmation, Placa A
+  confirmB: number | null;    // A – colonies selected for confirmation, Placa B
+  confirmPosA: number | null; // b – confirmed positive colonies, Placa A
+  confirmPosB: number | null; // b – confirmed positive colonies, Placa B
+}
+
+export interface EntResultadoMuestra {
+  sumaA: number;
+  n1: number;
+  n2: number;
+  d: number;
+  ufc: number | null;
+  textoReporte: string;
+  esEstimado: boolean;
+}
+
+export interface EntMuestraLectura {
+  label: string;                    // 'M1', 'M2', 'Duplicado'
+  diluciones: EntDilucionLectura[];
+  resultado?: EntResultadoMuestra;
+  isLoading: boolean;
+}

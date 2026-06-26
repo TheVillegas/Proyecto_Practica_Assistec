@@ -10,7 +10,7 @@
       Análisis de Enterobacterias
     </ion-title>
     <ion-buttons slot="end">
-      <span class="badge-etapa">{{ pasoActual }}/{{ TOTAL_PASOS }}</span>
+      <span class="badge-etapa">Etapa {{ etapaActual() }}/{{ TOTAL_ETAPAS }}</span>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
@@ -18,62 +18,78 @@
 <ion-content class="page-content">
   <div class="wizard-container">
 
-    <!-- Spinner de carga -->
     <div *ngIf="cargando()" class="flex justify-center items-center py-12">
       <ion-spinner name="crescent"></ion-spinner>
       <span class="ml-3 text-slate-600">Cargando catálogos y datos del formulario...</span>
     </div>
 
     <ng-container *ngIf="!cargando()">
-      <!-- Banner modo lectura -->
       <div *ngIf="modoLectura" class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg mb-4 flex items-center gap-3">
         <ion-icon name="eye-outline"></ion-icon>
         <span>Modo lectura — solo Analista o Admin pueden editar.</span>
       </div>
 
-      <!-- ═══════════ BARRA DE PROGRESO + STEPPER (3 etapas) ══════════ -->
+      <!-- ═══════════ STEPPER 6 ETAPAS ══════════ -->
       <div class="stepper-wrapper">
         <div class="stepper-bar">
           <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
         </div>
         <div class="stepper-steps">
           <button *ngFor="let nombre of NOMBRES_ETAPAS; let i = index" class="step-btn"
-            [class.step-btn--active]="etapaActual === i + 1" [class.step-btn--done]="etapaActual > i + 1">
-            <span class="step-circle">{{ i + 1 }}</span>
+            [class.step-btn--active]="etapaActual() === i + 1"
+            [class.step-btn--done]="etapaActual() > i + 1">
+            <span class="step-circle">
+              <ion-icon *ngIf="etapaActual() > i + 1" name="checkmark-outline"></ion-icon>
+              <span *ngIf="etapaActual() <= i + 1">{{ i + 1 }}</span>
+            </span>
             <span class="step-label">{{ nombre }}</span>
           </button>
-        </div>
-
-        <!-- Subetapa activa -->
-        <div class="subetapa-indicator">
-          <ion-icon name="chevron-forward-outline" class="sub-icon"></ion-icon>
-          <span>{{ subetapaActualLabel }}</span>
         </div>
       </div>
 
       <form [formGroup]="form">
 
-        <!-- ════════ ETAPA 1: PREPARACIÓN ════════ -->
-        <div *ngIf="etapaActual === 1" class="etapa-panel animate__animated animate__fadeIn">
+        <!-- ════════ ETAPA 1: PESADO Y SIEMBRA ════════ -->
+        <div *ngIf="etapaActual() === 1" class="etapa-panel animate__animated animate__fadeIn">
           <div class="form-card">
             <div class="form-card-header">
               <div class="form-card-title-group">
-                <ion-icon name="flask-outline" class="card-header-icon"></ion-icon>
-                <h2 class="form-card-title">1. Preparación</h2>
+                <ion-icon name="scale-outline" class="card-header-icon"></ion-icon>
+                <h2 class="form-card-title">1. Pesado y Siembra</h2>
               </div>
             </div>
             <div class="form-card-body">
-              <app-ent-pesado *ngIf="pasoActual === 1" [formGroup]="pesadoGroup" [rol]="rol"
+              <app-ent-pesado [formGroup]="pesadoGroup" [rol]="rol"
                 [responsables]="catalogos.responsables()"></app-ent-pesado>
-              <app-ent-homogeneizacion *ngIf="pasoActual === 2" [formGroup]="homogeneizacionGroup" [rol]="rol"
+
+              <div class="seccion-divider"></div>
+
+              <app-ent-homogeneizacion [formGroup]="homogeneizacionGroup" [rol]="rol"
                 [responsables]="catalogos.responsables()"></app-ent-homogeneizacion>
-              <app-ent-sembrado *ngIf="pasoActual === 3" [formGroup]="sembradoGroup" [rol]="rol"
+
+              <div class="seccion-divider"></div>
+
+              <app-ent-sembrado [formGroup]="sembradoGroup" [rol]="rol"
                 [equiposIncubacion]="catalogos.equiposIncubacion()"
                 [micropipetas]="catalogos.micropipetas()"
                 [lotesAgarVRBG]="catalogos.lotesAgarVRBG()"
                 [lotesTween80]="catalogos.lotesTween80()"
                 [responsables]="catalogos.responsables()"></app-ent-sembrado>
-              <app-ent-incubacion-prep *ngIf="pasoActual === 4" [formGroup]="incubacionPrepGroup" [rol]="rol"
+            </div>
+          </div>
+        </div>
+
+        <!-- ════════ ETAPA 2: INCUBACIÓN ════════ -->
+        <div *ngIf="etapaActual() === 2" class="etapa-panel animate__animated animate__fadeIn">
+          <div class="form-card">
+            <div class="form-card-header header-incubacion">
+              <div class="form-card-title-group">
+                <ion-icon name="timer-outline" class="card-header-icon"></ion-icon>
+                <h2 class="form-card-title">2. Incubación</h2>
+              </div>
+            </div>
+            <div class="form-card-body">
+              <app-ent-incubacion-prep [formGroup]="incubacionPrepGroup" [rol]="rol"
                 [equiposIncubacion]="catalogos.equiposIncubacion()"
                 [lotesAgarVRBG]="catalogos.lotesAgarVRBG()"
                 [responsables]="catalogos.responsables()"></app-ent-incubacion-prep>
@@ -81,39 +97,118 @@
           </div>
         </div>
 
-        <!-- ════════ ETAPA 2: ANÁLISIS ════════ -->
-        <div *ngIf="etapaActual === 2" class="etapa-panel animate__animated animate__fadeIn">
+        <!-- ════════ ETAPA 3: LECTURA 24H + CONFIRMACIÓN + RESULTADOS ════════ -->
+        <div *ngIf="etapaActual() === 3" class="etapa-panel animate__animated animate__fadeIn">
           <div class="form-card">
             <div class="form-card-header header-analisis">
               <div class="form-card-title-group">
                 <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
-                <h2 class="form-card-title">2. Análisis</h2>
+                <h2 class="form-card-title">3. Lectura 24h</h2>
               </div>
             </div>
             <div class="form-card-body">
-              <app-ent-analisis-lectura [formGroup]="analisisLecturaGroup" [rol]="rol"
-                [responsables]="catalogos.responsables()"></app-ent-analisis-lectura>
+
+              <!-- Multi-sample counting + NCh2676 confirmation + calculation -->
+              <app-ent-analisis-lectura
+                [formGroup]="analisisLecturaGroup"
+                [rol]="rol"
+                [responsables]="catalogos.responsables()"
+                [muestras]="muestrasLectura"
+                (muestrasChange)="muestrasLectura = $event"></app-ent-analisis-lectura>
+
+              <!-- Per-sample results summary (shown once at least one muestra is calculated) -->
+              <ng-container *ngIf="muestrasConResultado.length > 0">
+                <div class="seccion-divider"></div>
+                <p class="subseccion-title">Resumen de resultados por muestra</p>
+                <div class="muestras-resultados-grid">
+                  <div class="muestra-resultado-card" *ngFor="let m of muestrasConResultado">
+                    <div class="mrc-header">{{ m.label }}</div>
+                    <div class="mrc-body">
+                      <div class="mrc-row">
+                        <span class="mrc-label">Σa</span>
+                        <span class="mrc-value">{{ m.resultado?.sumaA ?? '—' }}</span>
+                      </div>
+                      <div class="mrc-row">
+                        <span class="mrc-label">d</span>
+                        <span class="mrc-value">{{ m.resultado?.d ?? '—' }}</span>
+                      </div>
+                      <div class="mrc-row">
+                        <span class="mrc-label">n₁ / n₂</span>
+                        <span class="mrc-value">{{ m.resultado?.n1 ?? '—' }} / {{ m.resultado?.n2 ?? '—' }}</span>
+                      </div>
+                      <div class="mrc-row mrc-row--result">
+                        <span class="mrc-label font-semibold">N Enterobact.</span>
+                        <span class="mrc-value font-bold text-blue-700">{{ m.resultado?.textoReporte ?? '—' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+
+              <!-- Quality controls -->
+              <div class="seccion-divider"></div>
+              <p class="subseccion-title">Controles de calidad</p>
+              <div [formGroup]="analisisLecturaGroup" class="grid-3col">
+                <div class="form-group">
+                  <label class="form-label" for="controlPosEcoli">Control (+) E. coli</label>
+                  <input id="controlPosEcoli" type="text" class="form-input"
+                    formControlName="controlPosEcoli"
+                    placeholder="Resultado control positivo"
+                    [attr.readonly]="modoLectura ? true : null" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="controlNegPaer">Control (-) P. aeruginosa</label>
+                  <input id="controlNegPaer" type="text" class="form-input"
+                    formControlName="controlNegPaer"
+                    placeholder="Resultado control negativo"
+                    [attr.readonly]="modoLectura ? true : null" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="blanco">Blanco</label>
+                  <input id="blanco" type="text" class="form-input"
+                    formControlName="blanco"
+                    placeholder="Resultado blanco"
+                    [attr.readonly]="modoLectura ? true : null" />
+                </div>
+              </div>
+
+              <!-- Observaciones -->
+              <div class="seccion-divider"></div>
+              <div [formGroup]="analisisLecturaGroup" class="form-group">
+                <label class="form-label" for="observaciones">Observaciones <span class="optional-tag">(opcional)</span></label>
+                <textarea id="observaciones" class="form-textarea" rows="4"
+                  formControlName="observaciones"
+                  placeholder="Escriba comentarios, notas o incidencias del análisis..."
+                  [attr.readonly]="modoLectura ? true : null"></textarea>
+              </div>
+
             </div>
           </div>
         </div>
 
-        <!-- ════════ ETAPA 3: CONFIRMACIÓN ════════ -->
-        <div *ngIf="etapaActual === 3" class="etapa-panel animate__animated animate__fadeIn">
+        <!-- ════════ ETAPA 4: TRASPASO ════════ -->
+        <div *ngIf="etapaActual() === 4" class="etapa-panel animate__animated animate__fadeIn">
           <div class="form-card">
             <div class="form-card-header header-confirmacion">
               <div class="form-card-title-group">
-                <ion-icon name="checkmark-done-outline" class="card-header-icon"></ion-icon>
-                <h2 class="form-card-title">3. Confirmación</h2>
+                <ion-icon name="swap-horizontal-outline" class="card-header-icon"></ion-icon>
+                <h2 class="form-card-title">4. Traspaso</h2>
               </div>
             </div>
             <div class="form-card-body">
-              <app-ent-incubacion-conf *ngIf="pasoActual === 6" [formGroup]="incubacionConfGroup" [rol]="rol"
+              <app-ent-incubacion-conf [formGroup]="incubacionConfGroup" [rol]="rol"
                 [equiposIncubacion]="catalogos.equiposIncubacion()"
                 [responsables]="catalogos.responsables()"></app-ent-incubacion-conf>
-              <app-ent-lectura-oxidasa *ngIf="pasoActual === 7" [formGroup]="lecturaOxidasaGroup" [rol]="rol"
-                [responsables]="catalogos.responsables()"></app-ent-lectura-oxidasa>
-              <app-ent-resultados *ngIf="pasoActual === 8" [formGroup]="resultadosGroup" [rol]="rol"></app-ent-resultados>
             </div>
+          </div>
+        </div>
+
+        <!-- ════════ FORMULARIO COMPLETADO ════════ -->
+        <div *ngIf="formularioCompletado" class="success-banner">
+          <ion-icon name="checkmark-circle-outline" class="success-icon"></ion-icon>
+          <div>
+            <p>Registro completado exitosamente.</p>
+            <p class="text-sm font-normal text-green-700 mt-1">Los datos del análisis han sido guardados.</p>
           </div>
         </div>
 
@@ -126,19 +221,19 @@
           Cancelar
         </button>
         <div class="nav-footer__actions">
-          <button type="button" class="btn-draft" (click)="onGuardarBorrador()" *ngIf="!modoLectura">
+          <button type="button" class="btn-draft" (click)="guardarFormularioBorrador()" *ngIf="!modoLectura && !formularioCompletado">
             <ion-icon name="document-outline"></ion-icon>
-            Guardar Borrador
+            Guardar
           </button>
-          <button type="button" class="btn-secondary" (click)="onAnterior()" *ngIf="pasoActual > 1 && !modoLectura">
+          <button type="button" class="btn-secondary" (click)="onAnterior()" *ngIf="etapaActual() > 1 && !modoLectura && !formularioCompletado">
             <ion-icon name="arrow-back-outline"></ion-icon>
             Anterior
           </button>
-          <button type="button" class="btn-save" (click)="onSiguiente()" *ngIf="pasoActual === TOTAL_PASOS && !modoLectura && !formularioCompletado">
+          <button type="button" class="btn-save" (click)="finalizarFormulario()" *ngIf="etapaActual() === TOTAL_ETAPAS && !modoLectura && !formularioCompletado">
             <ion-icon name="save-outline"></ion-icon>
             Finalizar
           </button>
-          <button type="button" class="btn-primary" (click)="onSiguiente()" *ngIf="pasoActual < TOTAL_PASOS && !modoLectura">
+          <button type="button" class="btn-primary" (click)="onSiguiente()" *ngIf="etapaActual() < TOTAL_ETAPAS && !modoLectura && !formularioCompletado">
             Siguiente
             <ion-icon name="arrow-forward-outline"></ion-icon>
           </button>

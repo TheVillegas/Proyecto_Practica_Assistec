@@ -1,26 +1,27 @@
 <div [formGroup]="formGroup" class="subetapa-section">
-  <p class="subseccion-title">Lectura a 24 horas</p>
 
+  <!-- Metadata: date / time / analyst -->
+  <p class="subseccion-title">Lectura a 24 horas</p>
   <div class="grid-3col">
     <div class="form-group">
-      <label class="form-label" for="fechaLectura24h">Fecha de lectura 24 hrs <span class="required-star">*</span></label>
+      <label class="form-label" for="fechaLectura24h">Fecha de lectura <span class="required-star">*</span></label>
       <input id="fechaLectura24h" type="date" class="form-input"
         [class.input-error]="campoInvalido('fechaLectura24h')"
         formControlName="fechaLectura24h"
         [max]="hoy()"
         [attr.readonly]="(rol | modoLectura) ? true : null" />
-      <span class="error-msg" *ngIf="campoInvalido('fechaLectura24h')">El campo Fecha de lectura 24 hrs es obligatorio.</span>
+      <span class="error-msg" *ngIf="campoInvalido('fechaLectura24h')">El campo Fecha de lectura es obligatorio.</span>
     </div>
     <div class="form-group">
-      <label class="form-label" for="horaLectura24h">Hora de lectura 24 hrs <span class="required-star">*</span></label>
+      <label class="form-label" for="horaLectura24h">Hora de lectura <span class="required-star">*</span></label>
       <input id="horaLectura24h" type="time" class="form-input"
         [class.input-error]="campoInvalido('horaLectura24h')"
         formControlName="horaLectura24h"
         [attr.readonly]="(rol | modoLectura) ? true : null" />
-      <span class="error-msg" *ngIf="campoInvalido('horaLectura24h')">El campo Hora de lectura 24 hrs es obligatorio.</span>
+      <span class="error-msg" *ngIf="campoInvalido('horaLectura24h')">El campo Hora de lectura es obligatorio.</span>
     </div>
     <div class="form-group">
-      <label class="form-label" for="analistaLectura24h">Analista de lectura 24 hrs <span class="required-star">*</span></label>
+      <label class="form-label" for="analistaLectura24h">Analista <span class="required-star">*</span></label>
       <ion-select id="analistaLectura24h"
         [class.input-error]="campoInvalido('analistaLectura24h')"
         formControlName="analistaLectura24h"
@@ -30,48 +31,172 @@
         <ion-select-option value="">— Seleccionar analista —</ion-select-option>
         <ion-select-option *ngFor="let r of responsables" [value]="r.rut">{{ r.nombreApellido }}</ion-select-option>
       </ion-select>
-      <span class="error-msg" *ngIf="campoInvalido('analistaLectura24h')">El campo Analista de lectura 24 hrs es obligatorio.</span>
+      <span class="error-msg" *ngIf="campoInvalido('analistaLectura24h')">El campo Analista es obligatorio.</span>
     </div>
+  </div>
+
+  <div class="form-group mt-4">
+    <label class="form-label" for="equipoCuentaColonias">Equipo Cuenta Colonias <span class="required-star">*</span></label>
+    <input id="equipoCuentaColonias" type="text" class="form-input"
+      [class.input-error]="campoInvalido('equipoCuentaColonias')"
+      formControlName="equipoCuentaColonias"
+      placeholder="Ej: ECC-001"
+      [attr.readonly]="(rol | modoLectura) ? true : null" />
+    <span class="error-msg" *ngIf="campoInvalido('equipoCuentaColonias')">El campo Equipo Cuenta Colonias es obligatorio.</span>
   </div>
 
   <div class="seccion-divider"></div>
 
-  <!-- Datos de medición -->
-  <p class="subseccion-title">Datos de medición</p>
-  <div class="grid-3col">
-    <div class="form-group">
-      <label class="form-label" for="nMuestraLectura">N° de muestra <span class="required-star">*</span></label>
-      <input id="nMuestraLectura" type="number" min="0" class="form-input"
-        [class.input-error]="campoInvalido('nMuestraLectura')"
-        formControlName="nMuestraLectura" placeholder="0"
-        [attr.readonly]="(rol | modoLectura) ? true : null" />
-      <span class="error-msg" *ngIf="campoInvalido('nMuestraLectura')">Ingrese un valor numérico válido.</span>
+  <!-- ── Per-sample cards ─────────────────────────────────────────────────── -->
+  <p class="subseccion-title">Recuento de colonias por muestra</p>
+
+  <div class="muestra-card" *ngFor="let muestra of muestras; let mi = index; trackBy: trackByIndex">
+
+    <!-- Card header -->
+    <div class="muestra-card-header">
+      <span class="muestra-card-label">{{ muestra.label }}</span>
+      <button type="button" class="muestra-remove-btn"
+        *ngIf="muestras.length > 1 && !(rol | modoLectura)"
+        (click)="eliminarMuestra(mi)"
+        title="Eliminar muestra">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
     </div>
-    <div class="form-group">
-      <label class="form-label" for="dilucion">Dilución <span class="required-star">*</span></label>
-      <input id="dilucion" type="number" min="0" class="form-input"
-        [class.input-error]="campoInvalido('dilucion')"
-        formControlName="dilucion" placeholder="0"
-        [attr.readonly]="(rol | modoLectura) ? true : null" />
-      <span class="error-msg" *ngIf="campoInvalido('dilucion')">Ingrese un valor numérico válido.</span>
+
+    <!-- Dilution rows -->
+    <div class="dilucion-row" *ngFor="let dil of muestra.diluciones; let di = index; trackBy: trackByIndex">
+      <div class="dilucion-header">
+        <div class="form-group dilucion-exp-group">
+          <label class="form-label">Dilución</label>
+          <select class="form-input dilucion-select"
+            [value]="dil.exponent"
+            [disabled]="(rol | modoLectura)"
+            (change)="updateDilucion(mi, di, 'exponent', +($any($event.target).value))">
+            <option *ngFor="let exp of EXPONENT_OPTIONS" [value]="exp">{{ expLabel(exp) }}</option>
+          </select>
+        </div>
+        <button type="button" class="dilucion-remove-btn"
+          *ngIf="muestra.diluciones.length > 1 && !(rol | modoLectura)"
+          (click)="eliminarDilucion(mi, di)"
+          title="Eliminar dilución">
+          <ion-icon name="remove-circle-outline"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Colony counts (C) -->
+      <div class="placas-grid">
+        <div class="form-group">
+          <label class="form-label">Placa A (C)</label>
+          <input type="number" min="0" class="form-input text-center"
+            [value]="dil.coloniasA"
+            [attr.readonly]="(rol | modoLectura) ? true : null"
+            placeholder="0"
+            (input)="updateDilucion(mi, di, 'coloniasA', $event.target && +($any($event.target).value) >= 0 ? +($any($event.target).value) : null)" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Placa B (C)</label>
+          <input type="number" min="0" class="form-input text-center"
+            [value]="dil.coloniasB"
+            [attr.readonly]="(rol | modoLectura) ? true : null"
+            placeholder="0"
+            (input)="updateDilucion(mi, di, 'coloniasB', $event.target && +($any($event.target).value) >= 0 ? +($any($event.target).value) : null)" />
+        </div>
+      </div>
+
+      <!-- Confirmation data (A, b) -->
+      <details class="confirm-details">
+        <summary class="confirm-summary">Confirmación (A / b)</summary>
+        <div class="confirm-grid">
+          <div class="form-group">
+            <label class="form-label">A Placa A</label>
+            <input type="number" min="0" class="form-input text-center"
+              [value]="dil.confirmA"
+              [attr.readonly]="(rol | modoLectura) ? true : null"
+              placeholder="—"
+              (input)="updateDilucion(mi, di, 'confirmA', $event.target && +($any($event.target).value) >= 0 ? +($any($event.target).value) : null)" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">b Placa A</label>
+            <input type="number" min="0" class="form-input text-center"
+              [value]="dil.confirmPosA"
+              [attr.readonly]="(rol | modoLectura) ? true : null"
+              placeholder="—"
+              (input)="updateDilucion(mi, di, 'confirmPosA', $event.target && +($any($event.target).value) >= 0 ? +($any($event.target).value) : null)" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">A Placa B</label>
+            <input type="number" min="0" class="form-input text-center"
+              [value]="dil.confirmB"
+              [attr.readonly]="(rol | modoLectura) ? true : null"
+              placeholder="—"
+              (input)="updateDilucion(mi, di, 'confirmB', $event.target && +($any($event.target).value) >= 0 ? +($any($event.target).value) : null)" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">b Placa B</label>
+            <input type="number" min="0" class="form-input text-center"
+              [value]="dil.confirmPosB"
+              [attr.readonly]="(rol | modoLectura) ? true : null"
+              placeholder="—"
+              (input)="updateDilucion(mi, di, 'confirmPosB', $event.target && +($any($event.target).value) >= 0 ? +($any($event.target).value) : null)" />
+          </div>
+        </div>
+        <p class="tabla-hint">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          Si b/A ≥ 80%, se usa C directamente. Si no, a = (b × C) / A.
+        </p>
+      </details>
     </div>
-    <div class="form-group">
-      <label class="form-label" for="colonias">(C) Colonias <span class="required-star">*</span></label>
-      <input id="colonias" type="number" min="0" class="form-input"
-        [class.input-error]="campoInvalido('colonias')"
-        formControlName="colonias" placeholder="0"
-        [attr.readonly]="(rol | modoLectura) ? true : null" />
-      <span class="error-msg" *ngIf="campoInvalido('colonias')">Ingrese un valor numérico válido.</span>
+
+    <!-- Add dilution -->
+    <div class="muestra-card-actions" *ngIf="!(rol | modoLectura) && muestra.diluciones.length < 4">
+      <button type="button" class="btn-add-dil" (click)="agregarDilucion(mi)">
+        <ion-icon name="add-outline"></ion-icon> Agregar dilución
+      </button>
     </div>
+
+    <!-- Result panel -->
+    <div class="resultado-panel" *ngIf="muestra.resultado">
+      <p class="resultado-title">Resultados del cálculo</p>
+      <div class="resultado-grid">
+        <div class="resultado-row">
+          <span class="resultado-label">Σa</span>
+          <span class="resultado-value">{{ muestra.resultado.sumaA }}</span>
+        </div>
+        <div class="resultado-row">
+          <span class="resultado-label">n₁ / n₂</span>
+          <span class="resultado-value">{{ muestra.resultado.n1 }} / {{ muestra.resultado.n2 }}</span>
+        </div>
+        <div class="resultado-row">
+          <span class="resultado-label">d</span>
+          <span class="resultado-value">{{ muestra.resultado.d }}</span>
+        </div>
+        <div class="resultado-row resultado-row--highlight">
+          <span class="resultado-label font-semibold">N Enterobacterias</span>
+          <span class="resultado-value font-bold text-blue-700">{{ muestra.resultado.textoReporte }}</span>
+        </div>
+      </div>
+      <p class="tabla-hint" *ngIf="muestra.resultado.esEstimado">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        Resultado estimado (Ne): ambas placas &lt; 15 colonias.
+      </p>
+    </div>
+
+    <!-- Calculate button -->
+    <div class="muestra-card-footer" *ngIf="!(rol | modoLectura)">
+      <button type="button" class="btn-calcular" (click)="calcularMuestra(mi)" [disabled]="muestra.isLoading">
+        <ion-icon name="calculator-outline"></ion-icon>
+        Calcular {{ muestra.label }}
+      </button>
+    </div>
+
   </div>
 
-  <!-- Equipo Cuenta Colonias -->
-  <div class="form-group mt-4 pt-4 border-t border-slate-100">
-    <label class="form-label" for="equipoCuentaColonias">Equipo Cuenta Colonias <span class="required-star">*</span></label>
-    <input id="equipoCuentaColonias" type="text" class="form-input"
-      [class.input-error]="campoInvalido('equipoCuentaColonias')"
-      formControlName="equipoCuentaColonias" placeholder="Ej: ECC-001"
-      [attr.readonly]="(rol | modoLectura) ? true : null" />
-    <span class="error-msg" *ngIf="campoInvalido('equipoCuentaColonias')">El campo Equipo Cuenta Colonias es obligatorio.</span>
+  <!-- Add muestra -->
+  <div class="add-muestra-row" *ngIf="!(rol | modoLectura) && muestras.length < 6">
+    <button type="button" class="btn-add-muestra" (click)="agregarMuestra()">
+      <ion-icon name="add-circle-outline"></ion-icon>
+      Agregar muestra
+    </button>
   </div>
+
 </div>
