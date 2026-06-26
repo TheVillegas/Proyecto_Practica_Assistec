@@ -40,6 +40,13 @@ export interface SauEtapa1 {
   ctrlSiembraAli: string;
   ctrlSiembraCumple: string;
   completada: boolean;
+  idLoteAgarBairdParker?: string;
+  nMuestra10g90ml?: number;
+  nMuestra50g450ml?: number;
+  idMicropipeta?: number;
+  codigoMicropipeta?: string;
+  horaHomogeneizado?: string;
+  horaSiembra?: string;
 }
 
 export interface SauEtapa2 {

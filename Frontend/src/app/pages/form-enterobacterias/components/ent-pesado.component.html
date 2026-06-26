@@ -1,28 +1,7 @@
 <div [formGroup]="formGroup" class="subetapa-section">
   <p class="subseccion-title">Pesado de la muestra</p>
 
-  <!-- Código ALI (autocompletado) -->
-  <div class="seccion-importada mb-6">
-    <div class="seccion-tag">
-      <ion-icon name="cloud-download-outline"></ion-icon>
-      <span>Datos importados del sistema</span>
-    </div>
-    <div class="form-group max-w-xs">
-      <label class="form-label">Código ALI <span class="required-star">*</span></label>
-      <input type="text" class="form-input input-locked" formControlName="codigoALI" readonly />
-    </div>
-  </div>
-
   <div class="grid-2col">
-    <!-- N° Acta -->
-    <div class="form-group">
-      <label class="form-label" for="nActa">N° Acta <span class="required-star">*</span></label>
-      <input id="nActa" type="text" class="form-input"
-        [class.input-error]="campoInvalido('nActa')"
-        formControlName="nActa" placeholder="Ej: ACT-2025-001"
-        [attr.readonly]="(rol | modoLectura) ? true : null" />
-      <span class="error-msg" *ngIf="campoInvalido('nActa')">El campo N° Acta es obligatorio.</span>
-    </div>
 
     <!-- Tipo de muestra -->
     <div class="form-group">

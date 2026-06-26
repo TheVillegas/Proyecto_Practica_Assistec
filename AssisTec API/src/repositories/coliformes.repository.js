@@ -27,11 +27,13 @@ class ColiRepository extends BaseFormRepository {
     }
 
     // Override touchFormulario with TOCTOU fix: updateMany + count === 1
-    async touchFormulario(id, extra = {}, expectedUpdatedAt) {
+    // Accepts optional tx to run inside an existing transaction.
+    async touchFormulario(id, extra = {}, expectedUpdatedAt, tx) {
         if (!expectedUpdatedAt) {
             throw new Error('MISSING_EXPECTED_UPDATED_AT');
         }
-        const result = await this.model.updateMany({
+        const client = tx || this.model;
+        const result = await client.updateMany({
             where: {
                 [this.idField]: BigInt(id),
                 updatedAt: expectedUpdatedAt
@@ -74,17 +76,15 @@ class ColiRepository extends BaseFormRepository {
 
     async upsertFase1(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
+            await this.touchFormulario(idFormulario, {
+                faseActual: data.faseActual ?? (data.etapa?.completada ? 2 : 1)
+            }, expectedUpdatedAt, tx);
 
             await tx.coliFase1.upsert({
                 where: { idColiFormulario: BigInt(idFormulario) },
                 create: { idColiFormulario: BigInt(idFormulario), ...data.etapa },
                 update: data.etapa
             });
-
-            await this.touchFormulario(idFormulario, {
-                faseActual: data.faseActual ?? (data.etapa?.completada ? 2 : 1)
-            }, expectedUpdatedAt);
 
             return tx.coliFormulario.findUnique({
                 where: { idColiFormulario: BigInt(idFormulario) },
@@ -95,7 +95,9 @@ class ColiRepository extends BaseFormRepository {
 
     async upsertFase2(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
+            await this.touchFormulario(idFormulario, {
+                faseActual: data.faseActual ?? 2
+            }, expectedUpdatedAt, tx);
 
             const fase2 = await tx.coliFase2.upsert({
                 where: { idColiFormulario: BigInt(idFormulario) },
@@ -132,10 +134,6 @@ class ColiRepository extends BaseFormRepository {
                 }
             }
 
-            await this.touchFormulario(idFormulario, {
-                faseActual: data.faseActual ?? 2
-            }, expectedUpdatedAt);
-
             return tx.coliFormulario.findUnique({
                 where: { idColiFormulario: BigInt(idFormulario) },
                 include: this.getFullInclude()
@@ -145,7 +143,9 @@ class ColiRepository extends BaseFormRepository {
 
     async upsertFase3(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
+            await this.touchFormulario(idFormulario, {
+                faseActual: data.faseActual ?? 3
+            }, expectedUpdatedAt, tx);
 
             await tx.coliFase3.upsert({
                 where: { idColiFormulario: BigInt(idFormulario) },
@@ -188,10 +188,6 @@ class ColiRepository extends BaseFormRepository {
                 }
             }
 
-            await this.touchFormulario(idFormulario, {
-                faseActual: data.faseActual ?? 3
-            }, expectedUpdatedAt);
-
             return tx.coliFormulario.findUnique({
                 where: { idColiFormulario: BigInt(idFormulario) },
                 include: this.getFullInclude()
@@ -201,17 +197,15 @@ class ColiRepository extends BaseFormRepository {
 
     async upsertFase35Controles(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
+            await this.touchFormulario(idFormulario, {
+                faseActual: data.faseActual ?? 3
+            }, expectedUpdatedAt, tx);
 
             await tx.coliFase35Controles.upsert({
                 where: { idColiFormulario: BigInt(idFormulario) },
                 create: { idColiFormulario: BigInt(idFormulario), ...data.etapa },
                 update: data.etapa
             });
-
-            await this.touchFormulario(idFormulario, {
-                faseActual: data.faseActual ?? 3
-            }, expectedUpdatedAt);
 
             return tx.coliFormulario.findUnique({
                 where: { idColiFormulario: BigInt(idFormulario) },
@@ -222,7 +216,9 @@ class ColiRepository extends BaseFormRepository {
 
     async upsertFase4Resultados(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
+            await this.touchFormulario(idFormulario, {
+                faseActual: data.faseActual ?? 4
+            }, expectedUpdatedAt, tx);
 
             for (const resultado of data.resultados ?? []) {
                 const idMuestra = BigInt(resultado.idColiMuestra);
@@ -247,10 +243,6 @@ class ColiRepository extends BaseFormRepository {
                     }
                 });
             }
-
-            await this.touchFormulario(idFormulario, {
-                faseActual: data.faseActual ?? 4
-            }, expectedUpdatedAt);
 
             return tx.coliFormulario.findUnique({
                 where: { idColiFormulario: BigInt(idFormulario) },

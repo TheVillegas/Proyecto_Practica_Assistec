@@ -14,6 +14,7 @@ router.use(verifyToken);
 
 router.get('/por-analisis/:idAnalisis', authorizeAny(READ_ROLES), coliController.obtenerPorAnalisis.bind(coliController));
 router.get('/:id', authorizeAny(READ_ROLES), coliController.obtener.bind(coliController));
+router.post('/:id/calcular-nmp', authorizeAny(WRITE_ROLES), coliController.calcularNmp.bind(coliController));
 
 // Validacion dinamica segun el numero de fase en la URL
 router.put('/:id/fase/:fase', authorizeAny(WRITE_ROLES), optimisticLock, (req, res, next) => {

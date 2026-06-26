@@ -20,12 +20,10 @@ export interface ColiMuestra {
 }
 
 export interface ColiFase1 {
-  ctAnalistaInicio: string;
-  ctAnalistaTermino: string;
-  cfAnalistaInicio: string;
-  cfAnalistaTermino: string;
-  ecAnalistaInicio: string;
-  ecAnalistaTermino: string;
+  rutAnalistaInicio: string;
+  rutAnalistaTermino: string;
+  fechaInicioIncubacion?: string;
+  fechaTerminoAnalisis?: string;
 }
 
 export interface ColiFase2 {
@@ -77,12 +75,10 @@ export interface ColiFase4Resultado {
 }
 
 export interface SaveFase1Payload {
-  ctAnalistaInicio: string;
-  ctAnalistaTermino: string;
-  cfAnalistaInicio: string;
-  cfAnalistaTermino: string;
-  ecAnalistaInicio: string;
-  ecAnalistaTermino: string;
+  rutAnalistaInicio: string;
+  rutAnalistaTermino: string;
+  fechaInicioIncubacion?: string;
+  fechaTerminoAnalisis?: string;
   completada: boolean;
 }
 
@@ -97,6 +93,10 @@ export interface SaveFase2Payload {
 export interface SaveFase3Payload {
   submuestras: ColiFase3Submuestra[];
   completada: boolean;
+  fechaLectura24h?: string;
+  rutAnalista24h?: string;
+  fechaLectura48h?: string;
+  rutAnalista48h?: string;
 }
 
 export interface SaveFase35Payload {
@@ -107,4 +107,18 @@ export interface SaveFase35Payload {
 export interface SaveFase4Payload {
   submuestras: ColiFase3Submuestra[];
   completada: boolean;
+}
+
+export interface CalcularNmpMuestraPayload {
+  idColiMuestra: number;
+  tubosPositivos24h: [number, number, number];
+  tubosPositivos48h: [number, number, number];
+}
+
+export interface CalcularNmpPayload {
+  muestras: CalcularNmpMuestraPayload[];
+}
+
+export interface CalcularNmpResponse {
+  fase4Resultado: ColiFase4Resultado[];
 }

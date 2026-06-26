@@ -95,7 +95,7 @@ const routes: Routes = [
     data: { allowedRoles: [0, 4] }
   },
   {
-    path: 'form-s-aureus',
+    path: 'form-s-aureus/:id',
     loadChildren: () => import('./pages/form-s-aureus/form-s-aureus.module').then((m) => m.FormSAureusPageModule),
     canActivate: [AuthGuard],
     data: { allowedRoles: [0, 4] }

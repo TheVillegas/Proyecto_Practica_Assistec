@@ -21,11 +21,11 @@ const fase1PayloadSchema = z.object({
     rut_analista_inicio: optionalString(),
     fecha_termino_analisis: optionalIsoDate(),
     rut_analista_termino: optionalString()
-});
+}).passthrough();
 
 const fase1Schema = baseSchema.extend({
     fase: fase1PayloadSchema
-}).refine((data) => {
+}).passthrough().refine((data) => {
     if (!data.completada) return true;
     const f = data.fase;
     return !!f.fecha_inicio_incubacion && !!f.rut_analista_inicio;
@@ -34,11 +34,11 @@ const fase1Schema = baseSchema.extend({
 const fase2PayloadSchema = z.object({
     codigo_caldo_lauril: optionalString(),
     codigo_tween_80: optionalString()
-});
+}).passthrough();
 
 const fase2Schema = baseSchema.extend({
     fase: fase2PayloadSchema
-}).refine((data) => {
+}).passthrough().refine((data) => {
     if (!data.completada) return true;
     return !!data.fase.codigo_caldo_lauril;
 }, { message: 'Campos obligatorios faltantes en fase 2', path: ['fase'] });
@@ -50,11 +50,11 @@ const fase3PayloadSchema = z.object({
     fecha_lectura_48h: optionalIsoDate(),
     rut_analista_48h: optionalString(),
     lectura_48h_en_tolerancia: optionalBoolean()
-});
+}).passthrough();
 
 const fase3Schema = baseSchema.extend({
     fase: fase3PayloadSchema
-});
+}).passthrough();
 
 const fase4PayloadSchema = z.object({
     resultados: z.array(z.object({
@@ -62,11 +62,11 @@ const fase4PayloadSchema = z.object({
         coliformes_fecales: optionalNumber(),
         e_coli: optionalNumber()
     })).optional()
-});
+}).passthrough();
 
 const fase4Schema = baseSchema.extend({
     fase: fase4PayloadSchema
-});
+}).passthrough();
 
 module.exports = {
     fase1Schema,

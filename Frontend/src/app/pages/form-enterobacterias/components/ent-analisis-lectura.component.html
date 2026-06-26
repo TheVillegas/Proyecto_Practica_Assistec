@@ -67,13 +67,13 @@
     <div class="dilucion-row" *ngFor="let dil of muestra.diluciones; let di = index; trackBy: trackByIndex">
       <div class="dilucion-header">
         <div class="form-group dilucion-exp-group">
-          <label class="form-label">Dilución</label>
-          <select class="form-input dilucion-select"
-            [value]="dil.exponent"
-            [disabled]="(rol | modoLectura)"
-            (change)="updateDilucion(mi, di, 'exponent', +($any($event.target).value))">
-            <option *ngFor="let exp of EXPONENT_OPTIONS" [value]="exp">{{ expLabel(exp) }}</option>
-          </select>
+          <label class="form-label">Dilución 10^-n</label>
+          <input type="number" min="0" class="form-input dilucion-select"
+            [value]="expInputValue(dil.exponent)"
+            [attr.readonly]="(rol | modoLectura) ? true : null"
+            placeholder="Ej: 2"
+            (input)="updateExponenteDilucion(mi, di, $event)" />
+          <span class="campo-hint">Se interpreta como {{ expLabel(dil.exponent) }}</span>
         </div>
         <button type="button" class="dilucion-remove-btn"
           *ngIf="muestra.diluciones.length > 1 && !(rol | modoLectura)"
@@ -86,65 +86,22 @@
       <!-- Colony counts (C) -->
       <div class="placas-grid">
         <div class="form-group">
-          <label class="form-label">Placa A (C)</label>
+          <label class="form-label">Placa 1 (C)</label>
           <input type="number" min="0" class="form-input text-center"
             [value]="dil.coloniasA"
             [attr.readonly]="(rol | modoLectura) ? true : null"
             placeholder="0"
-            (input)="updateDilucion(mi, di, 'coloniasA', $event.target && +($any($event.target).value) >= 0 ? +($any($event.target).value) : null)" />
+            (input)="updateDilucionNumero(mi, di, 'coloniasA', $event)" />
         </div>
         <div class="form-group">
-          <label class="form-label">Placa B (C)</label>
+          <label class="form-label">Placa 2 (C)</label>
           <input type="number" min="0" class="form-input text-center"
             [value]="dil.coloniasB"
             [attr.readonly]="(rol | modoLectura) ? true : null"
             placeholder="0"
-            (input)="updateDilucion(mi, di, 'coloniasB', $event.target && +($any($event.target).value) >= 0 ? +($any($event.target).value) : null)" />
+            (input)="updateDilucionNumero(mi, di, 'coloniasB', $event)" />
         </div>
       </div>
-
-      <!-- Confirmation data (A, b) -->
-      <details class="confirm-details">
-        <summary class="confirm-summary">Confirmación (A / b)</summary>
-        <div class="confirm-grid">
-          <div class="form-group">
-            <label class="form-label">A Placa A</label>
-            <input type="number" min="0" class="form-input text-center"
-              [value]="dil.confirmA"
-              [attr.readonly]="(rol | modoLectura) ? true : null"
-              placeholder="—"
-              (input)="updateDilucion(mi, di, 'confirmA', $event.target && +($any($event.target).value) >= 0 ? +($any($event.target).value) : null)" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">b Placa A</label>
-            <input type="number" min="0" class="form-input text-center"
-              [value]="dil.confirmPosA"
-              [attr.readonly]="(rol | modoLectura) ? true : null"
-              placeholder="—"
-              (input)="updateDilucion(mi, di, 'confirmPosA', $event.target && +($any($event.target).value) >= 0 ? +($any($event.target).value) : null)" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">A Placa B</label>
-            <input type="number" min="0" class="form-input text-center"
-              [value]="dil.confirmB"
-              [attr.readonly]="(rol | modoLectura) ? true : null"
-              placeholder="—"
-              (input)="updateDilucion(mi, di, 'confirmB', $event.target && +($any($event.target).value) >= 0 ? +($any($event.target).value) : null)" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">b Placa B</label>
-            <input type="number" min="0" class="form-input text-center"
-              [value]="dil.confirmPosB"
-              [attr.readonly]="(rol | modoLectura) ? true : null"
-              placeholder="—"
-              (input)="updateDilucion(mi, di, 'confirmPosB', $event.target && +($any($event.target).value) >= 0 ? +($any($event.target).value) : null)" />
-          </div>
-        </div>
-        <p class="tabla-hint">
-          <ion-icon name="information-circle-outline"></ion-icon>
-          Si b/A ≥ 80%, se usa C directamente. Si no, a = (b × C) / A.
-        </p>
-      </details>
     </div>
 
     <!-- Add dilution -->

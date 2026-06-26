@@ -3,6 +3,8 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { ColiformesApiService } from './coliformes-api.service';
 import { BloqueTabla } from '../pages/form-coliformes/form-coliformes.page';
 
+const MOCK_UPDATED_AT = '2025-01-01T00:00:00.000Z';
+
 describe('ColiformesApiService', () => {
   let service: ColiformesApiService;
   let httpMock: HttpTestingController;
@@ -64,7 +66,7 @@ describe('ColiformesApiService', () => {
       };
       const diluciones = ['1ml', '0.1ml', '0.01ml'];
 
-      const result = service.mapSubmuestrasToPayload(tabla, 24, diluciones);
+      const result = service.mapSubmuestrasToPayload(tabla, 'totales', diluciones);
 
       expect(result.length).toBe(9); // 1 entrada × 3 diluciones × 3 tubos
       expect(result[0]).toEqual({
@@ -78,27 +80,28 @@ describe('ColiformesApiService', () => {
       expect(result[2].presencia).toBeNull();
     });
 
-    it('should resolve tipoLectura from label', () => {
-      const diluciones = ['1ml', '0.1ml', '0.01ml'];
+    it('should use explicit tipoLectura passed in', () => {
+      const diluciones = ['1ml'];
       const tabla: BloqueTabla = {
         fechaLectura: '',
         horaLectura: '',
         analistaResponsable: '',
         entradas: [
-          { id: '1', esDuplicado: false, label: 'Fecal', submuestras: { '1ml': ['positivo', 'sin_registrar', 'sin_registrar'], '0.1ml': ['sin_registrar', 'sin_registrar', 'sin_registrar'], '0.01ml': ['sin_registrar', 'sin_registrar', 'sin_registrar'] } },
-          { id: '2', esDuplicado: false, label: 'E.Coli', submuestras: { '1ml': ['positivo', 'sin_registrar', 'sin_registrar'], '0.1ml': ['sin_registrar', 'sin_registrar', 'sin_registrar'], '0.01ml': ['sin_registrar', 'sin_registrar', 'sin_registrar'] } },
+          { id: '1', esDuplicado: false, label: 'M1', submuestras: { '1ml': ['positivo', 'sin_registrar', 'sin_registrar'] } },
         ],
       };
 
-      const result = service.mapSubmuestrasToPayload(tabla, 24, diluciones);
-      expect(result[0].tipoLectura).toBe('fecales');
-      expect(result[9].tipoLectura).toBe('ecoli');
+      const resultFecales = service.mapSubmuestrasToPayload(tabla, 'fecales', diluciones);
+      expect(resultFecales[0].tipoLectura).toBe('fecales');
+
+      const resultEcoli = service.mapSubmuestrasToPayload(tabla, 'ecoli', diluciones);
+      expect(resultEcoli[0].tipoLectura).toBe('ecoli');
     });
   });
 
   describe('HTTP methods', () => {
     it('should GET formulario by id', () => {
-      const mockForm = { idColiFormulario: 1, faseActual: 1, estado: 'BORRADOR', updatedAt: '2025-01-01', muestras: [] };
+      const mockForm = { idColiFormulario: 1, faseActual: 1, estado: 'BORRADOR', updatedAt: MOCK_UPDATED_AT, muestras: [] };
       service.getFormulario(1).subscribe((res) => {
         expect(res.idColiFormulario).toBe(1);
       });
@@ -108,46 +111,56 @@ describe('ColiformesApiService', () => {
       req.flush(mockForm);
     });
 
-    it('should PUT saveFase1 with correct URL and payload', () => {
-      const payload = { ctAnalistaInicio: 'Ana', ctAnalistaTermino: 'Ben', cfAnalistaInicio: 'Ana', cfAnalistaTermino: 'Ben', ecAnalistaInicio: 'Ana', ecAnalistaTermino: 'Ben', completada: true };
-      service.saveFase1(1, payload).subscribe();
+    it('should PUT saveFase1 with correct URL and updated_at in body', () => {
+      const payload = { rutAnalistaInicio: 'Ana', rutAnalistaTermino: 'Ben', completada: true };
+      service.saveFase1(1, payload, MOCK_UPDATED_AT).subscribe();
 
       const req = httpMock.expectOne('http://localhost:3002/api/coliformes/1/fase/1');
       expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual(payload);
+      expect(req.request.body.updated_at).toBe(MOCK_UPDATED_AT);
+      expect(req.request.body.fase.rut_analista_inicio).toBe('Ana');
       req.flush({});
     });
 
     it('should PUT saveFase2 with correct URL and payload', () => {
       const payload = { codigoCaldoLauril: 'CL-01', estufas: [{ idIncubacion: 1 }], micropipetas: [{ idPipeta: 1, capacidad: '1ml' }], completada: true };
-      service.saveFase2(1, payload).subscribe();
+      service.saveFase2(1, payload, MOCK_UPDATED_AT).subscribe();
 
       const req = httpMock.expectOne('http://localhost:3002/api/coliformes/1/fase/2');
       expect(req.request.method).toBe('PUT');
+      expect(req.request.body.updated_at).toBe(MOCK_UPDATED_AT);
       req.flush({});
     });
 
     it('should PUT saveFase3 with correct URL and payload', () => {
       const payload = { submuestras: [], completada: true };
-      service.saveFase3(1, payload).subscribe();
+      service.saveFase3(1, payload, MOCK_UPDATED_AT).subscribe();
 
       const req = httpMock.expectOne('http://localhost:3002/api/coliformes/1/fase/3');
       expect(req.request.method).toBe('PUT');
       req.flush({});
     });
 
-    it('should PUT saveFase35 with correct URL and payload', () => {
-      const payload = { controles: { ctControlKAerogenes: 'presencia', ctControlSAureus: 'ausencia', ctControlEColi: 'presencia', ctControlBlanco: 'OK', cfControlEColi: 'presencia', cfControlKAerogenes: 'ausencia', cfControlBlanco: 'OK', ecControlEColi: 'presencia', ecControlKAerogenes: 'ausencia', ecControlBlanco: 'OK' }, completada: true };
-      service.saveFase35(1, payload).subscribe();
+    it('should PUT saveFase35 with correct URL 3.5', () => {
+      const payload = {
+        controles: {
+          ctControlKAerogenes: 'presencia', ctControlSAureus: 'ausencia',
+          ctControlEColi: 'presencia', ctControlBlanco: 'OK',
+          cfControlEColi: 'presencia', cfControlKAerogenes: 'ausencia', cfControlBlanco: 'OK',
+          ecControlEColi: 'presencia', ecControlKAerogenes: 'ausencia', ecControlBlanco: 'OK'
+        },
+        completada: true
+      };
+      service.saveFase35(1, payload, MOCK_UPDATED_AT).subscribe();
 
-      const req = httpMock.expectOne('http://localhost:3002/api/coliformes/1/fase/35');
+      const req = httpMock.expectOne('http://localhost:3002/api/coliformes/1/fase/3.5');
       expect(req.request.method).toBe('PUT');
       req.flush({});
     });
 
     it('should PUT saveFase4 with correct URL and payload', () => {
       const payload = { submuestras: [], completada: true };
-      service.saveFase4(1, payload).subscribe();
+      service.saveFase4(1, payload, MOCK_UPDATED_AT).subscribe();
 
       const req = httpMock.expectOne('http://localhost:3002/api/coliformes/1/fase/4');
       expect(req.request.method).toBe('PUT');
@@ -158,9 +171,9 @@ describe('ColiformesApiService', () => {
   describe('error handling', () => {
     it('should retry once on network error after 2s delay', fakeAsync(() => {
       let errorCount = 0;
-      const payload = { ctAnalistaInicio: 'Ana', ctAnalistaTermino: 'Ben', cfAnalistaInicio: 'Ana', cfAnalistaTermino: 'Ben', ecAnalistaInicio: 'Ana', ecAnalistaTermino: 'Ben', completada: true };
+      const payload = { rutAnalistaInicio: 'Ana', rutAnalistaTermino: 'Ben', completada: true };
 
-      service.saveFase1(1, payload).subscribe({
+      service.saveFase1(1, payload, MOCK_UPDATED_AT).subscribe({
         next: () => fail('should have failed'),
         error: (err) => {
           errorCount++;
@@ -168,18 +181,14 @@ describe('ColiformesApiService', () => {
         },
       });
 
-      // First attempt fails
       const req1 = httpMock.expectOne('http://localhost:3002/api/coliformes/1/fase/1');
       req1.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
 
-      // Wait for retry delay
       tick(2000);
 
-      // Second attempt fails
       const req2 = httpMock.expectOne('http://localhost:3002/api/coliformes/1/fase/1');
       req2.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
 
-      // Wait for error propagation
       tick(0);
 
       expect(errorCount).toBe(1);
@@ -188,9 +197,9 @@ describe('ColiformesApiService', () => {
 
     it('should propagate 409 conflict without retry', () => {
       let errorReceived = false;
-      const payload = { ctAnalistaInicio: 'Ana', ctAnalistaTermino: 'Ben', cfAnalistaInicio: 'Ana', cfAnalistaTermino: 'Ben', ecAnalistaInicio: 'Ana', ecAnalistaTermino: 'Ben', completada: true };
+      const payload = { rutAnalistaInicio: 'Ana', rutAnalistaTermino: 'Ben', completada: true };
 
-      service.saveFase1(1, payload).subscribe({
+      service.saveFase1(1, payload, MOCK_UPDATED_AT).subscribe({
         next: () => fail('should have failed'),
         error: (err) => {
           errorReceived = true;

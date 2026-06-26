@@ -20,4 +20,9 @@ router.put('/observaciones', authorizeAny([ROLES.ANALISTA, ROLES.COORDINADORA, R
 // Eliminar muestra (solo supervisores)
 router.delete('/:codigo_ali', authorizeAny([ROLES.COORDINADORA, ROLES.ADMINISTRATOR]), muestraAliController.eliminar.bind(muestraAliController));
 
+// Obtener imágenes (dummy endpoint para evitar 404 en el front)
+router.get('/:codigo_ali/imagenes', authorizeAny([ROLES.ANALISTA, ROLES.COORDINADORA, ROLES.JEFE_AREA, ROLES.ADMINISTRATOR]), (req, res) => {
+    res.status(200).json([]);
+});
+
 module.exports = router;

@@ -38,8 +38,9 @@ export class CatalogosService {
         return this.http.get<LugarAlmacenamiento[]>(`${this.apiUrl}/lugares`);
     }
 
-    getResponsables(): Observable<Responsable[]> {
-        return this.http.get<Responsable[]>(this.usuariosUrl);
+    getResponsables(rol?: string): Observable<Responsable[]> {
+        const url = rol ? `${this.usuariosUrl}?rol=${rol}` : this.usuariosUrl;
+        return this.http.get<Responsable[]>(url);
     }
 
     getCategorias(): Observable<CategoriaProducto[]> {

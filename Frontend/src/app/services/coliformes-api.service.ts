@@ -1,25 +1,25 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, timer, EMPTY } from 'rxjs';
-import { catchError, map, retry } from 'rxjs/operators';
+import { Observable, throwError, timer } from 'rxjs';
+import { catchError, retry } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
+  CalcularNmpPayload,
+  CalcularNmpResponse,
   ColiFormulario,
   SaveFase1Payload,
   SaveFase2Payload,
   SaveFase3Payload,
   SaveFase35Payload,
   SaveFase4Payload,
-  ColiFase3Submuestra,
 } from '../interfaces/coliformes.interfaces';
-import { BloqueTabla } from '../pages/form-coliformes/form-coliformes.page';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ColiformesApiService {
   private http = inject(HttpClient);
-  private apiUrl = environment.apiUrl + '/coliformes';
+  private apiUrl = environment.apiUrl + '/formulario/coli';
 
   getFormulario(id: number): Observable<ColiFormulario> {
     return this.http.get<ColiFormulario>(`${this.apiUrl}/${id}`).pipe(
@@ -27,44 +27,93 @@ export class ColiformesApiService {
     );
   }
 
-  /** Obtener formulario por ID de solicitud de análisis (desde ALI card) */
-  obtenerPorAnalisis(idAnalisis: number): Observable<ColiFormulario> {
-    return this.http.get<{ existe: boolean; formulario: ColiFormulario }>(`${this.apiUrl}/por-analisis/${idAnalisis}`).pipe(
-      map(resp => {
-        if (!resp.existe) throw new Error('NOT_FOUND');
-        return resp.formulario;
-      }),
-      catchError((err: HttpErrorResponse) => this.handleError(err))
-    );
+  obtenerPorAnalisis(idAnalisis: number): Observable<{ existe: boolean; formulario: ColiFormulario }> {
+    return this.http
+      .get<{ existe: boolean; formulario: ColiFormulario }>(`${this.apiUrl}/por-analisis/${idAnalisis}`)
+      .pipe(catchError((err: HttpErrorResponse) => this.handleError(err)));
   }
 
-  saveFase1(id: number, payload: SaveFase1Payload): Observable<ColiFormulario> {
-    return this.putFase(id, 1, payload);
+  saveFase1(id: number, payload: SaveFase1Payload, updatedAt: string): Observable<ColiFormulario> {
+    return this.putFase(id, 1, {
+      updated_at: updatedAt,
+      completada: payload.completada,
+      fase: {
+        rut_analista_inicio: payload.rutAnalistaInicio || undefined,
+        fecha_inicio_incubacion: payload.fechaInicioIncubacion || undefined,
+        rut_analista_termino: payload.rutAnalistaTermino || undefined,
+        fecha_termino_analisis: payload.fechaTerminoAnalisis || undefined,
+      },
+    });
   }
 
-  saveFase2(id: number, payload: SaveFase2Payload): Observable<ColiFormulario> {
-    return this.putFase(id, 2, payload);
+  saveFase2(id: number, payload: SaveFase2Payload, updatedAt: string): Observable<ColiFormulario> {
+    return this.putFase(id, 2, {
+      updated_at: updatedAt,
+      completada: payload.completada,
+      fase: {
+        codigo_caldo_lauril: payload.codigoCaldoLauril || undefined,
+        codigo_tween_80: payload.codigoTween80 || undefined,
+      },
+      estufas: payload.estufas,
+      micropipetas: payload.micropipetas,
+    });
   }
 
-  saveFase3(id: number, payload: SaveFase3Payload): Observable<ColiFormulario> {
-    return this.putFase(id, 3, payload);
+  saveFase3(id: number, payload: SaveFase3Payload, updatedAt: string): Observable<ColiFormulario> {
+    return this.putFase(id, 3, {
+      updated_at: updatedAt,
+      completada: payload.completada,
+      fase: {
+        fecha_lectura_24h: payload.fechaLectura24h || undefined,
+        rut_analista_24h: payload.rutAnalista24h || undefined,
+        fecha_lectura_48h: payload.fechaLectura48h || undefined,
+        rut_analista_48h: payload.rutAnalista48h || undefined,
+      },
+      submuestras: payload.submuestras,
+    });
   }
 
-  saveFase35(id: number, payload: SaveFase35Payload): Observable<ColiFormulario> {
-    return this.putFase(id, 35, payload);
+  saveFase35(id: number, payload: SaveFase35Payload, updatedAt: string): Observable<ColiFormulario> {
+    const c = payload.controles;
+    return this.putFase(id, '3.5', {
+      updated_at: updatedAt,
+      completada: payload.completada,
+      fase: {
+        ctrlTotKAerogenes: c.ctControlKAerogenes !== 'sin_registrar' ? c.ctControlKAerogenes : undefined,
+        ctrlTotSAureus: c.ctControlSAureus !== 'sin_registrar' ? c.ctControlSAureus : undefined,
+        blancoTotales: c.ctControlBlanco || undefined,
+        ctrlFecEColi: c.cfControlEColi !== 'sin_registrar' ? c.cfControlEColi : undefined,
+        ctrlFecKAerogenes: c.cfControlKAerogenes !== 'sin_registrar' ? c.cfControlKAerogenes : undefined,
+        blancoFecales: c.cfControlBlanco || undefined,
+        ctrlEcoEColi: c.ecControlEColi !== 'sin_registrar' ? c.ecControlEColi : undefined,
+        ctrlEcoKAerogenes: c.ecControlKAerogenes !== 'sin_registrar' ? c.ecControlKAerogenes : undefined,
+        blancoEcoli: c.ecControlBlanco || undefined,
+      },
+    });
   }
 
-  saveFase4(id: number, payload: SaveFase4Payload): Observable<ColiFormulario> {
-    return this.putFase(id, 4, payload);
+  saveFase4(id: number, payload: SaveFase4Payload, updatedAt: string): Observable<ColiFormulario> {
+    return this.putFase(id, 4, {
+      updated_at: updatedAt,
+      completada: payload.completada,
+      fase: {},
+      submuestras: payload.submuestras,
+    });
+  }
+
+  calcularNmp(id: number, payload: CalcularNmpPayload): Observable<CalcularNmpResponse> {
+    return this.http
+      .post<CalcularNmpResponse>(`${this.apiUrl}/${id}/calcular-nmp`, payload)
+      .pipe(catchError((err: HttpErrorResponse) => this.handleError(err)));
   }
 
   private putFase(
     id: number,
-    fase: number,
-    payload: unknown
+    fase: number | string,
+    body: object
   ): Observable<ColiFormulario> {
     return this.http
-      .put<ColiFormulario>(`${this.apiUrl}/${id}/fase/${fase}`, payload)
+      .put<ColiFormulario>(`${this.apiUrl}/${id}/fase/${fase}`, body)
       .pipe(
         retry({
           count: 1,
@@ -81,44 +130,4 @@ export class ColiformesApiService {
     return throwError(() => err);
   }
 
-  mapPresencia(valor: string): boolean | null {
-    if (valor === 'positivo') return true;
-    if (valor === 'negativo') return false;
-    return null;
-  }
-
-  mapSubmuestrasToPayload(
-    tabla: BloqueTabla,
-    tiempo: number,
-    diluciones: string[]
-  ): ColiFase3Submuestra[] {
-    const submuestras: ColiFase3Submuestra[] = [];
-
-    tabla.entradas.forEach((entrada) => {
-      const idColiMuestra = Number(entrada.id) || 0;
-      diluciones.forEach((dilucion) => {
-        entrada.submuestras[dilucion].forEach((valor, idx) => {
-          submuestras.push({
-            idColiMuestra,
-            tipoLectura: this.resolveTipoLectura(entrada.label, tiempo),
-            dilucion,
-            numeroTubo: idx + 1,
-            presencia: this.mapPresencia(valor),
-          });
-        });
-      });
-    });
-
-    return submuestras;
-  }
-
-  private resolveTipoLectura(
-    label: string,
-    _tiempo: number
-  ): 'totales' | 'fecales' | 'ecoli' {
-    const lower = label.toLowerCase();
-    if (lower.includes('fecal')) return 'fecales';
-    if (lower.includes('coli') || lower.includes('ecoli')) return 'ecoli';
-    return 'totales';
-  }
 }

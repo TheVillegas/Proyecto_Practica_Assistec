@@ -200,7 +200,13 @@ class ColiService {
         return resultados;
     }
 
-    async _assertStageProgression(formulario, faseNum) {
+    async _assertStageProgression(formulario, faseNum, completada = true) {
+        // Para lecturas/cálculo intermedio, el usuario puede guardar fase 3/4
+        // sin haber marcado las fases previas como completadas todavía.
+        if (completada !== true && (faseNum === 3 || faseNum === 4)) {
+            return;
+        }
+
         if (faseNum <= 1) return;
 
         const fasesCompletadas = [
@@ -234,6 +240,54 @@ class ColiService {
         return body.fase_actual ?? body.faseActual ?? defaultValue;
     }
 
+    _normalizarConteoTubos(tubos) {
+        if (!Array.isArray(tubos)) {
+            return [0, 0, 0];
+        }
+
+        const normalizados = tubos.slice(0, 3).map((valor) => {
+            const numero = Number(valor);
+            if (!Number.isFinite(numero)) return 0;
+            return Math.max(0, Math.min(3, numero));
+        });
+
+        while (normalizados.length < 3) {
+            normalizados.push(0);
+        }
+
+        return normalizados;
+    }
+
+    async calcularNmp(idFormulario, body, usuario) {
+        this.assertCanWrite(usuario);
+
+        const formulario = await coliRepository.findById(idFormulario);
+        if (!formulario) {
+            throw new Error('NOT_FOUND');
+        }
+
+        const muestras = Array.isArray(body?.muestras) ? body.muestras : [];
+        const fase4Resultado = muestras.map((muestra) => {
+            const tubosPositivos24h = this._normalizarConteoTubos(muestra.tubosPositivos24h);
+            const tubosPositivos48h = this._normalizarConteoTubos(muestra.tubosPositivos48h);
+
+            const resultados = calcularResultadosNMP({
+                tubosPositivosTotales: tubosPositivos24h,
+                tubosPositivosFecales: tubosPositivos48h,
+                tubosPositivosEcoli: tubosPositivos48h
+            });
+
+            return {
+                idColiMuestra: Number(muestra.idColiMuestra),
+                coliformesTotales: resultados.coliformesTotales,
+                coliformesFecales: resultados.coliformesFecales,
+                eColi: resultados.eColi
+            };
+        });
+
+        return { fase4Resultado };
+    }
+
     async guardarFase(id, fase, body, expectedUpdatedAt, usuario) {
         this.assertCanWrite(usuario);
         const faseNum = Number(fase);
@@ -243,7 +297,7 @@ class ColiService {
         if (!formulario) {
             throw new Error('NOT_FOUND');
         }
-        await this._assertStageProgression(formulario, faseNum);
+        await this._assertStageProgression(formulario, faseNum, body.completada === true);
 
         let actualizado;
 
@@ -269,7 +323,7 @@ class ColiService {
                     faseActual: this._resolveFaseActual(body, 3)
                 }, expectedUpdatedAt);
                 break;
-            case 35:
+            case 3.5:
                 actualizado = await coliRepository.upsertFase35Controles(id, {
                     etapa: this.stripUndefined(this.mapFase35Payload(body)),
                     faseActual: this._resolveFaseActual(body, 3)

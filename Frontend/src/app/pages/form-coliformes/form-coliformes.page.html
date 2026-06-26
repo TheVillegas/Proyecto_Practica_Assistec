@@ -13,9 +13,6 @@
       <span class="badge-etapa">{{ etapaActual }}/{{ TOTAL_ETAPAS }}</span>
     </ion-buttons>
   </ion-toolbar>
-  <ion-toolbar *ngIf="lastSaveText" class="sub-toolbar">
-    <ion-label class="save-indicator">{{ lastSaveText }}</ion-label>
-  </ion-toolbar>
 </ion-header>
 
 <ion-content class="page-content">
@@ -38,7 +35,7 @@
 
     <form [formGroup]="form">
 
-      <!-- ════════ ETAPA 1: DETALLES DEL ALIMENTO E INCUBACIÓN ════════ -->
+      <!-- ════════ ETAPA 1: ALIMENTO E INCUBACIÓN ════════ -->
       <div *ngIf="etapaActual === 1" class="etapa-panel">
         <div class="form-card">
           <div class="form-card-header">
@@ -49,7 +46,7 @@
           </div>
           <div class="form-card-body">
 
-            <!-- Código ALI (Autocompletado) -->
+            <!-- Código ALI -->
             <div class="seccion-importada mb-6">
               <div class="seccion-tag">
                 <ion-icon name="cloud-download-outline"></ion-icon>
@@ -65,16 +62,15 @@
               <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
                 1. Enumeración de Coliformes Totales (NCh 2635/1. Of2001)
               </p>
-              <!-- Inicio Incubación -->
               <p class="text-xs font-semibold text-slate-500 mt-3 mb-1">Inicio Incubación</p>
               <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div class="form-group">
                   <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
-                  <input type="date" class="form-input" />
+                  <input type="date" class="form-input" formControlName="ct_fechaInicio" />
                 </div>
                 <div class="form-group">
                   <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
-                  <input type="time" class="form-input" />
+                  <input type="time" class="form-input" formControlName="ct_horaInicio" />
                 </div>
                 <div class="form-group">
                   <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
@@ -87,16 +83,15 @@
                 </div>
               </div>
 
-              <!-- Término Análisis -->
               <p class="text-xs font-semibold text-slate-500 mt-4 mb-1">Término Análisis</p>
               <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div class="form-group">
                   <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
-                  <input type="date" class="form-input" />
+                  <input type="date" class="form-input" formControlName="ct_fechaTermino" />
                 </div>
                 <div class="form-group">
                   <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
-                  <input type="time" class="form-input" />
+                  <input type="time" class="form-input" formControlName="ct_horaTermino" />
                 </div>
                 <div class="form-group">
                   <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
@@ -115,8 +110,6 @@
               <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
                 2. Enumeración de Coliformes Fecales (NCh 2635/1. Of2001)
               </p>
-
-              <!-- Inicio Incubación -->
               <p class="text-xs font-semibold text-slate-500 mt-3 mb-1">Inicio Incubación</p>
               <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div class="form-group">
@@ -138,7 +131,6 @@
                 </div>
               </div>
 
-              <!-- Término Análisis -->
               <p class="text-xs font-semibold text-slate-500 mt-4 mb-1">Término Análisis</p>
               <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div class="form-group">
@@ -166,8 +158,6 @@
               <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
                 3. Enumeración de Escherichia coli (NCh 2636. Of2001)
               </p>
-
-              <!-- Inicio Incubación -->
               <p class="text-xs font-semibold text-slate-500 mt-3 mb-1">Inicio Incubación</p>
               <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div class="form-group">
@@ -189,7 +179,6 @@
                 </div>
               </div>
 
-              <!-- Término Análisis -->
               <p class="text-xs font-semibold text-slate-500 mt-4 mb-1">Término Análisis</p>
               <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div class="form-group">
@@ -232,24 +221,20 @@
                   formControlName="caldoLauril" placeholder="Ej: CL-045" />
                 <span class="error-msg" *ngIf="campoInvalido('caldoLauril')">Campo obligatorio.</span>
               </div>
-
               <div class="form-group">
                 <label class="form-label">Tween 80 <span class="optional-tag">(opcional)</span></label>
                 <input type="text" class="form-input" formControlName="tween80" placeholder="Código si aplica" />
               </div>
-
               <div class="form-group">
                 <label class="form-label">N° Muestra 10 g / 90 ml</label>
                 <input type="text" class="form-input" formControlName="muestra10g90ml" placeholder="Ej: 3" />
               </div>
-
               <div class="form-group">
                 <label class="form-label">N° Muestra 50 g / 450 ml</label>
                 <input type="text" class="form-input" formControlName="muestra50g450ml" placeholder="Ej: 5" />
               </div>
             </div>
 
-            <!-- Estufa Utilizada -->
             <div class="form-group mt-4 border-t border-slate-100 pt-4">
               <label class="form-label">Estufa <span class="required-star">*</span></label>
               <ion-select formControlName="estufas" [multiple]="true" interface="popover"
@@ -261,7 +246,6 @@
               <span class="error-msg" *ngIf="campoInvalido('estufas')">Debe seleccionar al menos una estufa.</span>
             </div>
 
-            <!-- Micropipeta 1ml -->
             <div class="form-group mt-4 border-t border-slate-100 pt-4">
               <label class="form-label">Micropipetas 1ml <span class="required-star">*</span></label>
               <ion-select formControlName="micropipeta1ml" interface="popover"
@@ -274,7 +258,6 @@
                 1ml.</span>
             </div>
 
-            <!-- Micropipeta 10ml -->
             <div class="form-group mt-4 border-t border-slate-100 pt-4">
               <label class="form-label">Micropipetas 10ml <span class="required-star">*</span></label>
               <ion-select formControlName="micropipeta10ml" interface="popover"
@@ -290,171 +273,8 @@
         </div>
       </div>
 
-      <!-- ═══════════ ETAPA 3: CONTROL DE ANÁLISIS (24h y 48h) ═══════════ -->
+      <!-- ═══════════ ETAPA 3: CONTROL DE CALIDAD ═══════════ -->
       <div *ngIf="etapaActual === 3" class="etapa-panel">
-
-        <!-- Lectura 24h -->
-        <div class="form-card">
-          <div class="form-card-header header-24h">
-            <div class="form-card-title-group">
-              <ion-icon name="time-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">Lectura a 24 Horas</h2>
-            </div>
-          </div>
-          <div class="form-card-body">
-            <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              <div class="form-group">
-                <label class="form-label text-xs">Fecha de Lectura <span class="required-star">*</span></label>
-                <input type="date" class="form-input" [(ngModel)]="tabla24h.fechaLectura"
-                  [ngModelOptions]="{standalone: true}" placeholder="DD/MM" maxlength="5" />
-              </div>
-              <div class="form-group">
-                <label class="form-label text-xs">Hora de Lectura <span class="required-star">*</span></label>
-                <input type="time" class="form-input" [class.input-error]="errorHora24h"
-                  [(ngModel)]="tabla24h.horaLectura" [ngModelOptions]="{standalone: true}"
-                  (ngModelChange)="onHora24hChange()" />
-                <span class="error-msg" *ngIf="errorHora24h">{{ errorHora24h }}</span>
-              </div>
-              <div class="form-group">
-                <label class="form-label text-xs">Analista Responsable <span class="required-star">*</span></label>
-                <ion-select [(ngModel)]="tabla24h.analistaResponsable" [ngModelOptions]="{standalone: true}"
-                  interface="popover" placeholder="Seleccione analista">
-                  <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
-                    {{ r.nombreApellido }}
-                  </ion-select-option>
-                </ion-select>
-              </div>
-            </div>
-
-            <!-- Tabla submuestras 24h -->
-            <div class="tabla-wrapper">
-              <table class="tabla-submuestras">
-                <thead>
-                  <tr>
-                    <th class="th-dilucion">Dilución</th>
-                    <ng-container *ngFor="let entrada of tabla24h.entradas">
-                      <th [attr.colspan]="3" [class.th-duplicado]="entrada.esDuplicado">
-                        {{ entrada.label }}
-                      </th>
-                    </ng-container>
-                  </tr>
-                  <tr>
-                    <th class="th-dilucion"></th>
-                    <ng-container *ngFor="let entrada of tabla24h.entradas">
-                      <th class="th-sub">S1</th>
-                      <th class="th-sub">S2</th>
-                      <th class="th-sub">S3</th>
-                    </ng-container>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let dil of DILUCIONES">
-                    <td class="td-dilucion">{{ dil }}</td>
-                    <ng-container *ngFor="let entrada of tabla24h.entradas">
-                      <td *ngFor="let idx of [0, 1, 2]" class="td-celda"
-                        [class.celda-pos]="entrada.submuestras[dil][idx] === 'positivo'"
-                        [class.celda-neg]="entrada.submuestras[dil][idx] === 'negativo'"
-                        (click)="ciclarResultado(entrada, dil, idx)">
-                        <span class="celda-badge">
-                          {{ entrada.submuestras[dil][idx] === 'positivo' ? 'POS' :
-                          entrada.submuestras[dil][idx] === 'negativo' ? 'NEG' : '–' }}
-                        </span>
-                      </td>
-                    </ng-container>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p class="tabla-hint">
-              <ion-icon name="finger-print-outline"></ion-icon>
-              Toca cada celda para alternar: Sin registrar → Positivo → Negativo
-            </p>
-          </div>
-        </div>
-
-        <!-- Lectura 48h -->
-        <div class="form-card">
-          <div class="form-card-header header-48h">
-            <div class="form-card-title-group">
-              <ion-icon name="time-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">Lectura a 48 Horas</h2>
-            </div>
-          </div>
-          <div class="form-card-body">
-            <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              <div class="form-group">
-                <label class="form-label text-xs">Fecha de Lectura <span class="required-star">*</span></label>
-                <input type="date" class="form-input" [(ngModel)]="tabla48h.fechaLectura"
-                  [ngModelOptions]="{standalone: true}" placeholder="DD/MM" maxlength="5" />
-              </div>
-              <div class="form-group">
-                <label class="form-label text-xs">Hora de Lectura <span class="required-star">*</span></label>
-                <input type="time" class="form-input" [class.input-error]="errorHora48h"
-                  [(ngModel)]="tabla48h.horaLectura" [ngModelOptions]="{standalone: true}"
-                  (ngModelChange)="onHora48hChange()" />
-                <span class="error-msg" *ngIf="errorHora48h">{{ errorHora48h }}</span>
-              </div>
-              <div class="form-group">
-                <label class="form-label text-xs">Analista Responsable<span class="required-star">*</span></label>
-                <ion-select [(ngModel)]="tabla48h.analistaResponsable" [ngModelOptions]="{standalone: true}"
-                  interface="popover" placeholder="Seleccione analista">
-                  <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
-                    {{ r.nombreApellido }}
-                  </ion-select-option>
-                </ion-select>
-              </div>
-            </div>
-
-            <!-- Tabla submuestras 48h -->
-            <div class="tabla-wrapper">
-              <table class="tabla-submuestras">
-                <thead>
-                  <tr>
-                    <th class="th-dilucion">Dilución</th>
-                    <ng-container *ngFor="let entrada of tabla48h.entradas">
-                      <th [attr.colspan]="3" [class.th-duplicado]="entrada.esDuplicado">
-                        {{ entrada.label }}
-                      </th>
-                    </ng-container>
-                  </tr>
-                  <tr>
-                    <th class="th-dilucion"></th>
-                    <ng-container *ngFor="let entrada of tabla48h.entradas">
-                      <th class="th-sub">S1</th>
-                      <th class="th-sub">S2</th>
-                      <th class="th-sub">S3</th>
-                    </ng-container>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let dil of DILUCIONES">
-                    <td class="td-dilucion">{{ dil }}</td>
-                    <ng-container *ngFor="let entrada of tabla48h.entradas">
-                      <td *ngFor="let idx of [0, 1, 2]" class="td-celda"
-                        [class.celda-pos]="entrada.submuestras[dil][idx] === 'positivo'"
-                        [class.celda-neg]="entrada.submuestras[dil][idx] === 'negativo'"
-                        (click)="ciclarResultado(entrada, dil, idx)">
-                        <span class="celda-badge">
-                          {{ entrada.submuestras[dil][idx] === 'positivo' ? 'POS' :
-                          entrada.submuestras[dil][idx] === 'negativo' ? 'NEG' : '–' }}
-                        </span>
-                      </td>
-                    </ng-container>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p class="tabla-hint">
-              <ion-icon name="finger-print-outline"></ion-icon>
-              Toca cada celda para alternar: Sin registrar → Positivo → Negativo
-            </p>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ═════════════ ETAPA 4: CONTROL DE CALIDAD ═══════════════════ -->
-      <div *ngIf="etapaActual === 4" class="etapa-panel">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
@@ -464,13 +284,13 @@
           </div>
           <div class="form-card-body flex flex-col gap-6">
 
-            <!-- BLOQUE 1: Coliformes Totales (24 horas) -->
+            <!-- CT Controles -->
             <div class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
-              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3">
-                Control Coliformes Totales (24 horas)
+              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
+                Control Coliformes Totales
               </p>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
                   <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) K. aerogenes</p>
                   <div class="flex gap-4">
                     <label class="form-check-label text-xs">
@@ -485,7 +305,7 @@
                     </label>
                   </div>
                 </div>
-                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
                   <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) S. aureus</p>
                   <div class="flex gap-4">
                     <label class="form-check-label text-xs">
@@ -500,154 +320,341 @@
                     </label>
                   </div>
                 </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Control blanco <span class="required-star">*</span></label>
-                  <input type="text" class="form-input bg-white" placeholder="Descripción del control blanco..."
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <label class="text-xs font-semibold text-slate-600 mb-2 block">Control blanco</label>
+                  <input type="text" class="form-input" placeholder="Descripción..."
                     [(ngModel)]="ct_controlBlanco" [ngModelOptions]="{standalone: true}" />
                 </div>
               </div>
-
-              <!-- BLOQUE 2: Coliformes Fecales (24 horas) -->
-              <div class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
-                <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3">
-                  Control Coliformes Fecales (24 horas)
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
-                    <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
-                    <div class="flex gap-4">
-                      <label class="form-check-label text-xs">
-                        <input type="radio" class="form-radio" [(ngModel)]="cf_controlEColi"
-                          [ngModelOptions]="{standalone: true}" value="presencia" />
-                        <span class="badge-presencia">Presencia</span>
-                      </label>
-                      <label class="form-check-label text-xs">
-                        <input type="radio" class="form-radio" [(ngModel)]="cf_controlEColi"
-                          [ngModelOptions]="{standalone: true}" value="ausencia" />
-                        <span class="badge-ausencia">Ausencia</span>
-                      </label>
-                    </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="ct_controlEColi"
+                        [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="ct_controlEColi"
+                        [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
                   </div>
-                  <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
-                    <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
-                    <div class="flex gap-4">
-                      <label class="form-check-label text-xs">
-                        <input type="radio" class="form-radio" [(ngModel)]="cf_controlKAerogenes"
-                          [ngModelOptions]="{standalone: true}" value="presencia" />
-                        <span class="badge-presencia">Presencia</span>
-                      </label>
-                      <label class="form-check-label text-xs">
-                        <input type="radio" class="form-radio" [(ngModel)]="cf_controlKAerogenes"
-                          [ngModelOptions]="{standalone: true}" value="ausencia" />
-                        <span class="badge-ausencia">Ausencia</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Control blanco <span class="required-star">*</span></label>
-                  <input type="text" class="form-input bg-white" placeholder="Descripción del control blanco..."
-                    [(ngModel)]="cf_controlBlanco" [ngModelOptions]="{standalone: true}" />
                 </div>
               </div>
-
-              <!-- BLOQUE 3: Escherichia coli (24 horas) -->
-              <div class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
-                <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3">
-                  Control Escherichia coli (24 horas)
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
-                    <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
-                    <div class="flex gap-4">
-                      <label class="form-check-label text-xs">
-                        <input type="radio" class="form-radio" [(ngModel)]="ec_controlEColi"
-                          [ngModelOptions]="{standalone: true}" value="presencia" />
-                        <span class="badge-presencia">Presencia</span>
-                      </label>
-                      <label class="form-check-label text-xs">
-                        <input type="radio" class="form-radio" [(ngModel)]="ec_controlEColi"
-                          [ngModelOptions]="{standalone: true}" value="ausencia" />
-                        <span class="badge-ausencia">Ausencia</span>
-                      </label>
-                    </div>
-                  </div>
-                  <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
-                    <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
-                    <div class="flex gap-4">
-                      <label class="form-check-label text-xs">
-                        <input type="radio" class="form-radio" [(ngModel)]="ec_controlKAerogenes"
-                          [ngModelOptions]="{standalone: true}" value="presencia" />
-                        <span class="badge-presencia">Presencia</span>
-                      </label>
-                      <label class="form-check-label text-xs">
-                        <input type="radio" class="form-radio" [(ngModel)]="ec_controlKAerogenes"
-                          [ngModelOptions]="{standalone: true}" value="ausencia" />
-                        <span class="badge-ausencia">Ausencia</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Control blanco <span class="required-star">*</span></label>
-                  <input type="text" class="form-input bg-white" placeholder="Descripción del control blanco..."
-                    [(ngModel)]="ec_controlBlanco" [ngModelOptions]="{standalone: true}" />
-                </div>
-              </div>
-
             </div>
+
+            <!-- CF Controles -->
+            <div class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
+                Control Coliformes Fecales
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="cf_controlEColi"
+                        [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="cf_controlEColi"
+                        [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="cf_controlKAerogenes"
+                        [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="cf_controlKAerogenes"
+                        [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group mt-3">
+                <label class="form-label text-xs">Control blanco</label>
+                <input type="text" class="form-input bg-white" placeholder="Descripción..."
+                  [(ngModel)]="cf_controlBlanco" [ngModelOptions]="{standalone: true}" />
+              </div>
+            </div>
+
+            <!-- E. coli Controles -->
+            <div class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
+                Control Escherichia coli
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="ec_controlEColi"
+                        [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="ec_controlEColi"
+                        [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="ec_controlKAerogenes"
+                        [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" [(ngModel)]="ec_controlKAerogenes"
+                        [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group mt-3">
+                <label class="form-label text-xs">Control blanco</label>
+                <input type="text" class="form-input bg-white" placeholder="Descripción..."
+                  [(ngModel)]="ec_controlBlanco" [ngModelOptions]="{standalone: true}" />
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
 
-      <!-- ════════════════════ ETAPA 5: DATOS FINALES Y RESULTADOS NMP ═════════════════════════ -->
-      <div *ngIf="etapaActual === 5" class="etapa-panel">
-        <div class="form-card">
+      <!-- ═══════ ETAPA 4: LECTURAS Y RESULTADOS NMP ═══════ -->
+      <div *ngIf="etapaActual === 4" class="etapa-panel">
+
+        <!-- Metadata de lecturas (compartida) -->
+        <div class="form-card mb-4">
           <div class="form-card-header">
             <div class="form-card-title-group">
-              <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">Datos Finales y Resultados</h2>
+              <ion-icon name="time-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Lecturas 24h y 48h</h2>
             </div>
           </div>
           <div class="form-card-body">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- 24h -->
+              <div class="border border-slate-200 rounded-xl p-4 bg-blue-50/40">
+                <p class="text-sm font-semibold text-blue-800 mb-3 border-b border-blue-200 pb-2">
+                  <ion-icon name="sunny-outline" class="mr-1"></ion-icon>
+                  Lectura 24 horas
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div class="form-group">
+                    <label class="form-label text-xs">Fecha</label>
+                    <input type="date" class="form-input" [(ngModel)]="fechaLectura24h"
+                      [ngModelOptions]="{standalone: true}" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Hora</label>
+                    <input type="time" class="form-input" [class.input-error]="errorHora24h"
+                      [(ngModel)]="horaLectura24h" [ngModelOptions]="{standalone: true}"
+                      (ngModelChange)="onHora24hChange()" />
+                    <span class="error-msg" *ngIf="errorHora24h">{{ errorHora24h }}</span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Analista</label>
+                    <ion-select [(ngModel)]="analista24h" [ngModelOptions]="{standalone: true}"
+                      interface="popover" placeholder="Seleccione">
+                      <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
+                        {{ r.nombreApellido }}
+                      </ion-select-option>
+                    </ion-select>
+                  </div>
+                </div>
+              </div>
+              <!-- 48h -->
+              <div class="border border-slate-200 rounded-xl p-4 bg-purple-50/40">
+                <p class="text-sm font-semibold text-purple-800 mb-3 border-b border-purple-200 pb-2">
+                  <ion-icon name="moon-outline" class="mr-1"></ion-icon>
+                  Lectura 48 horas
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div class="form-group">
+                    <label class="form-label text-xs">Fecha</label>
+                    <input type="date" class="form-input" [(ngModel)]="fechaLectura48h"
+                      [ngModelOptions]="{standalone: true}" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Hora</label>
+                    <input type="time" class="form-input" [class.input-error]="errorHora48h"
+                      [(ngModel)]="horaLectura48h" [ngModelOptions]="{standalone: true}"
+                      (ngModelChange)="onHora48hChange()" />
+                    <span class="error-msg" *ngIf="errorHora48h">{{ errorHora48h }}</span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Analista</label>
+                    <ion-select [(ngModel)]="analista48h" [ngModelOptions]="{standalone: true}"
+                      interface="popover" placeholder="Seleccione">
+                      <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
+                        {{ r.nombreApellido }}
+                      </ion-select-option>
+                    </ion-select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            <!-- Tabla de Resultados Finales por Muestra -->
-            <p class="form-label mb-3">Resultados Finales por Muestra (NMP/100ml)</p>
-            <div class="tabla-wrapper mb-6">
-              <table class="tabla-submuestras w-full text-xs">
-                <thead>
-                  <tr class="bg-[#29588C] text-white">
-                    <th class="py-2 px-3 text-left font-semibold">N° Muestra</th>
-                    <th class="py-2 px-3 text-left font-semibold">CT</th>
-                    <th class="py-2 px-3 text-left font-semibold">CF</th>
-                    <th class="py-2 px-3 text-left font-semibold">E. coli</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let res of resultadosFinales" class="border-b border-slate-200">
-                    <td class="py-2 px-3 font-semibold">{{ res.label }}</td>
-                    <td class="py-2 px-3">{{ res.ct }}</td>
-                    <td class="py-2 px-3">{{ res.cf }}</td>
-                    <td class="py-2 px-3">{{ res.ecoli }}</td>
-                  </tr>
-                </tbody>
-              </table>
+        <!-- Tarjetas por muestra -->
+        <div *ngIf="entradasMuestra.length === 0" class="text-center text-slate-400 py-8">
+          No hay muestras cargadas para este análisis.
+        </div>
+
+        <ng-container *ngFor="let entrada of entradasMuestra; let idx = index">
+          <div class="muestra-card mb-4">
+            <!-- Header -->
+            <div class="muestra-card-header">
+              <div class="muestra-card-title">
+                <ion-icon name="flask-outline"></ion-icon>
+                Muestra {{ entrada.label }}
+                <span *ngIf="entrada.esDuplicado" class="badge-duplicado">Duplicado</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button *ngIf="idx === 0 && puedeDuplicar" type="button" class="btn-duplicar"
+                  (click)="duplicarMuestra(entrada)">
+                  <ion-icon name="duplicate-outline"></ion-icon>
+                  Dup
+                </button>
+                <span class="muestra-card-counter">{{ idx + 1 }} / {{ entradasMuestra.length }}</span>
+              </div>
             </div>
 
-            <!-- Botón calcular NMP -->
-            <div class="flex justify-end mb-6">
-              <ion-button fill="outline" color="primary" (click)="calcularNMP()" class="btn-calcular-nmp"
-                [disabled]="!puedeCalcularNMP">
-                <ion-icon name="calculator-outline" slot="start"></ion-icon>
-                Calcular NMP
-              </ion-button>
-            </div>
-            <p *ngIf="!puedeCalcularNMP" class="text-xs text-amber-600 mb-4">
-              Complete todas las lecturas de 24h y 48h para habilitar el cálculo.
-            </p>
+            <div class="muestra-card-body">
+              <!-- Side-by-side tables container -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 24h Readings -->
+                <div class="mb-4">
+                  <p class="text-xs font-semibold text-blue-700 mb-2 border-b border-blue-100 pb-1">
+                    Lectura 24h
+                  </p>
+                  <div class="tabla-wrapper">
+                    <table class="tabla-submuestras tabla-submuestras--card">
+                      <thead>
+                        <tr>
+                          <th class="th-dilucion">Dilución</th>
+                          <th class="th-sub">S1</th>
+                          <th class="th-sub">S2</th>
+                          <th class="th-sub">S3</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let dil of DILUCIONES">
+                          <td class="td-dilucion">{{ dil }}</td>
+                          <td *ngFor="let tubo of [0, 1, 2]" class="td-celda-radio">
+                            <button type="button"
+                              class="btn-resultado"
+                              [class.btn-positivo]="entrada.submuestras24h[dil][tubo] === 'positivo'"
+                              (click)="setResultado(entrada, entrada.submuestras24h, dil, tubo, 'positivo')">+</button>
+                            <button type="button"
+                              class="btn-resultado"
+                              [class.btn-negativo]="entrada.submuestras24h[dil][tubo] === 'negativo'"
+                              (click)="setResultado(entrada, entrada.submuestras24h, dil, tubo, 'negativo')">–</button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
 
-            <!-- Observaciones finales -->
-            <div class="form-group border-t border-slate-100 pt-4">
+                <!-- 48h Readings -->
+                <div class="mb-4">
+                  <p class="text-xs font-semibold text-purple-700 mb-2 border-b border-purple-100 pb-1">
+                    Lectura 48h
+                  </p>
+                  <div class="tabla-wrapper">
+                    <table class="tabla-submuestras tabla-submuestras--card">
+                      <thead>
+                        <tr>
+                          <th class="th-dilucion">Dilución</th>
+                          <th class="th-sub">S1</th>
+                          <th class="th-sub">S2</th>
+                          <th class="th-sub">S3</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let dil of DILUCIONES">
+                          <td class="td-dilucion">{{ dil }}</td>
+                          <td *ngFor="let tubo of [0, 1, 2]" class="td-celda-radio">
+                            <button type="button"
+                              class="btn-resultado"
+                              [class.btn-positivo]="entrada.submuestras48h[dil][tubo] === 'positivo'"
+                              (click)="setResultado(entrada, entrada.submuestras48h, dil, tubo, 'positivo')">+</button>
+                            <button type="button"
+                              class="btn-resultado"
+                              [class.btn-negativo]="entrada.submuestras48h[dil][tubo] === 'negativo'"
+                              (click)="setResultado(entrada, entrada.submuestras48h, dil, tubo, 'negativo')">–</button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- NMP Results -->
+              <div class="resultados-nmp" *ngIf="entrada.resultados; else sinResultados">
+                <div class="resultado-item">
+                  <span class="resultado-label">CT</span>
+                  <span class="resultado-valor">{{ entrada.resultados.ct }}</span>
+                </div>
+                <div class="resultado-item">
+                  <span class="resultado-label">CF</span>
+                  <span class="resultado-valor">{{ entrada.resultados.cf }}</span>
+                </div>
+                <div class="resultado-item">
+                  <span class="resultado-label">E. coli</span>
+                  <span class="resultado-valor">{{ entrada.resultados.ecoli }}</span>
+                </div>
+              </div>
+              <ng-template #sinResultados>
+                <div class="text-center py-3 text-xs text-slate-400 italic border-t border-slate-100">
+                  Presione "Calcular NMP" para ver los resultados.
+                </div>
+              </ng-template>
+
+              <!-- Botón Calcular NMP por tarjeta -->
+              <div class="text-center mt-4 border-t border-slate-100 pt-4">
+                <ion-button fill="outline" color="primary" size="small" (click)="calcularNMP()"
+                  [disabled]="calculando" class="btn-calcular-nmp--card">
+                  <ion-icon name="calculator-outline" slot="start"></ion-icon>
+                  {{ calculando ? 'Calculando...' : 'Calcular NMP' }}
+                </ion-button>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Botón Agregar nueva muestra -->
+        <div class="text-center mb-6">
+          <ion-button fill="outline" color="secondary" (click)="agregarMuestra()">
+            <ion-icon name="add-outline" slot="start"></ion-icon>
+            Agregar nueva muestra
+          </ion-button>
+        </div>
+
+        <!-- Observaciones finales -->
+        <div class="form-card">
+          <div class="form-card-body">
+            <div class="form-group">
               <label class="form-label">Observaciones Finales <span class="optional-tag">(opcional)</span></label>
               <textarea class="form-textarea w-full border border-gray-200 rounded-lg p-3 text-sm" rows="3"
                 placeholder="Escriba comentarios, notas o incidencias del análisis..."
@@ -655,20 +662,20 @@
             </div>
           </div>
         </div>
+
       </div>
     </form>
 
     <!-- ═════════════════ BARRA DE NAVEGACIÓN INFERIOR ═══════════════════════ -->
-
     <div class="nav-footer">
       <button type="button" class="btn-cancel" (click)="confirmarCancelar()">
         <ion-icon name="close-outline"></ion-icon>
         Cancelar
       </button>
       <div class="nav-footer__actions">
-        <button type="button" class="btn-draft" (click)="guardarBorrador()">
+        <button type="button" class="btn-draft" (click)="guardarFormularioBorrador()">
           <ion-icon name="document-outline"></ion-icon>
-          Guardar Borrador
+          Guardar
         </button>
         <button type="button" class="btn-secondary" (click)="retrocederEtapa()" *ngIf="etapaActual > 1">
           <ion-icon name="arrow-back-outline"></ion-icon>

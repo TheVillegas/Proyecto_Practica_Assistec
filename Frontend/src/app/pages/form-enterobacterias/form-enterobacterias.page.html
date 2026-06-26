@@ -29,7 +29,7 @@
         <span>Modo lectura — solo Analista o Admin pueden editar.</span>
       </div>
 
-      <!-- ═══════════ STEPPER 6 ETAPAS ══════════ -->
+      <!-- ═══════════ STEPPER 5 ETAPAS ══════════ -->
       <div class="stepper-wrapper">
         <div class="stepper-bar">
           <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
@@ -97,18 +97,112 @@
           </div>
         </div>
 
-        <!-- ════════ ETAPA 3: LECTURA 24H + CONFIRMACIÓN + RESULTADOS ════════ -->
+        <!-- ════════ ETAPA 3: CONTROL DE CALIDAD ════════ -->
         <div *ngIf="etapaActual() === 3" class="etapa-panel animate__animated animate__fadeIn">
+          <div class="form-card">
+            <div class="form-card-header header-resultados">
+              <div class="form-card-title-group">
+                <ion-icon name="shield-checkmark-outline" class="card-header-icon"></ion-icon>
+                <h2 class="form-card-title">3. Control de Calidad</h2>
+              </div>
+            </div>
+            <div class="form-card-body" [formGroup]="controlCalidadGroup">
+              <p class="subseccion-title">Controles de Calidad en ALI</p>
+              <div class="grid-3col">
+                <div class="form-group">
+                  <label class="form-label" for="duplicadoAli">Duplicado en ALI</label>
+                  <select id="duplicadoAli" class="form-input" formControlName="duplicadoAli" [disabled]="modoLectura">
+                    <option value="">— Seleccionar —</option>
+                    <option value="Cumple">Cumple</option>
+                    <option value="No Cumple">No Cumple</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="controlPositivoBlancoAli">Control (+) y Blanco en ALI</label>
+                  <select id="controlPositivoBlancoAli" class="form-input" formControlName="controlPositivoBlancoAli" [disabled]="modoLectura">
+                    <option value="">— Seleccionar —</option>
+                    <option value="Cumple">Cumple</option>
+                    <option value="No Cumple">No Cumple</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="controlSiembraAli">Control de Siembra en ALI</label>
+                  <select id="controlSiembraAli" class="form-input" formControlName="controlSiembraAli" [disabled]="modoLectura">
+                    <option value="">— Seleccionar —</option>
+                    <option value="Cumple">Cumple</option>
+                    <option value="No Cumple">No Cumple</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="seccion-divider"></div>
+              <p class="subseccion-title">Campos complementarios</p>
+              <div class="grid-2col">
+                <div class="form-group">
+                  <label class="form-label" for="desfavorable">Desfavorable <span class="optional-tag">(opcional)</span></label>
+                  <input id="desfavorable" type="text" class="form-input" formControlName="desfavorable"
+                    placeholder="Detalle si aplica" [attr.readonly]="modoLectura ? true : null" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="tablaPagina">Tabla/Página <span class="optional-tag">(opcional)</span></label>
+                  <input id="tablaPagina" type="text" class="form-input" formControlName="tablaPagina"
+                    placeholder="Ej: Tabla 1 / Pág. 2" [attr.readonly]="modoLectura ? true : null" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="limite">Límite <span class="optional-tag">(opcional)</span></label>
+                  <input id="limite" type="text" class="form-input" formControlName="limite"
+                    placeholder="Límite aplicable" [attr.readonly]="modoLectura ? true : null" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="fechaHoraEntrega">Fecha y hora de entrega <span class="optional-tag">(opcional)</span></label>
+                  <input id="fechaHoraEntrega" type="datetime-local" class="form-input" formControlName="fechaHoraEntrega"
+                    [attr.readonly]="modoLectura ? true : null" />
+                </div>
+              </div>
+
+              <div class="seccion-divider"></div>
+              <p class="subseccion-title">Controles históricos del registro</p>
+              <div class="grid-3col">
+                <div class="form-group">
+                  <label class="form-label" for="controlPosEcoli">Control (+) E. coli</label>
+                  <input id="controlPosEcoli" type="text" class="form-input" formControlName="controlPosEcoli"
+                    placeholder="Resultado control positivo" [attr.readonly]="modoLectura ? true : null" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="controlNegPaer">Control (-) P. aeruginosa</label>
+                  <input id="controlNegPaer" type="text" class="form-input" formControlName="controlNegPaer"
+                    placeholder="Resultado control negativo" [attr.readonly]="modoLectura ? true : null" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="blanco">Blanco</label>
+                  <input id="blanco" type="text" class="form-input" formControlName="blanco"
+                    placeholder="Resultado blanco" [attr.readonly]="modoLectura ? true : null" />
+                </div>
+              </div>
+
+              <div class="seccion-divider"></div>
+              <div class="form-group">
+                <label class="form-label" for="observaciones">Observaciones <span class="optional-tag">(opcional)</span></label>
+                <textarea id="observaciones" class="form-textarea" rows="4" formControlName="observaciones"
+                  placeholder="Escriba comentarios, notas o incidencias del análisis..."
+                  [attr.readonly]="modoLectura ? true : null"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ════════ ETAPA 4: LECTURA 24H + RESULTADOS ════════ -->
+        <div *ngIf="etapaActual() === 4" class="etapa-panel animate__animated animate__fadeIn">
           <div class="form-card">
             <div class="form-card-header header-analisis">
               <div class="form-card-title-group">
                 <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
-                <h2 class="form-card-title">3. Lectura 24h</h2>
+                <h2 class="form-card-title">4. Lectura 24h</h2>
               </div>
             </div>
             <div class="form-card-body">
 
-              <!-- Multi-sample counting + NCh2676 confirmation + calculation -->
+              <!-- Multi-sample counting + calculation -->
               <app-ent-analisis-lectura
                 [formGroup]="analisisLecturaGroup"
                 [rol]="rol"
@@ -145,54 +239,17 @@
                 </div>
               </ng-container>
 
-              <!-- Quality controls -->
-              <div class="seccion-divider"></div>
-              <p class="subseccion-title">Controles de calidad</p>
-              <div [formGroup]="analisisLecturaGroup" class="grid-3col">
-                <div class="form-group">
-                  <label class="form-label" for="controlPosEcoli">Control (+) E. coli</label>
-                  <input id="controlPosEcoli" type="text" class="form-input"
-                    formControlName="controlPosEcoli"
-                    placeholder="Resultado control positivo"
-                    [attr.readonly]="modoLectura ? true : null" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="controlNegPaer">Control (-) P. aeruginosa</label>
-                  <input id="controlNegPaer" type="text" class="form-input"
-                    formControlName="controlNegPaer"
-                    placeholder="Resultado control negativo"
-                    [attr.readonly]="modoLectura ? true : null" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="blanco">Blanco</label>
-                  <input id="blanco" type="text" class="form-input"
-                    formControlName="blanco"
-                    placeholder="Resultado blanco"
-                    [attr.readonly]="modoLectura ? true : null" />
-                </div>
-              </div>
-
-              <!-- Observaciones -->
-              <div class="seccion-divider"></div>
-              <div [formGroup]="analisisLecturaGroup" class="form-group">
-                <label class="form-label" for="observaciones">Observaciones <span class="optional-tag">(opcional)</span></label>
-                <textarea id="observaciones" class="form-textarea" rows="4"
-                  formControlName="observaciones"
-                  placeholder="Escriba comentarios, notas o incidencias del análisis..."
-                  [attr.readonly]="modoLectura ? true : null"></textarea>
-              </div>
-
             </div>
           </div>
         </div>
 
-        <!-- ════════ ETAPA 4: TRASPASO ════════ -->
-        <div *ngIf="etapaActual() === 4" class="etapa-panel animate__animated animate__fadeIn">
+        <!-- ════════ ETAPA 5: TRASPASO / CONFIRMACIÓN ════════ -->
+        <div *ngIf="etapaActual() === 5" class="etapa-panel animate__animated animate__fadeIn">
           <div class="form-card">
             <div class="form-card-header header-confirmacion">
               <div class="form-card-title-group">
                 <ion-icon name="swap-horizontal-outline" class="card-header-icon"></ion-icon>
-                <h2 class="form-card-title">4. Traspaso</h2>
+                <h2 class="form-card-title">5. Traspaso / Confirmación</h2>
               </div>
             </div>
             <div class="form-card-body">

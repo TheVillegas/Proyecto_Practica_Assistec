@@ -1,7 +1,6 @@
 <div [formGroup]="formGroup" class="subetapa-section">
-  <p class="subseccion-title">Resultados finales</p>
 
-  <!-- Tabla de resultados -->
+  <!-- Tabla de cálculos -->
   <p class="subseccion-title">Tabla de resultados finales</p>
   <div class="tabla-wrapper">
     <table class="tabla-resultados">
@@ -18,27 +17,65 @@
       </thead>
       <tbody>
         <tr>
-          <td *ngFor="let key of resultadosKeys">
+          <td>
             <input type="number" min="0" class="form-input-sm"
-              [class.input-error]="erroresTablaResultados[key]"
-              [(ngModel)]="tablaResultados[key]"
-              [ngModelOptions]="{standalone: true}" placeholder="0"
+              [class.input-error]="campoInvalido('muestraB')"
+              formControlName="muestraB" placeholder="0"
               [attr.readonly]="(rol | modoLectura) ? true : null" />
-            <span class="error-msg block" *ngIf="erroresTablaResultados[key]">
-              {{ erroresTablaResultados[key] }}
-            </span>
+          </td>
+          <td>
+            <input type="number" min="0" class="form-input-sm"
+              [class.input-error]="campoInvalido('muestraA')"
+              formControlName="muestraA" placeholder="0"
+              [attr.readonly]="(rol | modoLectura) ? true : null" />
+          </td>
+          <td>
+            <input type="number" min="0" class="form-input-sm"
+              [class.input-error]="campoInvalido('d')"
+              formControlName="d" placeholder="0"
+              [attr.readonly]="(rol | modoLectura) ? true : null" />
+          </td>
+          <td>
+            <input type="number" min="0" class="form-input-sm"
+              [class.input-error]="campoInvalido('n1')"
+              formControlName="n1" placeholder="0"
+              [attr.readonly]="(rol | modoLectura) ? true : null" />
+          </td>
+          <td>
+            <input type="number" min="0" class="form-input-sm"
+              [class.input-error]="campoInvalido('n2')"
+              formControlName="n2" placeholder="0"
+              [attr.readonly]="(rol | modoLectura) ? true : null" />
+          </td>
+          <td>
+            <input type="number" min="0" class="form-input-sm"
+              [class.input-error]="campoInvalido('m')"
+              formControlName="m" placeholder="0"
+              [attr.readonly]="(rol | modoLectura) ? true : null" />
+          </td>
+          <td>
+            <input type="number" min="0" class="form-input-sm"
+              [class.input-error]="campoInvalido('sumaA')"
+              formControlName="sumaA" placeholder="0"
+              [attr.readonly]="(rol | modoLectura) ? true : null" />
           </td>
         </tr>
       </tbody>
     </table>
   </div>
+  <p class="tabla-hint">
+    <ion-icon name="information-circle-outline"></ion-icon>
+    Campos opcionales. Si los completa, deben ser valores numéricos ≥ 0.
+  </p>
 
   <!-- Observaciones -->
-  <div class="form-group mt-6">
+  <div class="seccion-divider"></div>
+  <div class="form-group">
     <label class="form-label" for="observaciones">Observaciones <span class="optional-tag">(opcional)</span></label>
     <textarea id="observaciones" class="form-textarea" rows="4"
       placeholder="Escriba comentarios, notas o incidencias del análisis..."
       formControlName="observaciones"
       [attr.readonly]="(rol | modoLectura) ? true : null"></textarea>
   </div>
+
 </div>

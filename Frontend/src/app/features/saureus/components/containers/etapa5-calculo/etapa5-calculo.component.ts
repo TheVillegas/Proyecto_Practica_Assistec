@@ -481,6 +481,7 @@ export interface AliOption {
 })
 export class Etapa5CalculoComponent implements OnInit {
   @Input() formularioBloqueado: boolean = false;
+  @Input() solicitudAnalisisId: string = '';
 
   muestras: Array<{
     id: string;
@@ -566,7 +567,7 @@ export class Etapa5CalculoComponent implements OnInit {
       ];
 
       const resultado = await this.calculoService.calcularMuestra({
-        solicitudAnalisisId: 'current-id',
+        solicitudAnalisisId: this.solicitudAnalisisId,
         muestraId,
         ...muestra.data,
         coloniasPosibles
@@ -595,7 +596,7 @@ export class Etapa5CalculoComponent implements OnInit {
     this.duplicadoIsLoading = true;
 
     try {
-      const datosImportados = await this.calculoService.importarDuplicado(aliId, 'current-id');
+      const datosImportados = await this.calculoService.importarDuplicado(aliId, this.solicitudAnalisisId);
       const { muestra1, advertencia } = datosImportados;
 
       if (muestra1 && !advertencia) {
@@ -611,7 +612,7 @@ export class Etapa5CalculoComponent implements OnInit {
         };
 
         const resultado = await this.calculoService.calcularMuestra({
-          solicitudAnalisisId: 'current-id',
+          solicitudAnalisisId: this.solicitudAnalisisId,
           muestraId: 'DUP',
           diluciones: this.duplicado.diluciones,
           coloniasPosibles: this.duplicado.coloniasPosibles,
@@ -655,7 +656,7 @@ export class Etapa5CalculoComponent implements OnInit {
       ];
 
       const resultado = await this.calculoService.calcularMuestra({
-        solicitudAnalisisId: 'current-id',
+        solicitudAnalisisId: this.solicitudAnalisisId,
         muestraId: 'DUP',
         diluciones: this.duplicado.diluciones,
         coloniasPosibles,

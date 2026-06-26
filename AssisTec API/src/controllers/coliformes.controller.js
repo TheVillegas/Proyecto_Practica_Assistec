@@ -58,6 +58,19 @@ class ColiController {
             handleError(res, error);
         }
     }
+
+    async calcularNmp(req, res) {
+        try {
+            const result = await coliService.calcularNmp(
+                req.params.id,
+                req.body,
+                req.user
+            );
+            res.status(200).json(result);
+        } catch (error) {
+            handleError(res, error);
+        }
+    }
 }
 
 module.exports = new ColiController();

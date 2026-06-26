@@ -6,7 +6,17 @@ import { firstValueFrom, forkJoin } from 'rxjs';
 import { EnterobacteriasApiService } from '../../services/enterobacterias-api.service';
 import { AuthService } from '../../services/auth-service';
 import { CatalogosService } from '../../services/catalogos.service';
-import { EntEtapaPayload, EntFormularioCompleto, EntMuestraLectura } from '../../interfaces/enterobacterias.interfaces';
+import {
+  EntControlCalidadAli,
+  EntControlConfirmacion,
+  EntDilucionLectura,
+  EntEtapa1Payload,
+  EntEtapa2Payload,
+  EntEtapa3Payload,
+  EntEtapaPayload,
+  EntFormularioCompleto,
+  EntMuestraLectura,
+} from '../../interfaces/enterobacterias.interfaces';
 import { crearMuestraVacia } from './components/ent-analisis-lectura.component';
 import {
   EquipoIncubacion,
@@ -26,6 +36,63 @@ function reactivoOxidasaValidator(control: AbstractControl): ValidationErrors | 
   return null;
 }
 
+interface PesadoFormValue {
+  codigoALI?: string;
+  nActa?: string;
+  tipoMuestra?: string;
+  nMuestra10g90ml?: number | string | null;
+  nMuestra50g450ml?: number | string | null;
+  fechaInicio?: string;
+  horaInicio?: string;
+  analistaInicio?: string;
+}
+
+interface HomogeneizacionFormValue {
+  fechaHomog?: string;
+  horaHomog?: string;
+  analistaHomog?: string;
+}
+
+interface SembradoFormValue {
+  agarVRBGSembrado?: number | string | null;
+  estufaSembrado?: number | string | null;
+  placasSembrado?: number | string | null;
+  micropipeta1mlSembrado?: number | string | null;
+  fechaSembrado?: string;
+  horaSembrado?: string;
+  analistaSembrado?: string;
+}
+
+interface IncubacionPrepFormValue {
+  estufaIncub?: number | string | null;
+  fechaTermino?: string;
+  horaTermino?: string;
+  analistaIncub?: string;
+}
+
+interface AnalisisLecturaFormValue {
+  fechaLectura24h?: string;
+  horaLectura24h?: string;
+  analistaLectura24h?: string;
+  equipoCuentaColonias?: number | string | null;
+}
+
+interface ControlCalidadFormValue extends EntControlCalidadAli, EntControlConfirmacion {}
+
+interface IncubacionConfFormValue {
+  fechaTraspaso?: string;
+  horaTraspaso?: string;
+  analistaTraspaso?: string;
+  agarNutritivo?: number | string | null;
+  estufaConfIncub?: number | string | null;
+}
+
+interface LegacyLecturaFields {
+  n_muestra_lectura?: number;
+  dilucion?: number;
+  colonias_contadas?: number;
+}
+
 @Component({
   selector: 'app-form-enterobacterias',
   templateUrl: './form-enterobacterias.page.html',
@@ -42,12 +109,13 @@ export class FormEnterobacteriasPage implements OnInit {
   private authService = inject(AuthService);
   private catalogosService = inject(CatalogosService);
 
-  readonly TOTAL_ETAPAS = 4;
+  readonly TOTAL_ETAPAS = 5;
   readonly NOMBRES_ETAPAS = [
     'Pesado y Siembra',
     'Incubación',
+    'Control de Calidad',
     'Lectura 24h',
-    'Traspaso',
+    'Traspaso / Confirmación',
   ];
 
   idFormulario = 0;
@@ -66,6 +134,7 @@ export class FormEnterobacteriasPage implements OnInit {
   get homogeneizacionGroup(): FormGroup { return this.form.get('homogeneizacion') as FormGroup; }
   get sembradoGroup(): FormGroup { return this.form.get('sembrado') as FormGroup; }
   get incubacionPrepGroup(): FormGroup { return this.form.get('incubacionPrep') as FormGroup; }
+  get controlCalidadGroup(): FormGroup { return this.form.get('controlCalidad') as FormGroup; }
   get analisisLecturaGroup(): FormGroup { return this.form.get('analisisLectura') as FormGroup; }
   get incubacionConfGroup(): FormGroup { return this.form.get('incubacionConf') as FormGroup; }
 
@@ -151,9 +220,18 @@ export class FormEnterobacteriasPage implements OnInit {
         horaLectura24h: [''],
         analistaLectura24h: [''],
         equipoCuentaColonias: [''],
+      }),
+      controlCalidad: this.fb.group({
+        duplicadoAli: [''],
+        controlPositivoBlancoAli: [''],
+        controlSiembraAli: [''],
         controlPosEcoli: [''],
         controlNegPaer: [''],
         blanco: [''],
+        desfavorable: [''],
+        tablaPagina: [''],
+        limite: [''],
+        fechaHoraEntrega: [''],
         observaciones: [''],
       }),
       incubacionConf: this.fb.group({
@@ -210,8 +288,17 @@ export class FormEnterobacteriasPage implements OnInit {
         analistaLectura24h: e2.rutAnalistaLectura,
         equipoCuentaColonias: e2.idEquipoCuentaColonias ? String(e2.idEquipoCuentaColonias) : '',
       });
-      if ((e2 as unknown as { muestras?: EntMuestraLectura[] }).muestras?.length) {
-        this.muestrasLectura = (e2 as unknown as { muestras: EntMuestraLectura[] }).muestras;
+      this.form.get('controlCalidad')?.patchValue({
+        duplicadoAli: e2.duplicadoAli ?? '',
+        controlPositivoBlancoAli: e2.controlPositivoBlancoAli ?? '',
+        controlSiembraAli: e2.controlSiembraAli ?? '',
+        desfavorable: e2.desfavorable ?? '',
+        tablaPagina: e2.tablaPagina ?? '',
+        limite: e2.limite ?? '',
+        fechaHoraEntrega: e2.fechaHoraEntrega ?? '',
+      });
+      if (e2.muestras?.length) {
+        this.muestrasLectura = e2.muestras;
       }
     }
 
@@ -224,11 +311,18 @@ export class FormEnterobacteriasPage implements OnInit {
         agarNutritivo: e3.idAgarNutritivo ? String(e3.idAgarNutritivo) : '',
         estufaConfIncub: e3.idEstufaConf,
       });
-      // Controls and observaciones were previously stored in e3; keep loading them
-      this.form.get('analisisLectura')?.patchValue({
+      // Controls and observaciones were previously stored in e3; keep loading them for backwards compatibility.
+      this.form.get('controlCalidad')?.patchValue({
         controlPosEcoli: e3.controlPosEcoli ?? '',
         controlNegPaer: e3.controlNegPaer ?? '',
         blanco: e3.blanco ?? '',
+        duplicadoAli: e3.duplicadoAli ?? this.form.get('controlCalidad.duplicadoAli')?.value ?? '',
+        controlPositivoBlancoAli: e3.controlPositivoBlancoAli ?? this.form.get('controlCalidad.controlPositivoBlancoAli')?.value ?? '',
+        controlSiembraAli: e3.controlSiembraAli ?? this.form.get('controlCalidad.controlSiembraAli')?.value ?? '',
+        desfavorable: e3.desfavorable ?? this.form.get('controlCalidad.desfavorable')?.value ?? '',
+        tablaPagina: e3.tablaPagina ?? this.form.get('controlCalidad.tablaPagina')?.value ?? '',
+        limite: e3.limite ?? this.form.get('controlCalidad.limite')?.value ?? '',
+        fechaHoraEntrega: e3.fechaHoraEntrega ?? this.form.get('controlCalidad.fechaHoraEntrega')?.value ?? '',
         observaciones: e3.observaciones ?? '',
       });
     }
@@ -240,9 +334,23 @@ export class FormEnterobacteriasPage implements OnInit {
     const e3 = formulario.etapa3;
     if (!e1) return 1;
     if (!e1.completada) return 2;
-    if (!e2 || !e2.completada) return 3;
-    if (!e3 || !e3.completada) return 4;
-    return 4;
+    if (!e2) return 3;
+    if (!e2.completada) return this.tieneControlCalidad(e2) ? 4 : 3;
+    if (!e3 || !e3.completada) return 5;
+    return 5;
+  }
+
+  private tieneControlCalidad(etapa: EntFormularioCompleto['etapa2']): boolean {
+    if (!etapa) return false;
+    return Boolean(
+      etapa.duplicadoAli
+      || etapa.controlPositivoBlancoAli
+      || etapa.controlSiembraAli
+      || etapa.desfavorable
+      || etapa.tablaPagina
+      || etapa.limite
+      || etapa.fechaHoraEntrega
+    );
   }
 
   get progresoPorcentaje(): number {
@@ -272,6 +380,8 @@ export class FormEnterobacteriasPage implements OnInit {
   }
 
   async finalizarFormulario(): Promise<void> {
+    if (!await this.validarFinalizacion()) return;
+
     // Save all API etapas in order so completada flags are correct
     let ok = await this.guardarEtapa(1, true);
     if (!ok) return;
@@ -291,10 +401,10 @@ export class FormEnterobacteriasPage implements OnInit {
     let ok = await this.guardarEtapa(1, ui > 2);
     if (!ok) return;
     if (ui >= 3) {
-      ok = await this.guardarEtapa(2, ui > 3);
+      ok = await this.guardarEtapa(2, ui > 4);
       if (!ok) return;
     }
-    if (ui >= 4) {
+    if (ui >= 5) {
       ok = await this.guardarEtapa(3, false);
       if (!ok) return;
     }
@@ -326,12 +436,179 @@ export class FormEnterobacteriasPage implements OnInit {
   private construirPayloadEtapa(etapa: 1 | 2 | 3, completada: boolean): EntEtapaPayload {
     switch (etapa) {
       case 1:
-        return { completada, etapa: { ...this.form.value.pesado, ...this.form.value.homogeneizacion, ...this.form.value.sembrado, ...this.form.value.incubacionPrep } };
+        return { completada, etapa: this.construirPayloadEtapa1() };
       case 2:
-        return { completada, etapa: { ...this.form.value.analisisLectura, muestras: this.muestrasLectura } };
+        return { completada, etapa: this.construirPayloadEtapa2() };
       case 3:
-        return { completada, etapa: { ...this.form.value.incubacionConf } };
+        return { completada, etapa: this.construirPayloadEtapa3() };
     }
+  }
+
+  private construirPayloadEtapa1(): EntEtapa1Payload {
+    const pesado = this.groupValue<PesadoFormValue>('pesado');
+    const homogeneizacion = this.groupValue<HomogeneizacionFormValue>('homogeneizacion');
+    const sembrado = this.groupValue<SembradoFormValue>('sembrado');
+    const incubacion = this.groupValue<IncubacionPrepFormValue>('incubacionPrep');
+    const fechaInicioIncubacion = this.toIsoDateTime(sembrado.fechaSembrado, sembrado.horaSembrado);
+    const fechaFinIncubacion = this.toIsoDateTime(incubacion.fechaTermino, incubacion.horaTermino);
+
+    return this.omitirVacios({
+      codigo_ali: pesado.codigoALI,
+      n_acta: pesado.nActa,
+      tipo_muestra: pesado.tipoMuestra,
+      n_muestra_10g_90ml: this.toNumberOrUndefined(pesado.nMuestra10g90ml),
+      n_muestra_50g_450ml: this.toNumberOrUndefined(pesado.nMuestra50g450ml),
+      fecha_inicio: pesado.fechaInicio,
+      hora_inicio: pesado.horaInicio,
+      rut_analista_inicio: pesado.analistaInicio,
+      fecha_homog: homogeneizacion.fechaHomog,
+      hora_homog: homogeneizacion.horaHomog,
+      rut_analista_homog: homogeneizacion.analistaHomog,
+      id_lote_agar_vrbg_sembrado: this.toNumberOrUndefined(sembrado.agarVRBGSembrado),
+      id_estufa_sembrado: this.toNumberOrUndefined(sembrado.estufaSembrado),
+      placas_sembrado: this.toNumberOrUndefined(sembrado.placasSembrado),
+      id_micropipeta: this.toNumberOrUndefined(sembrado.micropipeta1mlSembrado),
+      fecha_sembrado: sembrado.fechaSembrado,
+      hora_sembrado: sembrado.horaSembrado,
+      rut_analista_sembrado: sembrado.analistaSembrado,
+      id_estufa_incub: this.toNumberOrUndefined(incubacion.estufaIncub),
+      fecha_inicio_incubacion: fechaInicioIncubacion,
+      fecha_fin_incubacion: fechaFinIncubacion,
+      rut_analista_incub: incubacion.analistaIncub,
+    });
+  }
+
+  private construirPayloadEtapa2(): EntEtapa2Payload {
+    const lectura = this.groupValue<AnalisisLecturaFormValue>('analisisLectura');
+    const controlCalidad = this.construirControlCalidadAli();
+
+    return this.omitirVacios({
+      fecha_lectura_24h: this.toIsoDateTime(lectura.fechaLectura24h, lectura.horaLectura24h),
+      hora_lectura_24h: lectura.horaLectura24h,
+      rut_analista_lectura: lectura.analistaLectura24h,
+      id_equipo_cuenta_colonias: this.toNumberOrUndefined(lectura.equipoCuentaColonias),
+      ...this.resolverCamposLecturaLegacy(),
+      muestras: this.muestrasLectura,
+      control_calidad: Object.keys(controlCalidad).length > 0 ? controlCalidad : undefined,
+    });
+  }
+
+  private construirPayloadEtapa3(): EntEtapa3Payload {
+    const incubacionConf = this.groupValue<IncubacionConfFormValue>('incubacionConf');
+    const controles = this.construirControlConfirmacion();
+
+    return this.omitirVacios({
+      fecha_traspaso: incubacionConf.fechaTraspaso,
+      hora_traspaso: incubacionConf.horaTraspaso,
+      rut_analista_traspaso: incubacionConf.analistaTraspaso,
+      id_agar_nutritivo: this.toNumberOrUndefined(incubacionConf.agarNutritivo),
+      id_estufa_conf: this.toNumberOrUndefined(incubacionConf.estufaConfIncub),
+      control_pos_ecoli: controles.controlPosEcoli,
+      control_neg_paer: controles.controlNegPaer,
+      blanco: controles.blanco,
+      observaciones: controles.observaciones,
+    });
+  }
+
+  private construirControlCalidadAli(): EntControlCalidadAli {
+    const control = this.groupValue<ControlCalidadFormValue>('controlCalidad');
+    return this.omitirVacios({
+      duplicadoAli: control.duplicadoAli,
+      controlPositivoBlancoAli: control.controlPositivoBlancoAli,
+      controlSiembraAli: control.controlSiembraAli,
+      desfavorable: control.desfavorable,
+      tablaPagina: control.tablaPagina,
+      limite: control.limite,
+      fechaHoraEntrega: control.fechaHoraEntrega,
+    });
+  }
+
+  private construirControlConfirmacion(): EntControlConfirmacion {
+    const control = this.groupValue<ControlCalidadFormValue>('controlCalidad');
+    return this.omitirVacios({
+      controlPosEcoli: control.controlPosEcoli,
+      controlNegPaer: control.controlNegPaer,
+      blanco: control.blanco,
+      observaciones: control.observaciones,
+    });
+  }
+
+  private resolverCamposLecturaLegacy(): LegacyLecturaFields {
+    const muestraConResultado = this.muestrasLectura.find((m) => m.resultado);
+    if (muestraConResultado?.resultado) {
+      return this.omitirVacios({
+        n_muestra_lectura: this.numeroMuestraDesdeEtiqueta(muestraConResultado.label),
+        dilucion: muestraConResultado.resultado.d,
+        colonias_contadas: muestraConResultado.resultado.sumaA,
+      });
+    }
+
+    const primeraDilucion = this.primeraDilucionConColonias();
+
+    if (!primeraDilucion) return {};
+
+    const coloniasA = primeraDilucion.coloniasA ?? 0;
+    const coloniasB = primeraDilucion.coloniasB ?? 0;
+    return this.omitirVacios({
+      n_muestra_lectura: 1,
+      dilucion: Math.pow(10, primeraDilucion.exponent),
+      colonias_contadas: coloniasA + coloniasB,
+    });
+  }
+
+  private async validarFinalizacion(): Promise<boolean> {
+    if (this.muestrasConResultado.length === 0) {
+      await this.mostrarAlerta('Lectura incompleta', 'Debe calcular al menos una muestra antes de finalizar el registro.');
+      return false;
+    }
+
+    const traspaso = this.groupValue<IncubacionConfFormValue>('incubacionConf');
+    if (!traspaso.fechaTraspaso || !traspaso.horaTraspaso || !traspaso.analistaTraspaso) {
+      await this.mostrarAlerta('Traspaso incompleto', 'Complete fecha, hora y analista de traspaso antes de finalizar.');
+      return false;
+    }
+
+    return true;
+  }
+
+  private groupValue<T>(groupName: string): T {
+    return (this.form.get(groupName)?.getRawValue() ?? {}) as T;
+  }
+
+  private toNumberOrUndefined(value: number | string | null | undefined): number | undefined {
+    if (value === null || value === undefined || value === '') return undefined;
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }
+
+  private toIsoDateTime(date?: string, time?: string): string | undefined {
+    if (!date) return undefined;
+    const resolvedTime = time || '00:00';
+    return new Date(`${date}T${resolvedTime}:00`).toISOString();
+  }
+
+  private numeroMuestraDesdeEtiqueta(label: string): number {
+    const match = label.match(/\d+/);
+    return match ? Number(match[0]) : 1;
+  }
+
+  private primeraDilucionConColonias(): EntDilucionLectura | undefined {
+    for (const muestra of this.muestrasLectura) {
+      const dilucion = muestra.diluciones.find((d) => d.coloniasA !== null || d.coloniasB !== null);
+      if (dilucion) return dilucion;
+    }
+    return undefined;
+  }
+
+  private omitirVacios<T extends object>(payload: T): T {
+    const limpio: Partial<T> = {};
+    for (const key of Object.keys(payload) as Array<keyof T>) {
+      const value = payload[key];
+      if (value !== undefined && value !== null && value !== '') {
+        limpio[key] = value;
+      }
+    }
+    return limpio as T;
   }
 
   async confirmarCancelar(): Promise<void> {

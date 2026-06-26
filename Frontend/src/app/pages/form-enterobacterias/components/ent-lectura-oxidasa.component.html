@@ -1,8 +1,7 @@
 <div [formGroup]="formGroup" class="subetapa-section">
-  <p class="subseccion-title">Lectura y prueba de oxidasa</p>
 
-  <!-- Datos generales de lectura -->
-  <p class="subseccion-title">Datos generales de lectura</p>
+  <!-- Datos generales de lectura de confirmación -->
+  <p class="subseccion-title">Lectura de confirmación</p>
   <div class="grid-3col">
     <div class="form-group">
       <label class="form-label" for="fechaLectConf">Fecha de lectura <span class="required-star">*</span></label>
@@ -36,30 +35,77 @@
     </div>
   </div>
 
+  <!-- Tabla lectura de placas (A) -->
   <div class="seccion-divider"></div>
+  <p class="subseccion-title">Tabla de lectura de placas</p>
+  <div class="tabla-wrapper">
+    <table class="tabla-placas">
+      <thead>
+        <tr>
+          <th>Muestra / Placa 1</th>
+          <th>Muestra / Placa 2</th>
+          <th>Duplicado / Placa 1</th>
+          <th>Duplicado / Placa 2</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <input type="number" min="0" class="form-input-sm"
+              [class.input-error]="campoInvalido('muestraPlaca1')"
+              formControlName="muestraPlaca1" placeholder="0"
+              [attr.readonly]="(rol | modoLectura) ? true : null" />
+          </td>
+          <td>
+            <input type="number" min="0" class="form-input-sm"
+              [class.input-error]="campoInvalido('muestraPlaca2')"
+              formControlName="muestraPlaca2" placeholder="0"
+              [attr.readonly]="(rol | modoLectura) ? true : null" />
+          </td>
+          <td>
+            <input type="number" min="0" class="form-input-sm"
+              [class.input-error]="campoInvalido('duplicadoPlaca1')"
+              formControlName="duplicadoPlaca1" placeholder="0"
+              [attr.readonly]="(rol | modoLectura) ? true : null" />
+          </td>
+          <td>
+            <input type="number" min="0" class="form-input-sm"
+              [class.input-error]="campoInvalido('duplicadoPlaca2')"
+              formControlName="duplicadoPlaca2" placeholder="0"
+              [attr.readonly]="(rol | modoLectura) ? true : null" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tabla-hint">
+    <ion-icon name="information-circle-outline"></ion-icon>
+    Campos opcionales. Si los completa, deben ser valores numéricos ≥ 0.
+  </p>
 
-  <!-- Fecha / Hora / Analista de Prueba Oxidasa -->
-  <p class="subseccion-title">Fecha, hora y analista de prueba de oxidasa</p>
+  <!-- Prueba Oxidasa -->
+  <div class="seccion-divider"></div>
+  <p class="subseccion-title">Prueba Oxidasa</p>
   <div class="grid-3col">
     <div class="form-group">
-      <label class="form-label" for="fechaOxidasa">Fecha de Prueba Oxidasa <span class="required-star">*</span></label>
+      <label class="form-label" for="fechaOxidasa">Fecha de prueba <span class="required-star">*</span></label>
       <input id="fechaOxidasa" type="date" class="form-input"
         [class.input-error]="campoInvalido('fechaOxidasa')"
         formControlName="fechaOxidasa"
         [max]="hoy()"
         [attr.readonly]="(rol | modoLectura) ? true : null" />
-      <span class="error-msg" *ngIf="campoInvalido('fechaOxidasa')">El campo Fecha de Prueba Oxidasa es obligatorio.</span>
+      <span class="error-msg" *ngIf="campoInvalido('fechaOxidasa')">El campo Fecha de prueba es obligatorio.</span>
     </div>
     <div class="form-group">
-      <label class="form-label" for="horaOxidasa">Hora de Prueba Oxidasa <span class="required-star">*</span></label>
+      <label class="form-label" for="horaOxidasa">Hora de prueba <span class="required-star">*</span></label>
       <input id="horaOxidasa" type="time" class="form-input"
         [class.input-error]="campoInvalido('horaOxidasa')"
         formControlName="horaOxidasa"
         [attr.readonly]="(rol | modoLectura) ? true : null" />
-      <span class="error-msg" *ngIf="campoInvalido('horaOxidasa')">El campo Hora de Prueba Oxidasa es obligatorio.</span>
+      <span class="error-msg" *ngIf="campoInvalido('horaOxidasa')">El campo Hora de prueba es obligatorio.</span>
     </div>
     <div class="form-group">
-      <label class="form-label" for="analistaOxidasa">Analista de Prueba Oxidasa <span class="required-star">*</span></label>
+      <label class="form-label" for="analistaOxidasa">Analista de prueba <span class="required-star">*</span></label>
       <ion-select id="analistaOxidasa"
         [class.input-error]="campoInvalido('analistaOxidasa')"
         formControlName="analistaOxidasa"
@@ -69,16 +115,13 @@
         <ion-select-option value="">— Seleccionar analista —</ion-select-option>
         <ion-select-option *ngFor="let r of responsables" [value]="r.rut">{{ r.nombreApellido }}</ion-select-option>
       </ion-select>
-      <span class="error-msg" *ngIf="campoInvalido('analistaOxidasa')">El campo Analista de Prueba Oxidasa es obligatorio.</span>
+      <span class="error-msg" *ngIf="campoInvalido('analistaOxidasa')">El campo Analista de prueba es obligatorio.</span>
     </div>
   </div>
 
-  <div class="seccion-divider"></div>
-
-  <!-- Test Oxidasa / Reactivo -->
-  <div class="form-group max-w-sm">
+  <div class="form-group mt-4">
     <label class="form-label" for="reactivoOxidasa">
-      Test Oxidasa / Reactivo de Oxidasa <span class="required-star">*</span>
+      Reactivo de Oxidasa <span class="required-star">*</span>
     </label>
     <input id="reactivoOxidasa" type="text" class="form-input"
       [class.input-error]="campoInvalido('reactivoOxidasa')"
@@ -91,8 +134,10 @@
     <p class="campo-hint">Formato: R69-AA-NN. Donde AA = año (2 dígitos), NN = 01 o 02.</p>
   </div>
 
-  <!-- Desaireado de Agar Glucosa -->
-  <div class="form-group mt-4 pt-4 border-t border-slate-100">
+  <!-- Prueba Glucosa -->
+  <div class="seccion-divider"></div>
+  <p class="subseccion-title">Prueba Glucosa</p>
+  <div class="form-group">
     <label class="form-label" for="desaireadoAgarGlucosa">Desaireado de Agar Glucosa <span class="required-star">*</span></label>
     <ion-select id="desaireadoAgarGlucosa"
       [class.input-error]="campoInvalido('desaireadoAgarGlucosa')"
@@ -145,46 +190,4 @@
     </div>
   </div>
 
-  <!-- Tabla de lectura de placas -->
-  <div class="form-card mt-6">
-    <div class="form-card-header header-placas">
-      <div class="form-card-title-group">
-        <ion-icon name="grid-outline" class="card-header-icon"></ion-icon>
-        <h2 class="form-card-title">Tabla de Lectura de Placas</h2>
-      </div>
-    </div>
-    <div class="form-card-body">
-      <div class="tabla-wrapper">
-        <table class="tabla-placas">
-          <thead>
-            <tr>
-              <th>Muestra / Placa 1</th>
-              <th>Muestra / Placa 2</th>
-              <th>Duplicado / Placa 1</th>
-              <th>Duplicado / Placa 2</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td *ngFor="let key of placasKeys">
-                <input type="number" min="0" class="form-input-sm"
-                  [class.input-error]="erroresTablaPlacas[key]"
-                  [(ngModel)]="tablaPlacas[key]"
-                  [ngModelOptions]="{standalone: true}"
-                  placeholder="0"
-                  [attr.readonly]="(rol | modoLectura) ? true : null" />
-                <span class="error-msg block" *ngIf="erroresTablaPlacas[key]">
-                  {{ erroresTablaPlacas[key] }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="tabla-hint">
-        <ion-icon name="information-circle-outline"></ion-icon>
-        Los campos de esta tabla son opcionales. Si los completa, deben contener valores numéricos válidos.
-      </p>
-    </div>
-  </div>
 </div>

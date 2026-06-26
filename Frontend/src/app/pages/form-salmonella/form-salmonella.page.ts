@@ -1,8 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
-import { firstValueFrom, forkJoin, of, take } from 'rxjs';
+import { firstValueFrom, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { SalmonellaApiService } from '../../services/salmonella-api.service';
 import { CatalogosService } from '../../services/catalogos.service';
@@ -96,28 +96,31 @@ function crearMuestrasEtapa5(backend: SalMuestra[]): MuestraEtapa5[] {
   standalone: false
 })
 export class FormSalmonellaPage implements OnInit {
-  readonly TOTAL_PASOS = 10;
+  readonly TOTAL_PASOS = 4;
   pasoActual = signal<number>(1);
 
   readonly NOMBRES_ETAPAS = [
-    'Inoculación',
-    'Incubación y Aislamiento',
-    'Resultados'
+    'Inicio e Incubación',
+    'Traspaso y Enriquecimiento',
+    'Aislamiento e Identificación',
+    'Resultado Final'
   ];
 
-  readonly PASOS_POR_ETAPA = [4, 5, 1];
+  readonly PASOS_POR_ETAPA = [1, 1, 1, 1];
   readonly ETIQUETAS_PASOS = [
-    'Fase 1: Configuración',
-    'Fase 2A: Trazabilidad',
-    'Fase 2B: Insumos',
-    'Fase 2C: Controles',
-    'Fase 3A: Tiempos',
-    'Fase 3B: Insumos',
-    'Fase 3C: Muestras',
-    'Fase 4A: Agares',
-    'Fase 4B: Resultados',
-    'Fase 5: Conclusión'
+    'Inicio e Incubación',
+    'Traspaso y Enriquecimiento',
+    'Aislamiento e Identificación',
+    'Resultado Final'
   ];
+
+  // Maps frontend fase (1-4) to backend paso numbers (1-10)
+  private readonly FASE_A_PASOS_BACKEND: Record<number, number[]> = {
+    1: [1, 2, 3, 4],
+    2: [5, 6, 7],
+    3: [8, 9],
+    4: [10],
+  };
 
   form!: FormGroup;
   formulario: SalFormularioCompleto | null = null;
@@ -158,7 +161,16 @@ export class FormSalmonellaPage implements OnInit {
   ngOnInit(): void {
     this.construirFormulario();
 
-    // Cargar catálogos con tolerancia a fallos individuales
+    const idParam = this.route.parent?.snapshot.paramMap.get('id')
+      || this.route.snapshot.paramMap.get('id');
+    this.idSolicitudAnalisis = idParam ? Number(idParam) : 0;
+    
+    this.cargarFormulario();
+  }
+
+  cargarFormulario(): void {
+    this.cargando.set(true);
+
     forkJoin({
       estufas: this.catalogos.getEquiposIncubacion().pipe(
         catchError(() => {
@@ -172,62 +184,73 @@ export class FormSalmonellaPage implements OnInit {
           return of([] as LoteReactivo[]);
         })
       ),
-    }).subscribe((res) => {
-      this.listaEstufas = res.estufas;
-      this.listaLotesReactivo = res.lotes;
+      formulario: this.idSolicitudAnalisis > 0
+        ? this.api.obtenerPorAnalisis(this.idSolicitudAnalisis).pipe(
+            catchError(() => of(null))
+          )
+        : of(null),
+    }).subscribe({
+      next: (res) => {
+        this.listaEstufas = res.estufas;
+        this.listaLotesReactivo = res.lotes;
+        this.cargando.set(false);
+        if (res.formulario?.existe && res.formulario.formulario) {
+          this.formulario = res.formulario.formulario;
+          this.muestras = res.formulario.formulario.muestras ?? [];
+          this.hidratarFormulario(res.formulario.formulario);
+        } else {
+          this.inicializarMuestrasMock();
+        }
+      },
+      error: () => {
+        this.cargando.set(false);
+        this.mostrarToast('Error al cargar el formulario', 'danger');
+        this.inicializarMuestrasMock();
+      },
     });
-
-    const idParam = this.route.parent?.snapshot.paramMap.get('id')
-      || this.route.snapshot.paramMap.get('id');
-    this.idSolicitudAnalisis = idParam ? Number(idParam) : 0;
-    if (this.idSolicitudAnalisis > 0) {
-      this.cargarFormulario();
-    } else {
-      this.inicializarMuestrasMock();
-    }
   }
 
   private construirFormulario(): void {
     this.form = this.fb.group({
-      e1_fechaIncubacion: ['', Validators.required],
-      e1_horaIncubacion: ['', Validators.required],
-      e1_tipoMatriz: ['Normal', Validators.required],
-      e1_pesoMuestra: ['25g', Validators.required],
+      e1_fechaIncubacion: [''],
+      e1_horaIncubacion: [''],
+      e1_tipoMatriz: ['Normal'],
+      e1_pesoMuestra: ['25g'],
       e1_caldoAPT: ['Caldo APT'],
       e1_horaInicioHidratacion: [''],
       e1_horaTerminoHidratacion: [''],
-      e1_fechaSiembra: ['', Validators.required],
-      e1_horaHomogeneizacion: ['', Validators.required],
-      e1_horaTerminoHomogeneizacion: ['', Validators.required],
-      e1_horaIngresoEstufa: ['', Validators.required],
-      e1_analistaResponsable: ['', Validators.required],
-      e1_fechaTerminoAnalisis: ['', Validators.required],
+      e1_fechaSiembra: [''],
+      e1_horaHomogeneizacion: [''],
+      e1_horaTerminoHomogeneizacion: [''],
+      e1_horaIngresoEstufa: [''],
+      e1_analistaResponsable: [''],
+      e1_fechaTerminoAnalisis: [''],
 
-      e2_loteCaldo: ['', Validators.required],
+      e2_loteCaldo: [''],
       e2_tween80: [false],
       e2_micropipetas: [false],
-      e2_estufaIncubacion: [null as number | null, Validators.required],
+      e2_estufaIncubacion: [null as number | null],
       e2_analisisDescripcion: [''],
       e2_controlBlancoAli: [''],
       e2_controlSiembraAli: [''],
 
-      e3_fechaTraspaso: ['', Validators.required],
-      e3_horaLecturaAPT: ['', Validators.required],
-      e3_analistaLecturaAPT: ['', Validators.required],
+      e3_fechaTraspaso: [''],
+      e3_horaLecturaAPT: [''],
+      e3_analistaLecturaAPT: [''],
       e3_horaLecturaCaldos: [''],
       e3_analistaLecturaCaldos: [''],
-      e3_selenitoEstufa: [null as number | null, Validators.required],
+      e3_selenitoEstufa: [null as number | null],
       e3_puntas1ml: [false],
       e3_micropipetasUtilizadas: [false],
       e3_pipetasDesechables: [false],
       e3_micropipetasExtra: [false],
 
-      e4_fechaTraspasoAgares: ['', Validators.required],
-      e4_horaTraspasoAgares: ['', Validators.required],
-      e4_analistaTraspasoAgares: ['', Validators.required],
-      e4_loteAgarXLD: ['', Validators.required],
-      e4_loteAgarSS: ['', Validators.required],
-      e4_estufaIncubacionAgares: [null as number | null, Validators.required],
+      e4_fechaTraspasoAgares: [''],
+      e4_horaTraspasoAgares: [''],
+      e4_analistaTraspasoAgares: [''],
+      e4_loteAgarXLD: [''],
+      e4_loteAgarSS: [''],
+      e4_estufaIncubacionAgares: [null as number | null],
       e4_fechaLectura24h: [''],
       e4_horaLectura24h: [''],
       e4_analistaLectura24h: [''],
@@ -243,29 +266,6 @@ export class FormSalmonellaPage implements OnInit {
         this.form.get('e1_caldoAPT')?.setValue('Leche descremada');
       }
     });
-  }
-
-  private cargarFormulario(): void {
-    this.cargando.set(true);
-    this.api.obtenerPorAnalisis(this.idSolicitudAnalisis)
-      .pipe(take(1))
-      .subscribe({
-        next: (res) => {
-          this.cargando.set(false);
-          if (res.existe && res.formulario) {
-            this.formulario = res.formulario;
-            this.muestras = res.formulario.muestras ?? [];
-            this.hidratarFormulario(res.formulario);
-          } else {
-            this.inicializarMuestrasMock();
-          }
-        },
-        error: () => {
-          this.cargando.set(false);
-          this.mostrarToast('Error al cargar el formulario', 'danger');
-          this.inicializarMuestrasMock();
-        }
-      });
   }
 
   private inicializarMuestrasMock(): void {
@@ -364,7 +364,9 @@ export class FormSalmonellaPage implements OnInit {
       });
     }
 
-    this.pasoActual.set(Math.max(1, Math.min(10, f.faseActual)));
+    const faseBackend = f.faseActual ?? 1;
+    const faseFrontend = faseBackend <= 4 ? 1 : faseBackend <= 7 ? 2 : faseBackend <= 9 ? 3 : 4;
+    this.pasoActual.set(faseFrontend);
   }
 
   get progresoPorcentaje(): number {
@@ -372,19 +374,14 @@ export class FormSalmonellaPage implements OnInit {
   }
 
   get etapaVisualActual(): number {
-    const p = this.pasoActual();
-    if (p <= 4) return 1;
-    if (p <= 7) return 2;
-    return 3;
+    return this.pasoActual();
   }
 
   get nombreEtapaVisualActual(): string {
-    const idx = this.etapaVisualActual - 1;
-    return this.NOMBRES_ETAPAS[idx] ?? '';
+    return this.ETIQUETAS_PASOS[this.pasoActual() - 1] ?? '';
   }
 
   avanzarPaso(): void {
-    if (!this.validarPasoActual()) return;
     if (this.pasoActual() < this.TOTAL_PASOS) {
       this.pasoActual.update((p) => p + 1);
     }
@@ -397,67 +394,16 @@ export class FormSalmonellaPage implements OnInit {
   }
 
   irAPaso(n: number): void {
-    const actual = this.pasoActual();
-    if (n > actual && !this.validarPasoActual()) return;
-    if (n > actual + 1) {
-      this.mostrarToast('Debe avanzar paso a paso.', 'warning');
-      return;
-    }
     if (n >= 1 && n <= this.TOTAL_PASOS) {
       this.pasoActual.set(n);
     }
   }
 
-  private validarPasoActual(): boolean {
-    return this.form.valid || !this.form.touched;
-  }
-
-  async guardarPaso(avanzar: boolean = true): Promise<void> {
-    if (!this.formulario) {
-      await this.mostrarAlerta('Error', 'No existe formulario asociado para guardar.');
-      return;
-    }
-
-    const payload = this.construirPayload(this.pasoActual());
-    if (!payload) return;
-
-    this.cargando.set(true);
-    this.api
-      .guardarFase(
-        this.formulario.idSalFormulario,
-        this.pasoActual(),
-        payload as SalFasePayload,
-        this.formulario.updatedAt
-      )
-      .pipe(take(1))
-      .subscribe({
-        next: (f) => {
-          this.cargando.set(false);
-          this.formulario = f;
-          this.mostrarToast(avanzar ? 'Paso guardado correctamente' : 'Borrador guardado', 'success');
-          if (avanzar && this.pasoActual() < this.TOTAL_PASOS) {
-            this.avanzarPaso();
-          }
-        },
-        error: (err: { status?: number }) => {
-          this.cargando.set(false);
-          if (err.status === 409) {
-            this.mostrarToast(
-              'El formulario fue modificado por otro usuario. Recargue y vuelva a intentar.',
-              'warning'
-            );
-            this.cargarFormulario();
-          } else {
-            this.mostrarToast('Error al guardar el paso', 'danger');
-          }
-        }
-      });
-  }
-
-  async guardarBorrador(): Promise<void> {
+  /** Guarda todo el formulario hasta la etapa actual (borrador) */
+  async guardarFormularioBorrador(): Promise<void> {
     const ok = await this.guardarBorradorCompleto();
     if (ok) {
-      this.mostrarToast('Borrador completo guardado', 'success');
+      this.mostrarToast('Borrador guardado correctamente', 'success');
     }
   }
 
@@ -472,20 +418,21 @@ export class FormSalmonellaPage implements OnInit {
     this.cargando.set(true);
 
     try {
-      for (let paso = 1; paso <= pasoActual; paso++) {
-        const payload = this.construirPayload(paso, false);
-        if (!payload) continue;
-
-        const actualizado: SalFormularioCompleto = await firstValueFrom(
-          this.api.guardarFase(
-            formularioActual.idSalFormulario,
-            paso,
-            payload as SalFasePayload,
-            formularioActual.updatedAt
-          )
-        );
-        formularioActual = actualizado;
-        this.formulario = actualizado;
+      for (let fase = 1; fase <= pasoActual; fase++) {
+        const subPasos = this.FASE_A_PASOS_BACKEND[fase] ?? [];
+        for (const paso of subPasos) {
+          const payload = this.construirPayload(paso, false);
+          if (!payload) continue;
+          formularioActual = await firstValueFrom(
+            this.api.guardarFase(
+              formularioActual.idSalFormulario,
+              paso,
+              payload as SalFasePayload,
+              formularioActual.updatedAt
+            )
+          );
+          this.formulario = formularioActual;
+        }
       }
 
       this.cargando.set(false);
@@ -628,7 +575,8 @@ export class FormSalmonellaPage implements OnInit {
       this.router.navigate(['/home']);
       return;
     }
-    await this.guardarPaso();
+    await this.guardarBorradorCompleto();
+    this.router.navigate(['/home']);
   }
 
   async confirmarCancelar(): Promise<void> {

@@ -9,6 +9,7 @@ import {
   EquipoIncubacion,
   Micropipeta,
   Responsable,
+  LoteReactivo,
 } from '../../interfaces/catalogo.interfaces';
 import { SauFormulario } from '../../interfaces/saureus.interfaces';
 
@@ -38,6 +39,7 @@ export class FormSAureusPage implements OnInit {
   listaEquiposIncubacion: EquipoIncubacion[] = [];
   listaPipetas: Micropipeta[] = [];
   listaResponsables: Responsable[] = [];
+  listaLotesReactivo: LoteReactivo[] = [];
 
   datosImportados = {
     codigoAlimento: '',
@@ -61,6 +63,7 @@ export class FormSAureusPage implements OnInit {
 
   ngOnInit(): void {
     const idParam =
+      this.route.snapshot.paramMap.get('id') ||
       this.route.snapshot.queryParamMap.get('analisis') ||
       this.route.snapshot.queryParamMap.get('idFormulario');
 
@@ -89,10 +92,16 @@ export class FormSAureusPage implements OnInit {
           return of([] as Micropipeta[]);
         })
       ),
-      responsables: this.catalogosService.getResponsables().pipe(
+      responsables: this.catalogosService.getResponsables('analista').pipe(
         catchError(() => {
           console.warn('[Sau] Catálogo responsables no disponible');
           return of([] as Responsable[]);
+        })
+      ),
+      lotes: this.catalogosService.getLotesReactivo('agar_baird_parker').pipe(
+        catchError(() => {
+          console.warn('[Sau] Catálogo lotes no disponible');
+          return of([] as LoteReactivo[]);
         })
       ),
       formulario: this.saureusApi.obtenerPorAnalisis(this.idAnalisis),
@@ -101,6 +110,7 @@ export class FormSAureusPage implements OnInit {
         this.listaEquiposIncubacion = res.equipos;
         this.listaPipetas = res.pipetas;
         this.listaResponsables = res.responsables;
+        this.listaLotesReactivo = res.lotes;
         this.cargarFormulario(res.formulario);
       },
       error: (err) => {
@@ -125,11 +135,13 @@ export class FormSAureusPage implements OnInit {
       e1_analistaTermino: [''],
       e1_fechaTermino: [''],
       e1_horaTermino: [''],
-      e1_tiempoMenor15: [false],
+      e1_horaHomogeneizado: [''],
+      e1_horaSiembra: [''],
       e1_agarBairdParker: [''],
-      e1_micropipeta1ml: [false],
-      e1_micropipeta10ml: [false],
-      e1_nroMuestraRadio: [''],
+      e1_micropipeta: [null as number | null],
+      e1_codigoMicropipeta: [''],
+      e1_nMuestra10g: [null as number | null],
+      e1_nMuestra50g: [null as number | null],
       e1_estufa: [null as number | null],
       e1_duplicadoAnalisis: [''],
       e1_controlBlanco: [''],
@@ -211,9 +223,13 @@ export class FormSAureusPage implements OnInit {
         e1_horaTermino: e1.fechaTerminoAnalisis
           ? e1.fechaTerminoAnalisis.substring(11, 16)
           : '',
-        e1_tiempoMenor15: e1.tiempoHomoSiembraMin ?? false,
-        e1_agarBairdParker: e1.codigoAgarBairdParker,
-        e1_nroMuestraRadio: e1.pesoMuestraTipo || '',
+        e1_horaHomogeneizado: e1.horaHomogeneizado || '',
+        e1_horaSiembra: e1.horaSiembra || '',
+        e1_agarBairdParker: e1.codigoAgarBairdParker || '',
+        e1_nMuestra10g: e1.nMuestra10g90ml || null,
+        e1_nMuestra50g: e1.nMuestra50g450ml || null,
+        e1_micropipeta: e1.idMicropipeta || null,
+        e1_codigoMicropipeta: e1.codigoMicropipeta || '',
         e1_estufa: e1.idEstufa || null,
         e1_duplicadoAnalisis: e1.duplicadoAliRef || '',
         e1_controlBlanco: e1.ctrlPositivoBlancoAli || '',
@@ -344,10 +360,8 @@ export class FormSAureusPage implements OnInit {
     );
   }
 
-  async avanzarEtapa(): Promise<void> {
-    if (!this.validarEtapaActual()) return;
-    const ok = await this.guardarEtapa(this.etapaActual, true);
-    if (ok && this.etapaActual < this.TOTAL_ETAPAS) {
+  avanzarEtapa(): void {
+    if (this.etapaActual < this.TOTAL_ETAPAS) {
       this.etapaActual++;
     }
   }
@@ -357,36 +371,33 @@ export class FormSAureusPage implements OnInit {
   }
 
   irAEtapa(n: number): void {
-    if (n > this.etapaActual) {
-      if (!this.validarEtapaActual()) return;
-      if (n > this.etapaActual + 1) {
-        this.mostrarToast('Debe avanzar paso a paso.', 'warning');
-        return;
-      }
-    }
     if (n >= 1 && n <= this.TOTAL_ETAPAS) this.etapaActual = n;
   }
 
-  private validarEtapaActual(): boolean {
-    return true;
+  async enviarFormulario(): Promise<void> {
+    const ok = await this.guardarBorradorCompleto();
+    if (ok) {
+      const okFinal = await this.guardarEtapa(this.TOTAL_ETAPAS, true);
+      if (okFinal) {
+        await this.mostrarAlerta(
+          'Éxito',
+          'Registro de análisis S. Aureus enviado correctamente.'
+        );
+        this.router.navigate(['/home']);
+      }
+    }
   }
 
-  async enviarFormulario(): Promise<void> {
-    const ok = await this.guardarEtapa(this.etapaActual, true);
+  /** Guarda todo el formulario hasta la etapa actual (borrador) */
+  async guardarFormularioBorrador(): Promise<void> {
+    const ok = await this.guardarBorradorCompleto();
     if (ok) {
-      await this.mostrarAlerta(
-        'Éxito',
-        'Registro de análisis S. Aureus enviado correctamente.'
-      );
-      this.router.navigate(['/home']);
+      this.mostrarToast('Borrador guardado correctamente', 'success');
     }
   }
 
   async guardarBorrador(): Promise<void> {
-    const ok = await this.guardarBorradorCompleto();
-    if (ok) {
-      this.mostrarToast('Borrador completo guardado', 'success');
-    }
+    await this.guardarFormularioBorrador();
   }
 
   private async guardarBorradorCompleto(): Promise<boolean> {
@@ -395,6 +406,15 @@ export class FormSAureusPage implements OnInit {
       if (!ok) return false;
     }
     return true;
+  }
+
+  async recargarFormulario(): Promise<void> {
+    try {
+      const form = await firstValueFrom(this.saureusApi.obtenerPorAnalisis(this.idAnalisis));
+      this.cargarFormulario(form);
+    } catch (err) {
+      this.mostrarToast('Error al recargar el formulario', 'danger');
+    }
   }
 
   private async guardarEtapa(etapa: number, completada: boolean): Promise<boolean> {
@@ -423,8 +443,9 @@ export class FormSAureusPage implements OnInit {
         await this.mostrarAlerta(
           'Conflicto de concurrencia',
           httpErr.error?.mensaje ||
-            'El formulario fue modificado por otro usuario. Recargue y vuelva a intentar.'
+            'El formulario fue modificado por otro usuario. Recargando...'
         );
+        await this.recargarFormulario();
       } else {
         this.mostrarToast('Error al guardar. Intente nuevamente.', 'danger');
       }
@@ -434,146 +455,159 @@ export class FormSAureusPage implements OnInit {
 
   private construirPayload(etapa: number, completada: boolean): Record<string, unknown> {
     const v = this.form.value;
-    const payload: Record<string, unknown> = {
-      completada,
-      etapaActual: etapa,
-    };
+    const base: Record<string, unknown> = { completada };
 
     if (etapa === 1) {
-      Object.assign(payload, {
-        fechaInicioIncubacion:
+      let tiempoHomoSiembraMin: number | undefined;
+      let tiempoHomoValido: boolean | undefined;
+      if (v.e1_horaHomogeneizado && v.e1_horaSiembra) {
+        const [h1, m1] = v.e1_horaHomogeneizado.split(':').map(Number);
+        const [h2, m2] = v.e1_horaSiembra.split(':').map(Number);
+        tiempoHomoSiembraMin = (h2 * 60 + m2) - (h1 * 60 + m1);
+        if (tiempoHomoSiembraMin < 0) tiempoHomoSiembraMin += 24 * 60;
+        tiempoHomoValido = tiempoHomoSiembraMin < 15;
+      }
+
+      base['etapa'] = {
+        fecha_inicio_incubacion:
           v.e1_fechaInicio && v.e1_horaInicio
             ? `${v.e1_fechaInicio}T${v.e1_horaInicio}:00`
             : undefined,
-        rutAnalistaInicio: v.e1_analistaInicio || undefined,
-        fechaTerminoAnalisis:
+        rut_analista_inicio: v.e1_analistaInicio || undefined,
+        fecha_termino_analisis:
           v.e1_fechaTermino && v.e1_horaTermino
             ? `${v.e1_fechaTermino}T${v.e1_horaTermino}:00`
             : undefined,
-        rutAnalistaTermino: v.e1_analistaTermino || undefined,
-        codigoAgarBairdParker: v.e1_agarBairdParker || undefined,
-        pesoMuestraTipo: v.e1_nroMuestraRadio || undefined,
-        idEstufa: v.e1_estufa || undefined,
-        duplicadoAliRef: v.e1_duplicadoAnalisis || undefined,
-        ctrlDuplicadoCumple:
+        rut_analista_termino: v.e1_analistaTermino || undefined,
+        codigo_agar_baird_parker: v.e1_agarBairdParker || undefined,
+        n_muestra_10g_90ml: v.e1_nMuestra10g ? Number(v.e1_nMuestra10g) : undefined,
+        n_muestra_50g_450ml: v.e1_nMuestra50g ? Number(v.e1_nMuestra50g) : undefined,
+        id_micropipeta: v.e1_micropipeta ? Number(v.e1_micropipeta) : undefined,
+        codigo_micropipeta: v.e1_codigoMicropipeta || undefined,
+        id_estufa: v.e1_estufa || undefined,
+        duplicado_ali_ref: v.e1_duplicadoAnalisis || undefined,
+        ctrl_duplicado_cumple:
           this.e1_duplicadoAliCumple !== 'sin_registrar'
-            ? this.e1_duplicadoAliCumple
+            ? this.e1_duplicadoAliCumple === 'cumple'
             : undefined,
-        ctrlPositivoBlancoAli: v.e1_controlBlanco || undefined,
-        ctrlPositivoCumple:
+        ctrl_positivo_blanco_ali: v.e1_controlBlanco || undefined,
+        ctrl_positivo_cumple:
           this.e1_controlBlancoCumple !== 'sin_registrar'
-            ? this.e1_controlBlancoCumple
+            ? this.e1_controlBlancoCumple === 'cumple'
             : undefined,
-        ctrlSiembraAli: v.e1_controlSiembra || undefined,
-        ctrlSiembraCumple:
+        ctrl_siembra_ali: v.e1_controlSiembra || undefined,
+        ctrl_siembra_cumple:
           this.e1_controlSiembraCumple !== 'sin_registrar'
-            ? this.e1_controlSiembraCumple
+            ? this.e1_controlSiembraCumple === 'cumple'
             : undefined,
-        tiempoHomoSiembraMin: v.e1_tiempoMenor15,
-      });
+        tiempo_homo_siembra_min: tiempoHomoSiembraMin,
+        tiempo_homo_valido: tiempoHomoValido,
+        hora_homogeneizado: v.e1_horaHomogeneizado || undefined,
+        hora_siembra: v.e1_horaSiembra || undefined,
+      };
     }
 
     if (etapa === 2) {
-      Object.assign(payload, {
-        ctrlSiembraSAureusUfc: v.e2_controlSAureusUFC
+      base['etapa'] = {
+        ctrl_siembra_s_aureus_ufc: v.e2_controlSAureusUFC
           ? Number(v.e2_controlSAureusUFC)
           : undefined,
-        ctrlPositivoSAureus: v.e2_controlPositivoSAureus || undefined,
-        ctrlNegativoSEpiderUfc: v.e2_controlNegativoSEpidermidis
+        ctrl_positivo_s_aureus: v.e2_controlPositivoSAureus || undefined,
+        ctrl_negativo_s_epider_ufc: v.e2_controlNegativoSEpidermidis
           ? Number(v.e2_controlNegativoSEpidermidis)
           : undefined,
-        blancoUfc: v.e2_blanco ? Number(v.e2_blanco) : undefined,
+        blanco_ufc: v.e2_blanco ? Number(v.e2_blanco) : undefined,
         sd: v.e2_sd ? Number(v.e2_sd) : undefined,
-        fechaLectura24h:
+        fecha_lectura_24h:
           v.e2_fecha24h && v.e2_hora24h
             ? `${v.e2_fecha24h}T${v.e2_hora24h}:00`
             : undefined,
-        rutAnalista24h: v.e2_analista24h || undefined,
-        fechaLectura48h:
+        rut_analista_24h: v.e2_analista24h || undefined,
+        fecha_lectura_48h:
           v.e2_fecha48h && v.e2_hora48h
             ? `${v.e2_fecha48h}T${v.e2_hora48h}:00`
             : undefined,
-        rutAnalista48h: v.e2_analista48h || undefined,
-      });
+        rut_analista_48h: v.e2_analista48h || undefined,
+      };
     }
 
     if (etapa === 3) {
-      Object.assign(payload, {
-        fechaHoraTraspaso:
+      base['etapa'] = {
+        fecha_hora_traspaso:
           v.e3_fechaTraspaso && v.e3_horaTraspaso
             ? `${v.e3_fechaTraspaso}T${v.e3_horaTraspaso}:00`
             : undefined,
-        rutAnalistaTraspaso: v.e3_analistaTraspaso || undefined,
-        codigoCaldoBhi: v.e3_caldoBHI || undefined,
-        idEstufa: v.e3_estufa || undefined,
-        ctrlPositivoSAureus: v.e3_controlPositivo || undefined,
-        ctrlNegativoSEpider: v.e3_controlNegativo || undefined,
+        rut_analista_traspaso: v.e3_analistaTraspaso || undefined,
+        codigo_caldo_bhi: v.e3_caldoBHI || undefined,
+        id_estufa: v.e3_estufa || undefined,
+        ctrl_positivo_s_aureus: v.e3_controlPositivo || undefined,
+        ctrl_negativo_s_epider: v.e3_controlNegativo || undefined,
         blanco: v.e3_blanco || undefined,
-        fechaHoraLectura:
+        fecha_hora_lectura:
           v.e3_fechaLectura && v.e3_horaLectura
             ? `${v.e3_fechaLectura}T${v.e3_horaLectura}:00`
             : undefined,
-        rutAnalistaLectura: v.e3_analistaLectura || undefined,
-      });
+        rut_analista_lectura: v.e3_analistaLectura || undefined,
+      };
     }
 
     if (etapa === 4) {
-      Object.assign(payload, {
-        fechaHoraPrueba:
+      base['etapa'] = {
+        fecha_hora_prueba:
           v.e4_fechaPrueba && v.e4_horaPrueba
             ? `${v.e4_fechaPrueba}T${v.e4_horaPrueba}:00`
             : undefined,
-        rutAnalistaPrueba: v.e4_analistaPrueba || undefined,
-        codigoTubosEsteriles: v.e4_tubosEsteriles || undefined,
-        codigoPuntas1ml: v.e4_puntas1ml || undefined,
-        codigoBacidentAgua: v.e4_bacident || undefined,
-        idMicropipeta: v.e4_micropipeta || undefined,
-        idEstufa: v.e4_estufa || undefined,
-        fechaLectura46h:
+        rut_analista_prueba: v.e4_analistaPrueba || undefined,
+        codigo_tubos_esteriles: v.e4_tubosEsteriles || undefined,
+        codigo_puntas_1ml: v.e4_puntas1ml || undefined,
+        codigo_bacident_agua: v.e4_bacident || undefined,
+        id_micropipeta: v.e4_micropipeta || undefined,
+        id_estufa: v.e4_estufa || undefined,
+        fecha_lectura_46h:
           v.e4_fechaLectura4h && v.e4_horaLectura4h
             ? `${v.e4_fechaLectura4h}T${v.e4_horaLectura4h}:00`
             : undefined,
-        rutAnalista46h: v.e4_analistaLectura4h || undefined,
-        resultadoCoagulasa46h: v.e4_coagulasa4h || undefined,
-        ctrlPositivo46h: v.e4_controlPositivo4h || undefined,
-        ctrlNegativo46h: v.e4_controlNegativo4h || undefined,
-        blanco46h: v.e4_blanco4h || undefined,
-        fechaLectura24h:
+        rut_analista_46h: v.e4_analistaLectura4h || undefined,
+        resultado_coagulasa_46h: v.e4_coagulasa4h || undefined,
+        ctrl_positivo_46h: v.e4_controlPositivo4h || undefined,
+        ctrl_negativo_46h: v.e4_controlNegativo4h || undefined,
+        blanco_46h: v.e4_blanco4h || undefined,
+        fecha_lectura_24h:
           v.e4_fechaLectura24h && v.e4_horaLectura24h
             ? `${v.e4_fechaLectura24h}T${v.e4_horaLectura24h}:00`
             : undefined,
-        rutAnalista24h: v.e4_analistaLectura24h || undefined,
-        resultadoCoagulasa24h: v.e4_coagulasa24h || undefined,
-        ctrlPositivo24h: v.e4_controlPositivo24h || undefined,
-        ctrlNegativo24h: v.e4_controlNegativo24h || undefined,
-        blanco24h: v.e4_blanco24h || undefined,
+        rut_analista_24h: v.e4_analistaLectura24h || undefined,
+        resultado_coagulasa_24h: v.e4_coagulasa24h || undefined,
+        ctrl_positivo_24h: v.e4_controlPositivo24h || undefined,
+        ctrl_negativo_24h: v.e4_controlNegativo24h || undefined,
+        blanco_24h: v.e4_blanco24h || undefined,
         lecturas: [],
-      });
+      };
     }
 
     if (etapa === 5) {
-      payload['resultados'] = [];
+      base['resultados'] = [];
     }
 
     if (etapa === 6) {
-      Object.assign(payload, {
+      base['etapa'] = {
         desfavorable:
           this.e6_desfavorable === 'si'
             ? true
             : this.e6_desfavorable === 'no'
               ? false
               : undefined,
-        tablaPaginaReferencia: v.e6_tablaPagina || undefined,
-        limiteNormativo: v.e6_limite || undefined,
-        fechaHoraEntrega:
+        tabla_pagina_referencia: v.e6_tablaPagina || undefined,
+        limite_normativo: v.e6_limite || undefined,
+        fecha_hora_entrega:
           v.e6_fechaEntrega && v.e6_horaEntrega
             ? `${v.e6_fechaEntrega}T${v.e6_horaEntrega}:00`
             : undefined,
         cerrado: completada || undefined,
-      });
+      };
     }
 
-    return payload;
+    return base;
   }
 
   async confirmarCancelar(): Promise<void> {

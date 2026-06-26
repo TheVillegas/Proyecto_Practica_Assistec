@@ -101,82 +101,17 @@ describe('FormColiformesPage', () => {
   });
 
   describe('avanzarEtapa', () => {
-    it('should show alert on 409 and NOT advance stage', async () => {
-      fixture.detectChanges();
-      flushCatalogAndFormRequests();
-
+    it('should advance stage without validation or save', () => {
       component.etapaActual = 1;
-      component.form.patchValue({
-        ct_analistaInicio: 'Ana',
-        ct_analistaTermino: 'Ben',
-        cf_analistaInicio: 'Ana',
-        cf_analistaTermino: 'Ben',
-        ec_analistaInicio: 'Ana',
-        ec_analistaTermino: 'Ben',
-      });
-
-      let alertShown = false;
-      spyOn(component as unknown as { mostrarAlerta: () => Promise<void> }, 'mostrarAlerta').and.callFake(async () => {
-        alertShown = true;
-      });
-
-      const promise = component.avanzarEtapa();
-
-      const req = httpMock.expectOne('http://localhost:3002/api/coliformes/1/fase/1');
-      req.flush('Conflict', { status: 409, statusText: 'Conflict' });
-
-      await promise;
-
-      expect(alertShown).toBeTrue();
-      expect(component.etapaActual).toBe(1);
+      component.avanzarEtapa();
+      expect(component.etapaActual).toBe(2);
     });
-  });
 
-  describe('auto-save', () => {
-    it('should fire PUT after 30s of inactivity', fakeAsync(() => {
-      fixture.detectChanges();
-      flushCatalogAndFormRequests();
-      tick(0);
-
-      component.etapaActual = 1;
-      component.form.patchValue({
-        ct_analistaInicio: 'Ana',
-        ct_analistaTermino: 'Ben',
-        cf_analistaInicio: 'Ana',
-        cf_analistaTermino: 'Ben',
-        ec_analistaInicio: 'Ana',
-        ec_analistaTermino: 'Ben',
-      });
-
-      component.hasChanges = true;
-      component.form.patchValue({ ct_analistaInicio: 'Trigger' });
-
-      tick(30000);
-
-      const req = httpMock.expectOne('http://localhost:3002/api/coliformes/1/fase/1');
-      expect(req.request.body.completada).toBeFalse();
-      req.flush({ idColiFormulario: 1, faseActual: 1, estado: 'BORRADOR', updatedAt: '2025-01-01', muestras: [] });
-
-      expect(component.lastSaveTime).not.toBeNull();
-      flush();
-    }));
-
-    it('should NOT fire when there are no changes', fakeAsync(() => {
-      fixture.detectChanges();
-      flushCatalogAndFormRequests();
-      tick(0);
-
-      component.hasChanges = false;
-      component.form.patchValue({ ct_analistaInicio: 'NoTrigger' });
-      // reset hasChanges after form patch
-      component.hasChanges = false;
-
-      tick(30000);
-
-      httpMock.expectNone('http://localhost:3002/api/coliformes/1/fase/1');
-      expect(component.lastSaveTime).toBeNull();
-      flush();
-    }));
+    it('should not advance past TOTAL_ETAPAS', () => {
+      component.etapaActual = 5;
+      component.avanzarEtapa();
+      expect(component.etapaActual).toBe(5);
+    });
   });
 
   describe('guardarBorrador', () => {

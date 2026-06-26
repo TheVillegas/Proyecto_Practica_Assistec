@@ -121,8 +121,6 @@ export class EntAnalisisLecturaComponent {
   @Input() muestras: EntMuestraLectura[] = [];
   @Output() muestrasChange = new EventEmitter<EntMuestraLectura[]>();
 
-  readonly EXPONENT_OPTIONS = [-1, -2, -3, -4, -5];
-
   campoInvalido(nombre: string): boolean {
     const ctrl = this.formGroup.get(nombre);
     return !!(ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched));
@@ -175,6 +173,17 @@ export class EntAnalisisLecturaComponent {
     this.muestrasChange.emit(this.muestras);
   }
 
+  updateDilucionNumero(muestraIdx: number, dilIdx: number, field: keyof EntDilucionLectura, event: Event): void {
+    this.updateDilucion(muestraIdx, dilIdx, field, this.numeroDesdeEvento(event));
+  }
+
+  updateExponenteDilucion(muestraIdx: number, dilIdx: number, event: Event): void {
+    const value = this.numeroDesdeEvento(event);
+    if (value === null) return;
+    const exponent = value > 0 ? -value : value;
+    this.updateDilucion(muestraIdx, dilIdx, 'exponent', exponent);
+  }
+
   calcularMuestra(idx: number): void {
     const muestra = this.muestras[idx];
     const resultado = calcularResultadoMuestra(muestra);
@@ -188,7 +197,18 @@ export class EntAnalisisLecturaComponent {
     return `10${superScript(exp)}`;
   }
 
+  expInputValue(exp: number): number {
+    return Math.abs(exp);
+  }
+
   dFactorLabel(exp: number): string {
     return `d = 10${superScript(exp)} (${Math.pow(10, exp).toExponential()})`;
+  }
+
+  private numeroDesdeEvento(event: Event): number | null {
+    const input = event.target as HTMLInputElement | null;
+    if (!input || input.value.trim() === '') return null;
+    const value = Number(input.value);
+    return Number.isFinite(value) && value >= 0 ? value : null;
   }
 }
