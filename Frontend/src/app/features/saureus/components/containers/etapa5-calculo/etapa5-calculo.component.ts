@@ -63,7 +63,7 @@ export interface AliOption {
             <div class="form-group">
               <label class="form-label">Placa A</label>
               <input type="number" class="form-input text-center" [(ngModel)]="muestra.data.diluciones[0].colonias[0]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-              <div class="text-[10px] text-slate-400 text-center mt-1">MNPC > 250</div>
+              <div class="text-[10px] text-slate-400 text-center mt-1">MNPC &gt; 250</div>
             </div>
             <div class="form-group">
               <label class="form-label">Placa B</label>
@@ -199,7 +199,7 @@ export interface AliOption {
               <div class="form-group">
                 <label class="form-label">Placa A</label>
                 <input type="number" class="form-input text-center" [(ngModel)]="duplicado.diluciones[0].colonias[0]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-                <div class="text-[10px] text-slate-400 text-center mt-1">MNPC > 250</div>
+                <div class="text-[10px] text-slate-400 text-center mt-1">MNPC &gt; 250</div>
               </div>
               <div class="form-group">
                 <label class="form-label">Placa B</label>
@@ -560,7 +560,7 @@ export class Etapa5CalculoComponent implements OnInit {
     muestra.isLoading = true;
 
     try {
-      // Auto-set coloniasPosibles desde el recuento de Placa A/B (son C en la fórmula NCh2676)
+      // Auto-set coloniasPosibles desde la primera fila: Placa A y Placa B (son C en la fórmula NCh2676)
       const coloniasPosibles: [number | null, number | null] = [
         muestra.data.diluciones[0].colonias[0],
         muestra.data.diluciones[0].colonias[1]
@@ -649,7 +649,7 @@ export class Etapa5CalculoComponent implements OnInit {
     this.duplicadoIsLoading = true;
 
     try {
-      // Auto-set coloniasPosibles desde el recuento (igual que en muestras)
+      // Auto-set coloniasPosibles desde la primera fila: Placa A y Placa B (igual que en muestras)
       const coloniasPosibles: [number | null, number | null] = [
         this.duplicado.diluciones[0].colonias[0],
         this.duplicado.diluciones[0].colonias[1]

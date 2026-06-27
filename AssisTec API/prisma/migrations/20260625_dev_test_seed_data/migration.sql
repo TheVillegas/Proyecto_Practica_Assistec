@@ -20,7 +20,29 @@ DECLARE
 BEGIN
     -- ── Idempotencia ──
     IF EXISTS (SELECT 1 FROM solicitud_ingreso WHERE anio_ingreso = 2026 AND numero_ali = 3) THEN
-        RAISE NOTICE 'Seed ya existe (solicitud #3/ALI-003/2026), omitiendo.';
+        SELECT id_solicitud INTO v_solicitud_id
+        FROM solicitud_ingreso
+        WHERE anio_ingreso = 2026 AND numero_ali = 3;
+
+        SELECT id_solicitud_muestra INTO v_muestra1_id
+        FROM solicitud_muestra
+        WHERE id_solicitud = v_solicitud_id
+        ORDER BY id_solicitud_muestra
+        LIMIT 1;
+
+        -- Reparación idempotente: versiones anteriores del seed dejaban
+        -- Enterobacterias en la muestra 2. El dataset de prueba debe mostrar
+        -- los 4 formularios microbiológicos principales en la muestra 1.
+        UPDATE solicitud_analisis
+        SET id_solicitud_muestra = v_muestra1_id
+        WHERE id_solicitud_analisis = 10;
+
+        UPDATE ent_muestra
+        SET id_solicitud_muestra = v_muestra1_id,
+            numero_muestra = 'DEV-M1-D'
+        WHERE id_ent_formulario = 1;
+
+        RAISE NOTICE 'Seed ya existe (solicitud #3/ALI-003/2026). Reparación aplicada: Enterobacterias asociado a muestra 1.';
         RETURN;
     END IF;
 
@@ -86,9 +108,8 @@ BEGIN
         '2026-06-25 09:00:00', '2026-07-02',
         '2026-07-02', '2026-07-02',
         '2026-06-25', '2026-06-25', '3-3'
-    );
-
-    v_solicitud_id := 3;
+    )
+    RETURNING id_solicitud INTO v_solicitud_id;
 
     -- ═══════════════════════════════════════════════════════════════
     -- 0b. LOTES REACTIVO (necesarios para ent_etapa1)
@@ -112,24 +133,24 @@ BEGIN
     -- ═══════════════════════════════════════════════════════════════
     -- 2. MUESTRAS (3 muestras)
     -- ═══════════════════════════════════════════════════════════════
-    INSERT INTO solicitud_muestra (id_solicitud) VALUES (3), (3), (3);
-    -- Las muestras reciben id 5, 6, 7 automáticamente (sequence)
+    INSERT INTO solicitud_muestra (id_solicitud)
+    VALUES (v_solicitud_id), (v_solicitud_id), (v_solicitud_id);
 
     SELECT id INTO v_muestra1_id FROM (
         SELECT id_solicitud_muestra AS id
-        FROM solicitud_muestra WHERE id_solicitud = 3
+        FROM solicitud_muestra WHERE id_solicitud = v_solicitud_id
         ORDER BY id_solicitud_muestra LIMIT 1 OFFSET 0
     ) t;
 
     SELECT id INTO v_muestra2_id FROM (
         SELECT id_solicitud_muestra AS id
-        FROM solicitud_muestra WHERE id_solicitud = 3
+        FROM solicitud_muestra WHERE id_solicitud = v_solicitud_id
         ORDER BY id_solicitud_muestra LIMIT 1 OFFSET 1
     ) t;
 
     SELECT id INTO v_muestra3_id FROM (
         SELECT id_solicitud_muestra AS id
-        FROM solicitud_muestra WHERE id_solicitud = 3
+        FROM solicitud_muestra WHERE id_solicitud = v_solicitud_id
         ORDER BY id_solicitud_muestra LIMIT 1 OFFSET 2
     ) t;
 
@@ -138,8 +159,8 @@ BEGIN
     -- ═══════════════════════════════════════════════════════════════
     -- 3. SOLICITUDES DE ANÁLISIS
     -- ═══════════════════════════════════════════════════════════════
-    -- Muestra 1 → Salmonella (7) + S. aureus (8) + Coliformes/E.coli (9)
-    -- Muestra 2 → Enterobacterias (10)
+    -- Muestra 1 → Salmonella (7) + S. aureus (8) + Coliformes/E.coli (9) + Enterobacterias (10)
+    -- Muestra 2 → reservada para pruebas sin formulario principal
     -- Muestra 3 → S. aureus duplicado (11) + Salmonella (12)
 
     INSERT INTO solicitud_analisis (id_solicitud_analisis, id_solicitud_muestra, id_alcance_acreditacion, id_formulario_analisis, acreditado, metodologia_norma)
@@ -147,7 +168,7 @@ BEGIN
         (7,  v_muestra1_id, 5,  9,  true, 'ISO 6579-1:2017'),                     -- Salmonella
         (8,  v_muestra1_id, 7,  5,  true, 'ISO 6888-3:2003 / GOST 31746-2012'),   -- S. aureus
         (9,  v_muestra1_id, 4,  11, true, 'NCh2635/1.Of2001'),                    -- Coliformes totales
-        (10, v_muestra2_id, 15, 13, true, 'NCh2676.Of2002'),                      -- Enterobacterias
+        (10, v_muestra1_id, 15, 13, true, 'NCh2676.Of2002'),                      -- Enterobacterias
         (11, v_muestra3_id, 7,  5,  true, 'ISO 6888-3:2003'),                     -- S. aureus (duplicado)
         (12, v_muestra3_id, 5,  9,  true, 'ISO 6579-1:2017');                     -- Salmonella (duplicado)
 
@@ -204,13 +225,13 @@ BEGIN
     );
 
     -- ═══════════════════════════════════════════════════════════════
-    -- 7. ENTEROBACTERIAS — Formulario (Muestra 2)
+    -- 7. ENTEROBACTERIAS — Formulario (Muestra 1)
     -- ═══════════════════════════════════════════════════════════════
     INSERT INTO ent_formulario (id_ent_formulario, id_solicitud_analisis, etapa_actual, subetapa_actual, estado, rut_analista, created_at, updated_at)
     VALUES (1, 10, 1, 1, 'en_proceso', '0-0', NOW(), NOW());
 
     INSERT INTO ent_muestra (id_ent_muestra, id_ent_formulario, id_solicitud_muestra, numero_muestra, es_duplicado, orden)
-    VALUES (1, 1, v_muestra2_id, 'DEV-M2-B', false, 1);
+    VALUES (1, 1, v_muestra1_id, 'DEV-M1-D', false, 1);
 
     INSERT INTO ent_etapa1 (
         id_ent_etapa1, id_ent_formulario, codigo_ali, n_acta,

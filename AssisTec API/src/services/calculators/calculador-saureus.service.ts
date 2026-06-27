@@ -23,24 +23,34 @@ export class CalculadorSaureusService extends CalculadorBase {
       return this.crearResultadoVacio();
     }
 
+    const totalColoniasConfirmar = (datos.colConfirmar[0] || 0) + (datos.colConfirmar[1] || 0);
+    if (totalColoniasConfirmar > 5) {
+      throw new Error('La suma de colonias a confirmar no puede ser mayor a 5');
+    }
+
     // 1. Resolver coagulasa por placa
     const coagulasa4h = datos.coagulasa4h || [null, null];
     const coagulasa24h = datos.coagulasa24h || [null, null];
     const { positivas: coagulasa, tiempoUsado } = this.resolverCoagulasa(coagulasa4h, coagulasa24h);
 
     // 2. Calcular 'a' por placa individual (NCh2676 8.2.2.1)
-    const C_A = datos.coloniasPosibles[0] || 0;
-    const C_B = datos.coloniasPosibles[1] || 0;
-    const A_A = datos.colConfirmar[0] || 0;
-    const A_B = datos.colConfirmar[1] || 0;
-    const b_A = coagulasa[0] || 0;
-    const b_B = coagulasa[1] || 0;
+    const placaA = this.calcularResultadoPlaca(
+      datos.coloniasPosibles[0],
+      datos.colConfirmar[0],
+      coagulasa[0]
+    );
+    const placaB = this.calcularResultadoPlaca(
+      datos.coloniasPosibles[1],
+      datos.colConfirmar[1],
+      coagulasa[1]
+    );
 
-    const aPlacaA = this.calcularPlacaIndividual(C_A, A_A, b_A);
-    const aPlacaB = this.calcularPlacaIndividual(C_B, A_B, b_B);
+    const aPlacaA = placaA.a;
+    const aPlacaB = placaB.a;
 
     // 3. Sumar Σa
     const sumaA = aPlacaA + aPlacaB;
+    const sumaColonias = this.sumarColonias(datos.diluciones);
 
     // 4. Extraer diluciones
     const { n1, n2, factorDilucion } = this.extraerDiluciones(datos.diluciones);
@@ -48,10 +58,11 @@ export class CalculadorSaureusService extends CalculadorBase {
     // 5. Calcular UFC/g (NCh2676 8.2.2.2)
     let ufc: number | null = null;
     let esSd = false;
+    let operador = '=';
 
     if (sumaA > 0 && factorDilucion > 0) {
       ufc = sumaA / ((n1 + 0.1 * n2) * factorDilucion);
-    } else {
+    } else if (sumaColonias > 0) {
       esSd = true;
     }
 
@@ -59,35 +70,37 @@ export class CalculadorSaureusService extends CalculadorBase {
     const previas = this.calcularPrevias(coagulasa, datos.colConfirmar, sumaA);
 
     // 7. Formatear resultado
-    const textoReporte = this.formatearResultado(ufc, esSd, tiempoUsado, previas);
+    let textoReporte = this.formatearResultado(ufc, esSd);
 
-    // 8. Sumar colonias totales
-    const sumaColonias = this.sumarColonias(datos.diluciones);
+    if (sumaColonias === 0 && factorDilucion > 0) {
+      operador = '<';
+      esSd = false;
+      ufc = 1 / factorDilucion;
+      textoReporte = `< ${this.formatearLimiteDeteccion(factorDilucion)} UFC/g`;
+    } else if (!esSd && sumaColonias < 15) {
+      textoReporte = 'NE';
+    }
 
     return {
       ufc,
       textoReporte,
-      operador: '=',
+      operador,
       esSd,
       aPlacaA,
       aPlacaB,
       sumaA,
       previas,
       coagulasaUsada: tiempoUsado,
+      proporcionA: placaA.proporcion,
+      proporcionB: placaB.proporcion,
+      regla80AplicadaA: placaA.regla80Aplicada,
+      regla80AplicadaB: placaB.regla80Aplicada,
+      n1,
+      n2,
       casoAplicado: 'NCh2676_8.2',
       factorDilucion,
       sumaColonias
     };
-  }
-
-  /**
-   * Calcula 'a' para una placa individual
-   * Fórmula: a = (b / A) × C
-   * Regla 80%: si b/A >= 0.8 → a = C
-   */
-  private calcularPlacaIndividual(C: number, A: number, b: number): number {
-    if (A === 0 || C === 0) return 0;
-    return this.aplicarRegla80(b, A, C);
   }
 
   /**
@@ -112,9 +125,7 @@ export class CalculadorSaureusService extends CalculadorBase {
    */
   private formatearResultado(
     ufc: number | null,
-    esSd: boolean,
-    tiempoUsado: string | null,
-    previas: number | null
+    esSd: boolean
   ): string {
     if (esSd) {
       return 'SD';

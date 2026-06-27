@@ -3,7 +3,7 @@
 # ║  Comandos de desarrollo para el proyecto                        ║
 # ╚══════════════════════════════════════════════════════════════════╝
 
-.PHONY: help dev build stop restart logs migrate seed studio test test-backend test-frontend dev-test clean
+.PHONY: help dev build stop restart logs migrate seed studio test test-backend test-frontend dev-test dev-test-reset clean
 
 # ══════════════════════════════════════════════════════════════════
 # HELP
@@ -142,23 +142,28 @@ dev-test: ## Iniciar servidores + cargar datos de prueba (1 comando)
 	@echo "🧪 Preparando entorno de prueba completo..."
 	@echo ""
 	@echo "🚀 Paso 1/4 — Iniciando contenedores..."
-	@docker compose up -d 2>/dev/null; \
+	@docker compose up --build -d; \
 	 echo "   ⏳ Esperando que la base de datos esté lista..." && \
 	 sleep 8
 	@echo ""
 	@echo "📦 Paso 2/4 — Sincronizando schema..."
-	@$(MAKE) db-push 2>/dev/null || true
+	@docker compose exec backend_asistec npx prisma db push --accept-data-loss
 	@echo ""
 	@echo "🌱 Paso 3/4 — Seeds base (catálogos, usuarios)..."
-	@docker compose exec backend_asistec node run-seeds.js 2>/dev/null || true
+	@docker compose exec backend_asistec node run-seeds.js
 	@echo ""
 	@echo "🧪 Paso 4/4 — Cargando datos de prueba (cliente + solicitud #3)..."
-	@docker compose exec -T BD_AsisTec psql -U postgres -d asistectest < "AssisTec API/prisma/migrations/20260625_dev_test_seed_data/migration.sql"
+	@docker compose exec -T BD_AsisTec psql -v ON_ERROR_STOP=1 -U postgres -d asistectest < "AssisTec API/prisma/migrations/20260625_dev_test_seed_data/migration.sql"
 	@echo ""
 	@echo "✅ Entorno listo!"
 	@echo "   📋 Solicitud #3 (2026/ALI-003) — 3 muestras, 6 análisis"
 	@echo "   🧪 Analista: 0-0 — http://localhost:8000"
 	@echo "   🔗 Backend API: http://localhost:3001"
+
+dev-test-reset: ## Borrar volumen de DB y recrear entorno de prueba desde cero
+	@echo "🧨 Borrando base de datos de desarrollo..."
+	@docker compose down -v
+	@$(MAKE) dev-test
 
 # ══════════════════════════════════════════════════════════════════
 # LIMPIEZA

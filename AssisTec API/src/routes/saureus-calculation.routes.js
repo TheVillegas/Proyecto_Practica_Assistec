@@ -13,6 +13,12 @@ const winston = require('winston');
 const router = Router();
 const prisma = new PrismaClient();
 
+function crearErrorCliente(mensaje) {
+  const error = new Error(mensaje);
+  error.statusCode = 400;
+  return error;
+}
+
 // ──────────────────────────────────────────────
 // Helpers de cálculo (NCh2676 8.2)
 // ──────────────────────────────────────────────
@@ -39,6 +45,25 @@ function aplicarRegla80(b, A, C) {
   return (b / A) >= 0.8 ? C : Math.floor((b / A) * C);
 }
 
+function calcularResultadoPlaca(C, A, b) {
+  const coloniasPosibles = C || 0;
+  const coloniasTraspasadas = A || 0;
+  const coagulasaPositiva = b || 0;
+
+  if (coloniasPosibles === 0 || coloniasTraspasadas === 0) {
+    return { a: 0, proporcion: null, regla80Aplicada: false };
+  }
+
+  const proporcion = coagulasaPositiva / coloniasTraspasadas;
+  const regla80Aplicada = proporcion >= 0.8;
+
+  return {
+    a: aplicarRegla80(coagulasaPositiva, coloniasTraspasadas, coloniasPosibles),
+    proporcion,
+    regla80Aplicada
+  };
+}
+
 /**
  * Redondea a 2 cifras significativas (NCh2676 8.2.2.3)
  */
@@ -55,58 +80,118 @@ function redondearDosCifras(valor) {
   return `${mantisaStr} x 10${signo}${expStr}`;
 }
 
+function calcularFactorDilucion(dil) {
+  return Math.pow(10, -Math.abs(dil));
+}
+
+function extraerDiluciones(diluciones) {
+  const dilucionesValidas = (diluciones || []).filter(
+    dilucion => dilucion.colonias[0] !== null || dilucion.colonias[1] !== null
+  );
+
+  if (dilucionesValidas.length === 0) {
+    return { n1: 0, n2: 0, factorDilucion: 0 };
+  }
+
+  return {
+    n1: 1,
+    n2: dilucionesValidas.length > 1 ? 1 : 0,
+    factorDilucion: calcularFactorDilucion(dilucionesValidas[0].dil)
+  };
+}
+
+function sumarColonias(diluciones) {
+  return (diluciones || []).reduce(
+    (total, dilucion) => total + (dilucion.colonias[0] || 0) + (dilucion.colonias[1] || 0),
+    0
+  );
+}
+
+function formatearLimiteDeteccion(factorDilucion) {
+  const superscripts = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+  const exponente = Math.round(Math.log10(1 / factorDilucion));
+  const expStr = Math.abs(exponente).toString().split('').map(d => superscripts[d]).join('');
+  const signo = exponente < 0 ? '⁻' : '';
+
+  return `1 x 10${signo}${expStr}`;
+}
+
 /**
  * Calcula el resultado completo de S. aureus (NCh2676 8.2)
  */
 function calcularSAureus(datos) {
   const { diluciones, coloniasPosibles, colConfirmar, coagulasa4h, coagulasa24h } = datos;
+  const totalColoniasConfirmar = ((colConfirmar ? colConfirmar[0] : 0) || 0) + ((colConfirmar ? colConfirmar[1] : 0) || 0);
+
+  if (totalColoniasConfirmar > 5) {
+    throw crearErrorCliente('La suma de colonias a confirmar no puede ser mayor a 5');
+  }
 
   // 1. Resolver coagulasa
   const coag = resolverCoagulasa(coagulasa4h, coagulasa24h);
   const coagPos = coag.positivas;
 
   // 2. Calcular a por placa (NCh2676 8.2.2.1)
-  const C_A = (coloniasPosibles ? coloniasPosibles[0] : null) || 0;
-  const C_B = (coloniasPosibles ? coloniasPosibles[1] : null) || 0;
-  const A_A = (colConfirmar ? colConfirmar[0] : null) || 0;
-  const A_B = (colConfirmar ? colConfirmar[1] : null) || 0;
-  const b_A = (coagPos[0] || 0);
-  const b_B = (coagPos[1] || 0);
+  const placaA = calcularResultadoPlaca(
+    coloniasPosibles ? coloniasPosibles[0] : null,
+    colConfirmar ? colConfirmar[0] : null,
+    coagPos[0]
+  );
+  const placaB = calcularResultadoPlaca(
+    coloniasPosibles ? coloniasPosibles[1] : null,
+    colConfirmar ? colConfirmar[1] : null,
+    coagPos[1]
+  );
 
-  const aPlacaA = aplicarRegla80(b_A, A_A, C_A);
-  const aPlacaB = aplicarRegla80(b_B, A_B, C_B);
+  const aPlacaA = placaA.a;
+  const aPlacaB = placaB.a;
   const sumaA = aPlacaA + aPlacaB;
+  const sumaColonias = sumarColonias(diluciones);
 
   // 3. Factor de dilución
-  const dils = diluciones || [];
-  const dilValidas = dils.filter(d => d.colonias[0] !== null || d.colonias[1] !== null);
-  const primeraDil = dilValidas.length > 0 ? dilValidas[0] : null;
-  const factorDilucion = primeraDil ? Math.pow(10, -Math.abs(primeraDil.dil)) : 0;
-  const n1 = primeraDil ? primeraDil.colonias.filter(c => c !== null).length : 0;
-  const n2 = dilValidas.length > 1 ? dilValidas[1].colonias.filter(c => c !== null).length : 0;
+  const { n1, n2, factorDilucion } = extraerDiluciones(diluciones);
 
   // 4. Calcular UFC/g
   let ufc = null;
   let esSd = false;
+  let operador = '=';
   if (sumaA > 0 && factorDilucion > 0) {
     ufc = sumaA / ((n1 + 0.1 * n2) * factorDilucion);
-  } else {
+  } else if (sumaColonias > 0) {
     esSd = true;
   }
 
   // 5. Previas
-  const totalConfirmar = ((colConfirmar ? colConfirmar[0] : 0) || 0) + ((colConfirmar ? colConfirmar[1] : 0) || 0);
+  const totalConfirmar = totalColoniasConfirmar;
   const totalCoag = ((coagPos[0] || 0) + (coagPos[1] || 0));
   const previas = totalConfirmar > 0 ? (totalCoag / totalConfirmar) * sumaA : null;
 
   // 6. Formatear
-  const textoReporte = esSd ? 'SD' : redondearDosCifras(ufc) + ' UFC/g';
-  const sumaColonias = dils.reduce((sum, d) => sum + (d.colonias[0] || 0) + (d.colonias[1] || 0), 0);
+  let textoReporte = 'SD';
+
+  if (!esSd && ufc !== null) {
+    textoReporte = `${redondearDosCifras(ufc)} UFC/g`;
+  }
+
+  if (sumaColonias === 0 && factorDilucion > 0) {
+    operador = '<';
+    esSd = false;
+    ufc = 1 / factorDilucion;
+    textoReporte = `< ${formatearLimiteDeteccion(factorDilucion)} UFC/g`;
+  } else if (!esSd && sumaColonias < 15) {
+    textoReporte = 'NE';
+  }
 
   return {
-    ufc, textoReporte, operador: '=', esSd,
+    ufc, textoReporte, operador, esSd,
     aPlacaA, aPlacaB, sumaA, previas,
     coagulasaUsada: coag.tiempoUsado,
+    proporcionA: placaA.proporcion,
+    proporcionB: placaB.proporcion,
+    regla80AplicadaA: placaA.regla80Aplicada,
+    regla80AplicadaB: placaB.regla80Aplicada,
+    n1,
+    n2,
     casoAplicado: 'NCh2676_8.2', factorDilucion, sumaColonias
   };
 }
@@ -132,6 +217,9 @@ router.post('/calcular-muestra', (req, res) => {
     const resultado = calcularSAureus({ diluciones, coloniasPosibles, colConfirmar, coagulasa4h, coagulasa24h });
     return res.status(200).json(resultado);
   } catch (error) {
+    if (error.statusCode === 400) {
+      return res.status(400).json({ error: error.message });
+    }
     winston.error('Error en /calcular-muestra:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
@@ -153,26 +241,23 @@ router.post('/calcular-todo', (req, res) => {
 
     const resultados = {};
     let maxUfc = 0;
-    let tieneSd = false;
 
     for (const muestra of muestras) {
       const resultado = calcularSAureus(muestra);
       resultados[muestra.id] = resultado;
       if (resultado.ufc && resultado.ufc > maxUfc) maxUfc = resultado.ufc;
-      if (resultado.esSd) tieneSd = true;
     }
 
-    const consolidado = {
-      totalMuestras: muestras.length,
-      muestrasConResultado: muestras.filter(m => !resultados[m.id]?.esSd).length,
-      muestrasSd: muestras.filter(m => resultados[m.id]?.esSd).length,
-      maxUfc,
-      textoMaximo: maxUfc > 0 ? `${maxUfc} UFC/g` : 'SD',
+    return res.status(200).json({
+      solicitudAnalisisId,
+      resultados,
+      resultadoConsolidado: maxUfc > 0 ? `${redondearDosCifras(maxUfc)} UFC/g` : 'SD',
       reglaAplicada: 'Se toma el mayor valor entre las muestras que presentan desarrollo'
-    };
-
-    return res.status(200).json({ solicitudAnalisisId, resultados, consolidado });
+    });
   } catch (error) {
+    if (error.statusCode === 400) {
+      return res.status(400).json({ error: error.message });
+    }
     winston.error('Error en /calcular-todo:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }

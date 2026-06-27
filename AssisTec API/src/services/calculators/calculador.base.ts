@@ -38,8 +38,14 @@ export interface ResultadoCalculo {
   aPlacaA?: number;
   aPlacaB?: number;
   sumaA?: number;
-  previas?: number;
+  previas?: number | null;
   coagulasaUsada?: string | null; // "4 hrs" | "24 horas" | null (SD)
+  proporcionA?: number | null;
+  proporcionB?: number | null;
+  regla80AplicadaA?: boolean;
+  regla80AplicadaB?: boolean;
+  n1?: number;
+  n2?: number;
   // Campos específicos Coliformes
   coliformesTotales?: number;
   coliformesFecales?: number;
@@ -57,6 +63,11 @@ export interface ResultadoCalculo {
 // ──────────────────────────────────────────────
 
 export abstract class CalculadorBase {
+
+  protected static readonly SUPERSCRIPTS: Record<string, string> = {
+    '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+    '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
+  };
   
   /**
    * Calcula el resultado para una muestra según la fórmula del formulario
@@ -108,6 +119,32 @@ export abstract class CalculadorBase {
   }
 
   /**
+   * Calcula los metadatos por placa para S. aureus.
+   */
+  protected calcularResultadoPlaca(
+    coloniasPosibles: number | null | undefined,
+    coloniasTraspasadas: number | null | undefined,
+    coagulasaPositiva: number | null | undefined
+  ): { a: number; proporcion: number | null; regla80Aplicada: boolean } {
+    const C = coloniasPosibles || 0;
+    const A = coloniasTraspasadas || 0;
+    const b = coagulasaPositiva || 0;
+
+    if (A === 0 || C === 0) {
+      return { a: 0, proporcion: null, regla80Aplicada: false };
+    }
+
+    const proporcion = b / A;
+    const regla80Aplicada = proporcion >= 0.8;
+
+    return {
+      a: regla80Aplicada ? C : Math.floor(proporcion * C),
+      proporcion,
+      regla80Aplicada
+    };
+  }
+
+  /**
    * Redondea a 2 cifras significativas (NCh2676 8.2.2.3)
    */
   protected redondearDosCifras(valor: number): string {
@@ -129,15 +166,10 @@ export abstract class CalculadorBase {
     }
     
     // Superscript para exponente
-    const superscripts: Record<string, string> = {
-      '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
-      '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
-    };
-    
     const expStr = Math.abs(exponente)
       .toString()
       .split('')
-      .map(d => superscripts[d])
+      .map(d => CalculadorBase.SUPERSCRIPTS[d])
       .join('');
     
     const signo = exponente < 0 ? '⁻' : '';
@@ -150,7 +182,7 @@ export abstract class CalculadorBase {
    * Ej: dil = -2 → d = 0.01 (10^-2)
    */
   protected calcularFactorDilucion(dilucion: number): number {
-    return Math.pow(10, dilucion);
+    return Math.pow(10, -Math.abs(dilucion));
   }
 
   /**
@@ -185,14 +217,26 @@ export abstract class CalculadorBase {
     const primeraDil = dilucionesConDatos[0];
     const factorDilucion = this.calcularFactorDilucion(primeraDil.dil);
 
-    // Contar placas por dilución
-    const placasDil1 = dilucionesConDatos[0]?.colonias.filter(c => c !== null).length || 0;
-    const placasDil2 = dilucionesConDatos[1]?.colonias.filter(c => c !== null).length || 0;
-
     return {
-      n1: placasDil1,
-      n2: placasDil2,
+      n1: 1,
+      n2: dilucionesConDatos.length > 1 ? 1 : 0,
       factorDilucion
     };
+  }
+
+  /**
+   * Formatea el límite de detección como "1 x 10²" a partir de d⁻¹.
+   */
+  protected formatearLimiteDeteccion(factorDilucion: number): string {
+    const exponente = Math.round(Math.log10(1 / factorDilucion));
+    const expStr = Math.abs(exponente)
+      .toString()
+      .split('')
+      .map(d => CalculadorBase.SUPERSCRIPTS[d])
+      .join('');
+
+    const signo = exponente < 0 ? '⁻' : '';
+
+    return `1 x 10${signo}${expStr}`;
   }
 }

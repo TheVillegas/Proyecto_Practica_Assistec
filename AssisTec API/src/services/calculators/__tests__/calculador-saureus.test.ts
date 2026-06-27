@@ -81,6 +81,8 @@ describe('CalculadorSaureusService', () => {
 
       // Placa A: regla 80% → a = C = 10
       expect(resultado.aPlacaA).toBe(10);
+      expect(resultado.regla80AplicadaA).toBe(true);
+      expect(resultado.proporcionA).toBe(0.8);
     });
 
     it('debería ajustar proporcionalmente cuando proporción < 80%', () => {
@@ -101,6 +103,8 @@ describe('CalculadorSaureusService', () => {
       expect(resultado.aPlacaA).toBe(9);
       // Placa B: a = floor(1/2 × 30) = 15
       expect(resultado.aPlacaB).toBe(15);
+      expect(resultado.regla80AplicadaA).toBe(false);
+      expect(resultado.regla80AplicadaB).toBe(false);
     });
   });
 
@@ -173,20 +177,47 @@ describe('CalculadorSaureusService', () => {
 
       const resultado = calculador.calcular(datos);
 
-      // Σa = 24, n1 = 2, n2 = 0, d = 0.01
-      // N = 24 / ((2 + 0.1×0) × 0.01) = 24 / 0.02 = 1200
-      expect(resultado.ufc).toBe(1200);
-      expect(resultado.textoReporte).toBe('1,2 x 10³ UFC/g');
+      // Σa = 24, n1 = 1, n2 = 0, d = 0.01
+      // N = 24 / ((1 + 0.1×0) × 0.01) = 2400
+      expect(resultado.n1).toBe(1);
+      expect(resultado.n2).toBe(0);
+      expect(resultado.ufc).toBe(2400);
+      expect(resultado.textoReporte).toBe('2,4 x 10³ UFC/g');
     });
 
-    it('debería retornar SD si Σa es 0', () => {
+    it('debería calcular el ejemplo reportado por el usuario con placa B sin desarrollo', () => {
       const datos: DatosMuestra = {
         diluciones: [
-          { dil: -2, colonias: [0, 0] },
+          { dil: 2, colonias: [230, 126] },
+          { dil: 3, colonias: [null, null] }
+        ],
+        coloniasPosibles: [230, 126],
+        colConfirmar: [5, null],
+        coagulasa4h: [2, null],
+        coagulasa24h: [3, null]
+      };
+
+      const resultado = calculador.calcular(datos);
+
+      expect(resultado.coagulasaUsada).toBe('4 hrs');
+      expect(resultado.aPlacaA).toBe(92);
+      expect(resultado.aPlacaB).toBe(0);
+      expect(resultado.sumaA).toBe(92);
+      expect(resultado.n1).toBe(1);
+      expect(resultado.n2).toBe(0);
+      expect(resultado.factorDilucion).toBe(0.01);
+      expect(resultado.ufc).toBe(9200);
+      expect(resultado.textoReporte).toBe('9,2 x 10³ UFC/g');
+    });
+
+    it('debería reportar SD si no hay colonias pero hubo desarrollo sospechoso sin confirmación positiva', () => {
+      const datos: DatosMuestra = {
+        diluciones: [
+          { dil: -2, colonias: [28, 30] },
           { dil: -3, colonias: [null, null] }
         ],
-        coloniasPosibles: [0, 0],
-        colConfirmar: [0, 0],
+        coloniasPosibles: [28, 30],
+        colConfirmar: [3, 2],
         coagulasa4h: [0, 0],
         coagulasa24h: [0, 0]
       };
@@ -214,6 +245,59 @@ describe('CalculadorSaureusService', () => {
       const resultado = calculador.calcular(datos);
 
       expect(resultado.sumaA).toBeGreaterThan(0);
+    });
+
+    it('debería bloquear cálculo si la suma supera 5 colonias', () => {
+      const datos: DatosMuestra = {
+        diluciones: [
+          { dil: -2, colonias: [28, 30] }
+        ],
+        coloniasPosibles: [28, 30],
+        colConfirmar: [3, 3],
+        coagulasa4h: [1, 1],
+        coagulasa24h: [null, null]
+      };
+
+      expect(() => calculador.calcular(datos)).toThrow('La suma de colonias a confirmar no puede ser mayor a 5');
+    });
+  });
+
+  describe('Resultados con menos de 15 colonias', () => {
+    it('debería reportar NE cuando la suma de colonias es menor a 15', () => {
+      const datos: DatosMuestra = {
+        diluciones: [
+          { dil: -2, colonias: [10, 0] }
+        ],
+        coloniasPosibles: [10, 0],
+        colConfirmar: [5, 0],
+        coagulasa4h: [2, 0],
+        coagulasa24h: [null, null]
+      };
+
+      const resultado = calculador.calcular(datos);
+
+      expect(resultado.esSd).toBe(false);
+      expect(resultado.ufc).toBe(400);
+      expect(resultado.textoReporte).toBe('NE');
+    });
+
+    it('debería reportar < 1 × d⁻¹ cuando sumaColonias es 0', () => {
+      const datos: DatosMuestra = {
+        diluciones: [
+          { dil: -2, colonias: [0, 0] }
+        ],
+        coloniasPosibles: [0, 0],
+        colConfirmar: [0, 0],
+        coagulasa4h: [0, 0],
+        coagulasa24h: [0, 0]
+      };
+
+      const resultado = calculador.calcular(datos);
+
+      expect(resultado.esSd).toBe(false);
+      expect(resultado.operador).toBe('<');
+      expect(resultado.ufc).toBe(100);
+      expect(resultado.textoReporte).toBe('< 1 x 10² UFC/g');
     });
   });
 });
