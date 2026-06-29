@@ -222,6 +222,30 @@ class ColiRepository extends BaseFormRepository {
 
             for (const resultado of data.resultados ?? []) {
                 const idMuestra = BigInt(resultado.idColiMuestra);
+                const camposEstadisticos = {
+                    totalesLog10Mpn: resultado.totalesLog10Mpn ?? null,
+                    totalesSdLog10: resultado.totalesSdLog10 ?? null,
+                    totalesLimiteInferior: resultado.totalesLimiteInferior ?? null,
+                    totalesLimiteSuperior: resultado.totalesLimiteSuperior ?? null,
+                    totalesRarityIndex: resultado.totalesRarityIndex ?? null,
+                    totalesCategoriaRareza: resultado.totalesCategoriaRareza ?? null,
+                    totalesEstado: resultado.totalesEstado ?? null,
+                    fecalesLog10Mpn: resultado.fecalesLog10Mpn ?? null,
+                    fecalesSdLog10: resultado.fecalesSdLog10 ?? null,
+                    fecalesLimiteInferior: resultado.fecalesLimiteInferior ?? null,
+                    fecalesLimiteSuperior: resultado.fecalesLimiteSuperior ?? null,
+                    fecalesRarityIndex: resultado.fecalesRarityIndex ?? null,
+                    fecalesCategoriaRareza: resultado.fecalesCategoriaRareza ?? null,
+                    fecalesEstado: resultado.fecalesEstado ?? null,
+                    ecoliLog10Mpn: resultado.ecoliLog10Mpn ?? null,
+                    ecoliSdLog10: resultado.ecoliSdLog10 ?? null,
+                    ecoliLimiteInferior: resultado.ecoliLimiteInferior ?? null,
+                    ecoliLimiteSuperior: resultado.ecoliLimiteSuperior ?? null,
+                    ecoliRarityIndex: resultado.ecoliRarityIndex ?? null,
+                    ecoliCategoriaRareza: resultado.ecoliCategoriaRareza ?? null,
+                    ecoliEstado: resultado.ecoliEstado ?? null
+                };
+
                 await tx.coliFase4Resultado.upsert({
                     where: { idColiMuestra: idMuestra },
                     create: {
@@ -231,7 +255,8 @@ class ColiRepository extends BaseFormRepository {
                         coliformesFecales: resultado.coliformesFecales ?? null,
                         eColi: resultado.eColi ?? null,
                         incongruenciaDetectada: Boolean(resultado.incongruenciaDetectada ?? false),
-                        observacionIncongruencia: resultado.observacionIncongruencia ?? null
+                        observacionIncongruencia: resultado.observacionIncongruencia ?? null,
+                        ...camposEstadisticos
                     },
                     update: {
                         coliformesTotales: resultado.coliformesTotales ?? null,
@@ -239,7 +264,8 @@ class ColiRepository extends BaseFormRepository {
                         eColi: resultado.eColi ?? null,
                         incongruenciaDetectada: Boolean(resultado.incongruenciaDetectada ?? false),
                         observacionIncongruencia: resultado.observacionIncongruencia ?? null,
-                        coliFormularioIdColiFormulario: BigInt(idFormulario)
+                        coliFormularioIdColiFormulario: BigInt(idFormulario),
+                        ...camposEstadisticos
                     }
                 });
             }

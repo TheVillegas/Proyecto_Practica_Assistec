@@ -1,11 +1,25 @@
+const winston = require('winston');
 const coliRepository = require('../repositories/coliformes.repository');
 const prisma = require('../config/prisma');
 const ROLES = require('../config/roles');
 const { serializePrismaRecord } = require('../utils/prismaSerialize');
 const { parseDate, resolvePayloadSection } = require('../utils/formularioPayload');
-const { calcularResultadosNMP } = require('../calculators/nmpColi.calculator');
+const { calcularMPN, construirConteos } = require('../../dist/calculators/mpnColi.engine');
+const { Prisma } = require('@prisma/client');
 
 const WRITE_ROLES = [ROLES.ANALISTA, ROLES.ADMINISTRATOR];
+const VOLUMENES_MUESTRA = [0.1, 0.01, 0.001];
+const TIPOS_LECTURA = ['totales', 'fecales', 'ecoli'];
+const LABELS_INCONGRUENCIA = {
+    totales: 'coliformes totales',
+    fecales: 'coliformes fecales',
+    ecoli: 'E. coli'
+};
+
+const logger = winston.createLogger({
+    level: 'warn',
+    transports: [new winston.transports.Console({ format: winston.format.simple() })]
+});
 
 class ColiService {
     assertCanWrite(usuario) {
@@ -150,6 +164,141 @@ class ColiService {
         }));
     }
 
+    /**
+     * Convierte un valor numérico a Prisma.Decimal, descartando Infinity/NaN/null.
+     * Prisma no soporta Infinity en campos Decimal.
+     */
+    _toDecimalOrNull(value) {
+        if (value === null || value === undefined || !Number.isFinite(value)) {
+            return null;
+        }
+        return new Prisma.Decimal(value);
+    }
+
+    /**
+     * Convierte un valor numérico a number, descartando Infinity/NaN/null.
+     * Útil para la respuesta JSON, donde JSON.stringify ya transforma Infinity/NaN a null.
+     */
+    _toNumberOrNull(value) {
+        if (value === null || value === undefined || !Number.isFinite(value)) {
+            return null;
+        }
+        return value;
+    }
+
+    /**
+     * Resultado MPN manual para datos inválidos o faltantes.
+     * @returns {import('../../dist/calculators/mpnColi.engine').ResultadoMPN}
+     */
+    _resultadoInvalido(detalle) {
+        return {
+            mpn: NaN,
+            log10Mpn: null,
+            sdLog10: null,
+            limiteInferior: null,
+            limiteSuperior: null,
+            rarityIndex: null,
+            categoriaRareza: null,
+            estado: 'invalido',
+            detalle
+        };
+    }
+
+    /**
+     * Agrupa submuestras por dilucion, preservando el orden numérico descendente.
+     * No usa Object.keys().sort() alfabético ni default '10'.
+     */
+    _agruparLecturasPorDilucion(submuestras) {
+        const porDilucion = new Map();
+        for (const s of submuestras) {
+            if (s.dilucion == null) {
+                return {
+                    invalido: true,
+                    detalle: `Submuestra sin dilucion (tipoLectura=${s.tipoLectura ?? 'desconocido'})`
+                };
+            }
+            const dil = String(s.dilucion);
+            if (!porDilucion.has(dil)) {
+                porDilucion.set(dil, { dil, lecturas: [] });
+            }
+            porDilucion.get(dil).lecturas.push(s.presencia === true);
+        }
+
+        const ordenadas = [...porDilucion.values()]
+            .sort((a, b) => parseFloat(b.dil) - parseFloat(a.dil));
+
+        return {
+            invalido: false,
+            lecturas: ordenadas.map((grupo) => grupo.lecturas)
+        };
+    }
+
+    _calcularDesdeSubmuestras(submuestras, tipoLectura) {
+        const delTipo = submuestras.filter((s) => s.tipoLectura === tipoLectura);
+        if (delTipo.length === 0) {
+            return this._resultadoInvalido(`No hay submuestras para ${tipoLectura}`);
+        }
+
+        const { lecturas, invalido, detalle } = this._agruparLecturasPorDilucion(delTipo);
+        if (invalido) {
+            return this._resultadoInvalido(detalle);
+        }
+
+        if (lecturas.length !== VOLUMENES_MUESTRA.length) {
+            return this._resultadoInvalido(
+                `Numero de diluciones invalido para ${tipoLectura}: ` +
+                `se esperaban ${VOLUMENES_MUESTRA.length}, se recibieron ${lecturas.length}`
+            );
+        }
+
+        const conteos = construirConteos(lecturas, VOLUMENES_MUESTRA);
+        return calcularMPN(conteos);
+    }
+
+    _calcularDesdeLecturas(lecturas) {
+        const conteos = construirConteos(lecturas, VOLUMENES_MUESTRA);
+        return calcularMPN(conteos);
+    }
+
+    /**
+     * Serializa un ResultadoMPN al objeto con los 7 campos persistidos por organismo.
+     */
+    _serializarResultadoDb(resultado, tipo) {
+        const p = (v) => this._toDecimalOrNull(v);
+        return {
+            [`${tipo}Log10Mpn`]: p(resultado.log10Mpn),
+            [`${tipo}SdLog10`]: p(resultado.sdLog10),
+            [`${tipo}LimiteInferior`]: p(resultado.limiteInferior),
+            [`${tipo}LimiteSuperior`]: p(resultado.limiteSuperior),
+            [`${tipo}RarityIndex`]: p(resultado.rarityIndex),
+            [`${tipo}CategoriaRareza`]: resultado.categoriaRareza ?? null,
+            [`${tipo}Estado`]: resultado.estado ?? null
+        };
+    }
+
+    /**
+     * Construye el objeto ResultadoMPN expuesto en la respuesta HTTP.
+     */
+    _organismoResponse(resultado) {
+        return {
+            mpn: resultado.mpn,
+            log10Mpn: this._toNumberOrNull(resultado.log10Mpn),
+            sdLog10: this._toNumberOrNull(resultado.sdLog10),
+            limiteInferior: this._toNumberOrNull(resultado.limiteInferior),
+            limiteSuperior: this._toNumberOrNull(resultado.limiteSuperior),
+            rarityIndex: this._toNumberOrNull(resultado.rarityIndex),
+            categoriaRareza: resultado.categoriaRareza ?? null,
+            estado: resultado.estado
+        };
+    }
+
+    _observacionIncongruencia(resultadosPorTipo) {
+        const tipos = TIPOS_LECTURA.filter((tipo) => resultadosPorTipo[tipo]?.categoriaRareza === 3);
+        if (tipos.length === 0) return null;
+        const nombres = tipos.map((tipo) => LABELS_INCONGRUENCIA[tipo]).join(', ');
+        return `Lecturas incongruentes (rareza 3) en: ${nombres}. Revisar conteo de tubos.`;
+    }
+
     async _calcularResultadosFase4(idFormulario) {
         const formulario = await coliRepository.findById(idFormulario);
         if (!formulario) {
@@ -161,43 +310,114 @@ class ColiService {
 
         for (const muestra of muestras) {
             const submuestras = muestra.submuestras || [];
+            const resultadosPorTipo = {};
 
-            // Agrupar por tipo lectura y calcular tubos positivos por dilucion
-            const tipos = ['totales', 'fecales', 'ecoli'];
-            const tubosPorTipo = {};
-
-            for (const tipo of tipos) {
-                const delTipo = submuestras.filter((s) => s.tipoLectura === tipo);
-                // Agrupar por dilucion y contar positivos
-                const porDilucion = {};
-                for (const s of delTipo) {
-                    const dil = s.dilucion || '10';
-                    if (!porDilucion[dil]) porDilucion[dil] = 0;
-                    if (s.presencia) porDilucion[dil]++;
-                }
-                // Ordenar diluciones y armar array de 3 elementos
-                const dilucionesOrdenadas = Object.keys(porDilucion).sort();
-                const tubos = dilucionesOrdenadas.slice(0, 3).map((d) => porDilucion[d]);
-                while (tubos.length < 3) tubos.push(0);
-                tubosPorTipo[tipo] = tubos;
+            for (const tipo of TIPOS_LECTURA) {
+                resultadosPorTipo[tipo] = this._calcularDesdeSubmuestras(submuestras, tipo);
             }
 
-            const nmp = calcularResultadosNMP({
-                tubosPositivosTotales: tubosPorTipo.totales,
-                tubosPositivosFecales: tubosPorTipo.fecales,
-                tubosPositivosEcoli: tubosPorTipo.ecoli
-            });
+            const incongruenciaDetectada = TIPOS_LECTURA.some(
+                (tipo) => resultadosPorTipo[tipo].categoriaRareza === 3
+            );
 
             resultados.push({
                 idColiMuestra: String(muestra.idColiMuestra),
-                coliformesTotales: nmp.coliformesTotales,
-                coliformesFecales: nmp.coliformesFecales,
-                eColi: nmp.eColi,
-                incongruenciaDetectada: false
+                coliformesTotales: this._toDecimalOrNull(resultadosPorTipo.totales.mpn),
+                coliformesFecales: this._toDecimalOrNull(resultadosPorTipo.fecales.mpn),
+                eColi: this._toDecimalOrNull(resultadosPorTipo.ecoli.mpn),
+                incongruenciaDetectada,
+                observacionIncongruencia: incongruenciaDetectada
+                    ? this._observacionIncongruencia(resultadosPorTipo)
+                    : null,
+                ...this._serializarResultadoDb(resultadosPorTipo.totales, 'totales'),
+                ...this._serializarResultadoDb(resultadosPorTipo.fecales, 'fecales'),
+                ...this._serializarResultadoDb(resultadosPorTipo.ecoli, 'ecoli')
             });
         }
 
         return resultados;
+    }
+
+    _construirConteosDesdeConteosPorDilucion(conteosPorDilucion) {
+        return conteosPorDilucion.map((positivos, index) => ({
+            positivos: Number(positivos) || 0,
+            tubos: 3,
+            volumenMuestraPorTubo: VOLUMENES_MUESTRA[index]
+        }));
+    }
+
+    _calcularResultadosLegacy(muestra) {
+        const conteosTotales = this._construirConteosDesdeConteosPorDilucion(muestra.tubosPositivos24h);
+        const conteosFecales = this._construirConteosDesdeConteosPorDilucion(muestra.tubosPositivos48h);
+
+        return {
+            totales: calcularMPN(conteosTotales),
+            fecales: calcularMPN(conteosFecales),
+            ecoli: calcularMPN(conteosFecales)
+        };
+    }
+
+    async calcularNmp(idFormulario, body, usuario) {
+        this.assertCanWrite(usuario);
+
+        const formulario = await coliRepository.findById(idFormulario);
+        if (!formulario) {
+            throw new Error('NOT_FOUND');
+        }
+
+        const muestras = Array.isArray(body?.muestras) ? body.muestras : [];
+        const fase4Resultado = muestras.map((muestra) => {
+            const idColiMuestra = Number(muestra.idColiMuestra);
+            const lecturas = muestra.lecturas;
+            let resultadosPorTipo;
+
+            const usaNuevoContrato = lecturas &&
+                Array.isArray(lecturas.totales) &&
+                Array.isArray(lecturas.fecales) &&
+                Array.isArray(lecturas.ecoli);
+
+            if (usaNuevoContrato) {
+                resultadosPorTipo = {
+                    totales: this._calcularDesdeLecturas(lecturas.totales),
+                    fecales: this._calcularDesdeLecturas(lecturas.fecales),
+                    ecoli: this._calcularDesdeLecturas(lecturas.ecoli)
+                };
+            } else if (Array.isArray(muestra.tubosPositivos24h) || Array.isArray(muestra.tubosPositivos48h)) {
+                // TODO: fallback temporal para frontend que aun no envia el contrato nuevo.
+                // Se conserva solo hasta que el change de UI adopte lecturas {totales, fecales, ecoli}.
+                logger.warn(
+                    `calcularNmp recibio body legacy para idColiMuestra=${idColiMuestra}. ` +
+                    'Usando fallback tubosPositivos24h/48h.'
+                );
+                resultadosPorTipo = this._calcularResultadosLegacy(muestra);
+            } else {
+                resultadosPorTipo = {
+                    totales: this._resultadoInvalido('No se recibieron lecturas para coliformes totales'),
+                    fecales: this._resultadoInvalido('No se recibieron lecturas para coliformes fecales'),
+                    ecoli: this._resultadoInvalido('No se recibieron lecturas para E. coli')
+                };
+            }
+
+            const incongruenciaDetectada = TIPOS_LECTURA.some(
+                (tipo) => resultadosPorTipo[tipo].categoriaRareza === 3
+            );
+
+            return {
+                idColiMuestra,
+                coliformesTotales: this._toNumberOrNull(resultadosPorTipo.totales.mpn),
+                coliformesFecales: this._toNumberOrNull(resultadosPorTipo.fecales.mpn),
+                eColi: this._toNumberOrNull(resultadosPorTipo.ecoli.mpn),
+                totales: this._organismoResponse(resultadosPorTipo.totales),
+                fecales: this._organismoResponse(resultadosPorTipo.fecales),
+                ecoli: this._organismoResponse(resultadosPorTipo.ecoli),
+                incongruenciaDetectada,
+                observacionIncongruencia: incongruenciaDetectada
+                    ? this._observacionIncongruencia(resultadosPorTipo)
+                    : null
+            };
+        });
+
+        return { fase4Resultado };
     }
 
     async _assertStageProgression(formulario, faseNum, completada = true) {
@@ -238,54 +458,6 @@ class ColiService {
 
     _resolveFaseActual(body, defaultValue) {
         return body.fase_actual ?? body.faseActual ?? defaultValue;
-    }
-
-    _normalizarConteoTubos(tubos) {
-        if (!Array.isArray(tubos)) {
-            return [0, 0, 0];
-        }
-
-        const normalizados = tubos.slice(0, 3).map((valor) => {
-            const numero = Number(valor);
-            if (!Number.isFinite(numero)) return 0;
-            return Math.max(0, Math.min(3, numero));
-        });
-
-        while (normalizados.length < 3) {
-            normalizados.push(0);
-        }
-
-        return normalizados;
-    }
-
-    async calcularNmp(idFormulario, body, usuario) {
-        this.assertCanWrite(usuario);
-
-        const formulario = await coliRepository.findById(idFormulario);
-        if (!formulario) {
-            throw new Error('NOT_FOUND');
-        }
-
-        const muestras = Array.isArray(body?.muestras) ? body.muestras : [];
-        const fase4Resultado = muestras.map((muestra) => {
-            const tubosPositivos24h = this._normalizarConteoTubos(muestra.tubosPositivos24h);
-            const tubosPositivos48h = this._normalizarConteoTubos(muestra.tubosPositivos48h);
-
-            const resultados = calcularResultadosNMP({
-                tubosPositivosTotales: tubosPositivos24h,
-                tubosPositivosFecales: tubosPositivos48h,
-                tubosPositivosEcoli: tubosPositivos48h
-            });
-
-            return {
-                idColiMuestra: Number(muestra.idColiMuestra),
-                coliformesTotales: resultados.coliformesTotales,
-                coliformesFecales: resultados.coliformesFecales,
-                eColi: resultados.eColi
-            };
-        });
-
-        return { fase4Resultado };
     }
 
     async guardarFase(id, fase, body, expectedUpdatedAt, usuario) {
