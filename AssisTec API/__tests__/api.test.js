@@ -1068,8 +1068,8 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
             expect(res.body.mensaje).toMatch(/Solicitud ya validada|no se puede modificar/);
         });
 
-        it('SC-09.3: Coordinadora sí puede editar solicitud en under_review', async () => {
-            const token = mockToken({ id: '1-1', roles: [1], primaryRole: 1 });
+        it('SC-09.3: Administrator puede editar actuando como coordinadora en under_review', async () => {
+            const token = mockToken({ id: '1-1', role: 4, roles: [4, 1], primaryRole: 4 });
             const mockDate = new Date('2024-01-01T00:00:00.000Z');
             prisma.solicitudIngreso.findUnique
                 .mockResolvedValueOnce({
@@ -1144,7 +1144,7 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
             const res = await request(app)
                 .put('/api/solicitud/1')
                 .set('Authorization', `Bearer ${token}`)
-                .send({ updated_at: '2024-01-01T00:00:00.000Z', categoriaId: 1, nombreCliente: 'Cliente', rutCliente: 'SIN-RUT' });
+                .send({ updated_at: '2024-01-01T00:00:00.000Z', actingRole: 1, categoriaId: 1, nombreCliente: 'Cliente', rutCliente: 'SIN-RUT' });
 
             expect(res.status).toBe(200);
         });
@@ -1156,7 +1156,7 @@ describe('AssisTec API - Pruebas Automatizadas (Specs)', () => {
 
     describe('REQ-09: Generación de reportes endurecida para analista', () => {
         it('SC-10.1: Analista puede generar reportes para solicitud asignada (post_validation)', async () => {
-            const token = mockToken({ id: '0-1', roles: [0], primaryRole: 0 });
+            const token = mockToken({ id: '0-1', role: 0, roles: [0], primaryRole: 0 });
             prisma.solicitudIngreso.findUnique.mockResolvedValue({
                 idSolicitud: 5n,
                 numeroAli: 1001,

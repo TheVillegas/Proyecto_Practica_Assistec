@@ -26,6 +26,7 @@ const etapa1PayloadSchema = z.object({
     hora_homogeneizado: optionalString(),
     hora_siembra: optionalString(),
     codigo_agar_baird_parker: optionalString(),
+    peso_muestra_tipo: optionalString(),
     n_muestra_10g_90ml: optionalNumber(),
     n_muestra_50g_450ml: optionalNumber(),
     id_micropipeta: optionalNumber(),

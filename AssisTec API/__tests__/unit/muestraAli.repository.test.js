@@ -21,6 +21,9 @@ jest.mock('../../src/config/prisma', () => ({
     },
     salFormulario: {
         findMany: jest.fn()
+    },
+    entFormulario: {
+        findMany: jest.fn()
     }
 }));
 
@@ -45,6 +48,7 @@ describe('T-SFE-001: MuestraAliRepository - ruteo de formularios', () => {
             faseActual: 1,
             rutAnalista: '1-9'
         }]);
+        prisma.entFormulario.findMany.mockResolvedValue([]);
 
         const formularios = await MuestraAliRepository.findFormulariosByCodigoAli('ALI-1');
 
@@ -73,6 +77,7 @@ describe('T-SFE-001: MuestraAliRepository - ruteo de formularios', () => {
             rutAnalista: '1-9'
         }]);
         prisma.salFormulario.findMany.mockResolvedValue([]);
+        prisma.entFormulario.findMany.mockResolvedValue([]);
 
         const formularios = await MuestraAliRepository.findFormulariosByCodigoAli('ALI-1');
 
