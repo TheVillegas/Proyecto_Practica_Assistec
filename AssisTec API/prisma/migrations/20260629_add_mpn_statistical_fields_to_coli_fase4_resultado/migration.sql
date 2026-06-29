@@ -1,0 +1,23 @@
+-- AlterTable
+ALTER TABLE "coli_fase4_resultado" ADD COLUMN     "ecoli_categoria_rareza" SMALLINT,
+ADD COLUMN     "ecoli_estado" VARCHAR(50),
+ADD COLUMN     "ecoli_limite_inferior" DECIMAL(15,4),
+ADD COLUMN     "ecoli_limite_superior" DECIMAL(15,4),
+ADD COLUMN     "ecoli_log10_mpn" DECIMAL(15,6),
+ADD COLUMN     "ecoli_rarity_index" DECIMAL(15,6),
+ADD COLUMN     "ecoli_sd_log10" DECIMAL(15,6),
+ADD COLUMN     "fecales_categoria_rareza" SMALLINT,
+ADD COLUMN     "fecales_estado" VARCHAR(50),
+ADD COLUMN     "fecales_limite_inferior" DECIMAL(15,4),
+ADD COLUMN     "fecales_limite_superior" DECIMAL(15,4),
+ADD COLUMN     "fecales_log10_mpn" DECIMAL(15,6),
+ADD COLUMN     "fecales_rarity_index" DECIMAL(15,6),
+ADD COLUMN     "fecales_sd_log10" DECIMAL(15,6),
+ADD COLUMN     "totales_categoria_rareza" SMALLINT,
+ADD COLUMN     "totales_estado" VARCHAR(50),
+ADD COLUMN     "totales_limite_inferior" DECIMAL(15,4),
+ADD COLUMN     "totales_limite_superior" DECIMAL(15,4),
+ADD COLUMN     "totales_log10_mpn" DECIMAL(15,6),
+ADD COLUMN     "totales_rarity_index" DECIMAL(15,6),
+ADD COLUMN     "totales_sd_log10" DECIMAL(15,6);
+

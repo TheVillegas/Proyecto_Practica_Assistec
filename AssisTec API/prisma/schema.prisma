@@ -938,6 +938,31 @@ model ColiFase4Resultado {
   incongruenciaDetectada   Boolean  @default(false) @map("incongruencia_detectada")
   observacionIncongruencia String?  @map("observacion_incongruencia")
 
+  // Campos estadisticos del motor MPN (coli-mpn-engine-replacement)
+  totalesLog10Mpn          Decimal? @map("totales_log10_mpn") @db.Decimal(15, 6)
+  totalesSdLog10           Decimal? @map("totales_sd_log10") @db.Decimal(15, 6)
+  totalesLimiteInferior    Decimal? @map("totales_limite_inferior") @db.Decimal(15, 4)
+  totalesLimiteSuperior    Decimal? @map("totales_limite_superior") @db.Decimal(15, 4)
+  totalesRarityIndex       Decimal? @map("totales_rarity_index") @db.Decimal(15, 6)
+  totalesCategoriaRareza   Int?     @map("totales_categoria_rareza") @db.SmallInt
+  totalesEstado            String?  @map("totales_estado") @db.VarChar(50)
+
+  fecalesLog10Mpn          Decimal? @map("fecales_log10_mpn") @db.Decimal(15, 6)
+  fecalesSdLog10           Decimal? @map("fecales_sd_log10") @db.Decimal(15, 6)
+  fecalesLimiteInferior    Decimal? @map("fecales_limite_inferior") @db.Decimal(15, 4)
+  fecalesLimiteSuperior    Decimal? @map("fecales_limite_superior") @db.Decimal(15, 4)
+  fecalesRarityIndex       Decimal? @map("fecales_rarity_index") @db.Decimal(15, 6)
+  fecalesCategoriaRareza   Int?     @map("fecales_categoria_rareza") @db.SmallInt
+  fecalesEstado            String?  @map("fecales_estado") @db.VarChar(50)
+
+  ecoliLog10Mpn            Decimal? @map("ecoli_log10_mpn") @db.Decimal(15, 6)
+  ecoliSdLog10             Decimal? @map("ecoli_sd_log10") @db.Decimal(15, 6)
+  ecoliLimiteInferior      Decimal? @map("ecoli_limite_inferior") @db.Decimal(15, 4)
+  ecoliLimiteSuperior      Decimal? @map("ecoli_limite_superior") @db.Decimal(15, 4)
+  ecoliRarityIndex         Decimal? @map("ecoli_rarity_index") @db.Decimal(15, 6)
+  ecoliCategoriaRareza     Int?     @map("ecoli_categoria_rareza") @db.SmallInt
+  ecoliEstado              String?  @map("ecoli_estado") @db.VarChar(50)
+
   muestra                        ColiMuestra     @relation(fields: [idColiMuestra], references: [idColiMuestra])
   coliFormulario                 ColiFormulario? @relation(fields: [coliFormularioIdColiFormulario], references: [idColiFormulario])
   coliFormularioIdColiFormulario BigInt?
