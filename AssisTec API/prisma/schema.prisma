@@ -838,14 +838,16 @@ model ColiFase1 {
 }
 
 model ColiFase2 {
-  idColiFase2       BigInt   @id @default(autoincrement()) @map("id_coli_fase2")
-  idColiFormulario  BigInt   @unique @map("id_coli_formulario")
-  codigoCaldoLauril String   @map("codigo_caldo_lauril") @db.VarChar(100)
-  codigoTween80     String?  @map("codigo_tween_80") @db.VarChar(100)
-  completada        Boolean  @default(false)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  idColiFase2          BigInt   @id @default(autoincrement()) @map("id_coli_fase2")
+  idColiFormulario     BigInt   @unique @map("id_coli_formulario")
+  idMedioCaldoLauril   Int      @map("id_medio_caldo_lauril")
+  idMedioTween80       Int?     @map("id_medio_tween_80")
+  completada           Boolean  @default(false)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamp()
 
-  formulario ColiFormulario @relation(fields: [idColiFormulario], references: [idColiFormulario])
+  formulario     ColiFormulario @relation(fields: [idColiFormulario], references: [idColiFormulario])
+  medioCaldoLauril MedioCultivo @relation("CaldoLauril", fields: [idMedioCaldoLauril], references: [idMedioCultivo])
+  medioTween80     MedioCultivo? @relation("Tween80", fields: [idMedioTween80], references: [idMedioCultivo])
 
   estufas      ColiFase2Estufa[]
   micropipetas ColiFase2Micropipeta[]
@@ -968,6 +970,25 @@ model ColiFase4Resultado {
   coliFormularioIdColiFormulario BigInt?
 
   @@map("coli_fase4_resultado")
+}
+
+// ============================================================
+// MAESTRAS GENERALES
+// ============================================================
+
+model MedioCultivo {
+  idMedioCultivo   Int      @id @default(autoincrement()) @map("id_medio_cultivo")
+  nombre           String   @unique @db.VarChar(100)
+  descripcion      String?
+  temperaturaUso   Decimal? @map("temperatura_uso") @db.Decimal(4, 1)
+  normaRelacionada String?  @map("norma_relacionada") @db.VarChar(50)
+  activo           Boolean  @default(true)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  coliFase2CaldoLauril ColiFase2[] @relation("CaldoLauril")
+  coliFase2Tween80     ColiFase2[] @relation("Tween80")
+
+  @@map("medios_cultivos")
 }
 
 // ============================================================

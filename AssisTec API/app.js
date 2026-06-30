@@ -22,6 +22,7 @@ const coliformesRoutes = require('./src/routes/coliformes.routes');
 const salmonellaRoutes = require('./src/routes/salmonella.routes');
 const enterobacteriasRoutes = require('./src/routes/enterobacterias.routes');
 const muestraAliRoutes = require('./src/routes/muestraAli.routes');
+const mediosCultivosRoutes = require('./src/routes/maestras/medios-cultivos.route');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/solicitud', solicitudRoutes);
@@ -35,6 +36,7 @@ app.use('/api/formulario/coli', coliformesRoutes);
 app.use('/api/formulario/sal', salmonellaRoutes);
 app.use('/api/formulario/ent', enterobacteriasRoutes);
 app.use('/api/MuestraALI', muestraAliRoutes);
+app.use('/api/maestras/medios-cultivos', mediosCultivosRoutes);
 
 // Ruta de health check
 app.get('/', (req, res) => {

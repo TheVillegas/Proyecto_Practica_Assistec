@@ -101,8 +101,8 @@ class ColiService {
     mapFase2Payload(body) {
         const raw = resolvePayloadSection(body, 'fase');
         return {
-            codigoCaldoLauril: raw.codigo_caldo_lauril ?? raw.codigoCaldoLauril,
-            codigoTween80: raw.codigo_tween_80 ?? raw.codigoTween80,
+            idMedioCaldoLauril: raw.id_medio_caldo_lauril ?? raw.idMedioCaldoLauril,
+            idMedioTween80: raw.id_medio_tween_80 ?? raw.idMedioTween80,
             completada: raw.completada
         };
     }
