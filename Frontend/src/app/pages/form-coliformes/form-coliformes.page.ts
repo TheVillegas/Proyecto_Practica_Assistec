@@ -11,11 +11,13 @@ import {
 import { catchError, switchMap } from 'rxjs/operators';
 import { CatalogosService } from '../../services/catalogos.service';
 import { ColiformesApiService } from '../../services/coliformes-api.service';
+import { MediosCultivosService, MedioCultivo } from '../../services/medios-cultivos.service';
 import { EquipoIncubacion, Micropipeta, Responsable } from '../../interfaces/catalogo.interfaces';
 import {
   CalcularNmpPayload,
   ColiFormulario,
   ColiMuestra,
+  ColiFase4CalidadManual,
   SaveFase1Payload,
   SaveFase2Payload,
   SaveFase3Payload,
@@ -77,15 +79,17 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   private toastCtrl = inject(ToastController);
   private catalogosService = inject(CatalogosService);
   private coliService = inject(ColiformesApiService);
+  private mediosCultivosService = inject(MediosCultivosService);
 
   // ─── Wizard ──────────────────────────────────────────────────────────────────
-  readonly TOTAL_ETAPAS = 4;
+  readonly TOTAL_ETAPAS = 5;
   etapaActual = 1;
   readonly NOMBRES_ETAPAS = [
-    'Alimento e Incubación',
-    'Detalles de Siembra',
-    'Control de Calidad',
-    'Lecturas y Resultados NMP',
+    'Incubación',
+    'Siembra',
+    'Lecturas',
+    'Controles',
+    'Resultados NMP',
   ];
 
   // ─── Formulario ──────────────────────────────────────────────────────────────
@@ -93,16 +97,23 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   formularioUpdatedAt = '';
   form!: FormGroup;
   muestras: ColiMuestra[] = [];
-  /** Entradas por muestra para las tarjetas de la etapa 4 */
+  /** Entradas por muestra para las tarjetas de la etapa 3 */
   entradasMuestra: EntradaMuestra[] = [];
 
   // ─── Catálogos ──────────────────────────────────────────────────────────────
   listaEquiposIncubacion: EquipoIncubacion[] = [];
   listaPipetas: Micropipeta[] = [];
   listaResponsables: Responsable[] = [];
+  listaMediosCaldoLauril: MedioCultivo[] = [];
+  listaMediosTween80: MedioCultivo[] = [];
 
   // ─── Diluciones fijas ────────────────────────────────────────────────────────
   readonly DILUCIONES: string[] = [...DILUCIONES_FIJAS];
+
+  // ─── Etapa 1: análisis activos ───────────────────────────────────────────────
+  ctActivo = true;
+  cfActivo = true;
+  ecActivo = true;
 
   // ─── Datos de lectura (compartidos entre todas las muestras) ─────────────────
   fechaLectura24h = '';
@@ -114,7 +125,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   errorHora24h = '';
   errorHora48h = '';
 
-  // ─── Etapa 3: controles de calidad ──────────────────────────────────────────
+  // ─── Etapa 4: controles de calidad ──────────────────────────────────────────
   ct_controlKAerogenes: ControlPresencia = 'sin_registrar';
   ct_controlSAureus: ControlPresencia = 'sin_registrar';
   ct_controlEColi: ControlPresencia = 'sin_registrar';
@@ -127,6 +138,17 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   ec_controlEColi: ControlPresencia = 'sin_registrar';
   ec_controlKAerogenes: ControlPresencia = 'sin_registrar';
   ec_controlBlanco = '';
+
+  // ─── Etapa 4: Manual de Inocuidad ───────────────────────────────────────────
+  fase4Calidad: ColiFase4CalidadManual = {
+    duplicadoAli: null,
+    duplicadoAliCumple: null,
+    controlBlancoAliCumple: null,
+    desfavorable: false,
+    desfavorableTabla: '',
+    desfavorableLimite: null as unknown as number,
+    desfavorableFechaEntrega: '',
+  };
 
   // ─── IDs locales para muestras creadas en el frontend ─────────────────────
   private localIdCounter = 0;
@@ -193,12 +215,20 @@ export class FormColiformesPage implements OnInit, OnDestroy {
           return of([] as Responsable[]);
         })
       ),
+      medios: this.mediosCultivosService.getAll().pipe(
+        catchError(() => {
+          console.warn('[Coli] Catálogo medios_cultivos no disponible');
+          return of([] as MedioCultivo[]);
+        })
+      ),
       formulario: formulario$,
     }).subscribe({
       next: (res) => {
         this.listaEquiposIncubacion = res.equipos;
         this.listaPipetas = res.pipetas;
         this.listaResponsables = res.responsables;
+        this.listaMediosCaldoLauril = res.medios;
+        this.listaMediosTween80 = res.medios;
         this.cargarFormulario(res.formulario);
       },
       error: (err: { status?: number }) => {
@@ -221,23 +251,33 @@ export class FormColiformesPage implements OnInit, OnDestroy {
 
   private initForm(): void {
     this.form = this.fb.group({
+      // Etapa 1 — CT
       ct_analistaInicio: [''],
-      ct_analistaTermino: [''],
-      cf_analistaInicio: [''],
-      cf_analistaTermino: [''],
-      ec_analistaInicio: [''],
-      ec_analistaTermino: [''],
       ct_fechaInicio: [''],
       ct_horaInicio: [''],
+      ct_analistaTermino: [''],
       ct_fechaTermino: [''],
       ct_horaTermino: [''],
-      caldoLauril: [''],
-      tween80: [''],
+      // Etapa 1 — CF
+      cf_analistaInicio: [''],
+      cf_fechaInicio: [''],
+      cf_horaInicio: [''],
+      cf_analistaTermino: [''],
+      cf_fechaTermino: [''],
+      cf_horaTermino: [''],
+      // Etapa 1 — EC
+      ec_analistaInicio: [''],
+      ec_fechaInicio: [''],
+      ec_horaInicio: [''],
+      ec_analistaTermino: [''],
+      ec_fechaTermino: [''],
+      ec_horaTermino: [''],
+      // Etapa 2 — medios (IDs)
+      idMedioCaldoLauril: [null as number | null],
+      idMedioTween80: [null as number | null],
       estufas: [[] as number[]],
       micropipeta1ml: [null as Micropipeta | null],
       micropipeta10ml: [null as Micropipeta | null],
-      muestra10g90ml: [''],
-      muestra50g450ml: [''],
     });
   }
 
@@ -246,28 +286,45 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   // ═════════════════════════════════════════════════════════════════════════════
 
   private cargarFormulario(formulario: ColiFormulario): void {
-    // IMPORTANTE: sobrescribir con el id REAL del formulario
-    // (cuando se navega desde ALI, idFormulario es el id del análisis, no del formulario)
     this.idFormulario = formulario.idColiFormulario;
     this.formularioUpdatedAt = formulario.updatedAt || '';
     this.etapaActual = formulario.faseActual || 1;
     this.muestras = formulario.muestras || [];
 
-    // Inicializar entradas por muestra
+    // Inicializar entradas por muestra (M1 + duplicado siempre presentes)
     if (this.muestras.length > 0) {
       this.entradasMuestra = this.muestras.map((m) => crearEntradaDesdeMuestra(m));
+    } else {
+      // Sin muestras del backend: crear M1 y su duplicado locales
+      this.localIdCounter--;
+      const m1: EntradaMuestra = {
+        id: String(this.localIdCounter),
+        esDuplicado: false,
+        label: '1',
+        submuestras24h: crearSubmuestrasDefault(),
+        submuestras48h: crearSubmuestrasDefault(),
+      };
+      this.localIdCounter--;
+      const dup: EntradaMuestra = {
+        id: String(this.localIdCounter),
+        esDuplicado: true,
+        label: '1 Dup',
+        submuestras24h: crearSubmuestrasDefault(),
+        submuestras48h: crearSubmuestrasDefault(),
+      };
+      this.entradasMuestra = [m1, dup];
     }
 
     // Cargar fase 1
     if (formulario.fase1) {
-      const f1 = formulario.fase1;
+      const f1 = formulario.fase1 as unknown as Record<string, string>;
       this.form.patchValue({
-        ct_analistaInicio: f1.rutAnalistaInicio,
-        ct_analistaTermino: f1.rutAnalistaTermino,
-        cf_analistaInicio: f1.rutAnalistaInicio,
-        cf_analistaTermino: f1.rutAnalistaTermino,
-        ec_analistaInicio: f1.rutAnalistaInicio,
-        ec_analistaTermino: f1.rutAnalistaTermino,
+        ct_analistaInicio: f1['ct_rutAnalistaInicio'] ?? f1['rutAnalistaInicio'] ?? '',
+        ct_analistaTermino: f1['ct_rutAnalistaTermino'] ?? f1['rutAnalistaTermino'] ?? '',
+        cf_analistaInicio: f1['cf_rutAnalistaInicio'] ?? f1['rutAnalistaInicio'] ?? '',
+        cf_analistaTermino: f1['cf_rutAnalistaTermino'] ?? f1['rutAnalistaTermino'] ?? '',
+        ec_analistaInicio: f1['ec_rutAnalistaInicio'] ?? f1['rutAnalistaInicio'] ?? '',
+        ec_analistaTermino: f1['ec_rutAnalistaTermino'] ?? f1['rutAnalistaTermino'] ?? '',
       });
     }
 
@@ -276,8 +333,8 @@ export class FormColiformesPage implements OnInit, OnDestroy {
       const f2 = formulario.fase2;
       const normCap = (c: string) => c.replace(/\s+/g, '').toLowerCase();
       this.form.patchValue({
-        caldoLauril: f2.codigoCaldoLauril,
-        tween80: f2.codigoTween80,
+        idMedioCaldoLauril: (f2 as unknown as Record<string, number>)['idMedioCaldoLauril'] ?? null,
+        idMedioTween80: (f2 as unknown as Record<string, number>)['idMedioTween80'] ?? null,
         estufas: f2.estufas.map((e) => e.idIncubacion),
         micropipeta1ml: this.listaPipetas.find(p =>
           f2.micropipetas.some(mp => mp.idPipeta === p.idPipeta && normCap(mp.capacidad) === '1ml')
@@ -288,12 +345,12 @@ export class FormColiformesPage implements OnInit, OnDestroy {
       });
     }
 
-    // Cargar fase 3 (submuestras) — poblar las entradas con datos guardados
+    // Cargar fase 3 (submuestras)
     if (formulario.fase3 && formulario.fase3.submuestras) {
       for (const sub of formulario.fase3.submuestras) {
         const entrada = this.entradasMuestra.find(e => Number(e.id) === sub.idColiMuestra);
         if (!entrada) continue;
-        const target = entrada.submuestras24h; // Cargamos todo en 24h (legacy)
+        const target = entrada.submuestras24h;
         if (target[sub.dilucion]) {
           target[sub.dilucion][sub.numeroTubo - 1] = sub.presencia === null
             ? 'sin_registrar'
@@ -302,7 +359,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
       }
     }
 
-    // Cargar fase 3.5 (controles)
+    // Cargar fase 3.5 (controles) — ahora en Etapa 4
     if (formulario.fase35Controles) {
       const c = formulario.fase35Controles as unknown as Record<string, string>;
       this.ct_controlKAerogenes = this.toControlPresencia(c['ctrlTotKAerogenes'] ?? c['ctControlKAerogenes']);
@@ -317,7 +374,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
       this.ec_controlBlanco = c['blancoEcoli'] ?? c['ecControlBlanco'] ?? '';
     }
 
-    // Cargar fase 4 (resultados NMP)
+    // Cargar fase 4 (resultados NMP) — ahora en Etapa 5
     if (formulario.fase4Resultado && formulario.fase4Resultado.length > 0) {
       this.nmpCalculado = true;
       for (const r of formulario.fase4Resultado) {
@@ -337,11 +394,6 @@ export class FormColiformesPage implements OnInit, OnDestroy {
     if (valor === 'presencia') return 'presencia';
     if (valor === 'ausencia') return 'ausencia';
     return 'sin_registrar';
-  }
-
-  private obtenerLabelMuestra(idColiMuestra: number): string {
-    const muestra = this.muestras.find((m) => m.idColiMuestra === idColiMuestra);
-    return muestra?.numeroMuestra || `Muestra ${idColiMuestra}`;
   }
 
   // ═════════════════════════════════════════════════════════════════════════════
@@ -366,12 +418,19 @@ export class FormColiformesPage implements OnInit, OnDestroy {
     if (n >= 1 && n <= this.TOTAL_ETAPAS) this.etapaActual = n;
   }
 
-  /** Guarda todo el formulario hasta la etapa actual (borrador) */
   async guardarFormularioBorrador(): Promise<void> {
     const exito = await this.guardarBorradorCompleto();
     if (exito) {
       this.mostrarToast('Borrador guardado correctamente', 'success');
     }
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════════
+  // ANÁLISIS TOGGLE (Etapa 1)
+  // ═════════════════════════════════════════════════════════════════════════════
+
+  get algunAnalisisActivo(): boolean {
+    return this.ctActivo || this.cfActivo || this.ecActivo;
   }
 
   // ═════════════════════════════════════════════════════════════════════════════
@@ -389,37 +448,39 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   }
 
   // ═════════════════════════════════════════════════════════════════════════════
-  // DUPLICAR / AGREGAR MUESTRA
+  // MUESTRAS (Etapa 3)
   // ═════════════════════════════════════════════════════════════════════════════
 
-  /** Solo la primera muestra original puede duplicarse */
-  get puedeDuplicar(): boolean {
-    return this.entradasMuestra.length > 0 && !this.entradasMuestra[0].esDuplicado;
-  }
-
-  duplicarMuestra(entrada: EntradaMuestra): void {
-    this.localIdCounter--;
+  /** M1 y su duplicado son fijos (índices 0 y 1 si el duplicado existe) */
+  esMuestraFija(entrada: EntradaMuestra): boolean {
     const idx = this.entradasMuestra.indexOf(entrada);
-    if (idx === -1) return;
-    const dup: EntradaMuestra = JSON.parse(JSON.stringify(entrada));
-    dup.id = String(this.localIdCounter);
-    dup.esDuplicado = true;
-    dup.label = entrada.label + ' Dup';
-    dup.resultados = undefined;
-    this.entradasMuestra.splice(idx + 1, 0, dup);
+    return idx === 0 || (idx === 1 && entrada.esDuplicado);
   }
 
   agregarMuestra(): void {
     this.localIdCounter--;
-    const count = this.entradasMuestra.length + 1;
+    const count = this.entradasMuestra.filter(e => !e.esDuplicado).length + 1;
     const nueva: EntradaMuestra = {
       id: String(this.localIdCounter),
       esDuplicado: false,
-      label: `Muestra ${count}`,
+      label: `${count}`,
       submuestras24h: crearSubmuestrasDefault(),
       submuestras48h: crearSubmuestrasDefault(),
     };
     this.entradasMuestra.push(nueva);
+  }
+
+  eliminarMuestra(entrada: EntradaMuestra): void {
+    if (this.esMuestraFija(entrada)) return;
+    const idx = this.entradasMuestra.indexOf(entrada);
+    if (idx !== -1) {
+      this.entradasMuestra.splice(idx, 1);
+    }
+  }
+
+  calcularNmpPorMuestra(entrada: EntradaMuestra): void {
+    // Delegar al cálculo global (comparte estado) — se puede refinar a muestra individual
+    this.calcularNMP();
   }
 
   // ═════════════════════════════════════════════════════════════════════════════
@@ -502,6 +563,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
 
     switch (fase) {
       case 1: {
+        // Wizard Etapa 1 → backend fase 1
         const v = this.form.value;
         const payload: SaveFase1Payload = {
           rutAnalistaInicio: v.ct_analistaInicio,
@@ -522,11 +584,12 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         );
       }
       case 2: {
+        // Wizard Etapa 2 → backend fase 2
         const pip1 = this.form.value.micropipeta1ml as Micropipeta | null;
         const pip10 = this.form.value.micropipeta10ml as Micropipeta | null;
         const payload: SaveFase2Payload = {
-          codigoCaldoLauril: this.form.value.caldoLauril,
-          codigoTween80: this.form.value.tween80,
+          idMedioCaldoLauril: this.form.value.idMedioCaldoLauril,
+          idMedioTween80: this.form.value.idMedioTween80 ?? undefined,
           estufas: (this.form.value.estufas as number[]).map((id: number) => ({ idIncubacion: id })),
           micropipetas: [
             ...(pip1 ? [{ idPipeta: pip1.idPipeta, capacidad: pip1.capacidad }] : []),
@@ -541,8 +604,29 @@ export class FormColiformesPage implements OnInit, OnDestroy {
           })
         );
       }
-      // Etapa 3 → backend fase 3.5 (controles de calidad)
       case 3: {
+        // Wizard Etapa 3 → backend fase 3 (submuestras / lecturas)
+        const payload: SaveFase3Payload = {
+          submuestras: this.buildSubmuestrasPayload(),
+          completada,
+          fechaLectura24h: this.fechaLectura24h && this.horaLectura24h
+            ? `${this.fechaLectura24h}T${this.horaLectura24h}:00`
+            : undefined,
+          rutAnalista24h: this.analista24h || undefined,
+          fechaLectura48h: this.fechaLectura48h && this.horaLectura48h
+            ? `${this.fechaLectura48h}T${this.horaLectura48h}:00`
+            : undefined,
+          rutAnalista48h: this.analista48h || undefined,
+        };
+        return this.coliService.saveFase3(this.idFormulario, payload, this.formularioUpdatedAt).pipe(
+          switchMap((res) => {
+            this.formularioUpdatedAt = res.updatedAt;
+            return of(undefined);
+          })
+        );
+      }
+      case 4: {
+        // Wizard Etapa 4 → backend fase 3.5 (controles de calidad)
         const payload: SaveFase35Payload = {
           controles: {
             ctControlKAerogenes: this.ct_controlKAerogenes,
@@ -565,33 +649,15 @@ export class FormColiformesPage implements OnInit, OnDestroy {
           })
         );
       }
-      // Etapa 4 → backend fase 3 (submuestras)
-      case 4: {
-        const payload: SaveFase3Payload = {
-          submuestras: this.buildSubmuestrasPayload(),
-          completada,
-          fechaLectura24h: this.fechaLectura24h && this.horaLectura24h
-            ? `${this.fechaLectura24h}T${this.horaLectura24h}:00`
-            : undefined,
-          rutAnalista24h: this.analista24h || undefined,
-          fechaLectura48h: this.fechaLectura48h && this.horaLectura48h
-            ? `${this.fechaLectura48h}T${this.horaLectura48h}:00`
-            : undefined,
-          rutAnalista48h: this.analista48h || undefined,
-        };
-        return this.coliService.saveFase3(this.idFormulario, payload, this.formularioUpdatedAt).pipe(
-          switchMap((res) => {
-            this.formularioUpdatedAt = res.updatedAt;
-            return of(undefined);
-          })
-        );
+      case 5: {
+        // Wizard Etapa 5 → backend fase 4 (resultados NMP) — TBD, no-op for now
+        return of(undefined);
       }
       default:
         return of(undefined);
     }
   }
 
-  /** Construye el array de submuestras para enviar al backend (fase 3 y 4) */
   private buildSubmuestrasPayload(): Array<{
     idColiMuestra: number;
     tipoLectura: 'totales';

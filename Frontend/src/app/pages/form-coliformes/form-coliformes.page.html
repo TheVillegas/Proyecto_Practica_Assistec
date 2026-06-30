@@ -35,13 +35,13 @@
 
     <form [formGroup]="form">
 
-      <!-- ════════ ETAPA 1: ALIMENTO E INCUBACIÓN ════════ -->
-      <div *ngIf="etapaActual === 1" class="etapa-panel">
+      <!-- ════════ ETAPA 1: INCUBACIÓN ════════ -->
+      <div *ngIf="etapaActual === 1" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
-              <ion-icon name="information-circle-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">Detalles del Alimento e Incubación</h2>
+              <ion-icon name="time-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">1. Incubación</h2>
             </div>
           </div>
           <div class="form-card-body">
@@ -53,188 +53,215 @@
               </div>
               <div class="form-group max-w-xs">
                 <label class="form-label">Código del Alimento (ALI)</label>
-                <input type="text" class="form-input input-locked" [value]="datosImportados.codigoAlimento" disabled />
+                <input type="text" class="form-input input-locked" [value]="datosImportados.codigoAlimento" readonly />
               </div>
             </div>
 
-            <!-- BLOQUE 1: Coliformes Totales -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                1. Enumeración de Coliformes Totales (NCh 2635/1. Of2001)
-              </p>
-              <p class="text-xs font-semibold text-slate-500 mt-3 mb-1">Inicio Incubación</p>
-              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="form-group">
-                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
-                  <input type="date" class="form-input" formControlName="ct_fechaInicio" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
-                  <input type="time" class="form-input" formControlName="ct_horaInicio" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
-                  <ion-select formControlName="ct_analistaInicio" interface="popover"
-                    [class.input-error]="campoInvalido('ct_analistaInicio')" placeholder="Seleccione analista">
-                    <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
-                      {{ r.nombreApellido }}
-                    </ion-select-option>
-                  </ion-select>
-                </div>
-              </div>
-
-              <p class="text-xs font-semibold text-slate-500 mt-4 mb-1">Término Análisis</p>
-              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="form-group">
-                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
-                  <input type="date" class="form-input" formControlName="ct_fechaTermino" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
-                  <input type="time" class="form-input" formControlName="ct_horaTermino" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
-                  <ion-select formControlName="ct_analistaTermino" interface="popover"
-                    [class.input-error]="campoInvalido('ct_analistaTermino')" placeholder="Seleccione analista">
-                    <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
-                      {{ r.nombreApellido }}
-                    </ion-select-option>
-                  </ion-select>
-                </div>
-              </div>
+            <!-- Alerta: ningún análisis activo -->
+            <div *ngIf="!algunAnalisisActivo"
+              class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <ion-icon name="warning-outline" class="mr-1"></ion-icon>
+              Debe activar al menos un análisis (CT, CF o E. coli).
             </div>
 
-            <!-- BLOQUE 2: Coliformes Fecales -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                2. Enumeración de Coliformes Fecales (NCh 2635/1. Of2001)
-              </p>
-              <p class="text-xs font-semibold text-slate-500 mt-3 mb-1">Inicio Incubación</p>
-              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="form-group">
-                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
-                  <input type="date" class="form-input" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
-                  <input type="time" class="form-input" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
-                  <ion-select formControlName="cf_analistaInicio" interface="popover"
-                    [class.input-error]="campoInvalido('cf_analistaInicio')" placeholder="Seleccione analista">
-                    <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
-                      {{ r.nombreApellido }}
-                    </ion-select-option>
-                  </ion-select>
-                </div>
+            <!-- BLOQUE CT: Coliformes Totales -->
+            <div class="control-card mb-6 border border-slate-200 rounded-xl p-4">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+                <p class="control-title text-blue-700 font-semibold">
+                  1. Enumeración de Coliformes Totales (NCh 2635/1. Of2001)
+                </p>
+                <ion-toggle [(ngModel)]="ctActivo" [ngModelOptions]="{standalone: true}" color="primary">
+                </ion-toggle>
               </div>
-
-              <p class="text-xs font-semibold text-slate-500 mt-4 mb-1">Término Análisis</p>
-              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="form-group">
-                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
-                  <input type="date" class="form-input" />
+              <ng-container *ngIf="ctActivo">
+                <p class="text-xs font-semibold text-slate-500 mt-3 mb-1">Inicio Incubación</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div class="form-group">
+                    <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                    <input type="date" class="form-input" formControlName="ct_fechaInicio" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                    <input type="time" class="form-input" formControlName="ct_horaInicio" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                    <select class="form-select" formControlName="ct_analistaInicio"
+                      [class.input-error]="campoInvalido('ct_analistaInicio')">
+                      <option value="">Seleccionar analista...</option>
+                      <option *ngFor="let r of listaResponsables" [value]="r.rut">{{ r.nombreApellido }}</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
-                  <input type="time" class="form-input" />
+                <p class="text-xs font-semibold text-slate-500 mt-4 mb-1">Término Análisis</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div class="form-group">
+                    <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                    <input type="date" class="form-input" formControlName="ct_fechaTermino" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                    <input type="time" class="form-input" formControlName="ct_horaTermino" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                    <select class="form-select" formControlName="ct_analistaTermino"
+                      [class.input-error]="campoInvalido('ct_analistaTermino')">
+                      <option value="">Seleccionar analista...</option>
+                      <option *ngFor="let r of listaResponsables" [value]="r.rut">{{ r.nombreApellido }}</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
-                  <ion-select formControlName="cf_analistaTermino" interface="popover"
-                    [class.input-error]="campoInvalido('cf_analistaTermino')" placeholder="Seleccione analista">
-                    <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
-                      {{ r.nombreApellido }}
-                    </ion-select-option>
-                  </ion-select>
-                </div>
-              </div>
+              </ng-container>
+              <p *ngIf="!ctActivo" class="text-xs text-slate-400 italic mt-2">Análisis desactivado.</p>
             </div>
 
-            <!-- BLOQUE 3: Escherichia Coli -->
-            <div class="control-card">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                3. Enumeración de Escherichia coli (NCh 2636. Of2001)
-              </p>
-              <p class="text-xs font-semibold text-slate-500 mt-3 mb-1">Inicio Incubación</p>
-              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="form-group">
-                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
-                  <input type="date" class="form-input" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
-                  <input type="time" class="form-input" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
-                  <ion-select formControlName="ec_analistaInicio" interface="popover"
-                    [class.input-error]="campoInvalido('ec_analistaInicio')" placeholder="Seleccione analista">
-                    <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
-                      {{ r.nombreApellido }}
-                    </ion-select-option>
-                  </ion-select>
-                </div>
+            <!-- BLOQUE CF: Coliformes Fecales -->
+            <div class="control-card mb-6 border border-slate-200 rounded-xl p-4">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+                <p class="control-title text-blue-700 font-semibold">
+                  2. Enumeración de Coliformes Fecales (NCh 2635/1. Of2001)
+                </p>
+                <ion-toggle [(ngModel)]="cfActivo" [ngModelOptions]="{standalone: true}" color="primary">
+                </ion-toggle>
               </div>
-
-              <p class="text-xs font-semibold text-slate-500 mt-4 mb-1">Término Análisis</p>
-              <div class="grid-3col grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="form-group">
-                  <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
-                  <input type="date" class="form-input" />
+              <ng-container *ngIf="cfActivo">
+                <p class="text-xs font-semibold text-slate-500 mt-3 mb-1">Inicio Incubación</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div class="form-group">
+                    <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                    <input type="date" class="form-input" formControlName="cf_fechaInicio" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                    <input type="time" class="form-input" formControlName="cf_horaInicio" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                    <select class="form-select" formControlName="cf_analistaInicio"
+                      [class.input-error]="campoInvalido('cf_analistaInicio')">
+                      <option value="">Seleccionar analista...</option>
+                      <option *ngFor="let r of listaResponsables" [value]="r.rut">{{ r.nombreApellido }}</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
-                  <input type="time" class="form-input" />
+                <p class="text-xs font-semibold text-slate-500 mt-4 mb-1">Término Análisis</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div class="form-group">
+                    <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                    <input type="date" class="form-input" formControlName="cf_fechaTermino" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                    <input type="time" class="form-input" formControlName="cf_horaTermino" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                    <select class="form-select" formControlName="cf_analistaTermino"
+                      [class.input-error]="campoInvalido('cf_analistaTermino')">
+                      <option value="">Seleccionar analista...</option>
+                      <option *ngFor="let r of listaResponsables" [value]="r.rut">{{ r.nombreApellido }}</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
-                  <ion-select formControlName="ec_analistaTermino" interface="popover"
-                    [class.input-error]="campoInvalido('ec_analistaTermino')" placeholder="Seleccione analista">
-                    <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
-                      {{ r.nombreApellido }}
-                    </ion-select-option>
-                  </ion-select>
-                </div>
-              </div>
+              </ng-container>
+              <p *ngIf="!cfActivo" class="text-xs text-slate-400 italic mt-2">Análisis desactivado.</p>
             </div>
+
+            <!-- BLOQUE EC: Escherichia coli -->
+            <div class="control-card border border-slate-200 rounded-xl p-4">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+                <p class="control-title text-blue-700 font-semibold">
+                  3. Enumeración de Escherichia coli (NCh 2636. Of2001)
+                </p>
+                <ion-toggle [(ngModel)]="ecActivo" [ngModelOptions]="{standalone: true}" color="primary">
+                </ion-toggle>
+              </div>
+              <ng-container *ngIf="ecActivo">
+                <p class="text-xs font-semibold text-slate-500 mt-3 mb-1">Inicio Incubación</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div class="form-group">
+                    <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                    <input type="date" class="form-input" formControlName="ec_fechaInicio" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                    <input type="time" class="form-input" formControlName="ec_horaInicio" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                    <select class="form-select" formControlName="ec_analistaInicio"
+                      [class.input-error]="campoInvalido('ec_analistaInicio')">
+                      <option value="">Seleccionar analista...</option>
+                      <option *ngFor="let r of listaResponsables" [value]="r.rut">{{ r.nombreApellido }}</option>
+                    </select>
+                  </div>
+                </div>
+                <p class="text-xs font-semibold text-slate-500 mt-4 mb-1">Término Análisis</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div class="form-group">
+                    <label class="form-label text-xs">Fecha <span class="required-star">*</span></label>
+                    <input type="date" class="form-input" formControlName="ec_fechaTermino" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Hora (HH:MM) <span class="required-star">*</span></label>
+                    <input type="time" class="form-input" formControlName="ec_horaTermino" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Analista <span class="required-star">*</span></label>
+                    <select class="form-select" formControlName="ec_analistaTermino"
+                      [class.input-error]="campoInvalido('ec_analistaTermino')">
+                      <option value="">Seleccionar analista...</option>
+                      <option *ngFor="let r of listaResponsables" [value]="r.rut">{{ r.nombreApellido }}</option>
+                    </select>
+                  </div>
+                </div>
+              </ng-container>
+              <p *ngIf="!ecActivo" class="text-xs text-slate-400 italic mt-2">Análisis desactivado.</p>
+            </div>
+
           </div>
         </div>
       </div>
 
-      <!-- ═════════ ETAPA 2: DETALLES DE SIEMBRA ═════════ -->
-      <div *ngIf="etapaActual === 2" class="etapa-panel">
+      <!-- ═════════ ETAPA 2: SIEMBRA ═════════ -->
+      <div *ngIf="etapaActual === 2" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
               <ion-icon name="leaf-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">Detalles de Siembra</h2>
+              <h2 class="form-card-title">2. Siembra</h2>
             </div>
           </div>
           <div class="form-card-body">
-            <div class="grid-2col">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Caldo Lauril simple — select sobre maestra -->
               <div class="form-group">
                 <label class="form-label">Caldo Lauril simple <span class="required-star">*</span></label>
-                <input type="text" class="form-input" [class.input-error]="campoInvalido('caldoLauril')"
-                  formControlName="caldoLauril" placeholder="Ej: CL-045" />
-                <span class="error-msg" *ngIf="campoInvalido('caldoLauril')">Campo obligatorio.</span>
+                <select class="form-select" formControlName="idMedioCaldoLauril"
+                  [class.input-error]="campoInvalido('idMedioCaldoLauril')">
+                  <option [ngValue]="null">Seleccionar medio...</option>
+                  <option *ngFor="let m of listaMediosCaldoLauril" [ngValue]="m.idMedioCultivo">
+                    {{ m.nombre }}
+                  </option>
+                </select>
+                <span class="error-msg" *ngIf="campoInvalido('idMedioCaldoLauril')">Campo obligatorio.</span>
               </div>
+
+              <!-- Tween 80 — select sobre maestra -->
               <div class="form-group">
                 <label class="form-label">Tween 80 <span class="optional-tag">(opcional)</span></label>
-                <input type="text" class="form-input" formControlName="tween80" placeholder="Código si aplica" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">N° Muestra 10 g / 90 ml</label>
-                <input type="text" class="form-input" formControlName="muestra10g90ml" placeholder="Ej: 3" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">N° Muestra 50 g / 450 ml</label>
-                <input type="text" class="form-input" formControlName="muestra50g450ml" placeholder="Ej: 5" />
+                <select class="form-select" formControlName="idMedioTween80">
+                  <option [ngValue]="null">Seleccionar medio...</option>
+                  <option *ngFor="let m of listaMediosTween80" [ngValue]="m.idMedioCultivo">
+                    {{ m.nombre }}
+                  </option>
+                </select>
               </div>
             </div>
 
+            <!-- Estufas -->
             <div class="form-group mt-4 border-t border-slate-100 pt-4">
               <label class="form-label">Estufa <span class="required-star">*</span></label>
               <ion-select formControlName="estufas" [multiple]="true" interface="popover"
@@ -246,6 +273,7 @@
               <span class="error-msg" *ngIf="campoInvalido('estufas')">Debe seleccionar al menos una estufa.</span>
             </div>
 
+            <!-- Micropipeta 1ml -->
             <div class="form-group mt-4 border-t border-slate-100 pt-4">
               <label class="form-label">Micropipetas 1ml <span class="required-star">*</span></label>
               <ion-select formControlName="micropipeta1ml" interface="popover"
@@ -254,10 +282,10 @@
                   {{ mic.nombrePipeta }} ({{ mic.capacidad }})
                 </ion-select-option>
               </ion-select>
-              <span class="error-msg" *ngIf="campoInvalido('micropipeta1ml')">Debe seleccionar una micropipeta de
-                1ml.</span>
+              <span class="error-msg" *ngIf="campoInvalido('micropipeta1ml')">Debe seleccionar una micropipeta de 1ml.</span>
             </div>
 
+            <!-- Micropipeta 10ml -->
             <div class="form-group mt-4 border-t border-slate-100 pt-4">
               <label class="form-label">Micropipetas 10ml <span class="required-star">*</span></label>
               <ion-select formControlName="micropipeta10ml" interface="popover"
@@ -266,186 +294,22 @@
                   {{ mic.nombrePipeta }} ({{ mic.capacidad }})
                 </ion-select-option>
               </ion-select>
-              <span class="error-msg" *ngIf="campoInvalido('micropipeta10ml')">Debe seleccionar una micropipeta de
-                10ml.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ═══════════ ETAPA 3: CONTROL DE CALIDAD ═══════════ -->
-      <div *ngIf="etapaActual === 3" class="etapa-panel">
-        <div class="form-card">
-          <div class="form-card-header">
-            <div class="form-card-title-group">
-              <ion-icon name="shield-checkmark-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">Controles de Calidad</h2>
-            </div>
-          </div>
-          <div class="form-card-body flex flex-col gap-6">
-
-            <!-- CT Controles -->
-            <div class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
-              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
-                Control Coliformes Totales
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white p-3 rounded-lg border border-slate-100">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) K. aerogenes</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="ct_controlKAerogenes"
-                        [ngModelOptions]="{standalone: true}" value="presencia" />
-                      <span class="badge-presencia">Presencia</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="ct_controlKAerogenes"
-                        [ngModelOptions]="{standalone: true}" value="ausencia" />
-                      <span class="badge-ausencia">Ausencia</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="bg-white p-3 rounded-lg border border-slate-100">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) S. aureus</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="ct_controlSAureus"
-                        [ngModelOptions]="{standalone: true}" value="presencia" />
-                      <span class="badge-presencia">Presencia</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="ct_controlSAureus"
-                        [ngModelOptions]="{standalone: true}" value="ausencia" />
-                      <span class="badge-ausencia">Ausencia</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="bg-white p-3 rounded-lg border border-slate-100">
-                  <label class="text-xs font-semibold text-slate-600 mb-2 block">Control blanco</label>
-                  <input type="text" class="form-input" placeholder="Descripción..."
-                    [(ngModel)]="ct_controlBlanco" [ngModelOptions]="{standalone: true}" />
-                </div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                <div class="bg-white p-3 rounded-lg border border-slate-100">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="ct_controlEColi"
-                        [ngModelOptions]="{standalone: true}" value="presencia" />
-                      <span class="badge-presencia">Presencia</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="ct_controlEColi"
-                        [ngModelOptions]="{standalone: true}" value="ausencia" />
-                      <span class="badge-ausencia">Ausencia</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- CF Controles -->
-            <div class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
-              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
-                Control Coliformes Fecales
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white p-3 rounded-lg border border-slate-100">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="cf_controlEColi"
-                        [ngModelOptions]="{standalone: true}" value="presencia" />
-                      <span class="badge-presencia">Presencia</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="cf_controlEColi"
-                        [ngModelOptions]="{standalone: true}" value="ausencia" />
-                      <span class="badge-ausencia">Ausencia</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="bg-white p-3 rounded-lg border border-slate-100">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="cf_controlKAerogenes"
-                        [ngModelOptions]="{standalone: true}" value="presencia" />
-                      <span class="badge-presencia">Presencia</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="cf_controlKAerogenes"
-                        [ngModelOptions]="{standalone: true}" value="ausencia" />
-                      <span class="badge-ausencia">Ausencia</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="form-group mt-3">
-                <label class="form-label text-xs">Control blanco</label>
-                <input type="text" class="form-input bg-white" placeholder="Descripción..."
-                  [(ngModel)]="cf_controlBlanco" [ngModelOptions]="{standalone: true}" />
-              </div>
-            </div>
-
-            <!-- E. coli Controles -->
-            <div class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
-              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
-                Control Escherichia coli
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white p-3 rounded-lg border border-slate-100">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="ec_controlEColi"
-                        [ngModelOptions]="{standalone: true}" value="presencia" />
-                      <span class="badge-presencia">Presencia</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="ec_controlEColi"
-                        [ngModelOptions]="{standalone: true}" value="ausencia" />
-                      <span class="badge-ausencia">Ausencia</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="bg-white p-3 rounded-lg border border-slate-100">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="ec_controlKAerogenes"
-                        [ngModelOptions]="{standalone: true}" value="presencia" />
-                      <span class="badge-presencia">Presencia</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" [(ngModel)]="ec_controlKAerogenes"
-                        [ngModelOptions]="{standalone: true}" value="ausencia" />
-                      <span class="badge-ausencia">Ausencia</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="form-group mt-3">
-                <label class="form-label text-xs">Control blanco</label>
-                <input type="text" class="form-input bg-white" placeholder="Descripción..."
-                  [(ngModel)]="ec_controlBlanco" [ngModelOptions]="{standalone: true}" />
-              </div>
+              <span class="error-msg" *ngIf="campoInvalido('micropipeta10ml')">Debe seleccionar una micropipeta de 10ml.</span>
             </div>
 
           </div>
         </div>
       </div>
 
-      <!-- ═══════ ETAPA 4: LECTURAS Y RESULTADOS NMP ═══════ -->
-      <div *ngIf="etapaActual === 4" class="etapa-panel">
+      <!-- ═════════ ETAPA 3: LECTURAS ═════════ -->
+      <div *ngIf="etapaActual === 3" class="etapa-panel animate__animated animate__fadeIn">
 
-        <!-- Metadata de lecturas (compartida) -->
+        <!-- Metadata de lecturas compartidas -->
         <div class="form-card mb-4">
           <div class="form-card-header">
             <div class="form-card-title-group">
               <ion-icon name="time-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">Lecturas 24h y 48h</h2>
+              <h2 class="form-card-title">3. Lecturas</h2>
             </div>
           </div>
           <div class="form-card-body">
@@ -471,12 +335,10 @@
                   </div>
                   <div class="form-group">
                     <label class="form-label text-xs">Analista</label>
-                    <ion-select [(ngModel)]="analista24h" [ngModelOptions]="{standalone: true}"
-                      interface="popover" placeholder="Seleccione">
-                      <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
-                        {{ r.nombreApellido }}
-                      </ion-select-option>
-                    </ion-select>
+                    <select class="form-select" [(ngModel)]="analista24h" [ngModelOptions]="{standalone: true}">
+                      <option value="">Seleccione...</option>
+                      <option *ngFor="let r of listaResponsables" [value]="r.rut">{{ r.nombreApellido }}</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -501,12 +363,10 @@
                   </div>
                   <div class="form-group">
                     <label class="form-label text-xs">Analista</label>
-                    <ion-select [(ngModel)]="analista48h" [ngModelOptions]="{standalone: true}"
-                      interface="popover" placeholder="Seleccione">
-                      <ion-select-option *ngFor="let r of listaResponsables" [value]="r.rut">
-                        {{ r.nombreApellido }}
-                      </ion-select-option>
-                    </ion-select>
+                    <select class="form-select" [(ngModel)]="analista48h" [ngModelOptions]="{standalone: true}">
+                      <option value="">Seleccione...</option>
+                      <option *ngFor="let r of listaResponsables" [value]="r.rut">{{ r.nombreApellido }}</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -514,14 +374,14 @@
           </div>
         </div>
 
-        <!-- Tarjetas por muestra -->
+        <!-- Sin muestras -->
         <div *ngIf="entradasMuestra.length === 0" class="text-center text-slate-400 py-8">
           No hay muestras cargadas para este análisis.
         </div>
 
+        <!-- Tarjeta por muestra -->
         <ng-container *ngFor="let entrada of entradasMuestra; let idx = index">
           <div class="muestra-card mb-4">
-            <!-- Header -->
             <div class="muestra-card-header">
               <div class="muestra-card-title">
                 <ion-icon name="flask-outline"></ion-icon>
@@ -529,23 +389,21 @@
                 <span *ngIf="entrada.esDuplicado" class="badge-duplicado">Duplicado</span>
               </div>
               <div class="flex items-center gap-2">
-                <button *ngIf="idx === 0 && puedeDuplicar" type="button" class="btn-duplicar"
-                  (click)="duplicarMuestra(entrada)">
-                  <ion-icon name="duplicate-outline"></ion-icon>
-                  Dup
+                <!-- Eliminar solo muestras no fijas -->
+                <button *ngIf="!esMuestraFija(entrada)" type="button"
+                  class="text-red-500 hover:text-red-700 text-xs flex items-center gap-1"
+                  (click)="eliminarMuestra(entrada)">
+                  <ion-icon name="trash-outline"></ion-icon> Eliminar
                 </button>
                 <span class="muestra-card-counter">{{ idx + 1 }} / {{ entradasMuestra.length }}</span>
               </div>
             </div>
 
             <div class="muestra-card-body">
-              <!-- Side-by-side tables container -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- 24h Readings -->
+                <!-- Lecturas 24h -->
                 <div class="mb-4">
-                  <p class="text-xs font-semibold text-blue-700 mb-2 border-b border-blue-100 pb-1">
-                    Lectura 24h
-                  </p>
+                  <p class="text-xs font-semibold text-blue-700 mb-2 border-b border-blue-100 pb-1">Lectura 24h</p>
                   <div class="tabla-wrapper">
                     <table class="tabla-submuestras tabla-submuestras--card">
                       <thead>
@@ -560,12 +418,10 @@
                         <tr *ngFor="let dil of DILUCIONES">
                           <td class="td-dilucion">{{ dil }}</td>
                           <td *ngFor="let tubo of [0, 1, 2]" class="td-celda-radio">
-                            <button type="button"
-                              class="btn-resultado"
+                            <button type="button" class="btn-resultado"
                               [class.btn-positivo]="entrada.submuestras24h[dil][tubo] === 'positivo'"
                               (click)="setResultado(entrada, entrada.submuestras24h, dil, tubo, 'positivo')">+</button>
-                            <button type="button"
-                              class="btn-resultado"
+                            <button type="button" class="btn-resultado"
                               [class.btn-negativo]="entrada.submuestras24h[dil][tubo] === 'negativo'"
                               (click)="setResultado(entrada, entrada.submuestras24h, dil, tubo, 'negativo')">–</button>
                           </td>
@@ -575,11 +431,9 @@
                   </div>
                 </div>
 
-                <!-- 48h Readings -->
+                <!-- Lecturas 48h -->
                 <div class="mb-4">
-                  <p class="text-xs font-semibold text-purple-700 mb-2 border-b border-purple-100 pb-1">
-                    Lectura 48h
-                  </p>
+                  <p class="text-xs font-semibold text-purple-700 mb-2 border-b border-purple-100 pb-1">Lectura 48h</p>
                   <div class="tabla-wrapper">
                     <table class="tabla-submuestras tabla-submuestras--card">
                       <thead>
@@ -594,12 +448,10 @@
                         <tr *ngFor="let dil of DILUCIONES">
                           <td class="td-dilucion">{{ dil }}</td>
                           <td *ngFor="let tubo of [0, 1, 2]" class="td-celda-radio">
-                            <button type="button"
-                              class="btn-resultado"
+                            <button type="button" class="btn-resultado"
                               [class.btn-positivo]="entrada.submuestras48h[dil][tubo] === 'positivo'"
                               (click)="setResultado(entrada, entrada.submuestras48h, dil, tubo, 'positivo')">+</button>
-                            <button type="button"
-                              class="btn-resultado"
+                            <button type="button" class="btn-resultado"
                               [class.btn-negativo]="entrada.submuestras48h[dil][tubo] === 'negativo'"
                               (click)="setResultado(entrada, entrada.submuestras48h, dil, tubo, 'negativo')">–</button>
                           </td>
@@ -610,31 +462,10 @@
                 </div>
               </div>
 
-              <!-- NMP Results -->
-              <div class="resultados-nmp" *ngIf="entrada.resultados; else sinResultados">
-                <div class="resultado-item">
-                  <span class="resultado-label">CT</span>
-                  <span class="resultado-valor">{{ entrada.resultados.ct }}</span>
-                </div>
-                <div class="resultado-item">
-                  <span class="resultado-label">CF</span>
-                  <span class="resultado-valor">{{ entrada.resultados.cf }}</span>
-                </div>
-                <div class="resultado-item">
-                  <span class="resultado-label">E. coli</span>
-                  <span class="resultado-valor">{{ entrada.resultados.ecoli }}</span>
-                </div>
-              </div>
-              <ng-template #sinResultados>
-                <div class="text-center py-3 text-xs text-slate-400 italic border-t border-slate-100">
-                  Presione "Calcular NMP" para ver los resultados.
-                </div>
-              </ng-template>
-
-              <!-- Botón Calcular NMP por tarjeta -->
+              <!-- Botón calcular NMP por muestra -->
               <div class="text-center mt-4 border-t border-slate-100 pt-4">
-                <ion-button fill="outline" color="primary" size="small" (click)="calcularNMP()"
-                  [disabled]="calculando" class="btn-calcular-nmp--card">
+                <ion-button fill="outline" color="primary" size="small"
+                  (click)="calcularNmpPorMuestra(entrada)" [disabled]="calculando" class="btn-calcular-nmp--card">
                   <ion-icon name="calculator-outline" slot="start"></ion-icon>
                   {{ calculando ? 'Calculando...' : 'Calcular NMP' }}
                 </ion-button>
@@ -643,7 +474,7 @@
           </div>
         </ng-container>
 
-        <!-- Botón Agregar nueva muestra -->
+        <!-- Agregar nueva muestra -->
         <div class="text-center mb-6">
           <ion-button fill="outline" color="secondary" (click)="agregarMuestra()">
             <ion-icon name="add-outline" slot="start"></ion-icon>
@@ -651,19 +482,333 @@
           </ion-button>
         </div>
 
-        <!-- Observaciones finales -->
+      </div>
+
+      <!-- ═══════════ ETAPA 4: CONTROLES ═══════════ -->
+      <div *ngIf="etapaActual === 4" class="etapa-panel animate__animated animate__fadeIn">
+        <div class="form-card mb-4">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="shield-checkmark-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">4. Controles</h2>
+            </div>
+          </div>
+          <div class="form-card-body flex flex-col gap-6">
+
+            <!-- CT Controles (solo si ctActivo) -->
+            <div *ngIf="ctActivo" class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
+                Control Coliformes Totales
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) K. aerogenes</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ct_controlKAerogenes"
+                        [(ngModel)]="ct_controlKAerogenes" [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ct_controlKAerogenes"
+                        [(ngModel)]="ct_controlKAerogenes" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) S. aureus</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ct_controlSAureus"
+                        [(ngModel)]="ct_controlSAureus" [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ct_controlSAureus"
+                        [(ngModel)]="ct_controlSAureus" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <label class="text-xs font-semibold text-slate-600 mb-2 block">Control blanco</label>
+                  <input type="text" class="form-input" placeholder="Descripción..."
+                    [(ngModel)]="ct_controlBlanco" [ngModelOptions]="{standalone: true}" />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ct_controlEColi"
+                        [(ngModel)]="ct_controlEColi" [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ct_controlEColi"
+                        [(ngModel)]="ct_controlEColi" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CF Controles (solo si cfActivo) -->
+            <div *ngIf="cfActivo" class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
+                Control Coliformes Fecales
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="cf_controlEColi"
+                        [(ngModel)]="cf_controlEColi" [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="cf_controlEColi"
+                        [(ngModel)]="cf_controlEColi" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="cf_controlKAerogenes"
+                        [(ngModel)]="cf_controlKAerogenes" [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="cf_controlKAerogenes"
+                        [(ngModel)]="cf_controlKAerogenes" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group mt-3">
+                <label class="form-label text-xs">Control blanco</label>
+                <input type="text" class="form-input bg-white" placeholder="Descripción..."
+                  [(ngModel)]="cf_controlBlanco" [ngModelOptions]="{standalone: true}" />
+              </div>
+            </div>
+
+            <!-- EC Controles (solo si ecActivo) -->
+            <div *ngIf="ecActivo" class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
+                Control Escherichia coli
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ec_controlEColi"
+                        [(ngModel)]="ec_controlEColi" [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ec_controlEColi"
+                        [(ngModel)]="ec_controlEColi" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ec_controlKAerogenes"
+                        [(ngModel)]="ec_controlKAerogenes" [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ec_controlKAerogenes"
+                        [(ngModel)]="ec_controlKAerogenes" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group mt-3">
+                <label class="form-label text-xs">Control blanco</label>
+                <input type="text" class="form-input bg-white" placeholder="Descripción..."
+                  [(ngModel)]="ec_controlBlanco" [ngModelOptions]="{standalone: true}" />
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Control de Calidad — Manual de Inocuidad -->
         <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="document-text-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">Control de Calidad (Manual de Inocuidad)</h2>
+            </div>
+          </div>
+          <div class="form-card-body flex flex-col gap-4">
+
+            <!-- Duplicado ALI -->
+            <div class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p class="text-xs font-semibold text-slate-600 mb-3">Duplicado ALI — tipo de análisis</p>
+              <div class="flex gap-4 flex-wrap">
+                <label class="form-check-label text-xs" *ngIf="ctActivo">
+                  <input type="radio" class="form-radio" name="duplicadoAli"
+                    [(ngModel)]="fase4Calidad.duplicadoAli" [ngModelOptions]="{standalone: true}" value="ct" />
+                  CT
+                </label>
+                <label class="form-check-label text-xs" *ngIf="cfActivo">
+                  <input type="radio" class="form-radio" name="duplicadoAli"
+                    [(ngModel)]="fase4Calidad.duplicadoAli" [ngModelOptions]="{standalone: true}" value="cf" />
+                  CF
+                </label>
+                <label class="form-check-label text-xs" *ngIf="ecActivo">
+                  <input type="radio" class="form-radio" name="duplicadoAli"
+                    [(ngModel)]="fase4Calidad.duplicadoAli" [ngModelOptions]="{standalone: true}" value="ec" />
+                  E. coli
+                </label>
+              </div>
+
+              <p class="text-xs font-semibold text-slate-600 mb-2 mt-4">Duplicado ALI cumple</p>
+              <div class="flex gap-4">
+                <label class="form-check-label text-xs">
+                  <input type="radio" class="form-radio" name="duplicadoAliCumple"
+                    [(ngModel)]="fase4Calidad.duplicadoAliCumple" [ngModelOptions]="{standalone: true}" [value]="true" />
+                  <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
+                </label>
+                <label class="form-check-label text-xs">
+                  <input type="radio" class="form-radio" name="duplicadoAliCumple"
+                    [(ngModel)]="fase4Calidad.duplicadoAliCumple" [ngModelOptions]="{standalone: true}" [value]="false" />
+                  <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Control Blanco ALI cumple -->
+            <div class="bg-white p-3 rounded-lg border border-slate-100">
+              <p class="text-xs font-semibold text-slate-600 mb-2">Control Blanco ALI cumple</p>
+              <div class="flex gap-4">
+                <label class="form-check-label text-xs">
+                  <input type="radio" class="form-radio" name="controlBlancoAliCumple"
+                    [(ngModel)]="fase4Calidad.controlBlancoAliCumple" [ngModelOptions]="{standalone: true}" [value]="true" />
+                  <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
+                </label>
+                <label class="form-check-label text-xs">
+                  <input type="radio" class="form-radio" name="controlBlancoAliCumple"
+                    [(ngModel)]="fase4Calidad.controlBlancoAliCumple" [ngModelOptions]="{standalone: true}" [value]="false" />
+                  <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Resultado desfavorable -->
+            <div class="bg-white p-3 rounded-lg border border-slate-100">
+              <p class="text-xs font-semibold text-slate-600 mb-2">Resultado Desfavorable</p>
+              <div class="flex gap-4 mb-3">
+                <label class="form-check-label text-xs">
+                  <input type="radio" class="form-radio" name="desfavorable"
+                    [(ngModel)]="fase4Calidad.desfavorable" [ngModelOptions]="{standalone: true}" [value]="true" />
+                  <span class="badge-ausencia text-red-700 bg-red-100">Sí</span>
+                </label>
+                <label class="form-check-label text-xs">
+                  <input type="radio" class="form-radio" name="desfavorable"
+                    [(ngModel)]="fase4Calidad.desfavorable" [ngModelOptions]="{standalone: true}" [value]="false" />
+                  <span class="badge-presencia text-[#00558f] bg-blue-100">No</span>
+                </label>
+              </div>
+              <ng-container *ngIf="fase4Calidad.desfavorable">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
+                  <div class="form-group">
+                    <label class="form-label text-xs">Tabla/Página</label>
+                    <input type="text" class="form-input" placeholder="Ej: Tabla 3.1"
+                      [(ngModel)]="fase4Calidad.desfavorableTabla" [ngModelOptions]="{standalone: true}" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Límite normativo</label>
+                    <input type="number" class="form-input" placeholder="Ej: 100"
+                      [(ngModel)]="fase4Calidad.desfavorableLimite" [ngModelOptions]="{standalone: true}" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label text-xs">Fecha/Hora entrega</label>
+                    <input type="datetime-local" class="form-input"
+                      [(ngModel)]="fase4Calidad.desfavorableFechaEntrega" [ngModelOptions]="{standalone: true}" />
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════ ETAPA 5: RESULTADOS NMP ═══════ -->
+      <div *ngIf="etapaActual === 5" class="etapa-panel animate__animated animate__fadeIn">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">5. Resultados NMP</h2>
+            </div>
+          </div>
           <div class="form-card-body">
-            <div class="form-group">
+
+            <div *ngIf="entradasMuestra.length === 0" class="text-center text-slate-400 py-8">
+              No hay muestras disponibles.
+            </div>
+
+            <ng-container *ngFor="let entrada of entradasMuestra">
+              <div class="nmp-banner mb-4">
+                <p class="text-sm font-semibold text-slate-700 mb-3">
+                  <ion-icon name="flask-outline" class="mr-1"></ion-icon>
+                  Muestra {{ entrada.label }}
+                  <span *ngIf="entrada.esDuplicado" class="badge-duplicado ml-2">Duplicado</span>
+                </p>
+
+                <div *ngIf="entrada.resultados; else sinResultadosNmp">
+                  <div class="nmp-grid">
+                    <div class="nmp-card" *ngIf="ctActivo">
+                      <p class="nmp-label">CT (NMP/g)</p>
+                      <p class="text-2xl font-bold text-[#1e3a8a]">{{ entrada.resultados.ct }}</p>
+                    </div>
+                    <div class="nmp-card" *ngIf="cfActivo">
+                      <p class="nmp-label">CF (NMP/g)</p>
+                      <p class="text-2xl font-bold text-[#1e3a8a]">{{ entrada.resultados.cf }}</p>
+                    </div>
+                    <div class="nmp-card" *ngIf="ecActivo">
+                      <p class="nmp-label">E. coli (NMP/g)</p>
+                      <p class="text-2xl font-bold text-[#1e3a8a]">{{ entrada.resultados.ecoli }}</p>
+                    </div>
+                  </div>
+                </div>
+                <ng-template #sinResultadosNmp>
+                  <div class="text-center py-4 text-xs text-slate-400 italic">
+                    Sin resultados calculados. Vuelva a la etapa anterior y presione "Calcular NMP".
+                  </div>
+                </ng-template>
+              </div>
+            </ng-container>
+
+            <!-- Observaciones finales -->
+            <div class="form-group mt-6 border-t border-slate-100 pt-4">
               <label class="form-label">Observaciones Finales <span class="optional-tag">(opcional)</span></label>
               <textarea class="form-textarea w-full border border-gray-200 rounded-lg p-3 text-sm" rows="3"
                 placeholder="Escriba comentarios, notas o incidencias del análisis..."
                 [(ngModel)]="observacionesFinales" [ngModelOptions]="{standalone: true}"></textarea>
             </div>
+
           </div>
         </div>
-
       </div>
+
     </form>
 
     <!-- ═════════════════ BARRA DE NAVEGACIÓN INFERIOR ═══════════════════════ -->
@@ -691,5 +836,6 @@
         </button>
       </div>
     </div>
+
   </div>
 </ion-content>
