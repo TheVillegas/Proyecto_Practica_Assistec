@@ -215,8 +215,12 @@ describe('T-008: SauService', () => {
                         etapa1Lecturas: [
                             { conteo48hPlaca1: 50, conteo48hPlaca2: 52 }
                         ],
-                        etapa3Lecturas: [],
-                        etapa4Lecturas: []
+                        etapa3Lecturas: [
+                            { coloniasPlaca1: 3, coloniasPlaca2: 3 }
+                        ],
+                        etapa4Lecturas: [
+                            { tipoLectura: '4-6h', coloniasPlaca1: 2, coloniasPlaca2: 2 }
+                        ]
                     }
                 ],
                 etapa1: { pesoMuestraTipo: '1g' },

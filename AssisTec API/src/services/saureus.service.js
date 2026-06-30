@@ -3,7 +3,7 @@ const prisma = require('../config/prisma');
 const ROLES = require('../config/roles');
 const { serializePrismaRecord } = require('../utils/prismaSerialize');
 const { parseDate, resolvePayloadSection } = require('../utils/formularioPayload');
-const { calcularUfcSau } = require('../calculators/ufcSau.calculator');
+const { calcularUfcSauDesdeEtapas } = require('../calculators/ufcSauNch2671.calculator');
 
 const WRITE_ROLES = [ROLES.ANALISTA, ROLES.ADMINISTRATOR];
 
@@ -209,34 +209,12 @@ class SaureusService {
         return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined));
     }
 
-    _construirDilucionesDesdeMuestra(muestra) {
-        const diluciones = [];
-
-        // Etapa1: conteo 48h en Baird-Parker (principal)
-        const etapa1Lecturas = muestra.etapa1Lecturas || [];
-        for (const lect of etapa1Lecturas) {
-            const colonias = [
-                lect.conteo48hPlaca1 != null ? Number(lect.conteo48hPlaca1) : null,
-                lect.conteo48hPlaca2 != null ? Number(lect.conteo48hPlaca2) : null
-            ].filter((c) => c !== null);
-            if (colonias.length > 0) {
-                diluciones.push({ dil: -1, colonias });
-            }
-        }
-
-        // Etapa3: colonias despues de traspaso (si no hay etapa1)
-        const etapa3Lecturas = muestra.etapa3Lecturas || [];
-        for (const lect of etapa3Lecturas) {
-            const colonias = [
-                lect.coloniasPlaca1 != null ? Number(lect.coloniasPlaca1) : null,
-                lect.coloniasPlaca2 != null ? Number(lect.coloniasPlaca2) : null
-            ].filter((c) => c !== null);
-            if (colonias.length > 0) {
-                diluciones.push({ dil: -2, colonias });
-            }
-        }
-
-        return diluciones;
+    _construirDatosDesdeEtapas(muestra) {
+        return {
+            etapa1Lecturas: muestra.etapa1Lecturas || [],
+            etapa3Lecturas: muestra.etapa3Lecturas || [],
+            etapa4Lecturas: muestra.etapa4Lecturas || [],
+        };
     }
 
     async _calcularResultadosEtapa5(idFormulario, bodyResultados) {
@@ -255,19 +233,16 @@ class SaureusService {
         const computed = muestras.map((muestra) => {
             const idMuestra = String(muestra.idSauMuestra);
             const clienteData = resultadosMap.get(idMuestra) || {};
-            const diluciones = this._construirDilucionesDesdeMuestra(muestra);
+            const { etapa1Lecturas, etapa3Lecturas, etapa4Lecturas } = this._construirDatosDesdeEtapas(muestra);
 
-            let calculado;
-            if (diluciones.length > 0) {
-                calculado = calcularUfcSau({ volumen: 1, diluciones });
-            }
+            const calculado = calcularUfcSauDesdeEtapas({ etapa1Lecturas, etapa3Lecturas, etapa4Lecturas });
 
             return {
                 idSauMuestra: idMuestra,
-                nSAureus: calculado?.ufcPorG ?? clienteData.n_s_aureus ?? clienteData.nSAureus ?? null,
-                ufcPorG: calculado?.ufcPorG ?? clienteData.ufc_por_g ?? clienteData.ufcPorG ?? null,
-                incongruenciaDetectada: calculado?.incongruenciaDetectada ?? Boolean(clienteData.incongruencia_detectada ?? clienteData.incongruenciaDetectada ?? false),
-                observacionIncongruencia: calculado?.observacionIncongruencia ?? (clienteData.observacion_incongruencia ?? clienteData.observacionIncongruencia ?? null)
+                nSAureus: calculado?.ufc ?? clienteData.n_s_aureus ?? clienteData.nSAureus ?? null,
+                ufcPorG: calculado?.ufc ?? clienteData.ufc_por_g ?? clienteData.ufcPorG ?? null,
+                incongruenciaDetectada: calculado?.esSd ?? Boolean(clienteData.incongruencia_detectada ?? clienteData.incongruenciaDetectada ?? false),
+                observacionIncongruencia: calculado?.advertencias?.filter(Boolean).join('; ') || (clienteData.observacion_incongruencia ?? clienteData.observacionIncongruencia ?? null)
             };
         });
 
