@@ -5,11 +5,11 @@ import { AlertController, ToastController } from '@ionic/angular';
 import { forkJoin, of, catchError, firstValueFrom } from 'rxjs';
 import { CatalogosService } from '../../services/catalogos.service';
 import { SaureusApiService } from '../../services/saureus-api.service';
+import { MediosCultivosService, MedioCultivo } from '../../services/medios-cultivos.service';
 import {
   EquipoIncubacion,
   Micropipeta,
   Responsable,
-  LoteReactivo,
 } from '../../interfaces/catalogo.interfaces';
 import { SauFormulario } from '../../interfaces/saureus.interfaces';
 
@@ -39,7 +39,7 @@ export class FormSAureusPage implements OnInit {
   listaEquiposIncubacion: EquipoIncubacion[] = [];
   listaPipetas: Micropipeta[] = [];
   listaResponsables: Responsable[] = [];
-  listaLotesReactivo: LoteReactivo[] = [];
+  listaMediosCultivos: MedioCultivo[] = [];
 
   datosImportados = {
     codigoAlimento: '',
@@ -59,6 +59,7 @@ export class FormSAureusPage implements OnInit {
   private readonly alertCtrl = inject(AlertController);
   private readonly toastCtrl = inject(ToastController);
   private readonly catalogosService = inject(CatalogosService);
+  private readonly mediosCultivosService = inject(MediosCultivosService);
   private readonly saureusApi = inject(SaureusApiService);
 
   ngOnInit(): void {
@@ -98,10 +99,10 @@ export class FormSAureusPage implements OnInit {
           return of([] as Responsable[]);
         })
       ),
-      lotes: this.catalogosService.getLotesReactivo('agar_baird_parker').pipe(
+      medios: this.mediosCultivosService.getAll().pipe(
         catchError(() => {
-          console.warn('[Sau] Catálogo lotes no disponible');
-          return of([] as LoteReactivo[]);
+          console.warn('[Sau] Catálogo medios-cultivos no disponible');
+          return of([] as MedioCultivo[]);
         })
       ),
       formulario: this.saureusApi.obtenerPorAnalisis(this.idAnalisis),
@@ -110,7 +111,7 @@ export class FormSAureusPage implements OnInit {
         this.listaEquiposIncubacion = res.equipos;
         this.listaPipetas = res.pipetas;
         this.listaResponsables = res.responsables;
-        this.listaLotesReactivo = res.lotes;
+        this.listaMediosCultivos = res.medios;
         this.cargarFormulario(res.formulario);
       },
       error: (err) => {
@@ -176,7 +177,8 @@ export class FormSAureusPage implements OnInit {
       e4_analistaPrueba: [''],
       e4_tubosEsteriles: [''],
       e4_puntas1ml: [''],
-      e4_bacident: [''],
+      e4_bacidentMedio: [null as number | null],
+      e4_aguaEsteril: [null as number | null],
       e4_micropipeta: [null as number | null],
       e4_estufa: [null as number | null],
       e4_fechaLectura4h: [''],
@@ -225,7 +227,7 @@ export class FormSAureusPage implements OnInit {
           : '',
         e1_horaHomogeneizado: e1.horaHomogeneizado || '',
         e1_horaSiembra: e1.horaSiembra || '',
-        e1_agarBairdParker: e1.codigoAgarBairdParker || '',
+        e1_agarBairdParker: e1.idMedioAgarBairdParker || null,
         e1_nMuestra10g: e1.nMuestra10g90ml || null,
         e1_nMuestra50g: e1.nMuestra50g450ml || null,
         e1_micropipeta: e1.idMicropipeta || null,
@@ -278,7 +280,7 @@ export class FormSAureusPage implements OnInit {
           ? e3.fechaHoraTraspaso.substring(11, 16)
           : '',
         e3_analistaTraspaso: e3.rutAnalistaTraspaso,
-        e3_caldoBHI: e3.codigoCaldoBhi,
+        e3_caldoBHI: e3.idMedioCaldoBhi || null,
         e3_estufa: e3.idEstufa || null,
         e3_controlPositivo: e3.ctrlPositivoSAureus,
         e3_controlNegativo: e3.ctrlNegativoSEpider,
@@ -303,9 +305,10 @@ export class FormSAureusPage implements OnInit {
           ? e4.fechaHoraPrueba.substring(11, 16)
           : '',
         e4_analistaPrueba: e4.rutAnalistaPrueba,
-        e4_tubosEsteriles: e4.codigoTubosEsteriles,
-        e4_puntas1ml: e4.codigoPuntas1ml,
-        e4_bacident: e4.codigoBacidentAgua,
+        e4_tubosEsteriles: e4.codigoTubosEsteriles || '',
+        e4_puntas1ml: e4.codigoPuntas1ml || '',
+        e4_bacidentMedio: e4.idMedioBacident || null,
+        e4_aguaEsteril: e4.idMedioAguaEsteril || null,
         e4_micropipeta: e4.idMicropipeta || null,
         e4_estufa: e4.idEstufa || null,
         e4_fechaLectura4h: e4.fechaLectura46h
@@ -352,6 +355,16 @@ export class FormSAureusPage implements OnInit {
             ? 'no'
             : 'sin_registrar';
     }
+  }
+
+  get tiempoHomoSiembraInfo(): { minutos: number; valido: boolean } | null {
+    const v = this.form?.value;
+    if (!v?.e1_horaHomogeneizado || !v?.e1_horaSiembra) return null;
+    const [h1, m1] = v.e1_horaHomogeneizado.split(':').map(Number);
+    const [h2, m2] = v.e1_horaSiembra.split(':').map(Number);
+    let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+    if (diff < 0) diff += 24 * 60;
+    return { minutos: diff, valido: diff < 15 };
   }
 
   get progresoPorcentaje(): number {
@@ -479,7 +492,7 @@ export class FormSAureusPage implements OnInit {
             ? `${v.e1_fechaTermino}T${v.e1_horaTermino}:00`
             : undefined,
         rut_analista_termino: v.e1_analistaTermino || undefined,
-        codigo_agar_baird_parker: v.e1_agarBairdParker || undefined,
+        id_medio_agar_baird_parker: v.e1_agarBairdParker ? Number(v.e1_agarBairdParker) : undefined,
         n_muestra_10g_90ml: v.e1_nMuestra10g ? Number(v.e1_nMuestra10g) : undefined,
         n_muestra_50g_450ml: v.e1_nMuestra50g ? Number(v.e1_nMuestra50g) : undefined,
         id_micropipeta: v.e1_micropipeta ? Number(v.e1_micropipeta) : undefined,
@@ -538,7 +551,7 @@ export class FormSAureusPage implements OnInit {
             ? `${v.e3_fechaTraspaso}T${v.e3_horaTraspaso}:00`
             : undefined,
         rut_analista_traspaso: v.e3_analistaTraspaso || undefined,
-        codigo_caldo_bhi: v.e3_caldoBHI || undefined,
+        id_medio_caldo_bhi: v.e3_caldoBHI ? Number(v.e3_caldoBHI) : undefined,
         id_estufa: v.e3_estufa || undefined,
         ctrl_positivo_s_aureus: v.e3_controlPositivo || undefined,
         ctrl_negativo_s_epider: v.e3_controlNegativo || undefined,
@@ -560,7 +573,8 @@ export class FormSAureusPage implements OnInit {
         rut_analista_prueba: v.e4_analistaPrueba || undefined,
         codigo_tubos_esteriles: v.e4_tubosEsteriles || undefined,
         codigo_puntas_1ml: v.e4_puntas1ml || undefined,
-        codigo_bacident_agua: v.e4_bacident || undefined,
+        id_medio_bacident: v.e4_bacidentMedio ? Number(v.e4_bacidentMedio) : undefined,
+        id_medio_agua_esteril: v.e4_aguaEsteril ? Number(v.e4_aguaEsteril) : undefined,
         id_micropipeta: v.e4_micropipeta || undefined,
         id_estufa: v.e4_estufa || undefined,
         fecha_lectura_46h:

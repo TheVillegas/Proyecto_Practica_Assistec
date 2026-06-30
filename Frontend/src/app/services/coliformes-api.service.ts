@@ -51,8 +51,8 @@ export class ColiformesApiService {
       updated_at: updatedAt,
       completada: payload.completada,
       fase: {
-        codigo_caldo_lauril: payload.codigoCaldoLauril || undefined,
-        codigo_tween_80: payload.codigoTween80 || undefined,
+        id_medio_caldo_lauril: payload.idMedioCaldoLauril || undefined,
+        id_medio_tween_80: payload.idMedioTween80 || undefined,
       },
       estufas: payload.estufas,
       micropipetas: payload.micropipetas,

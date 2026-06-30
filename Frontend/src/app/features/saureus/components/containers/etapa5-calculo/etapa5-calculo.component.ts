@@ -1,317 +1,184 @@
-/**
- * Etapa5Calculo - Componente contenedor principal para Etapa 5: Cálculo S. Aureus
- *
- * Rediseñado para usar el patrón visual del formulario S. aureus
- * (form-card, control-card, form-group, form-input) sin ion-accordion.
- */
-
 import { Component, Input, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
-import { CalculoService, MuestraData, ResultadoCalculo } from '../../../services/calculo.service';
-export { MuestraData, ResultadoCalculo };
+import {
+  CalculoService,
+  MuestraGridData,
+  PlacaRow,
+  ResultadoCalculo,
+} from '../../../services/calculo.service';
 
-export interface Dilucion {
-  dil: number;
-  colonias: [number | null, number | null];
+export { MuestraGridData, PlacaRow, ResultadoCalculo };
+
+function emptyPlaca(): PlacaRow {
+  return { colonias24h: null, colonias48h: null, dil: null, aConfirmar: null, coag4a6h: null, coag24h: null };
 }
 
-export interface DuplicadoData {
-  aliReferencia: number | null;
-  diluciones: Dilucion[];
-  coloniasPosibles: [number | null, number | null];
-  colConfirmar: [number | null, number | null];
-  coagulasa4h: [number | null, number | null];
-  coagulasa24h: [number | null, number | null];
-  resultado?: ResultadoCalculo;
-  advertencia?: string | null;
-}
-
-export interface AliOption {
-  id: number;
-  codigo: string;
-  fechaCreacion: Date;
+function emptyMuestra(): MuestraGridData & { isLoading: boolean } {
+  return { placaA: emptyPlaca(), placaB: emptyPlaca(), isLoading: false };
 }
 
 @Component({
   selector: 'app-etapa5-calculo',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule
-  ],
+  imports: [CommonModule, FormsModule, IonicModule],
   template: `
     <div class="form-card">
       <div class="form-card-header">
         <div class="form-card-title-group">
           <ion-icon name="calculator-outline" class="card-header-icon"></ion-icon>
-          <h2 class="form-card-title">5. Cálculo S. Aureus</h2>
+          <h2 class="form-card-title">5. Cálculo S. Aureus (NCh 2671)</h2>
         </div>
       </div>
       <div class="form-card-body">
 
-        <!-- Muestras visibles (M1 por defecto, hasta 6) -->
         <div class="control-card mb-6" *ngFor="let muestra of muestrasVisibles; let i = index">
-          <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-            Muestra {{ muestra.id }}
-          </p>
+          <p class="control-title">Muestra {{ muestra.id }}</p>
 
-          <!-- Recuento de Colonias -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-            <div class="form-group">
-              <label class="form-label">Placa A</label>
-              <input type="number" class="form-input text-center" [(ngModel)]="muestra.data.diluciones[0].colonias[0]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-              <div class="text-[10px] text-slate-400 text-center mt-1">MNPC > 250</div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Placa B</label>
-              <input type="number" class="form-input text-center" [(ngModel)]="muestra.data.diluciones[0].colonias[1]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-              <div class="text-[10px] text-slate-400 text-center mt-1">SD = 0</div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Dilución</label>
-              <input type="number" class="form-input text-center" [(ngModel)]="muestra.data.diluciones[0].dil" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-            </div>
-            <div class="form-group">
-              <input type="number" class="form-input text-center" [(ngModel)]="muestra.data.diluciones[1].colonias[0]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-            </div>
-            <div class="form-group">
-              <input type="number" class="form-input text-center" [(ngModel)]="muestra.data.diluciones[1].colonias[1]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-            </div>
-            <div class="form-group">
-              <input type="number" class="form-input text-center" [(ngModel)]="muestra.data.diluciones[1].dil" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-            </div>
+          <!-- Input grid -->
+          <div class="muestra-grid-wrapper">
+            <table class="muestra-grid">
+              <thead>
+                <tr>
+                  <th class="row-label-cell"></th>
+                  <th>C 24h</th>
+                  <th>C 48h</th>
+                  <th>D</th>
+                  <th>A confirmar</th>
+                  <th>Coag. 4-6h</th>
+                  <th>Coag. 24h</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="row-label-cell">Placa A</td>
+                  <td><input type="number" class="grid-input" [(ngModel)]="muestra.data.placaA.colonias24h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                  <td><input type="number" class="grid-input" [(ngModel)]="muestra.data.placaA.colonias48h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                  <td><input type="number" class="grid-input" [(ngModel)]="muestra.data.placaA.dil" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                  <td><input type="number" class="grid-input" [(ngModel)]="muestra.data.placaA.aConfirmar" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                  <td><input type="number" class="grid-input" [(ngModel)]="muestra.data.placaA.coag4a6h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                  <td><input type="number" class="grid-input" [(ngModel)]="muestra.data.placaA.coag24h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                </tr>
+                <tr>
+                  <td class="row-label-cell">Placa B</td>
+                  <td><input type="number" class="grid-input" [(ngModel)]="muestra.data.placaB.colonias24h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                  <td><input type="number" class="grid-input" [(ngModel)]="muestra.data.placaB.colonias48h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                  <td><input type="number" class="grid-input" [(ngModel)]="muestra.data.placaB.dil" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                  <td><input type="number" class="grid-input" [(ngModel)]="muestra.data.placaB.aConfirmar" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                  <td><input type="number" class="grid-input" [(ngModel)]="muestra.data.placaB.coag4a6h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                  <td><input type="number" class="grid-input" [(ngModel)]="muestra.data.placaB.coag24h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
-          <!-- Confirmación + Coagulasa -->
-          <div class="mt-4">
-            <div class="grid grid-cols-3 gap-4 mb-2">
-              <div class="form-label text-center"></div>
-              <div class="form-label text-center">Placa A</div>
-              <div class="form-label text-center">Placa B</div>
-            </div>
-            <div class="grid grid-cols-3 gap-4 items-center mb-2">
-              <div class="form-label text-center flex items-center justify-center">A confirmar</div>
-              <div class="form-group">
-                <input type="number" class="form-input text-center" [(ngModel)]="muestra.data.colConfirmar[0]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-              </div>
-              <div class="form-group">
-                <input type="number" class="form-input text-center" [(ngModel)]="muestra.data.colConfirmar[1]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-              </div>
-            </div>
-            <div class="grid grid-cols-3 gap-4 items-center mb-2">
-              <div class="form-label text-center flex items-center justify-center">Coag. 4 hrs</div>
-              <div class="form-group">
-                <input type="number" class="form-input text-center" [(ngModel)]="muestra.data.coagulasa4h[0]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-              </div>
-              <div class="form-group">
-                <input type="number" class="form-input text-center" [(ngModel)]="muestra.data.coagulasa4h[1]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-              </div>
-            </div>
-            <div class="grid grid-cols-3 gap-4 items-center mb-2">
-              <div class="form-label text-center flex items-center justify-center">Coag. 24 h</div>
-              <div class="form-group">
-                <input type="number" class="form-input text-center" [(ngModel)]="muestra.data.coagulasa24h[0]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-              </div>
-              <div class="form-group">
-                <input type="number" class="form-input text-center" [(ngModel)]="muestra.data.coagulasa24h[1]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-              </div>
-            </div>
-          </div>
-
-          <!-- RESULTADOS DEL CÁLCULO -->
-          <div class="mt-4 p-4 bg-white rounded-lg border border-slate-200">
-            <p class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">📈 Resultados del Cálculo</p>
-            
-            <div class="space-y-1 text-sm">
-              <div class="flex justify-between py-1">
-                <span class="text-slate-600">a (suma placas):</span>
-                <span class="font-semibold text-slate-800">{{ muestra.data.resultado?.sumaA ?? '—' }}</span>
-              </div>
-              <div class="flex justify-between py-1">
-                <span class="text-slate-600">Ʃa (total):</span>
-                <span class="font-semibold text-slate-800">{{ muestra.data.resultado?.sumaA ?? '—' }}</span>
-              </div>
-              <div class="flex justify-between py-1">
-                <span class="text-slate-600">d (dilución):</span>
-                <span class="font-semibold text-slate-800">{{ factorDilucionTexto(muestra.data.resultado) || '—' }}</span>
-              </div>
-              
-              <hr class="border-slate-200 my-2" />
-              
-              <div class="flex justify-between py-1" *ngIf="muestra.data.resultado?.previas !== null && muestra.data.resultado?.previas !== undefined">
-                <span class="text-slate-600">Previas:</span>
-                <span class="font-semibold text-slate-800">{{ muestra.data.resultado?.previas }}</span>
-              </div>
-              <div class="flex justify-between py-1">
-                <span class="text-slate-600 font-semibold">N S. Aureus:</span>
-                <span class="text-blue-700 font-bold">{{ muestra.data.resultado?.textoReporte || '—' }}</span>
-              </div>
-              <div class="flex justify-between py-1">
-                <span class="text-slate-600">NE S. Aureus:</span>
-                <span class="font-semibold text-slate-800">{{ muestra.data.resultado?.textoReporte || '—' }}</span>
-              </div>
-              
-              <hr class="border-slate-200 my-2" />
-              
-              <div class="flex justify-between py-1">
-                <span class="text-slate-600">Lectura usada:</span>
-                <span class="font-semibold text-slate-800">{{ muestra.data.resultado?.coagulasaUsada || '—' }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Botón calcular -->
+          <!-- Calculate button -->
           <div class="mt-4 flex justify-center">
-            <button type="button" class="btn-primary" (click)="onCalcularMuestra(muestra.id)" [disabled]="formularioBloqueado || muestra.isLoading">
+            <button type="button" class="btn-primary" (click)="onCalcular(muestra)" [disabled]="formularioBloqueado || muestra.isLoading">
+              <ion-spinner name="crescent" *ngIf="muestra.isLoading" style="width:14px;height:14px;margin-right:6px;"></ion-spinner>
               Calcular {{ muestra.id }}
             </button>
           </div>
 
-          <!-- DUPLICADO (solo M1) -->
-          <div *ngIf="i === 0" class="mt-4 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50">
-            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Duplicado</p>
-
-            <!-- ALI selector -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div class="form-group">
-                <label class="form-label">ALI Duplicado</label>
-                <select class="form-select" [(ngModel)]="duplicado.aliReferencia" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" (ngModelChange)="onAliChange($event)">
-                  <option [ngValue]="null">Seleccionar ALI...</option>
-                  <option *ngFor="let ali of aliList" [ngValue]="ali.id">{{ ali.codigo }} - {{ ali.fechaCreacion | date:'dd/MM/yyyy' }}</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">N° Muestra Dup.</label>
-                <input type="number" class="form-input bg-slate-100" [disabled]="true" value="1" />
-              </div>
+          <!-- Results -->
+          <div *ngIf="muestra.data.resultado" class="resultado-card mt-4">
+            <div class="resultado-principal">
+              <span class="resultado-label">N S. aureus</span>
+              <span class="resultado-valor" [class.resultado-sd]="muestra.data.resultado.esSd">
+                {{ muestra.data.resultado.textoReporte }}
+              </span>
             </div>
 
-            <!-- Advertencia -->
-            <div *ngIf="duplicado.advertencia" class="p-3 bg-amber-50 rounded border border-amber-200 text-amber-800 text-sm mb-3">
-              {{ duplicado.advertencia }}
+            <div class="resultado-meta" *ngIf="muestra.data.resultado.sumaA !== undefined">
+              <span>Σa = {{ muestra.data.resultado.sumaA }}</span>
+              <span *ngIf="muestra.data.resultado.n1 !== undefined">n1 = {{ muestra.data.resultado.n1 }}</span>
+              <span *ngIf="muestra.data.resultado.n2 !== undefined">n2 = {{ muestra.data.resultado.n2 }}</span>
+              <span *ngIf="muestra.data.resultado.d !== undefined">d = {{ muestra.data.resultado.d }}</span>
             </div>
 
-            <!-- Recuento duplicado -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-              <div class="form-group">
-                <label class="form-label">Placa A</label>
-                <input type="number" class="form-input text-center" [(ngModel)]="duplicado.diluciones[0].colonias[0]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-                <div class="text-[10px] text-slate-400 text-center mt-1">MNPC > 250</div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Placa B</label>
-                <input type="number" class="form-input text-center" [(ngModel)]="duplicado.diluciones[0].colonias[1]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-                <div class="text-[10px] text-slate-400 text-center mt-1">SD = 0</div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Dilución</label>
-                <input type="number" class="form-input text-center" [(ngModel)]="duplicado.diluciones[0].dil" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-              </div>
-              <div class="form-group">
-                <input type="number" class="form-input text-center" [(ngModel)]="duplicado.diluciones[1].colonias[0]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-              </div>
-              <div class="form-group">
-                <input type="number" class="form-input text-center" [(ngModel)]="duplicado.diluciones[1].colonias[1]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-              </div>
-              <div class="form-group">
-                <input type="number" class="form-input text-center" [(ngModel)]="duplicado.diluciones[1].dil" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-              </div>
+            <div class="resultado-caso" *ngIf="muestra.data.resultado.casoAplicado && muestra.data.resultado.casoAplicado !== 'NCh2671_porPlaca'">
+              <ion-chip color="warning" style="font-size:0.75rem;">
+                {{ muestra.data.resultado.casoAplicado }}
+              </ion-chip>
             </div>
 
-            <!-- Confirmación + Coagulasa duplicado -->
-            <div class="mt-4">
-              <div class="grid grid-cols-3 gap-4 mb-2">
-                <div class="form-label text-center"></div>
-                <div class="form-label text-center">Placa A</div>
-                <div class="form-label text-center">Placa B</div>
-              </div>
-              <div class="grid grid-cols-3 gap-4 items-center mb-2">
-                <div class="form-label text-center flex items-center justify-center">A confirmar</div>
-                <div class="form-group">
-                  <input type="number" class="form-input text-center" [(ngModel)]="duplicado.colConfirmar[0]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-                </div>
-                <div class="form-group">
-                  <input type="number" class="form-input text-center" [(ngModel)]="duplicado.colConfirmar[1]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-                </div>
-              </div>
-              <div class="grid grid-cols-3 gap-4 items-center mb-2">
-                <div class="form-label text-center flex items-center justify-center">Coag. 4 hrs</div>
-                <div class="form-group">
-                  <input type="number" class="form-input text-center" [(ngModel)]="duplicado.coagulasa4h[0]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-                </div>
-                <div class="form-group">
-                  <input type="number" class="form-input text-center" [(ngModel)]="duplicado.coagulasa4h[1]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-                </div>
-              </div>
-              <div class="grid grid-cols-3 gap-4 items-center mb-2">
-                <div class="form-label text-center flex items-center justify-center">Coag. 24 h</div>
-                <div class="form-group">
-                  <input type="number" class="form-input text-center" [(ngModel)]="duplicado.coagulasa24h[0]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-                </div>
-                <div class="form-group">
-                  <input type="number" class="form-input text-center" [(ngModel)]="duplicado.coagulasa24h[1]" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" />
-                </div>
+            <div class="resultado-advertencias" *ngIf="muestra.data.resultado.advertencias?.length">
+              <div class="advertencia-item" *ngFor="let adv of muestra.data.resultado.advertencias">
+                <ion-icon name="warning-outline"></ion-icon>
+                <span>{{ adv }}</span>
               </div>
             </div>
+          </div>
 
-            <!-- RESULTADOS DEL CÁLCULO -->
-            <div class="mt-4 p-4 bg-white rounded-lg border border-slate-200">
-              <p class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">📈 Resultados del Cálculo</p>
-              
-              <div class="space-y-1 text-sm">
-                <div class="flex justify-between py-1">
-                  <span class="text-slate-600">a (suma placas):</span>
-                  <span class="font-semibold text-slate-800">{{ duplicado.resultado?.sumaA ?? '—' }}</span>
-                </div>
-                <div class="flex justify-between py-1">
-                  <span class="text-slate-600">Ʃa (total):</span>
-                  <span class="font-semibold text-slate-800">{{ duplicado.resultado?.sumaA ?? '—' }}</span>
-                </div>
-                <div class="flex justify-between py-1">
-                  <span class="text-slate-600">d (dilución):</span>
-                  <span class="font-semibold text-slate-800">{{ factorDilucionTexto(duplicado.resultado) || '—' }}</span>
-                </div>
-                
-                <hr class="border-slate-200 my-2" />
-                
-                <div class="flex justify-between py-1" *ngIf="duplicado.resultado?.previas !== null && duplicado.resultado?.previas !== undefined">
-                  <span class="text-slate-600">Previas:</span>
-                  <span class="font-semibold text-slate-800">{{ duplicado.resultado?.previas }}</span>
-                </div>
-                <div class="flex justify-between py-1">
-                  <span class="text-slate-600 font-semibold">N S. Aureus:</span>
-                  <span class="text-blue-700 font-bold">{{ duplicado.resultado?.textoReporte || '—' }}</span>
-                </div>
-                <div class="flex justify-between py-1">
-                  <span class="text-slate-600">NE S. Aureus:</span>
-                  <span class="font-semibold text-slate-800">{{ duplicado.resultado?.textoReporte || '—' }}</span>
-                </div>
-                
-                <hr class="border-slate-200 my-2" />
-                
-                <div class="flex justify-between py-1">
-                  <span class="text-slate-600">Lectura usada:</span>
-                  <span class="font-semibold text-slate-800">{{ duplicado.resultado?.coagulasaUsada || '—' }}</span>
-                </div>
-              </div>
+          <!-- Duplicado section (only M1) -->
+          <div *ngIf="i === 0" class="duplicado-wrapper mt-6">
+            <p class="duplicado-title">Duplicado (M1)</p>
+
+            <div class="muestra-grid-wrapper">
+              <table class="muestra-grid">
+                <thead>
+                  <tr>
+                    <th class="row-label-cell"></th>
+                    <th>C 24h</th>
+                    <th>C 48h</th>
+                    <th>D</th>
+                    <th>A confirmar</th>
+                    <th>Coag. 4-6h</th>
+                    <th>Coag. 24h</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="row-label-cell">Placa A</td>
+                    <td><input type="number" class="grid-input" [(ngModel)]="duplicado.data.placaA.colonias24h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                    <td><input type="number" class="grid-input" [(ngModel)]="duplicado.data.placaA.colonias48h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                    <td><input type="number" class="grid-input" [(ngModel)]="duplicado.data.placaA.dil" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                    <td><input type="number" class="grid-input" [(ngModel)]="duplicado.data.placaA.aConfirmar" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                    <td><input type="number" class="grid-input" [(ngModel)]="duplicado.data.placaA.coag4a6h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                    <td><input type="number" class="grid-input" [(ngModel)]="duplicado.data.placaA.coag24h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                  </tr>
+                  <tr>
+                    <td class="row-label-cell">Placa B</td>
+                    <td><input type="number" class="grid-input" [(ngModel)]="duplicado.data.placaB.colonias24h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                    <td><input type="number" class="grid-input" [(ngModel)]="duplicado.data.placaB.colonias48h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                    <td><input type="number" class="grid-input" [(ngModel)]="duplicado.data.placaB.dil" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                    <td><input type="number" class="grid-input" [(ngModel)]="duplicado.data.placaB.aConfirmar" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                    <td><input type="number" class="grid-input" [(ngModel)]="duplicado.data.placaB.coag4a6h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                    <td><input type="number" class="grid-input" [(ngModel)]="duplicado.data.placaB.coag24h" [ngModelOptions]="{standalone: true}" [disabled]="formularioBloqueado" /></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
-            <!-- Botón calcular duplicado -->
             <div class="mt-4 flex justify-center">
-              <button type="button" class="btn-primary" (click)="onCalcularDuplicado()" [disabled]="formularioBloqueado || duplicadoIsLoading">
+              <button type="button" class="btn-primary" (click)="onCalcularDuplicado()" [disabled]="formularioBloqueado || duplicado.isLoading">
+                <ion-spinner name="crescent" *ngIf="duplicado.isLoading" style="width:14px;height:14px;margin-right:6px;"></ion-spinner>
                 Calcular Duplicado
               </button>
+            </div>
+
+            <div *ngIf="duplicado.data.resultado" class="resultado-card mt-4">
+              <div class="resultado-principal">
+                <span class="resultado-label">N S. aureus (Dup.)</span>
+                <span class="resultado-valor" [class.resultado-sd]="duplicado.data.resultado.esSd">
+                  {{ duplicado.data.resultado.textoReporte }}
+                </span>
+              </div>
+              <div class="resultado-advertencias" *ngIf="duplicado.data.resultado.advertencias?.length">
+                <div class="advertencia-item" *ngFor="let adv of duplicado.data.resultado.advertencias">
+                  <ion-icon name="warning-outline"></ion-icon>
+                  <span>{{ adv }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Agregar otra muestra -->
-        <div class="flex justify-center mt-4" *ngIf="muestrasVisibles.length < 6 && !formularioBloqueado">
+        <!-- Add muestra -->
+        <div class="flex justify-center mt-2" *ngIf="muestrasVisibles.length < 6 && !formularioBloqueado">
           <button type="button" class="btn-secondary" (click)="agregarMuestra()">
-            + Agregar otra muestra
+            + Agregar muestra
           </button>
         </div>
 
@@ -319,11 +186,6 @@ export interface AliOption {
     </div>
   `,
   styles: [`
-    /* ══════════════════════════════════════════════
-       Estilos compartidos del formulario S. Aureus
-       (mismos valores que form-s-aureus.page.scss)
-       ══════════════════════════════════════════════ */
-
     .form-card {
       background: #fff;
       border-radius: 0.75rem;
@@ -331,40 +193,17 @@ export interface AliOption {
       overflow: hidden;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
     }
-
     .form-card-header {
       padding: 1rem;
       display: flex;
       align-items: center;
-      justify-content: space-between;
       color: #fff;
       background: #29588c;
     }
-
-    .form-card-title-group {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .card-header-icon {
-      font-size: 1.5rem;
-      opacity: 0.8;
-      color: #fff;
-    }
-
-    .form-card-title {
-      font-size: 1.125rem;
-      font-weight: 600;
-      line-height: 1.3;
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .form-card-body {
-      padding: 1.5rem;
-      background: #fff;
-    }
+    .form-card-title-group { display: flex; align-items: center; gap: 0.75rem; }
+    .card-header-icon { font-size: 1.5rem; opacity: 0.8; color: #fff; }
+    .form-card-title { font-size: 1.125rem; font-weight: 600; margin: 0; font-family: 'Inter', sans-serif; }
+    .form-card-body { padding: 1.5rem; background: #fff; }
 
     .control-card {
       background: #f8fafc;
@@ -373,311 +212,190 @@ export interface AliOption {
       padding: 1rem;
       margin-bottom: 1.5rem;
     }
-
     .control-title {
       font-size: 0.875rem;
       font-weight: 600;
       color: #1e3a8a;
       margin-bottom: 0.75rem;
       font-family: 'Inter', sans-serif;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 0.5rem;
     }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+    .muestra-grid-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
-
-    .form-label {
-      color: #1e3a8a;
-      font-weight: 500;
-      font-size: 0.875rem;
-      line-height: 1.25;
-    }
-
-    .form-input,
-    .form-select {
+    .muestra-grid {
       width: 100%;
-      border: 1px solid #e5e7eb;
-      border-radius: 0.5rem;
-      padding: 0.5rem 0.75rem;
-      font-size: 0.875rem;
-      outline: none;
-      transition: all 0.2s;
-      color: #1e293b;
-      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      min-width: 580px;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+    .muestra-grid th {
+      padding: 0.375rem 0.5rem;
+      text-align: center;
+      font-weight: 600;
+      color: #1e3a8a;
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+    .muestra-grid td {
+      padding: 0.375rem 0.375rem;
+      border: 1px solid #e2e8f0;
       background: #fff;
     }
-
-    .form-input:focus,
-    .form-select:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 1px #2563eb;
+    .row-label-cell {
+      font-weight: 600;
+      color: #475569;
+      white-space: nowrap;
+      padding: 0.375rem 0.625rem !important;
+      background: #f1f5f9 !important;
+      text-align: right;
+      min-width: 64px;
     }
-
-    .form-input.input-error {
-      border-color: #ef4444;
-      box-shadow: 0 0 0 1px #f87171;
+    .grid-input {
+      width: 100%;
+      min-width: 52px;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+      padding: 0.375rem 0.375rem;
+      font-size: 0.8125rem;
+      text-align: center;
+      outline: none;
+      color: #1e293b;
+      background: #fff;
+      transition: border-color 0.15s;
     }
+    .grid-input:focus { border-color: #2563eb; box-shadow: 0 0 0 1px #2563eb; }
+    .grid-input:disabled { background: #f1f5f9; color: #94a3b8; }
 
-    .form-select {
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 0.75rem center;
-      padding-right: 2rem;
+    .resultado-card {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 0.625rem;
+      padding: 0.875rem 1rem;
+    }
+    .resultado-principal {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .resultado-label { font-size: 0.8125rem; color: #0369a1; font-weight: 600; }
+    .resultado-valor { font-size: 1rem; font-weight: 700; color: #0c4a6e; }
+    .resultado-sd { color: #b45309; }
+    .resultado-meta {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: #64748b;
+      flex-wrap: wrap;
+    }
+    .resultado-caso { margin-top: 0.5rem; }
+    .resultado-advertencias { margin-top: 0.625rem; display: flex; flex-direction: column; gap: 0.25rem; }
+    .advertencia-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.375rem;
+      font-size: 0.75rem;
+      color: #92400e;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      border-radius: 0.375rem;
+      padding: 0.25rem 0.5rem;
+    }
+    .advertencia-item ion-icon { font-size: 0.875rem; flex-shrink: 0; margin-top: 1px; }
+
+    .duplicado-wrapper {
+      border-top: 2px dashed #cbd5e1;
+      padding-top: 1rem;
+    }
+    .duplicado-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #64748b;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
     }
 
     .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.625rem 1.25rem;
-      border-radius: 0.5rem;
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #fff;
-      background: #006eb6;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.625rem 1.25rem; border-radius: 0.5rem;
+      font-size: 0.875rem; font-weight: 600; color: #fff;
+      background: #006eb6; border: none; cursor: pointer; transition: all 0.2s;
     }
-
-    .btn-primary:hover {
-      background: #005a94;
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    .btn-primary:hover { background: #005a94; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.625rem 1.25rem;
-      border-radius: 0.5rem;
-      font-size: 0.875rem;
-      font-weight: 600;
-      border: 2px solid #29588c;
-      color: #29588c;
-      background: transparent;
-      cursor: pointer;
-      transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.625rem 1.25rem; border-radius: 0.5rem;
+      font-size: 0.875rem; font-weight: 600;
+      border: 2px solid #29588c; color: #29588c;
+      background: transparent; cursor: pointer; transition: all 0.2s;
     }
-
-    .btn-secondary:hover {
-      background: #29588c;
-      color: #fff;
-    }
-
-    .btn-secondary:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
+    .btn-secondary:hover { background: #29588c; color: #fff; }
   `],
   encapsulation: ViewEncapsulation.None
 })
 export class Etapa5CalculoComponent implements OnInit {
-  @Input() formularioBloqueado: boolean = false;
-  @Input() solicitudAnalisisId: string = '';
+  @Input() formularioBloqueado = false;
+  @Input() solicitudAnalisisId = '';
 
-  muestras: Array<{
-    id: string;
-    data: MuestraData;
-    isLoading: boolean;
-  }> = [];
+  private readonly ALL_IDS = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'];
 
-  muestrasVisibles: Array<{
-    id: string;
-    data: MuestraData;
-    isLoading: boolean;
-  }> = [];
+  muestras: Array<{ id: string; data: MuestraGridData; isLoading: boolean }> = [];
+  muestrasVisibles: typeof this.muestras = [];
 
-  duplicado: DuplicadoData = {
-    aliReferencia: null,
-    diluciones: [
-      { dil: 2, colonias: [null, null] },
-      { dil: 3, colonias: [null, null] }
-    ],
-    coloniasPosibles: [null, null],
-    colConfirmar: [null, null],
-    coagulasa4h: [null, null],
-    coagulasa24h: [null, null]
+  duplicado: { data: MuestraGridData; isLoading: boolean } = {
+    data: emptyMuestra(),
+    isLoading: false,
   };
-
-  aliList: AliOption[] = [];
-  duplicadoIsLoading: boolean = false;
 
   private readonly calculoService = inject(CalculoService);
 
   ngOnInit(): void {
-    this.inicializarMuestras();
-    this.cargarAliList();
-  }
-
-  private inicializarMuestras(): void {
-    const ids = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'];
-
-    this.muestras = ids.map(id => ({
-      id,
-      data: {
-        diluciones: [
-          { dil: 2, colonias: [null, null] },
-          { dil: 3, colonias: [null, null] }
-        ],
-        coloniasPosibles: [null, null],
-        colConfirmar: [null, null],
-        coagulasa4h: [null, null],
-        coagulasa24h: [null, null]
-      },
-      isLoading: false
-    }));
-
+    this.muestras = this.ALL_IDS.map(id => ({ id, data: emptyMuestra(), isLoading: false }));
     this.muestrasVisibles = [this.muestras[0]];
   }
 
   agregarMuestra(): void {
-    const nextIndex = this.muestrasVisibles.length;
-    if (nextIndex < 6) {
-      this.muestrasVisibles.push(this.muestras[nextIndex]);
-    }
+    const next = this.muestrasVisibles.length;
+    if (next < 6) this.muestrasVisibles.push(this.muestras[next]);
   }
 
-  private cargarAliList(): void {
-    this.aliList = [
-      { id: 421, codigo: 'ALI-2025-00421', fechaCreacion: new Date('2025-05-15') },
-      { id: 420, codigo: 'ALI-2025-00420', fechaCreacion: new Date('2025-05-14') },
-      { id: 419, codigo: 'ALI-2025-00419', fechaCreacion: new Date('2025-05-13') }
-    ];
-  }
-
-  async onCalcularMuestra(muestraId: string): Promise<void> {
-    const muestra = this.muestras.find(m => m.id === muestraId);
-    if (!muestra) return;
-
+  async onCalcular(muestra: typeof this.muestras[0]): Promise<void> {
     muestra.isLoading = true;
-
     try {
-      // Auto-set coloniasPosibles desde el recuento de Placa A/B (son C en la fórmula NCh2676)
-      const coloniasPosibles: [number | null, number | null] = [
-        muestra.data.diluciones[0].colonias[0],
-        muestra.data.diluciones[0].colonias[1]
-      ];
-
-      const resultado = await this.calculoService.calcularMuestra({
+      muestra.data.resultado = await this.calculoService.calcularMuestra({
         solicitudAnalisisId: this.solicitudAnalisisId,
-        muestraId,
-        ...muestra.data,
-        coloniasPosibles
+        muestraId: muestra.id,
+        placas: [muestra.data.placaA, muestra.data.placaB],
       });
-
-      muestra.data.resultado = resultado;
-    } catch (error) {
-      // TODO: mostrar error al usuario vía toast/alert cuando se integre AlertController
-      console.warn('Error en cálculo:', error);
+    } catch {
+      // toast integration deferred
     } finally {
       muestra.isLoading = false;
     }
   }
 
-  onAliChange(aliId: number | null): void {
-    this.duplicado.aliReferencia = aliId;
-
-    if (aliId) {
-      this.onReimportar(aliId);
-    }
-  }
-
-  async onReimportar(aliId: number | null): Promise<void> {
-    if (!aliId) return;
-
-    this.duplicadoIsLoading = true;
-
-    try {
-      const datosImportados = await this.calculoService.importarDuplicado(aliId, this.solicitudAnalisisId);
-      const { muestra1, advertencia } = datosImportados;
-
-      if (muestra1 && !advertencia) {
-        this.duplicado = {
-          ...this.duplicado,
-          aliReferencia: aliId,
-          diluciones: muestra1.diluciones,
-          coloniasPosibles: muestra1.coloniasPosibles,
-          colConfirmar: muestra1.colConfirmar,
-          coagulasa4h: muestra1.coagulasa4h,
-          coagulasa24h: muestra1.coagulasa24h,
-          advertencia: null
-        };
-
-        const resultado = await this.calculoService.calcularMuestra({
-          solicitudAnalisisId: this.solicitudAnalisisId,
-          muestraId: 'DUP',
-          diluciones: this.duplicado.diluciones,
-          coloniasPosibles: this.duplicado.coloniasPosibles,
-          colConfirmar: this.duplicado.colConfirmar,
-          coagulasa4h: this.duplicado.coagulasa4h,
-          coagulasa24h: this.duplicado.coagulasa24h
-        });
-
-        this.duplicado.resultado = resultado;
-      } else {
-        this.duplicado = {
-          ...this.duplicado,
-          aliReferencia: aliId,
-          diluciones: [
-            { dil: 2, colonias: [null, null] },
-            { dil: 3, colonias: [null, null] }
-          ],
-          coloniasPosibles: [null, null],
-          colConfirmar: [null, null],
-          coagulasa4h: [null, null],
-          coagulasa24h: [null, null],
-          resultado: undefined,
-          advertencia: advertencia || 'No se encontraron datos de S. aureus en el ALI seleccionado'
-        };
-      }
-    } catch (error) {
-      this.duplicado.advertencia = 'Error al importar datos del ALI origen';
-    } finally {
-      this.duplicadoIsLoading = false;
-    }
-  }
-
   async onCalcularDuplicado(): Promise<void> {
-    this.duplicadoIsLoading = true;
-
+    this.duplicado.isLoading = true;
     try {
-      // Auto-set coloniasPosibles desde el recuento (igual que en muestras)
-      const coloniasPosibles: [number | null, number | null] = [
-        this.duplicado.diluciones[0].colonias[0],
-        this.duplicado.diluciones[0].colonias[1]
-      ];
-
-      const resultado = await this.calculoService.calcularMuestra({
+      this.duplicado.data.resultado = await this.calculoService.calcularMuestra({
         solicitudAnalisisId: this.solicitudAnalisisId,
         muestraId: 'DUP',
-        diluciones: this.duplicado.diluciones,
-        coloniasPosibles,
-        colConfirmar: this.duplicado.colConfirmar,
-        coagulasa4h: this.duplicado.coagulasa4h,
-        coagulasa24h: this.duplicado.coagulasa24h
+        placas: [this.duplicado.data.placaA, this.duplicado.data.placaB],
       });
-
-      this.duplicado.resultado = resultado;
-    } catch (error) {
-      // TODO: mostrar error al usuario vía toast/alert cuando se integre AlertController
-      console.warn('Error en cálculo:', error);
+    } catch {
+      // toast integration deferred
     } finally {
-      this.duplicadoIsLoading = false;
+      this.duplicado.isLoading = false;
     }
-  }
-
-  factorDilucionTexto(resultado?: ResultadoCalculo | null): string {
-    if (!resultado?.factorDilucion) return '—';
-    const fd = resultado.factorDilucion;
-    const exponente = Math.round(Math.log10(fd));
-    return `${fd}  (10${exponente})`;
   }
 }

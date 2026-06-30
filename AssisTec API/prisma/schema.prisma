@@ -581,7 +581,7 @@ model SauEtapa1 {
   nMuestra50g450ml      Int?      @map("n_muestra_50g_450ml")
   idMicropipeta         Int?      @map("id_micropipeta")
   codigoMicropipeta     String?   @map("codigo_micropipeta") @db.VarChar(100)
-  codigoAgarBairdParker String    @map("codigo_agar_baird_parker") @db.VarChar(100)
+  idMedioAgarBairdParker Int       @map("id_medio_agar_baird_parker")
   pesoMuestraTipo       String    @map("peso_muestra_tipo") @db.VarChar(20)
   idEstufa              Int       @map("id_estufa")
   duplicadoAliRef       String?   @map("duplicado_ali_ref") @db.VarChar(100)
@@ -596,7 +596,8 @@ model SauEtapa1 {
   formulario      SauFormulario    @relation(fields: [idSauFormulario], references: [idSauFormulario])
   analistaInicio  Usuario          @relation("SauEtapa1_AnalistaInicio", fields: [rutAnalistaInicio], references: [rutUsuario])
   analistaTermino Usuario?         @relation("SauEtapa1_AnalistaTermino", fields: [rutAnalistaTermino], references: [rutUsuario])
-  estufa          EquipoIncubacion @relation(fields: [idEstufa], references: [idIncubacion])
+  estufa               EquipoIncubacion @relation(fields: [idEstufa], references: [idIncubacion])
+  medioAgarBairdParker MedioCultivo     @relation("SauAgarBairdParker", fields: [idMedioAgarBairdParker], references: [idMedioCultivo])
 
   micropipetas SauEtapa1Micropipeta[]
 
@@ -656,7 +657,7 @@ model SauEtapa3 {
   fechaHoraTraspaso       DateTime  @map("fecha_hora_traspaso") @db.Timestamp()
   rutAnalistaTraspaso     String    @map("rut_analista_traspaso") @db.VarChar(255)
   duracionTraspasoLectura String?   @map("duracion_traspaso_lectura")
-  codigoCaldoBhi          String?   @map("codigo_caldo_bhi") @db.VarChar(100)
+  idMedioCaldoBhi         Int?      @map("id_medio_caldo_bhi")
   idEstufa                Int       @map("id_estufa")
   ctrlPositivoSAureus     String?   @map("ctrl_positivo_s_aureus") @db.VarChar(50)
   ctrlNegativoSEpider     String?   @map("ctrl_negativo_s_epider") @db.VarChar(50)
@@ -668,9 +669,10 @@ model SauEtapa3 {
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario       SauFormulario    @relation(fields: [idSauFormulario], references: [idSauFormulario])
-  analistaTraspaso Usuario          @relation("SauEtapa3_AnalistaTraspaso", fields: [rutAnalistaTraspaso], references: [rutUsuario])
-  analistaLectura  Usuario?         @relation("SauEtapa3_AnalistaLectura", fields: [rutAnalistaLectura], references: [rutUsuario])
-  estufa           EquipoIncubacion @relation(fields: [idEstufa], references: [idIncubacion])
+  analistaTraspaso Usuario           @relation("SauEtapa3_AnalistaTraspaso", fields: [rutAnalistaTraspaso], references: [rutUsuario])
+  analistaLectura  Usuario?          @relation("SauEtapa3_AnalistaLectura", fields: [rutAnalistaLectura], references: [rutUsuario])
+  estufa           EquipoIncubacion  @relation(fields: [idEstufa], references: [idIncubacion])
+  medioCaldoBhi    MedioCultivo?     @relation("SauCaldoBhi", fields: [idMedioCaldoBhi], references: [idMedioCultivo])
 
   lecturas SauEtapa3Lectura[]
 
@@ -697,7 +699,8 @@ model SauEtapa4 {
   rutAnalistaPrueba     String    @map("rut_analista_prueba") @db.VarChar(255)
   codigoTubosEsteriles  String?   @map("codigo_tubos_esteriles") @db.VarChar(100)
   codigoPuntas1ml       String?   @map("codigo_puntas_1ml") @db.VarChar(100)
-  codigoBacidentAgua    String?   @map("codigo_bacident_agua") @db.VarChar(100)
+  idMedioBacident       Int?      @map("id_medio_bacident")
+  idMedioAguaEsteril    Int?      @map("id_medio_agua_esteril")
   idMicropipeta         Int?      @map("id_micropipeta")
   idEstufa              Int       @map("id_estufa")
   fechaLectura46h       DateTime? @map("fecha_lectura_4_6h") @db.Timestamp()
@@ -716,11 +719,13 @@ model SauEtapa4 {
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario     SauFormulario    @relation(fields: [idSauFormulario], references: [idSauFormulario])
-  analistaPrueba Usuario          @relation("SauEtapa4_AnalistaPrueba", fields: [rutAnalistaPrueba], references: [rutUsuario])
-  analista46h    Usuario?         @relation("SauEtapa4_Analista46h", fields: [rutAnalista46h], references: [rutUsuario])
-  analista24h    Usuario?         @relation("SauEtapa4_Analista24h", fields: [rutAnalista24h], references: [rutUsuario])
-  micropipeta    Micropipeta?     @relation(fields: [idMicropipeta], references: [idPipeta])
-  estufa         EquipoIncubacion @relation(fields: [idEstufa], references: [idIncubacion])
+  analistaPrueba    Usuario          @relation("SauEtapa4_AnalistaPrueba", fields: [rutAnalistaPrueba], references: [rutUsuario])
+  analista46h       Usuario?         @relation("SauEtapa4_Analista46h", fields: [rutAnalista46h], references: [rutUsuario])
+  analista24h       Usuario?         @relation("SauEtapa4_Analista24h", fields: [rutAnalista24h], references: [rutUsuario])
+  micropipeta       Micropipeta?     @relation(fields: [idMicropipeta], references: [idPipeta])
+  estufa            EquipoIncubacion @relation(fields: [idEstufa], references: [idIncubacion])
+  medioBacident     MedioCultivo?    @relation("SauBacident", fields: [idMedioBacident], references: [idMedioCultivo])
+  medioAguaEsteril  MedioCultivo?    @relation("SauAguaEsteril", fields: [idMedioAguaEsteril], references: [idMedioCultivo])
 
   lecturas SauEtapa4Lectura[]
 
@@ -987,6 +992,11 @@ model MedioCultivo {
 
   coliFase2CaldoLauril ColiFase2[] @relation("CaldoLauril")
   coliFase2Tween80     ColiFase2[] @relation("Tween80")
+
+  sauEtapa1AgarBairdParker SauEtapa1[] @relation("SauAgarBairdParker")
+  sauEtapa3CaldoBhi        SauEtapa3[] @relation("SauCaldoBhi")
+  sauEtapa4Bacident        SauEtapa4[] @relation("SauBacident")
+  sauEtapa4AguaEsteril     SauEtapa4[] @relation("SauAguaEsteril")
 
   @@map("medios_cultivos")
 }

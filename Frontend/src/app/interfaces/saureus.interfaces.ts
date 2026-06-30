@@ -29,8 +29,9 @@ export interface SauEtapa1 {
   rutAnalistaInicio: string;
   fechaTerminoAnalisis: string;
   rutAnalistaTermino: string;
-  tiempoHomoSiembraMin: boolean;
-  codigoAgarBairdParker: string;
+  tiempoHomoSiembraMin: number | null;
+  tiempoHomoValido: boolean | null;
+  idMedioAgarBairdParker: number;
   pesoMuestraTipo: string;
   idEstufa: number;
   duplicadoAliRef: string;
@@ -40,7 +41,6 @@ export interface SauEtapa1 {
   ctrlSiembraAli: string;
   ctrlSiembraCumple: string;
   completada: boolean;
-  idLoteAgarBairdParker?: string;
   nMuestra10g90ml?: number;
   nMuestra50g450ml?: number;
   idMicropipeta?: number;
@@ -65,7 +65,7 @@ export interface SauEtapa2 {
 export interface SauEtapa3 {
   fechaHoraTraspaso: string;
   rutAnalistaTraspaso: string;
-  codigoCaldoBhi: string;
+  idMedioCaldoBhi: number | null;
   idEstufa: number;
   ctrlPositivoSAureus: string;
   ctrlNegativoSEpider: string;
@@ -79,9 +79,10 @@ export interface SauEtapa3 {
 export interface SauEtapa4 {
   fechaHoraPrueba: string;
   rutAnalistaPrueba: string;
-  codigoTubosEsteriles: string;
-  codigoPuntas1ml: string;
-  codigoBacidentAgua: string;
+  codigoTubosEsteriles: string | null;
+  codigoPuntas1ml: string | null;
+  idMedioBacident: number | null;
+  idMedioAguaEsteril: number | null;
   idMicropipeta: number;
   idEstufa: number;
   fechaLectura46h: string;

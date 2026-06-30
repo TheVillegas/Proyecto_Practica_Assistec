@@ -100,21 +100,34 @@
                 Parámetros de Siembra
               </p>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                <div class="form-group grid grid-cols-2 gap-2">
-                  <div>
-                    <label class="form-label text-xs">Hora Homogeneizado</label>
-                    <input type="time" class="form-input mt-1" formControlName="e1_horaHomogeneizado" [class.input-error]="campoInvalido('e1_horaHomogeneizado')" />
+                <div class="form-group">
+                  <label class="form-label text-xs">Tiempo entre homogeneizado y siembra (&lt;15 min)</label>
+                  <div class="grid grid-cols-2 gap-2 mt-1">
+                    <div>
+                      <label class="text-xs text-slate-500">Hora Homogeneizado</label>
+                      <input type="time" class="form-input mt-1" formControlName="e1_horaHomogeneizado" />
+                    </div>
+                    <div>
+                      <label class="text-xs text-slate-500">Hora Siembra</label>
+                      <input type="time" class="form-input mt-1" formControlName="e1_horaSiembra" />
+                    </div>
                   </div>
-                  <div>
-                    <label class="form-label text-xs">Hora Siembra</label>
-                    <input type="time" class="form-input mt-1" formControlName="e1_horaSiembra" [class.input-error]="campoInvalido('e1_horaSiembra')" />
+                  <div class="mt-2" *ngIf="tiempoHomoSiembraInfo !== null">
+                    <span *ngIf="tiempoHomoSiembraInfo.valido"
+                      class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                      ✓ {{ tiempoHomoSiembraInfo.minutos }} min — Dentro del límite
+                    </span>
+                    <span *ngIf="!tiempoHomoSiembraInfo.valido"
+                      class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                      ✗ {{ tiempoHomoSiembraInfo.minutos }} min — Excede 15 min
+                    </span>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Agar Baird Parker</label>
+                  <label class="form-label">Agar Baird Parker <span class="required-star">*</span></label>
                   <select class="form-select" formControlName="e1_agarBairdParker" [class.input-error]="campoInvalido('e1_agarBairdParker')">
-                    <option value="">Seleccionar lote...</option>
-                    <option *ngFor="let lote of listaLotesReactivo" [value]="lote.idLoteReactivo">{{ lote.codigoLote }}</option>
+                    <option [ngValue]="null">Seleccionar medio de cultivo...</option>
+                    <option *ngFor="let medio of listaMediosCultivos" [ngValue]="medio.idMedioCultivo">{{ medio.nombre }}</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -364,7 +377,10 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100">
                 <div class="form-group">
                   <label class="form-label">Caldo BHI <span class="required-star">*</span></label>
-                  <input type="text" class="form-input" formControlName="e3_caldoBHI" [class.input-error]="campoInvalido('e3_caldoBHI')" />
+                  <select class="form-select" formControlName="e3_caldoBHI" [class.input-error]="campoInvalido('e3_caldoBHI')">
+                    <option [ngValue]="null">Seleccionar medio de cultivo...</option>
+                    <option *ngFor="let medio of listaMediosCultivos" [ngValue]="medio.idMedioCultivo">{{ medio.nombre }}</option>
+                  </select>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Estufa <span class="required-star">*</span></label>
@@ -391,31 +407,7 @@
               </div>
             </div>
 
-            <!-- Lectura BHI -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                Lectura
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-                <div class="form-group">
-                  <label class="form-label">Fecha Lectura <span class="required-star">*</span></label>
-                  <input type="date" class="form-input" formControlName="e3_fechaLectura" [class.input-error]="campoInvalido('e3_fechaLectura')" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Hora Lectura <span class="required-star">*</span></label>
-                  <input type="time" class="form-input" formControlName="e3_horaLectura" [class.input-error]="campoInvalido('e3_horaLectura')" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Analista Lectura <span class="required-star">*</span></label>
-                  <select class="form-select" formControlName="e3_analistaLectura" [class.input-error]="campoInvalido('e3_analistaLectura')">
-                    <option value="">Seleccionar analista...</option>
-                    <option *ngFor="let r of listaResponsables" [value]="r.rut">{{ r.nombreApellido }}</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <!-- Tabla Traspaso BHI ELIMINADA: el traspaso se ingresa en Etapa 5 -->
+            <!-- Tabla Traspaso BHI: el ingreso por muestra se realiza en Etapa 5 -->
 
           </div>
         </div>
@@ -464,16 +456,26 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Código Micropipeta <span class="required-star">*</span></label>
-                  <input type="text" class="form-input" formControlName="e4_puntas1ml" [class.input-error]="campoInvalido('e4_puntas1ml')" placeholder="Ej: MP-001" />
+                  <label class="form-label">Código Puntas 1 mL</label>
+                  <input type="text" class="form-input" formControlName="e4_puntas1ml" placeholder="Ej: PT-001" />
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Código Bacident coagulasa / Agua estéril <span class="required-star">*</span></label>
-                  <input type="text" class="form-input" formControlName="e4_bacident" [class.input-error]="campoInvalido('e4_bacident')" />
+                  <label class="form-label">Bacident coagulasa <span class="required-star">*</span></label>
+                  <select class="form-select" formControlName="e4_bacidentMedio" [class.input-error]="campoInvalido('e4_bacidentMedio')">
+                    <option [ngValue]="null">Seleccionar medio de cultivo...</option>
+                    <option *ngFor="let medio of listaMediosCultivos" [ngValue]="medio.idMedioCultivo">{{ medio.nombre }}</option>
+                  </select>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Tubos estériles <span class="required-star">*</span></label>
-                  <input type="text" class="form-input" formControlName="e4_tubosEsteriles" [class.input-error]="campoInvalido('e4_tubosEsteriles')" />
+                  <label class="form-label">Agua estéril <span class="required-star">*</span></label>
+                  <select class="form-select" formControlName="e4_aguaEsteril" [class.input-error]="campoInvalido('e4_aguaEsteril')">
+                    <option [ngValue]="null">Seleccionar medio de cultivo...</option>
+                    <option *ngFor="let medio of listaMediosCultivos" [ngValue]="medio.idMedioCultivo">{{ medio.nombre }}</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Código Tubos Estériles</label>
+                  <input type="text" class="form-input" formControlName="e4_tubosEsteriles" placeholder="Ej: TE-001" />
                 </div>
                 <div class="form-group">
                   <label class="form-label">Estufa <span class="required-star">*</span></label>

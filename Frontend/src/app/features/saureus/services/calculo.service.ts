@@ -1,93 +1,61 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+
+export interface PlacaRow {
+  colonias24h: number | null;
+  colonias48h: number | null;
+  dil: number | null;
+  aConfirmar: number | null;
+  coag4a6h: number | null;
+  coag24h: number | null;
+}
 
 export interface ResultadoCalculo {
-  aPlacaA?: number;
-  aPlacaB?: number;
-  sumaA?: number;
   ufc?: number | null;
   textoReporte: string;
   esSd: boolean;
-  coagulasaUsada?: string | null;
+  casoAplicado: string;
+  sumaA?: number;
+  sumaColonias?: number;
+  n1?: number;
+  n2?: number;
+  d?: number;
   factorDilucion?: number;
-  previas?: number | null;
-  coloniasSeleccionadas?: number;
-  coloniasPosiblesTotal?: number;
+  advertencias?: string[];
+  detalle?: unknown[];
 }
 
-export interface MuestraData {
-  diluciones: Array<{ dil: number; colonias: [number | null, number | null] }>;
-  coloniasPosibles: [number | null, number | null];
-  colConfirmar: [number | null, number | null];
-  coagulasa4h: [number | null, number | null];
-  coagulasa24h: [number | null, number | null];
+export interface MuestraGridData {
+  placaA: PlacaRow;
+  placaB: PlacaRow;
   resultado?: ResultadoCalculo;
 }
 
 export interface CalcularMuestraRequest {
   solicitudAnalisisId: string;
   muestraId: string;
-  diluciones: Array<{ dil: number; colonias: [number | null, number | null] }>;
-  coloniasPosibles: [number | null, number | null];
-  colConfirmar: [number | null, number | null];
-  coagulasa4h: [number | null, number | null];
-  coagulasa24h: [number | null, number | null];
-}
-
-export interface CalcularTodasRequest {
-  solicitudAnalisisId: string;
-  muestras: Array<MuestraData & { id: string }>;
+  placas: PlacaRow[];
 }
 
 export interface ImportarDuplicadoResponse {
   aliOrigen: number;
   muestra1: {
-    diluciones: Array<{ dil: number; colonias: [number | null, number | null] }>;
-    coloniasPosibles: [number | null, number | null];
-    colConfirmar: [number | null, number | null];
-    coagulasa4h: [number | null, number | null];
-    coagulasa24h: [number | null, number | null];
-    resultadoTexto: string;
-  };
+    placaA: PlacaRow;
+    placaB: PlacaRow;
+  } | null;
   advertencia: string | null;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class CalculoService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = '/api/saureus';
+  private readonly apiUrl = `${environment.apiUrl}/saureus`;
 
-  async calcularMuestra(data: CalcularMuestraRequest): Promise<MuestraData['resultado']> {
+  calcularMuestra(req: CalcularMuestraRequest): Promise<ResultadoCalculo> {
     return firstValueFrom(
-      this.http.post<MuestraData['resultado']>(`${this.apiUrl}/calcular-muestra`, data)
-    );
-  }
-
-  async calcularTodas(data: CalcularTodasRequest): Promise<{
-    resultados: Record<string, MuestraData['resultado']>;
-    resultadoConsolidado: string;
-    reglaAplicada: string;
-  }> {
-    return firstValueFrom(
-      this.http.post<{
-        resultados: Record<string, MuestraData['resultado']>;
-        resultadoConsolidado: string;
-        reglaAplicada: string;
-      }>(`${this.apiUrl}/calcular-todo`, data)
-    );
-  }
-
-  async importarDuplicado(
-    aliOrigen: number,
-    solicitudActualId: string
-  ): Promise<ImportarDuplicadoResponse> {
-    return firstValueFrom(
-      this.http.get<ImportarDuplicadoResponse>(`${this.apiUrl}/importar-duplicado`, {
-        params: { aliOrigen: aliOrigen.toString(), solicitudActualId }
-      })
+      this.http.post<ResultadoCalculo>(`${this.apiUrl}/calcular-muestra`, req)
     );
   }
 }
