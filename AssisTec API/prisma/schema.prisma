@@ -998,6 +998,9 @@ model MedioCultivo {
   sauEtapa4Bacident        SauEtapa4[] @relation("SauBacident")
   sauEtapa4AguaEsteril     SauEtapa4[] @relation("SauAguaEsteril")
 
+  entEtapa1AgarVrbg EntEtapa1[] @relation("EntAgarVrbg")
+  entEtapa1Tween80  EntEtapa1[] @relation("EntTween80")
+
   @@map("medios_cultivos")
 }
 
@@ -1325,7 +1328,6 @@ model LoteReactivo {
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamp()
   updatedAt        DateTime  @default(now()) @map("updated_at") @db.Timestamp()
 
-  entEtapa1AgarVrbg   EntEtapa1[] @relation("EntEtapa1_LoteAgarVrbg")
   entEtapa3AgarNutritivo EntEtapa3[] @relation("EntEtapa3_LoteAgarNutritivo")
 
   @@map("lotes_reactivo")
@@ -1348,7 +1350,8 @@ model EntEtapa1 {
   rutAnalistaHomog       String    @map("rut_analista_homog") @db.VarChar(255)
   idStomacher            Int?      @map("id_stomacher")
   tiempoHomogenizacion   Int?      @map("tiempo_homogenizacion") @db.SmallInt
-  idLoteAgarVrbgSembrado BigInt    @map("id_lote_agar_vrbg_sembrado")
+  idMedioAgarVrbg        Int       @map("id_medio_agar_vrbg")
+  idMedioTween80         Int?      @map("id_medio_tween_80")
   idEstufaSembrado       Int       @map("id_estufa_sembrado")
   placasSembrado         Int       @map("placas_sembrado") @db.SmallInt
   idMicropipeta          Int       @map("id_micropipeta")
@@ -1369,7 +1372,8 @@ model EntEtapa1 {
   analistaIncub      Usuario         @relation("EntEtapa1_AnalistaIncub", fields: [rutAnalistaIncub], references: [rutUsuario])
   balanza            Instrumento?    @relation("EntEtapa1_Balanza", fields: [idBalanza], references: [idInstrumento])
   stomacher          Instrumento?    @relation("EntEtapa1_Stomacher", fields: [idStomacher], references: [idInstrumento])
-  loteAgarVrbg       LoteReactivo    @relation("EntEtapa1_LoteAgarVrbg", fields: [idLoteAgarVrbgSembrado], references: [idLoteReactivo])
+  medioAgarVrbg      MedioCultivo    @relation("EntAgarVrbg", fields: [idMedioAgarVrbg], references: [idMedioCultivo])
+  medioTween80       MedioCultivo?   @relation("EntTween80", fields: [idMedioTween80], references: [idMedioCultivo])
   estufaSembrado     EquipoIncubacion @relation("EntEtapa1_EstufaSembrado", fields: [idEstufaSembrado], references: [idIncubacion])
   micropipeta        Micropipeta     @relation(fields: [idMicropipeta], references: [idPipeta])
   estufaIncub        EquipoIncubacion @relation("EntEtapa1_EstufaIncub", fields: [idEstufaIncub], references: [idIncubacion])
@@ -1401,23 +1405,27 @@ model EntEtapa2 {
 model EntEtapa3 {
   idEntEtapa3            BigInt    @id @default(autoincrement()) @map("id_ent_etapa3")
   idEntFormulario        BigInt    @unique @map("id_ent_formulario")
-  fechaTraspaso          DateTime  @map("fecha_traspaso") @db.Date
-  horaTraspaso           String    @map("hora_traspaso") @db.VarChar(10)
-  rutAnalistaTraspaso    String    @map("rut_analista_traspaso") @db.VarChar(255)
-  idAgarNutritivo        BigInt    @map("id_agar_nutritivo")
-  idEstufaConf           Int       @map("id_estufa_conf")
-  fechaLectConf          DateTime  @map("fecha_lect_conf") @db.Date
-  horaLectConf           String    @map("hora_lect_conf") @db.VarChar(10)
-  rutAnalistaLectConf    String    @map("rut_analista_lect_conf") @db.VarChar(255)
-  fechaOxidasa           DateTime  @map("fecha_oxidasa") @db.Date
-  horaOxidasa            String    @map("hora_oxidasa") @db.VarChar(10)
-  rutAnalistaOxidasa     String    @map("rut_analista_oxidasa") @db.VarChar(255)
-  reactivoOxidasa        String    @map("reactivo_oxidasa") @db.VarChar(20)
-  desaireadoAgarGlucosa  String    @map("desaireado_agar_glucosa") @db.VarChar(100)
-  agarGlucosa            String    @map("agar_glucosa") @db.VarChar(100)
-  controlPosEcoli        String    @map("control_pos_ecoli") @db.VarChar(20)
-  controlNegPaer         String    @map("control_neg_paer") @db.VarChar(20)
-  blanco                 String    @map("blanco") @db.VarChar(20)
+  fechaTraspaso          DateTime? @map("fecha_traspaso") @db.Date
+  horaTraspaso           String?   @map("hora_traspaso") @db.VarChar(10)
+  rutAnalistaTraspaso    String?   @map("rut_analista_traspaso") @db.VarChar(255)
+  idAgarNutritivo        BigInt?   @map("id_agar_nutritivo")
+  idEstufaConf           Int?      @map("id_estufa_conf")
+  fechaLectConf          DateTime? @map("fecha_lect_conf") @db.Date
+  horaLectConf           String?   @map("hora_lect_conf") @db.VarChar(10)
+  rutAnalistaLectConf    String?   @map("rut_analista_lect_conf") @db.VarChar(255)
+  fechaOxidasa           DateTime? @map("fecha_oxidasa") @db.Date
+  horaOxidasa            String?   @map("hora_oxidasa") @db.VarChar(10)
+  rutAnalistaOxidasa     String?   @map("rut_analista_oxidasa") @db.VarChar(255)
+  reactivoOxidasa        String?   @map("reactivo_oxidasa") @db.VarChar(20)
+  desaireadoAgarGlucosa  String?   @map("desaireado_agar_glucosa") @db.VarChar(100)
+  agarGlucosa            String?   @map("agar_glucosa") @db.VarChar(100)
+  controlPosEcoli        String?   @map("control_pos_ecoli") @db.VarChar(20)
+  controlNegPaer         String?   @map("control_neg_paer") @db.VarChar(20)
+  blanco                 String?   @map("blanco") @db.VarChar(20)
+  desfavorable           Boolean?  @map("desfavorable")
+  tablaPagina            String?   @map("tabla_pagina") @db.VarChar(200)
+  limite                 String?   @map("limite") @db.VarChar(200)
+  fechaHoraEntrega       DateTime? @map("fecha_hora_entrega") @db.Timestamp()
   muestraB               Decimal?  @map("muestra_b") @db.Decimal(15, 4)
   muestraA               Decimal?  @map("muestra_a") @db.Decimal(15, 4)
   d                      Decimal?  @map("d") @db.Decimal(15, 4)
@@ -1429,12 +1437,12 @@ model EntEtapa3 {
   completada             Boolean   @default(false)
   updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
-  formulario      EntFormulario    @relation(fields: [idEntFormulario], references: [idEntFormulario])
-  analistaTraspaso Usuario         @relation("EntEtapa3_AnalistaTraspaso", fields: [rutAnalistaTraspaso], references: [rutUsuario])
-  analistaLectConf Usuario         @relation("EntEtapa3_AnalistaLectConf", fields: [rutAnalistaLectConf], references: [rutUsuario])
-  analistaOxidasa  Usuario         @relation("EntEtapa3_AnalistaOxidasa", fields: [rutAnalistaOxidasa], references: [rutUsuario])
-  agarNutritivo    LoteReactivo    @relation("EntEtapa3_LoteAgarNutritivo", fields: [idAgarNutritivo], references: [idLoteReactivo])
-  estufaConf       EquipoIncubacion @relation("EntEtapa3_EstufaConf", fields: [idEstufaConf], references: [idIncubacion])
+  formulario       EntFormulario     @relation(fields: [idEntFormulario], references: [idEntFormulario])
+  analistaTraspaso Usuario?          @relation("EntEtapa3_AnalistaTraspaso", fields: [rutAnalistaTraspaso], references: [rutUsuario])
+  analistaLectConf Usuario?          @relation("EntEtapa3_AnalistaLectConf", fields: [rutAnalistaLectConf], references: [rutUsuario])
+  analistaOxidasa  Usuario?          @relation("EntEtapa3_AnalistaOxidasa", fields: [rutAnalistaOxidasa], references: [rutUsuario])
+  agarNutritivo    LoteReactivo?     @relation("EntEtapa3_LoteAgarNutritivo", fields: [idAgarNutritivo], references: [idLoteReactivo])
+  estufaConf       EquipoIncubacion? @relation("EntEtapa3_EstufaConf", fields: [idEstufaConf], references: [idIncubacion])
 
   @@map("ent_etapa3")
 }

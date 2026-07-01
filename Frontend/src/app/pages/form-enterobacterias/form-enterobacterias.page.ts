@@ -6,9 +6,9 @@ import { firstValueFrom, forkJoin } from 'rxjs';
 import { EnterobacteriasApiService } from '../../services/enterobacterias-api.service';
 import { AuthService } from '../../services/auth-service';
 import { CatalogosService } from '../../services/catalogos.service';
+import { MediosCultivosService, MedioCultivo } from '../../services/medios-cultivos.service';
 import {
   EntControlCalidadAli,
-  EntControlConfirmacion,
   EntDilucionLectura,
   EntEtapa1Payload,
   EntEtapa2Payload,
@@ -22,19 +22,7 @@ import {
   EquipoIncubacion,
   Micropipeta,
   Responsable,
-  LoteReactivo
 } from '../../interfaces/catalogo.interfaces';
-
-function reactivoOxidasaValidator(control: AbstractControl): ValidationErrors | null {
-  if (!control.value) return null;
-  const patron = /^R69-(\d{2})-(0[12])$/;
-  if (!patron.test(control.value)) {
-    return {
-      reactivoInvalido: 'El formato del Reactivo de Oxidasa debe ser R69-AA-NN donde AA es el año en 2 dígitos y NN es 01 o 02. Ejemplo: R69-25-01.'
-    };
-  }
-  return null;
-}
 
 interface PesadoFormValue {
   codigoALI?: string;
@@ -55,6 +43,7 @@ interface HomogeneizacionFormValue {
 
 interface SembradoFormValue {
   agarVRBGSembrado?: number | string | null;
+  tween80Medio?: number | string | null;
   estufaSembrado?: number | string | null;
   placasSembrado?: number | string | null;
   micropipeta1mlSembrado?: number | string | null;
@@ -77,14 +66,15 @@ interface AnalisisLecturaFormValue {
   equipoCuentaColonias?: number | string | null;
 }
 
-interface ControlCalidadFormValue extends EntControlCalidadAli, EntControlConfirmacion {}
-
-interface IncubacionConfFormValue {
-  fechaTraspaso?: string;
-  horaTraspaso?: string;
-  analistaTraspaso?: string;
-  agarNutritivo?: number | string | null;
-  estufaConfIncub?: number | string | null;
+interface ControlCalidadFormValue extends EntControlCalidadAli {
+  controlPosEcoli?: string;
+  controlNegPaer?: string;
+  blanco?: string;
+  desfavorable?: string;
+  tablaPagina?: string;
+  limite?: string;
+  fechaHoraEntrega?: string;
+  observaciones?: string;
 }
 
 interface LegacyLecturaFields {
@@ -108,14 +98,15 @@ export class FormEnterobacteriasPage implements OnInit {
   private apiService = inject(EnterobacteriasApiService);
   private authService = inject(AuthService);
   private catalogosService = inject(CatalogosService);
+  private mediosCultivosService = inject(MediosCultivosService);
 
   readonly TOTAL_ETAPAS = 5;
   readonly NOMBRES_ETAPAS = [
     'Pesado y Siembra',
     'Incubación',
     'Control de Calidad',
-    'Lectura 24h',
-    'Traspaso / Confirmación',
+    'Recuento Enterobact.',
+    'Manual de Inocuidad',
   ];
 
   idFormulario = 0;
@@ -130,21 +121,31 @@ export class FormEnterobacteriasPage implements OnInit {
     crearMuestraVacia('Duplicado'),
   ];
 
+  listaMediosCultivos: MedioCultivo[] = [];
+
   get pesadoGroup(): FormGroup { return this.form.get('pesado') as FormGroup; }
   get homogeneizacionGroup(): FormGroup { return this.form.get('homogeneizacion') as FormGroup; }
   get sembradoGroup(): FormGroup { return this.form.get('sembrado') as FormGroup; }
   get incubacionPrepGroup(): FormGroup { return this.form.get('incubacionPrep') as FormGroup; }
   get controlCalidadGroup(): FormGroup { return this.form.get('controlCalidad') as FormGroup; }
   get analisisLecturaGroup(): FormGroup { return this.form.get('analisisLectura') as FormGroup; }
-  get incubacionConfGroup(): FormGroup { return this.form.get('incubacionConf') as FormGroup; }
 
   catalogos = {
     equiposIncubacion: signal<EquipoIncubacion[]>([]),
     responsables: signal<Responsable[]>([]),
     micropipetas: signal<Micropipeta[]>([]),
-    lotesAgarVRBG: signal<LoteReactivo[]>([]),
-    lotesTween80: signal<LoteReactivo[]>([]),
   };
+
+  get tiempoHomoSiembraInfo(): { minutos: number; valido: boolean } | null {
+    const horaHomog = this.form.get('homogeneizacion.horaHomog')?.value as string;
+    const horaSembrado = this.form.get('sembrado.horaSembrado')?.value as string;
+    if (!horaHomog || !horaSembrado) return null;
+    const [hH, mH] = horaHomog.split(':').map(Number);
+    const [hS, mS] = horaSembrado.split(':').map(Number);
+    const diff = (hS * 60 + mS) - (hH * 60 + mH);
+    if (diff < 0) return null;
+    return { minutos: diff, valido: diff < 20 };
+  }
 
   ngOnInit(): void {
     const idParam = this.route.parent?.snapshot.paramMap.get('id')
@@ -162,15 +163,13 @@ export class FormEnterobacteriasPage implements OnInit {
       equiposIncubacion: this.catalogosService.getEquiposIncubacion(),
       responsables: this.catalogosService.getResponsables('analista'),
       micropipetas: this.catalogosService.getMicroPipetas(),
-      lotesAgarVRBG: this.catalogosService.getLotesReactivo('agar_vrbg'),
-      lotesTween80: this.catalogosService.getLotesReactivo('tween_80'),
+      mediosCultivos: this.mediosCultivosService.getAll(),
     }).subscribe({
       next: (res) => {
         this.catalogos.equiposIncubacion.set(res.equiposIncubacion);
         this.catalogos.responsables.set(res.responsables);
         this.catalogos.micropipetas.set(res.micropipetas);
-        this.catalogos.lotesAgarVRBG.set(res.lotesAgarVRBG);
-        this.catalogos.lotesTween80.set(res.lotesTween80);
+        this.listaMediosCultivos = res.mediosCultivos;
         if (res.formularioResp.existe && res.formularioResp.formulario) {
           this.idFormulario = Number(res.formularioResp.formulario.idEntFormulario) || this.idFormulario;
           this.cargarFormulario(res.formularioResp.formulario);
@@ -201,6 +200,7 @@ export class FormEnterobacteriasPage implements OnInit {
       }),
       sembrado: this.fb.group({
         agarVRBGSembrado: [''],
+        tween80Medio: [''],
         estufaSembrado: [null],
         placasSembrado: [null],
         micropipeta1mlSembrado: [null],
@@ -234,13 +234,6 @@ export class FormEnterobacteriasPage implements OnInit {
         fechaHoraEntrega: [''],
         observaciones: [''],
       }),
-      incubacionConf: this.fb.group({
-        fechaTraspaso: [''],
-        horaTraspaso: [''],
-        analistaTraspaso: [''],
-        agarNutritivo: [''],
-        estufaConfIncub: [null],
-      }),
     });
   }
 
@@ -264,7 +257,8 @@ export class FormEnterobacteriasPage implements OnInit {
         analistaHomog: e1.rutAnalistaHomog,
       });
       this.form.get('sembrado')?.patchValue({
-        agarVRBGSembrado: e1.idLoteAgarVrbgSembrado ? String(e1.idLoteAgarVrbgSembrado) : '',
+        agarVRBGSembrado: e1.idMedioAgarVrbg ? String(e1.idMedioAgarVrbg) : '',
+        tween80Medio: e1.idMedioTween80 ? String(e1.idMedioTween80) : '',
         estufaSembrado: e1.idEstufaSembrado,
         placasSembrado: e1.placasSembrado,
         micropipeta1mlSembrado: e1.idMicropipeta,
@@ -292,10 +286,6 @@ export class FormEnterobacteriasPage implements OnInit {
         duplicadoAli: e2.duplicadoAli ?? '',
         controlPositivoBlancoAli: e2.controlPositivoBlancoAli ?? '',
         controlSiembraAli: e2.controlSiembraAli ?? '',
-        desfavorable: e2.desfavorable ?? '',
-        tablaPagina: e2.tablaPagina ?? '',
-        limite: e2.limite ?? '',
-        fechaHoraEntrega: e2.fechaHoraEntrega ?? '',
       });
       if (e2.muestras?.length) {
         this.muestrasLectura = e2.muestras;
@@ -304,25 +294,14 @@ export class FormEnterobacteriasPage implements OnInit {
 
     const e3 = formulario.etapa3;
     if (e3) {
-      this.form.get('incubacionConf')?.patchValue({
-        fechaTraspaso: e3.fechaTraspaso,
-        horaTraspaso: e3.horaTraspaso,
-        analistaTraspaso: e3.rutAnalistaTraspaso,
-        agarNutritivo: e3.idAgarNutritivo ? String(e3.idAgarNutritivo) : '',
-        estufaConfIncub: e3.idEstufaConf,
-      });
-      // Controls and observaciones were previously stored in e3; keep loading them for backwards compatibility.
       this.form.get('controlCalidad')?.patchValue({
         controlPosEcoli: e3.controlPosEcoli ?? '',
         controlNegPaer: e3.controlNegPaer ?? '',
         blanco: e3.blanco ?? '',
-        duplicadoAli: e3.duplicadoAli ?? this.form.get('controlCalidad.duplicadoAli')?.value ?? '',
-        controlPositivoBlancoAli: e3.controlPositivoBlancoAli ?? this.form.get('controlCalidad.controlPositivoBlancoAli')?.value ?? '',
-        controlSiembraAli: e3.controlSiembraAli ?? this.form.get('controlCalidad.controlSiembraAli')?.value ?? '',
-        desfavorable: e3.desfavorable ?? this.form.get('controlCalidad.desfavorable')?.value ?? '',
-        tablaPagina: e3.tablaPagina ?? this.form.get('controlCalidad.tablaPagina')?.value ?? '',
-        limite: e3.limite ?? this.form.get('controlCalidad.limite')?.value ?? '',
-        fechaHoraEntrega: e3.fechaHoraEntrega ?? this.form.get('controlCalidad.fechaHoraEntrega')?.value ?? '',
+        desfavorable: e3.desfavorable === true ? 'si' : e3.desfavorable === false ? 'no' : '',
+        tablaPagina: e3.tablaPagina ?? '',
+        limite: e3.limite ?? '',
+        fechaHoraEntrega: e3.fechaHoraEntrega ?? '',
         observaciones: e3.observaciones ?? '',
       });
     }
@@ -335,22 +314,9 @@ export class FormEnterobacteriasPage implements OnInit {
     if (!e1) return 1;
     if (!e1.completada) return 2;
     if (!e2) return 3;
-    if (!e2.completada) return this.tieneControlCalidad(e2) ? 4 : 3;
+    if (!e2.completada) return 4;
     if (!e3 || !e3.completada) return 5;
     return 5;
-  }
-
-  private tieneControlCalidad(etapa: EntFormularioCompleto['etapa2']): boolean {
-    if (!etapa) return false;
-    return Boolean(
-      etapa.duplicadoAli
-      || etapa.controlPositivoBlancoAli
-      || etapa.controlSiembraAli
-      || etapa.desfavorable
-      || etapa.tablaPagina
-      || etapa.limite
-      || etapa.fechaHoraEntrega
-    );
   }
 
   get progresoPorcentaje(): number {
@@ -382,7 +348,6 @@ export class FormEnterobacteriasPage implements OnInit {
   async finalizarFormulario(): Promise<void> {
     if (!await this.validarFinalizacion()) return;
 
-    // Save all API etapas in order so completada flags are correct
     let ok = await this.guardarEtapa(1, true);
     if (!ok) return;
     ok = await this.guardarEtapa(2, true);
@@ -397,7 +362,6 @@ export class FormEnterobacteriasPage implements OnInit {
   async guardarFormularioBorrador(): Promise<void> {
     if (this.modoLectura) return;
     const ui = this.etapaActual();
-    // Mark prior API etapas as completed so backend stage-progression check passes
     let ok = await this.guardarEtapa(1, ui > 2);
     if (!ok) return;
     if (ui >= 3) {
@@ -435,12 +399,9 @@ export class FormEnterobacteriasPage implements OnInit {
 
   private construirPayloadEtapa(etapa: 1 | 2 | 3, completada: boolean): EntEtapaPayload {
     switch (etapa) {
-      case 1:
-        return { completada, etapa: this.construirPayloadEtapa1() };
-      case 2:
-        return { completada, etapa: this.construirPayloadEtapa2() };
-      case 3:
-        return { completada, etapa: this.construirPayloadEtapa3() };
+      case 1: return { completada, etapa: this.construirPayloadEtapa1() };
+      case 2: return { completada, etapa: this.construirPayloadEtapa2() };
+      case 3: return { completada, etapa: this.construirPayloadEtapa3() };
     }
   }
 
@@ -464,7 +425,8 @@ export class FormEnterobacteriasPage implements OnInit {
       fecha_homog: homogeneizacion.fechaHomog,
       hora_homog: homogeneizacion.horaHomog,
       rut_analista_homog: homogeneizacion.analistaHomog,
-      id_lote_agar_vrbg_sembrado: this.toNumberOrUndefined(sembrado.agarVRBGSembrado),
+      id_medio_agar_vrbg: this.toNumberOrUndefined(sembrado.agarVRBGSembrado),
+      id_medio_tween_80: this.toNumberOrUndefined(sembrado.tween80Medio),
       id_estufa_sembrado: this.toNumberOrUndefined(sembrado.estufaSembrado),
       placas_sembrado: this.toNumberOrUndefined(sembrado.placasSembrado),
       id_micropipeta: this.toNumberOrUndefined(sembrado.micropipeta1mlSembrado),
@@ -494,19 +456,17 @@ export class FormEnterobacteriasPage implements OnInit {
   }
 
   private construirPayloadEtapa3(): EntEtapa3Payload {
-    const incubacionConf = this.groupValue<IncubacionConfFormValue>('incubacionConf');
-    const controles = this.construirControlConfirmacion();
+    const cc = this.groupValue<ControlCalidadFormValue>('controlCalidad');
 
     return this.omitirVacios({
-      fecha_traspaso: incubacionConf.fechaTraspaso,
-      hora_traspaso: incubacionConf.horaTraspaso,
-      rut_analista_traspaso: incubacionConf.analistaTraspaso,
-      id_agar_nutritivo: this.toNumberOrUndefined(incubacionConf.agarNutritivo),
-      id_estufa_conf: this.toNumberOrUndefined(incubacionConf.estufaConfIncub),
-      control_pos_ecoli: controles.controlPosEcoli,
-      control_neg_paer: controles.controlNegPaer,
-      blanco: controles.blanco,
-      observaciones: controles.observaciones,
+      control_pos_ecoli: cc.controlPosEcoli,
+      control_neg_paer: cc.controlNegPaer,
+      blanco: cc.blanco,
+      desfavorable: cc.desfavorable === 'si' ? true : cc.desfavorable === 'no' ? false : undefined,
+      tabla_pagina: cc.tablaPagina,
+      limite: cc.limite,
+      fecha_hora_entrega: cc.fechaHoraEntrega || undefined,
+      observaciones: cc.observaciones,
     });
   }
 
@@ -516,37 +476,12 @@ export class FormEnterobacteriasPage implements OnInit {
       duplicadoAli: control.duplicadoAli,
       controlPositivoBlancoAli: control.controlPositivoBlancoAli,
       controlSiembraAli: control.controlSiembraAli,
-      desfavorable: control.desfavorable,
-      tablaPagina: control.tablaPagina,
-      limite: control.limite,
-      fechaHoraEntrega: control.fechaHoraEntrega,
-    });
-  }
-
-  private construirControlConfirmacion(): EntControlConfirmacion {
-    const control = this.groupValue<ControlCalidadFormValue>('controlCalidad');
-    return this.omitirVacios({
-      controlPosEcoli: control.controlPosEcoli,
-      controlNegPaer: control.controlNegPaer,
-      blanco: control.blanco,
-      observaciones: control.observaciones,
     });
   }
 
   private resolverCamposLecturaLegacy(): LegacyLecturaFields {
-    const muestraConResultado = this.muestrasLectura.find((m) => m.resultado);
-    if (muestraConResultado?.resultado) {
-      return this.omitirVacios({
-        n_muestra_lectura: this.numeroMuestraDesdeEtiqueta(muestraConResultado.label),
-        dilucion: muestraConResultado.resultado.d,
-        colonias_contadas: muestraConResultado.resultado.sumaA,
-      });
-    }
-
     const primeraDilucion = this.primeraDilucionConColonias();
-
     if (!primeraDilucion) return {};
-
     const coloniasA = primeraDilucion.coloniasA ?? 0;
     const coloniasB = primeraDilucion.coloniasB ?? 0;
     return this.omitirVacios({
@@ -561,13 +496,6 @@ export class FormEnterobacteriasPage implements OnInit {
       await this.mostrarAlerta('Lectura incompleta', 'Debe calcular al menos una muestra antes de finalizar el registro.');
       return false;
     }
-
-    const traspaso = this.groupValue<IncubacionConfFormValue>('incubacionConf');
-    if (!traspaso.fechaTraspaso || !traspaso.horaTraspaso || !traspaso.analistaTraspaso) {
-      await this.mostrarAlerta('Traspaso incompleto', 'Complete fecha, hora y analista de traspaso antes de finalizar.');
-      return false;
-    }
-
     return true;
   }
 

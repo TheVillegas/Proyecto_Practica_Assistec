@@ -7,12 +7,7 @@
 $brand-navy:       #29588C;
 $brand-blue:       #006EB6;
 $brand-blue-dk:    #004f8a;
-$brand-analisis:   #0369a1;   // sky-700     — Lectura 24h
-$brand-incubacion: #0f766e;   // teal-700    — Incubación
-$brand-conf:       #5b21b6;   // violet-800  — Traspaso
-$brand-oxidasa:    #065f46;   // emerald-800 — Pruebas
-$brand-resultados: #1e40af;   // blue-800    — Resultados
-$brand-placas:     #92400e;   // amber-800
+$brand-resultados: #1e40af;   // blue-800    — usado en mrc-header (resumen por muestra)
 $bg-global:        #F4F4F4;
 $surface-white:    #FFFFFF;
 $text-primary:     #1E293B;
@@ -130,14 +125,6 @@ $color-success:    #16a34a;
 .form-card-header {
   @apply p-4 flex items-center justify-between text-white w-full;
   background: $brand-navy;
-
-  // Variantes por etapa
-  &.header-incubacion  { background: $brand-incubacion; }
-  &.header-analisis    { background: $brand-analisis; }
-  &.header-confirmacion { background: $brand-conf; }
-  &.header-oxidasa     { background: $brand-oxidasa; }
-  &.header-resultados  { background: $brand-resultados; }
-  &.header-placas      { background: $brand-placas; }
 }
 
 .form-card-title-group {
@@ -440,4 +427,46 @@ $color-success:    #16a34a;
 
 .subseccion-title {
   @apply text-xs font-semibold text-slate-500 mb-3 mt-1 uppercase tracking-wide;
+}
+
+// ─── Time badge: homogeneización → siembra ───────────────────────────────────
+.tiempo-badge-row {
+  @apply flex justify-center my-3;
+}
+
+.tiempo-badge {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium;
+
+  ion-icon {
+    font-size: 14px;
+  }
+
+  &--ok {
+    @apply bg-green-100 text-green-700;
+    ion-icon { color: #16a34a; }
+  }
+
+  &--warn {
+    @apply bg-red-100 text-red-700;
+    ion-icon { color: #dc2626; }
+  }
+}
+
+// ─── Result chip / badge (Etapa 4) ──────────────────────────────────────────
+.chip {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+}
+
+.chip-caso {
+  @apply bg-blue-100 text-blue-700;
+}
+
+.badge-estimado {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700;
+}
+
+.advertencia-item {
+  @apply flex items-center gap-1.5 text-xs text-orange-700;
+
+  ion-icon { font-size: 14px; }
 }

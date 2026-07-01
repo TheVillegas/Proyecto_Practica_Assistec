@@ -4,8 +4,8 @@ import {
   EquipoIncubacion,
   Micropipeta,
   Responsable,
-  LoteReactivo
 } from '../../../interfaces/catalogo.interfaces';
+import { MedioCultivo } from '../../../services/medios-cultivos.service';
 
 @Component({
   selector: 'app-ent-sembrado',
@@ -18,8 +18,7 @@ export class EntSembradoComponent {
   @Input() rol?: number;
   @Input() equiposIncubacion: EquipoIncubacion[] = [];
   @Input() micropipetas: Micropipeta[] = [];
-  @Input() lotesAgarVRBG: LoteReactivo[] = [];
-  @Input() lotesTween80: LoteReactivo[] = [];
+  @Input() mediosCultivos: MedioCultivo[] = [];
   @Input() responsables: Responsable[] = [];
   @Output() subetapaCompleta = new EventEmitter<void>();
 

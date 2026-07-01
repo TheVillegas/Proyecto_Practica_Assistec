@@ -67,13 +67,23 @@
               <app-ent-homogeneizacion [formGroup]="homogeneizacionGroup" [rol]="rol"
                 [responsables]="catalogos.responsables()"></app-ent-homogeneizacion>
 
+              <!-- Time badge: homogeneización → siembra -->
+              <ng-container *ngIf="tiempoHomoSiembraInfo as t">
+                <div class="tiempo-badge-row">
+                  <span class="tiempo-badge" [class.tiempo-badge--ok]="t.valido" [class.tiempo-badge--warn]="!t.valido">
+                    <ion-icon [name]="t.valido ? 'checkmark-circle-outline' : 'warning-outline'"></ion-icon>
+                    Tiempo homo → siembra: {{ t.minutos }} min
+                    <span *ngIf="!t.valido">&nbsp;— supera los 20 min</span>
+                  </span>
+                </div>
+              </ng-container>
+
               <div class="seccion-divider"></div>
 
               <app-ent-sembrado [formGroup]="sembradoGroup" [rol]="rol"
                 [equiposIncubacion]="catalogos.equiposIncubacion()"
                 [micropipetas]="catalogos.micropipetas()"
-                [lotesAgarVRBG]="catalogos.lotesAgarVRBG()"
-                [lotesTween80]="catalogos.lotesTween80()"
+                [mediosCultivos]="listaMediosCultivos"
                 [responsables]="catalogos.responsables()"></app-ent-sembrado>
             </div>
           </div>
@@ -82,7 +92,7 @@
         <!-- ════════ ETAPA 2: INCUBACIÓN ════════ -->
         <div *ngIf="etapaActual() === 2" class="etapa-panel animate__animated animate__fadeIn">
           <div class="form-card">
-            <div class="form-card-header header-incubacion">
+            <div class="form-card-header">
               <div class="form-card-title-group">
                 <ion-icon name="timer-outline" class="card-header-icon"></ion-icon>
                 <h2 class="form-card-title">2. Incubación</h2>
@@ -91,7 +101,6 @@
             <div class="form-card-body">
               <app-ent-incubacion-prep [formGroup]="incubacionPrepGroup" [rol]="rol"
                 [equiposIncubacion]="catalogos.equiposIncubacion()"
-                [lotesAgarVRBG]="catalogos.lotesAgarVRBG()"
                 [responsables]="catalogos.responsables()"></app-ent-incubacion-prep>
             </div>
           </div>
@@ -100,7 +109,7 @@
         <!-- ════════ ETAPA 3: CONTROL DE CALIDAD ════════ -->
         <div *ngIf="etapaActual() === 3" class="etapa-panel animate__animated animate__fadeIn">
           <div class="form-card">
-            <div class="form-card-header header-resultados">
+            <div class="form-card-header">
               <div class="form-card-title-group">
                 <ion-icon name="shield-checkmark-outline" class="card-header-icon"></ion-icon>
                 <h2 class="form-card-title">3. Control de Calidad</h2>
@@ -135,58 +144,6 @@
                 </div>
               </div>
 
-              <div class="seccion-divider"></div>
-              <p class="subseccion-title">Campos complementarios</p>
-              <div class="grid-2col">
-                <div class="form-group">
-                  <label class="form-label" for="desfavorable">Desfavorable <span class="optional-tag">(opcional)</span></label>
-                  <input id="desfavorable" type="text" class="form-input" formControlName="desfavorable"
-                    placeholder="Detalle si aplica" [attr.readonly]="modoLectura ? true : null" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="tablaPagina">Tabla/Página <span class="optional-tag">(opcional)</span></label>
-                  <input id="tablaPagina" type="text" class="form-input" formControlName="tablaPagina"
-                    placeholder="Ej: Tabla 1 / Pág. 2" [attr.readonly]="modoLectura ? true : null" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="limite">Límite <span class="optional-tag">(opcional)</span></label>
-                  <input id="limite" type="text" class="form-input" formControlName="limite"
-                    placeholder="Límite aplicable" [attr.readonly]="modoLectura ? true : null" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="fechaHoraEntrega">Fecha y hora de entrega <span class="optional-tag">(opcional)</span></label>
-                  <input id="fechaHoraEntrega" type="datetime-local" class="form-input" formControlName="fechaHoraEntrega"
-                    [attr.readonly]="modoLectura ? true : null" />
-                </div>
-              </div>
-
-              <div class="seccion-divider"></div>
-              <p class="subseccion-title">Controles históricos del registro</p>
-              <div class="grid-3col">
-                <div class="form-group">
-                  <label class="form-label" for="controlPosEcoli">Control (+) E. coli</label>
-                  <input id="controlPosEcoli" type="text" class="form-input" formControlName="controlPosEcoli"
-                    placeholder="Resultado control positivo" [attr.readonly]="modoLectura ? true : null" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="controlNegPaer">Control (-) P. aeruginosa</label>
-                  <input id="controlNegPaer" type="text" class="form-input" formControlName="controlNegPaer"
-                    placeholder="Resultado control negativo" [attr.readonly]="modoLectura ? true : null" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="blanco">Blanco</label>
-                  <input id="blanco" type="text" class="form-input" formControlName="blanco"
-                    placeholder="Resultado blanco" [attr.readonly]="modoLectura ? true : null" />
-                </div>
-              </div>
-
-              <div class="seccion-divider"></div>
-              <div class="form-group">
-                <label class="form-label" for="observaciones">Observaciones <span class="optional-tag">(opcional)</span></label>
-                <textarea id="observaciones" class="form-textarea" rows="4" formControlName="observaciones"
-                  placeholder="Escriba comentarios, notas o incidencias del análisis..."
-                  [attr.readonly]="modoLectura ? true : null"></textarea>
-              </div>
             </div>
           </div>
         </div>
@@ -194,13 +151,35 @@
         <!-- ════════ ETAPA 4: LECTURA 24H + RESULTADOS ════════ -->
         <div *ngIf="etapaActual() === 4" class="etapa-panel animate__animated animate__fadeIn">
           <div class="form-card">
-            <div class="form-card-header header-analisis">
+            <div class="form-card-header">
               <div class="form-card-title-group">
                 <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
                 <h2 class="form-card-title">4. Lectura 24h</h2>
               </div>
             </div>
-            <div class="form-card-body">
+            <div class="form-card-body" [formGroup]="controlCalidadGroup">
+
+              <!-- Controls: E. coli / P. aeruginosa / Blanco -->
+              <p class="subseccion-title">Controles de rutina</p>
+              <div class="grid-3col">
+                <div class="form-group">
+                  <label class="form-label" for="controlPosEcoli4">Control (+) E. coli</label>
+                  <input id="controlPosEcoli4" type="text" class="form-input" formControlName="controlPosEcoli"
+                    placeholder="Resultado control positivo" [attr.readonly]="modoLectura ? true : null" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="controlNegPaer4">Control (-) P. aeruginosa</label>
+                  <input id="controlNegPaer4" type="text" class="form-input" formControlName="controlNegPaer"
+                    placeholder="Resultado control negativo" [attr.readonly]="modoLectura ? true : null" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="blanco4">Blanco</label>
+                  <input id="blanco4" type="text" class="form-input" formControlName="blanco"
+                    placeholder="Resultado blanco" [attr.readonly]="modoLectura ? true : null" />
+                </div>
+              </div>
+
+              <div class="seccion-divider"></div>
 
               <!-- Multi-sample counting + calculation -->
               <app-ent-analisis-lectura
@@ -210,7 +189,7 @@
                 [muestras]="muestrasLectura"
                 (muestrasChange)="muestrasLectura = $event"></app-ent-analisis-lectura>
 
-              <!-- Per-sample results summary (shown once at least one muestra is calculated) -->
+              <!-- Per-sample results summary -->
               <ng-container *ngIf="muestrasConResultado.length > 0">
                 <div class="seccion-divider"></div>
                 <p class="subseccion-title">Resumen de resultados por muestra</p>
@@ -218,21 +197,22 @@
                   <div class="muestra-resultado-card" *ngFor="let m of muestrasConResultado">
                     <div class="mrc-header">{{ m.label }}</div>
                     <div class="mrc-body">
-                      <div class="mrc-row">
-                        <span class="mrc-label">Σa</span>
-                        <span class="mrc-value">{{ m.resultado?.sumaA ?? '—' }}</span>
-                      </div>
-                      <div class="mrc-row">
-                        <span class="mrc-label">d</span>
-                        <span class="mrc-value">{{ m.resultado?.d ?? '—' }}</span>
-                      </div>
-                      <div class="mrc-row">
-                        <span class="mrc-label">n₁ / n₂</span>
-                        <span class="mrc-value">{{ m.resultado?.n1 ?? '—' }} / {{ m.resultado?.n2 ?? '—' }}</span>
-                      </div>
                       <div class="mrc-row mrc-row--result">
                         <span class="mrc-label font-semibold">N Enterobact.</span>
-                        <span class="mrc-value font-bold text-blue-700">{{ m.resultado?.textoReporte ?? '—' }}</span>
+                        <span class="mrc-value font-bold text-blue-700">
+                          {{ m.resultado?.operador !== '=' ? (m.resultado?.operador + ' ') : '' }}{{ m.resultado?.nEnterobacterias !== null ? (m.resultado?.nEnterobacterias | number) : '—' }} UFC/g
+                        </span>
+                      </div>
+                      <div class="mrc-row" *ngIf="m.resultado?.casoAplicado && m.resultado?.casoAplicado !== 'PRIORIDAD_1' && m.resultado?.casoAplicado !== 'PRIORIDAD_2'">
+                        <span class="mrc-label">Caso</span>
+                        <span class="mrc-value chip chip-caso">{{ m.resultado?.casoAplicado }}</span>
+                      </div>
+                      <div class="mrc-row" *ngIf="m.resultado?.esEstimado">
+                        <span class="badge-estimado">Estimado</span>
+                      </div>
+                      <div class="mrc-row advertencia-item" *ngIf="m.resultado?.incongruenciaDetectada">
+                        <ion-icon name="warning-outline"></ion-icon>
+                        {{ m.resultado?.observacionIncongruencia }}
                       </div>
                     </div>
                   </div>
@@ -243,19 +223,52 @@
           </div>
         </div>
 
-        <!-- ════════ ETAPA 5: TRASPASO / CONFIRMACIÓN ════════ -->
+        <!-- ════════ ETAPA 5: MANUAL DE INOCUIDAD ════════ -->
         <div *ngIf="etapaActual() === 5" class="etapa-panel animate__animated animate__fadeIn">
           <div class="form-card">
-            <div class="form-card-header header-confirmacion">
+            <div class="form-card-header">
               <div class="form-card-title-group">
-                <ion-icon name="swap-horizontal-outline" class="card-header-icon"></ion-icon>
-                <h2 class="form-card-title">5. Traspaso / Confirmación</h2>
+                <ion-icon name="document-text-outline" class="card-header-icon"></ion-icon>
+                <h2 class="form-card-title">5. Manual de Inocuidad</h2>
               </div>
             </div>
-            <div class="form-card-body">
-              <app-ent-incubacion-conf [formGroup]="incubacionConfGroup" [rol]="rol"
-                [equiposIncubacion]="catalogos.equiposIncubacion()"
-                [responsables]="catalogos.responsables()"></app-ent-incubacion-conf>
+            <div class="form-card-body" [formGroup]="controlCalidadGroup">
+              <p class="subseccion-title">Cierre del análisis</p>
+
+              <div class="grid-2col">
+                <div class="form-group">
+                  <label class="form-label" for="desfavorable">Resultado desfavorable <span class="optional-tag">(opcional)</span></label>
+                  <select id="desfavorable" class="form-input" formControlName="desfavorable" [disabled]="modoLectura">
+                    <option value="">— Seleccionar —</option>
+                    <option value="si">Sí</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="fechaHoraEntrega">Fecha y hora de entrega <span class="optional-tag">(opcional)</span></label>
+                  <input id="fechaHoraEntrega" type="datetime-local" class="form-input" formControlName="fechaHoraEntrega"
+                    [attr.readonly]="modoLectura ? true : null" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="tablaPagina">Tabla / Página <span class="optional-tag">(opcional)</span></label>
+                  <input id="tablaPagina" type="text" class="form-input" formControlName="tablaPagina"
+                    placeholder="Ej: Tabla 1 / Pág. 2" [attr.readonly]="modoLectura ? true : null" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="limite">Límite normativo <span class="optional-tag">(opcional)</span></label>
+                  <input id="limite" type="text" class="form-input" formControlName="limite"
+                    placeholder="Ej: ≤ 10² UFC/g" [attr.readonly]="modoLectura ? true : null" />
+                </div>
+              </div>
+
+              <div class="seccion-divider"></div>
+
+              <div class="form-group">
+                <label class="form-label" for="observaciones">Observaciones <span class="optional-tag">(opcional)</span></label>
+                <textarea id="observaciones" class="form-textarea" rows="4" formControlName="observaciones"
+                  placeholder="Comentarios, notas o incidencias del análisis..."
+                  [attr.readonly]="modoLectura ? true : null"></textarea>
+              </div>
             </div>
           </div>
         </div>

@@ -1,7 +1,14 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { Responsable } from '../../../interfaces/catalogo.interfaces';
-import { EntDilucionLectura, EntMuestraLectura, EntResultadoMuestra } from '../../../interfaces/enterobacterias.interfaces';
+import {
+  EntDilucionLectura,
+  EntMuestraLectura,
+  EntResultadoCalculo,
+} from '../../../interfaces/enterobacterias.interfaces';
+import { environment } from '../../../../environments/environment';
 
 export function crearDilucionVacia(exponent = -1): EntDilucionLectura {
   return {
@@ -24,88 +31,27 @@ export function crearMuestraVacia(label: string): EntMuestraLectura {
   };
 }
 
-/** NCh2676 – compute estimated confirmed colonies for a single plate. */
-function calcularA(C: number | null, A: number | null, b: number | null): number | null {
-  if (C === null || C < 0) return null;
-  if (A === null || b === null || A <= 0) return C; // assume 100% confirmation
-  const ratio = b / A;
-  if (ratio >= 0.80) return C;
-  return Math.round((b * C) / A);
-}
-
-/** NCh2676 – compute N (UFC/g) for a single muestra. */
-export function calcularResultadoMuestra(muestra: EntMuestraLectura): EntResultadoMuestra {
-  const dil1 = muestra.diluciones[0];
-  const dil2 = muestra.diluciones[1];
-
-  const d1 = dil1 ? Math.pow(10, dil1.exponent) : null;
-  const d2 = dil2 ? Math.pow(10, dil2.exponent) : null;
-
-  // Confirmed colony counts per plate
-  const a1A = dil1 ? calcularA(dil1.coloniasA, dil1.confirmA, dil1.confirmPosA) : null;
-  const a1B = dil1 ? calcularA(dil1.coloniasB, dil1.confirmB, dil1.confirmPosB) : null;
-  const a2A = dil2 ? calcularA(dil2.coloniasA, dil2.confirmA, dil2.confirmPosA) : null;
-  const a2B = dil2 ? calcularA(dil2.coloniasB, dil2.confirmB, dil2.confirmPosB) : null;
-
-  // n1: plates counted from lowest dilution; n2: from next dilution
-  const n1 = (a1A !== null ? 1 : 0) + (a1B !== null ? 1 : 0);
-  const n2 = (a2A !== null ? 1 : 0) + (a2B !== null ? 1 : 0);
-
-  const sumaA = (a1A ?? 0) + (a1B ?? 0) + (a2A ?? 0) + (a2B ?? 0);
-  const dFactor = d1 ?? 1;
-
-  // Estimación (both plates < 15 colonies, first dilution only)
-  const c1A = dil1?.coloniasA ?? null;
-  const c1B = dil1?.coloniasB ?? null;
-  if (
-    n2 === 0 &&
-    n1 === 2 &&
-    c1A !== null && c1A < 15 &&
-    c1B !== null && c1B < 15
-  ) {
-    const m = (c1A + c1B) / 2;
-    const Ne = m / dFactor;
-    return {
-      sumaA: c1A + c1B,
-      n1: 2,
-      n2: 0,
-      d: dFactor,
-      ufc: Ne,
-      textoReporte: `Ne = ${formatUfc(Ne)} UFC/g (estimado)`,
-      esEstimado: true,
-    };
-  }
-
-  if (n1 === 0) {
-    return { sumaA: 0, n1: 0, n2: 0, d: dFactor, ufc: null, textoReporte: 'Sin datos', esEstimado: false };
-  }
-
-  const N = sumaA / ((n1 + 0.1 * n2) * dFactor);
-  return {
-    sumaA,
-    n1,
-    n2,
-    d: dFactor,
-    ufc: N,
-    textoReporte: `${formatUfc(N)} UFC/g`,
-    esEstimado: false,
-  };
-}
-
-function formatUfc(n: number): string {
-  if (n <= 0) return '< 1';
-  const exp = Math.floor(Math.log10(n));
-  const mantisa = n / Math.pow(10, exp);
-  const m = Math.round(mantisa * 10) / 10;
-  return `${m} × 10${superScript(exp)}`;
-}
-
-function superScript(n: number): string {
+function superscript(n: number): string {
   const map: Record<string, string> = {
     '0': '⁰','1': '¹','2': '²','3': '³','4': '⁴','5': '⁵',
     '6': '⁶','7': '⁷','8': '⁸','9': '⁹','-': '⁻',
   };
   return String(n).split('').map(c => map[c] ?? c).join('');
+}
+
+function formatUfcValue(n: number | null): string {
+  if (n === null) return 'Sin datos';
+  if (n <= 0) return '< 1 UFC/g';
+  const exp = Math.floor(Math.log10(n));
+  const mantisa = Math.round((n / Math.pow(10, exp)) * 10) / 10;
+  return `${mantisa} × 10${superscript(exp)} UFC/g`;
+}
+
+export function formatResultadoEnt(r: EntResultadoCalculo): string {
+  const valor = formatUfcValue(r.nEnterobacterias);
+  const estimado = r.esEstimado ? ' (estimado)' : '';
+  if (r.operador === '=') return `${valor}${estimado}`;
+  return `${r.operador} ${valor}${estimado}`;
 }
 
 @Component({
@@ -115,6 +61,9 @@ function superScript(n: number): string {
   standalone: false,
 })
 export class EntAnalisisLecturaComponent {
+  private http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/formulario/ent/calcular-muestra`;
+
   @Input() formGroup!: FormGroup;
   @Input() rol?: number;
   @Input() responsables: Responsable[] = [];
@@ -162,50 +111,72 @@ export class EntAnalisisLecturaComponent {
     this.muestrasChange.emit(this.muestras);
   }
 
-  updateDilucion(muestraIdx: number, dilIdx: number, field: keyof EntDilucionLectura, value: unknown): void {
+  updateColonias(muestraIdx: number, dilIdx: number, placa: 'coloniasA' | 'coloniasB', event: Event): void {
+    const value = this.numFromEvent(event);
     this.muestras = this.muestras.map((m, i) => {
       if (i !== muestraIdx) return m;
       const dils = m.diluciones.map((d, j) =>
-        j === dilIdx ? { ...d, [field]: value } : d
+        j === dilIdx ? { ...d, [placa]: value } : d
       );
       return { ...m, diluciones: dils };
     });
     this.muestrasChange.emit(this.muestras);
   }
 
-  updateDilucionNumero(muestraIdx: number, dilIdx: number, field: keyof EntDilucionLectura, event: Event): void {
-    this.updateDilucion(muestraIdx, dilIdx, field, this.numeroDesdeEvento(event));
-  }
-
-  updateExponenteDilucion(muestraIdx: number, dilIdx: number, event: Event): void {
-    const value = this.numeroDesdeEvento(event);
-    if (value === null) return;
-    const exponent = value > 0 ? -value : value;
-    this.updateDilucion(muestraIdx, dilIdx, 'exponent', exponent);
-  }
-
-  calcularMuestra(idx: number): void {
-    const muestra = this.muestras[idx];
-    const resultado = calcularResultadoMuestra(muestra);
-    this.muestras = this.muestras.map((m, i) =>
-      i === idx ? { ...m, resultado } : m
-    );
+  updateExponente(muestraIdx: number, dilIdx: number, event: Event): void {
+    const raw = this.numFromEvent(event);
+    if (raw === null) return;
+    const exponent = raw > 0 ? -raw : raw;
+    this.muestras = this.muestras.map((m, i) => {
+      if (i !== muestraIdx) return m;
+      const dils = m.diluciones.map((d, j) =>
+        j === dilIdx ? { ...d, exponent } : d
+      );
+      return { ...m, diluciones: dils };
+    });
     this.muestrasChange.emit(this.muestras);
   }
 
-  expLabel(exp: number): string {
-    return `10${superScript(exp)}`;
+  async calcularMuestra(idx: number): Promise<void> {
+    const muestra = this.muestras[idx];
+    this.setLoading(idx, true);
+
+    try {
+      const diluciones = muestra.diluciones.map(d => ({
+        dil: d.exponent,
+        colonias: [d.coloniasA ?? null, d.coloniasB ?? null],
+      }));
+
+      const resultado = await firstValueFrom(
+        this.http.post<EntResultadoCalculo>(this.apiUrl, { diluciones })
+      );
+
+      this.muestras = this.muestras.map((m, i) =>
+        i === idx ? { ...m, resultado, isLoading: false } : m
+      );
+    } catch {
+      this.setLoading(idx, false);
+    }
+
+    this.muestrasChange.emit(this.muestras);
+  }
+
+  formatResultado(r: EntResultadoCalculo): string {
+    return formatResultadoEnt(r);
   }
 
   expInputValue(exp: number): number {
     return Math.abs(exp);
   }
 
-  dFactorLabel(exp: number): string {
-    return `d = 10${superScript(exp)} (${Math.pow(10, exp).toExponential()})`;
+  private setLoading(idx: number, loading: boolean): void {
+    this.muestras = this.muestras.map((m, i) =>
+      i === idx ? { ...m, isLoading: loading } : m
+    );
+    this.muestrasChange.emit(this.muestras);
   }
 
-  private numeroDesdeEvento(event: Event): number | null {
+  private numFromEvent(event: Event): number | null {
     const input = event.target as HTMLInputElement | null;
     if (!input || input.value.trim() === '') return null;
     const value = Number(input.value);

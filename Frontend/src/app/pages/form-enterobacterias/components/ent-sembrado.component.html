@@ -9,13 +9,27 @@
         formControlName="agarVRBGSembrado"
         [disabled]="(rol | modoLectura)"
         interface="popover"
-        placeholder="— Seleccionar lote —">
-        <ion-select-option value="">— Seleccionar lote —</ion-select-option>
-        <ion-select-option *ngFor="let lote of lotesAgarVRBG" [value]="lote.idLoteReactivo">{{ lote.codigoLote }}</ion-select-option>
+        placeholder="— Seleccionar medio —">
+        <ion-select-option value="">— Seleccionar medio —</ion-select-option>
+        <ion-select-option *ngFor="let m of mediosCultivos" [value]="m.idMedioCultivo">{{ m.nombre }}</ion-select-option>
       </ion-select>
       <span class="error-msg" *ngIf="campoInvalido('agarVRBGSembrado')">El campo Agar VRBG es obligatorio.</span>
     </div>
 
+    <div class="form-group">
+      <label class="form-label" for="tween80Medio">Tween 80 <span class="optional-tag">(opcional)</span></label>
+      <ion-select id="tween80Medio"
+        formControlName="tween80Medio"
+        [disabled]="(rol | modoLectura)"
+        interface="popover"
+        placeholder="— Seleccionar medio —">
+        <ion-select-option value="">— Seleccionar medio —</ion-select-option>
+        <ion-select-option *ngFor="let m of mediosCultivos" [value]="m.idMedioCultivo">{{ m.nombre }}</ion-select-option>
+      </ion-select>
+    </div>
+  </div>
+
+  <div class="grid-2col mt-4 pt-4 border-t border-slate-100">
     <div class="form-group">
       <label class="form-label" for="placasSembrado">Placas <span class="required-star">*</span></label>
       <input id="placasSembrado" type="number" min="1" class="form-input"
@@ -24,9 +38,7 @@
         [attr.readonly]="(rol | modoLectura) ? true : null" />
       <span class="error-msg" *ngIf="campoInvalido('placasSembrado')">Ingrese un valor mayor a 0.</span>
     </div>
-  </div>
 
-  <div class="grid-2col mt-4 pt-4 border-t border-slate-100">
     <div class="form-group">
       <label class="form-label" for="estufaSembrado">Estufa <span class="required-star">*</span></label>
       <ion-select id="estufaSembrado"
@@ -40,7 +52,9 @@
       </ion-select>
       <span class="error-msg" *ngIf="campoInvalido('estufaSembrado')">Debe seleccionar una estufa.</span>
     </div>
+  </div>
 
+  <div class="grid-2col mt-4">
     <div class="form-group">
       <label class="form-label" for="micropipeta1mlSembrado">Micropipetas 1 ml <span class="required-star">*</span></label>
       <ion-select id="micropipeta1mlSembrado"

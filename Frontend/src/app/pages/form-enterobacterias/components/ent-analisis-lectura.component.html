@@ -47,7 +47,7 @@
 
   <div class="seccion-divider"></div>
 
-  <!-- ── Per-sample cards ─────────────────────────────────────────────────── -->
+  <!-- ── Per-sample grid cards ─────────────────────────────────────────────── -->
   <p class="subseccion-title">Recuento de colonias por muestra</p>
 
   <div class="muestra-card" *ngFor="let muestra of muestras; let mi = index; trackBy: trackByIndex">
@@ -63,45 +63,52 @@
       </button>
     </div>
 
-    <!-- Dilution rows -->
-    <div class="dilucion-row" *ngFor="let dil of muestra.diluciones; let di = index; trackBy: trackByIndex">
-      <div class="dilucion-header">
-        <div class="form-group dilucion-exp-group">
-          <label class="form-label">Dilución 10^-n</label>
-          <input type="number" min="0" class="form-input dilucion-select"
-            [value]="expInputValue(dil.exponent)"
-            [attr.readonly]="(rol | modoLectura) ? true : null"
-            placeholder="Ej: 2"
-            (input)="updateExponenteDilucion(mi, di, $event)" />
-          <span class="campo-hint">Se interpreta como {{ expLabel(dil.exponent) }}</span>
-        </div>
-        <button type="button" class="dilucion-remove-btn"
-          *ngIf="muestra.diluciones.length > 1 && !(rol | modoLectura)"
-          (click)="eliminarDilucion(mi, di)"
-          title="Eliminar dilución">
-          <ion-icon name="remove-circle-outline"></ion-icon>
-        </button>
-      </div>
-
-      <!-- Colony counts (C) -->
-      <div class="placas-grid">
-        <div class="form-group">
-          <label class="form-label">Placa 1 (C)</label>
-          <input type="number" min="0" class="form-input text-center"
-            [value]="dil.coloniasA"
-            [attr.readonly]="(rol | modoLectura) ? true : null"
-            placeholder="0"
-            (input)="updateDilucionNumero(mi, di, 'coloniasA', $event)" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Placa 2 (C)</label>
-          <input type="number" min="0" class="form-input text-center"
-            [value]="dil.coloniasB"
-            [attr.readonly]="(rol | modoLectura) ? true : null"
-            placeholder="0"
-            (input)="updateDilucionNumero(mi, di, 'coloniasB', $event)" />
-        </div>
-      </div>
+    <!-- NCh2676 grid: rows = diluciones, cols = Placa 1 | Placa 2 | D -->
+    <div class="table-wrapper">
+      <table class="muestra-grid">
+        <thead>
+          <tr>
+            <th class="row-label-cell"></th>
+            <th>Placa 1 (C)</th>
+            <th>Placa 2 (C)</th>
+            <th>D (10^-n)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let dil of muestra.diluciones; let di = index; trackBy: trackByIndex">
+            <td class="row-label-cell">
+              Dil {{ di + 1 }}
+              <button type="button" class="dil-remove-btn"
+                *ngIf="muestra.diluciones.length > 1 && !(rol | modoLectura)"
+                (click)="eliminarDilucion(mi, di)"
+                title="Eliminar dilución">
+                <ion-icon name="remove-circle-outline"></ion-icon>
+              </button>
+            </td>
+            <td>
+              <input type="number" min="0" class="grid-input"
+                [value]="dil.coloniasA"
+                [attr.readonly]="(rol | modoLectura) ? true : null"
+                placeholder="0"
+                (input)="updateColonias(mi, di, 'coloniasA', $event)" />
+            </td>
+            <td>
+              <input type="number" min="0" class="grid-input"
+                [value]="dil.coloniasB"
+                [attr.readonly]="(rol | modoLectura) ? true : null"
+                placeholder="0"
+                (input)="updateColonias(mi, di, 'coloniasB', $event)" />
+            </td>
+            <td>
+              <input type="number" min="0" class="grid-input"
+                [value]="expInputValue(dil.exponent)"
+                [attr.readonly]="(rol | modoLectura) ? true : null"
+                placeholder="1"
+                (input)="updateExponente(mi, di, $event)" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Add dilution -->
@@ -112,36 +119,26 @@
     </div>
 
     <!-- Result panel -->
-    <div class="resultado-panel" *ngIf="muestra.resultado">
-      <p class="resultado-title">Resultados del cálculo</p>
-      <div class="resultado-grid">
-        <div class="resultado-row">
-          <span class="resultado-label">Σa</span>
-          <span class="resultado-value">{{ muestra.resultado.sumaA }}</span>
-        </div>
-        <div class="resultado-row">
-          <span class="resultado-label">n₁ / n₂</span>
-          <span class="resultado-value">{{ muestra.resultado.n1 }} / {{ muestra.resultado.n2 }}</span>
-        </div>
-        <div class="resultado-row">
-          <span class="resultado-label">d</span>
-          <span class="resultado-value">{{ muestra.resultado.d }}</span>
-        </div>
-        <div class="resultado-row resultado-row--highlight">
-          <span class="resultado-label font-semibold">N Enterobacterias</span>
-          <span class="resultado-value font-bold text-blue-700">{{ muestra.resultado.textoReporte }}</span>
-        </div>
+    <div class="resultado-card" *ngIf="muestra.resultado">
+      <div class="resultado-main">
+        <span class="resultado-texto">{{ formatResultado(muestra.resultado) }}</span>
+        <span class="chip chip-caso"
+          *ngIf="muestra.resultado.casoAplicado !== 'PRIORIDAD_1' && muestra.resultado.casoAplicado !== 'PRIORIDAD_2'">
+          {{ muestra.resultado.casoAplicado }}
+        </span>
+        <span class="badge-estimado" *ngIf="muestra.resultado.esEstimado">Estimado</span>
       </div>
-      <p class="tabla-hint" *ngIf="muestra.resultado.esEstimado">
-        <ion-icon name="alert-circle-outline"></ion-icon>
-        Resultado estimado (Ne): ambas placas &lt; 15 colonias.
-      </p>
+      <div class="advertencia-item" *ngIf="muestra.resultado.incongruenciaDetectada">
+        <ion-icon name="warning-outline"></ion-icon>
+        Incongruencia detectada: {{ muestra.resultado.observacionIncongruencia }}
+      </div>
     </div>
 
     <!-- Calculate button -->
     <div class="muestra-card-footer" *ngIf="!(rol | modoLectura)">
       <button type="button" class="btn-calcular" (click)="calcularMuestra(mi)" [disabled]="muestra.isLoading">
-        <ion-icon name="calculator-outline"></ion-icon>
+        <ion-spinner *ngIf="muestra.isLoading" name="crescent" class="spinner-sm"></ion-spinner>
+        <ion-icon *ngIf="!muestra.isLoading" name="calculator-outline"></ion-icon>
         Calcular {{ muestra.label }}
       </button>
     </div>

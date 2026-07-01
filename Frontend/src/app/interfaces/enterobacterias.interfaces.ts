@@ -36,7 +36,8 @@ export interface EntEtapa1 {
   rutAnalistaHomog: string;
   idStomacher?: number;
   tiempoHomogenizacion?: number;
-  idLoteAgarVrbgSembrado: string;
+  idMedioAgarVrbg: number;
+  idMedioTween80?: number;
   idEstufaSembrado: number;
   placasSembrado: number;
   idMicropipeta: number;
@@ -96,27 +97,24 @@ export interface EntControlConfirmacion {
 export interface EntEtapa3 {
   idEntEtapa3: number;
   idEntFormulario: string;
-  fechaTraspaso: string;
-  horaTraspaso: string;
-  rutAnalistaTraspaso: string;
-  idAgarNutritivo: string;
-  idEstufaConf: number;
-  fechaLectConf: string;
-  horaLectConf: string;
-  rutAnalistaLectConf: string;
-  fechaOxidasa: string;
-  horaOxidasa: string;
-  rutAnalistaOxidasa: string;
-  reactivoOxidasa: string;
-  desaireadoAgarGlucosa: string;
-  agarGlucosa: string;
-  controlPosEcoli: string;
-  controlNegPaer: string;
-  blanco: string;
-  duplicadoAli?: ResultadoControlCalidad;
-  controlPositivoBlancoAli?: ResultadoControlCalidad;
-  controlSiembraAli?: ResultadoControlCalidad;
-  desfavorable?: string;
+  fechaTraspaso?: string;
+  horaTraspaso?: string;
+  rutAnalistaTraspaso?: string;
+  idAgarNutritivo?: number;
+  idEstufaConf?: number;
+  fechaLectConf?: string;
+  horaLectConf?: string;
+  rutAnalistaLectConf?: string;
+  fechaOxidasa?: string;
+  horaOxidasa?: string;
+  rutAnalistaOxidasa?: string;
+  reactivoOxidasa?: string;
+  desaireadoAgarGlucosa?: string;
+  agarGlucosa?: string;
+  controlPosEcoli?: string;
+  controlNegPaer?: string;
+  blanco?: string;
+  desfavorable?: boolean;
   tablaPagina?: string;
   limite?: string;
   fechaHoraEntrega?: string;
@@ -156,7 +154,8 @@ export interface EntEtapa1Payload {
   fecha_homog?: string;
   hora_homog?: string;
   rut_analista_homog?: string;
-  id_lote_agar_vrbg_sembrado?: number;
+  id_medio_agar_vrbg?: number;
+  id_medio_tween_80?: number;
   id_estufa_sembrado?: number;
   placas_sembrado?: number;
   id_micropipeta?: number;
@@ -182,14 +181,13 @@ export interface EntEtapa2Payload {
 }
 
 export interface EntEtapa3Payload {
-  fecha_traspaso?: string;
-  hora_traspaso?: string;
-  rut_analista_traspaso?: string;
-  id_agar_nutritivo?: number;
-  id_estufa_conf?: number;
   control_pos_ecoli?: string;
   control_neg_paer?: string;
   blanco?: string;
+  desfavorable?: boolean;
+  tabla_pagina?: string;
+  limite?: string;
+  fecha_hora_entrega?: string;
   observaciones?: string;
 }
 
@@ -205,19 +203,19 @@ export interface EntDilucionLectura {
   confirmPosB: number | null; // Legacy: b – confirmed positive colonies, Placa 2
 }
 
-export interface EntResultadoMuestra {
-  sumaA: number;
-  n1: number;
-  n2: number;
-  d: number;
-  ufc: number | null;
-  textoReporte: string;
+export interface EntResultadoCalculo {
+  nEnterobacterias: number | null;
+  ufcPorG: number | null;
+  casoAplicado: string;
+  operador: '=' | '<' | '>';
   esEstimado: boolean;
+  incongruenciaDetectada: boolean;
+  observacionIncongruencia: string | null;
 }
 
 export interface EntMuestraLectura {
-  label: string;                    // 'M1', 'M2', 'Duplicado'
+  label: string;
   diluciones: EntDilucionLectura[];
-  resultado?: EntResultadoMuestra;
+  resultado?: EntResultadoCalculo;
   isLoading: boolean;
 }
