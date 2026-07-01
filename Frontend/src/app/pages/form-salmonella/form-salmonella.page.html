@@ -24,687 +24,115 @@
         <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
       </div>
       <div class="stepper-steps">
-        <button *ngFor="let etiqueta of ETIQUETAS_PASOS; let i = index" class="step-btn"
+        <button *ngFor="let nombre of NOMBRES_ETAPAS; let i = index" class="step-btn" type="button"
           [class.step-btn--active]="pasoActual() === i + 1" [class.step-btn--done]="pasoActual() > i + 1"
           (click)="irAPaso(i + 1)">
-          <span class="step-circle">{{ i + 1 }}</span>
-          <span class="step-label">{{ etiqueta }}</span>
+          <span class="step-circle">
+            <ion-icon *ngIf="pasoActual() > i + 1" name="checkmark-outline"></ion-icon>
+            <span *ngIf="pasoActual() <= i + 1">{{ i + 1 }}</span>
+          </span>
+          <span class="step-label">{{ nombre }}</span>
         </button>
       </div>
     </div>
 
     <form [formGroup]="form">
 
-      <!-- ════════ FASE 1: INICIO E INCUBACIÓN ════════ -->
+      <!-- ════════ ETAPA 1: INICIO E INCUBACIÓN ════════ -->
       <div *ngIf="pasoActual() === 1" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
               <ion-icon name="time-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">1. Inicio y Trazabilidad</h2>
+              <h2 class="form-card-title">1. Inicio e Incubación</h2>
             </div>
           </div>
           <div class="form-card-body">
-            <!-- Fase 1: Configuracion inicial de la muestra -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                Fase 1: Configuración Inicial
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                <div class="form-group">
-                  <label class="form-label text-xs">Fecha Inicio Incubación <span class="required-star">*</span></label>
-                  <input type="date" class="form-input" formControlName="e1_fechaIncubacion" [class.input-error]="campoInvalido('e1_fechaIncubacion')" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora Inicio Incubación <span class="required-star">*</span></label>
-                  <input type="time" class="form-input" formControlName="e1_horaIncubacion" [class.input-error]="campoInvalido('e1_horaIncubacion')" />
-                </div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
-                <div class="form-group">
-                  <label class="form-label">Tipo de matriz</label>
-                  <div class="form-radio-group" style="flex-wrap: wrap; gap: 8px;">
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e1_tipoMatriz" formControlName="e1_tipoMatriz" value="Normal" />
-                      <span>Normal</span>
-                    </label>
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e1_tipoMatriz" formControlName="e1_tipoMatriz" value="Polvo" />
-                      <span>Polvo</span>
-                    </label>
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e1_tipoMatriz" formControlName="e1_tipoMatriz" value="Chocolate" />
-                      <span>Chocolate</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Peso de muestra</label>
-                  <div class="form-radio-group">
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e1_pesoMuestra" formControlName="e1_pesoMuestra" value="25g" />
-                      <span>25g</span>
-                    </label>
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e1_pesoMuestra" formControlName="e1_pesoMuestra" value="50g" />
-                      <span>50g</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Medio Pre-enriquecimiento</label>
-                  <div class="form-radio-group" style="flex-wrap: wrap; gap: 8px;">
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e1_caldoAPT" formControlName="e1_caldoAPT" value="Caldo APT" />
-                      <span>Caldo APT</span>
-                    </label>
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e1_caldoAPT" formControlName="e1_caldoAPT" value="Leche descremada" />
-                      <span>Leche desc. (450ml)</span>
-                    </label>
-                    <label class="form-check-label">
-                      <input type="radio" class="form-radio" name="e1_caldoAPT" formControlName="e1_caldoAPT" value="No" />
-                      <span>No aplica</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100" *ngIf="form.get('e1_tipoMatriz')?.value === 'Polvo'">
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora de Inicio Hidratación (Solo Polvo)</label>
-                  <input type="time" class="form-input" formControlName="e1_horaInicioHidratacion" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora Término Hidratación (Solo Polvo)</label>
-                  <input type="time" class="form-input" formControlName="e1_horaTerminoHidratacion" />
-                </div>
-              </div>
-            </div>
-
-            <!-- Fase 2A: Datos de tiempo y trazabilidad -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                Fase 2A: Trazabilidad
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-                <div class="form-group">
-                  <label class="form-label text-xs">Fecha de Siembra <span class="required-star">*</span></label>
-                  <input type="date" class="form-input" formControlName="e1_fechaSiembra" [class.input-error]="campoInvalido('e1_fechaSiembra')" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora Homogeneización <span class="required-star">*</span></label>
-                  <input type="time" class="form-input" formControlName="e1_horaHomogeneizacion" [class.input-error]="campoInvalido('e1_horaHomogeneizacion')" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora Término Homog./Fin Siembra <span class="required-star">*</span></label>
-                  <input type="time" class="form-input" formControlName="e1_horaTerminoHomogeneizacion" [class.input-error]="campoInvalido('e1_horaTerminoHomogeneizacion')" />
-                </div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora Ingreso a Estufa <span class="required-star">*</span></label>
-                  <input type="time" class="form-input" formControlName="e1_horaIngresoEstufa" [class.input-error]="campoInvalido('e1_horaIngresoEstufa')" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Analista Responsable <span class="required-star">*</span></label>
-                  <input type="text" class="form-input" formControlName="e1_analistaResponsable" [class.input-error]="campoInvalido('e1_analistaResponsable')" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Término Análisis <span class="required-star">*</span></label>
-                  <input type="date" class="form-input" formControlName="e1_fechaTerminoAnalisis" [class.input-error]="campoInvalido('e1_fechaTerminoAnalisis')" />
-                </div>
-              </div>
-              <!-- ⚠ Alerta 25 min: homogeneización a estufa (SFE-05 / task 5.3) -->
-              <div *ngIf="formulario?.fase2a?.alertaTiempo25min === true"
-                   class="alert-banner alert-banner--warning mt-4">
-                <ion-icon name="warning-outline" class="alert-banner__icon"></ion-icon>
-                <div class="alert-banner__content">
-                  <strong>Alerta: tiempo homogeneización a estufa</strong>
-                  <span>El tiempo entre homogeneización e ingreso a estufa supera los 25 minutos. Verifique el registro antes de continuar.</span>
-                </div>
-              </div>
-            </div>
-
+            <app-sal-etapa1-inicio
+              [formGroupFase1]="fase1Group"
+              [formGroupFase2a]="fase2aGroup"
+              [responsables]="listaResponsables"
+              [alertaTiempo25min]="formulario?.fase2a?.alertaTiempo25min === true">
+            </app-sal-etapa1-inicio>
           </div>
         </div>
       </div>
 
-      <!-- ════════ FASE 1 (cont.): INSUMOS Y CONTROLES ════════ -->
-      <div *ngIf="pasoActual() === 1" class="etapa-panel animate__animated animate__fadeIn">
-        <div class="form-card">
-          <div class="form-card-header">
-            <div class="form-card-title-group">
-              <ion-icon name="flask-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">2. Insumos y Controles de Calidad</h2>
-            </div>
-          </div>
-          <div class="form-card-body">
-            <!-- Fase 2B: Insumos utilizados -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                Fase 2B: Insumos
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                <div class="form-group">
-                  <label class="form-label">Clave/Lote de Caldo APT o Leche</label>
-                  <input type="text" class="form-input" formControlName="e2_loteCaldo" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Estufa de Incubación</label>
-                  <ion-select formControlName="e2_estufaIncubacion" interface="popover" placeholder="Seleccione estufa" class="form-select">
-                    <ion-select-option *ngFor="let e of listaEstufas" [value]="e.idIncubacion">
-                      {{ e.nombreEquipo }} ({{ e.temperaturaRef }})
-                    </ion-select-option>
-                  </ion-select>
-                </div>
-              </div>
-              <div class="flex gap-6 mt-4">
-                <label class="form-check-label">
-                  <input type="checkbox" class="form-checkbox" formControlName="e2_tween80" />
-                  <span>Tween 80 / Pipetas desechables</span>
-                </label>
-                <label class="form-check-label">
-                  <input type="checkbox" class="form-checkbox" formControlName="e2_micropipetas" />
-                  <span>Micropipetas</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Fase 2C: Controles de Calidad -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                Fase 2C: Controles de Calidad
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-center">
-                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
-                  <label class="form-label text-xs">Análisis (Descripción del control)</label>
-                  <input type="text" class="form-input mt-2" formControlName="e2_analisisDescripcion" />
-                </div>
-                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Resultado Control - Análisis</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e2_resultadoAnalisis" [(ngModel)]="e2_resultadoAnalisis" value="cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e2_resultadoAnalisis" [(ngModel)]="e2_resultadoAnalisis" value="no_cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-center">
-                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
-                  <label class="form-label text-xs">Control (+) y Blanco en ALI</label>
-                  <input type="text" class="form-input mt-2" formControlName="e2_controlBlancoAli" />
-                </div>
-                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Resultado Control - Blanco</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e2_resultadoControlBlanco" [(ngModel)]="e2_resultadoControlBlanco" value="cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e2_resultadoControlBlanco" [(ngModel)]="e2_resultadoControlBlanco" value="no_cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
-                  <label class="form-label text-xs">Control de Siembra en ALI</label>
-                  <input type="text" class="form-input mt-2" formControlName="e2_controlSiembraAli" />
-                </div>
-                <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Resultado Control - Siembra</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e2_resultadoControlSiembra" [(ngModel)]="e2_resultadoControlSiembra" value="cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e2_resultadoControlSiembra" [(ngModel)]="e2_resultadoControlSiembra" value="no_cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- ════════ PASOS 5-7: TRASPASO A CALDOS ════════ -->
-      <!-- ════════ FASE 2: TRASPASO Y ENRIQUECIMIENTO ════════ -->
+      <!-- ════════ ETAPA 2: CONTROLES DE CALIDAD ════════ -->
       <div *ngIf="pasoActual() === 2" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
-              <ion-icon name="beaker-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">3. Traspaso a Caldos</h2>
+              <ion-icon name="shield-checkmark-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">2. Controles de Calidad</h2>
             </div>
           </div>
           <div class="form-card-body">
-            <!-- Fase 3A: Datos de tiempo -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                Fase 3A: Tiempos de Traspaso
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-                <div class="form-group">
-                  <label class="form-label text-xs">Fecha Traspaso</label>
-                  <input type="date" class="form-input" formControlName="e3_fechaTraspaso" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora Lectura APT y Traspaso</label>
-                  <input type="time" class="form-input" formControlName="e3_horaLecturaAPT" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Analista APT</label>
-                  <input type="text" class="form-input" formControlName="e3_analistaLecturaAPT" />
-                </div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora Lectura Caldos Finales</label>
-                  <input type="time" class="form-input" formControlName="e3_horaLecturaCaldos" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Analista Caldos</label>
-                  <input type="text" class="form-input" formControlName="e3_analistaLecturaCaldos" />
-                </div>
-              </div>
-            </div>
-
-            <!-- Fase 3B: Insumos de traspaso -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                Fase 3B: Insumos
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                <div class="form-group">
-                  <label class="form-label">Selenito-Estufa Asignada</label>
-                  <ion-select formControlName="e3_selenitoEstufa" interface="popover" placeholder="Seleccione estufa" class="form-select">
-                    <ion-select-option *ngFor="let e of listaEstufas" [value]="e.idIncubacion">
-                      {{ e.nombreEquipo }} ({{ e.temperaturaRef }})
-                    </ion-select-option>
-                  </ion-select>
-                </div>
-                <div class="form-group flex flex-col justify-center">
-                  <div class="flex flex-wrap gap-4 mt-2">
-                    <label class="form-check-label">
-                      <input type="checkbox" class="form-checkbox" formControlName="e3_puntas1ml" />
-                      <span>Puntas 1ml</span>
-                    </label>
-                    <label class="form-check-label">
-                      <input type="checkbox" class="form-checkbox" formControlName="e3_micropipetasUtilizadas" />
-                      <span>Micropipetas utilizadas</span>
-                    </label>
-                    <label class="form-check-label">
-                      <input type="checkbox" class="form-checkbox" formControlName="e3_pipetasDesechables" />
-                      <span>Pipetas desechables</span>
-                    </label>
-                    <label class="form-check-label">
-                      <input type="checkbox" class="form-checkbox" formControlName="e3_micropipetasExtra" />
-                      <span>Micropipetas</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Fase 3C: Tabla de muestras -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                Fase 3C: Muestras en Caldos
-              </p>
-              
-              <!-- Controles Globales -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-3 bg-white rounded-lg border border-slate-100">
-                <div class="form-group">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) S. Enteritidis</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e3_controlPositivo" [(ngModel)]="e3_controlPositivo" value="cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e3_controlPositivo" [(ngModel)]="e3_controlPositivo" value="no_cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. Neumoneae</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e3_controlNegativo" [(ngModel)]="e3_controlNegativo" value="cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e3_controlNegativo" [(ngModel)]="e3_controlNegativo" value="no_cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Blanco</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e3_blanco" [(ngModel)]="e3_blanco" value="cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e3_blanco" [(ngModel)]="e3_blanco" value="no_cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Tabla -->
-              <div class="tabla-wrapper overflow-x-auto">
-                <table class="tabla-submuestras w-full text-center text-xs">
-                  <thead>
-                    <tr class="bg-[#29588C] text-white">
-                      <th class="p-2 border font-semibold">Nº Muestra (o DUP)</th>
-                      <th class="p-2 border font-semibold">Caldo APT</th>
-                      <th class="p-2 border font-semibold">Selenito</th>
-                      <th class="p-2 border font-semibold">Rappaport</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let m of muestrasEtapa3; let i = index" [class.bg-slate-50]="m.esDuplicado">
-                      <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
-                      <td class="p-2 border">
-                        <input type="checkbox" class="form-checkbox mx-auto" [(ngModel)]="m.caldoApt" [ngModelOptions]="{standalone: true}" />
-                      </td>
-                      <td class="p-2 border">
-                        <input type="checkbox" class="form-checkbox mx-auto" [(ngModel)]="m.selenito" [ngModelOptions]="{standalone: true}" />
-                      </td>
-                      <td class="p-2 border">
-                        <input type="checkbox" class="form-checkbox mx-auto" [(ngModel)]="m.rappaport" [ngModelOptions]="{standalone: true}" />
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
+            <app-sal-etapa2-controles
+              [formGroupFase2b]="fase2bGroup"
+              [formGroupFase2c]="fase2cGroup"
+              [equiposIncubacion]="listaEstufas">
+            </app-sal-etapa2-controles>
           </div>
         </div>
       </div>
 
-      <!-- ════════ FASE 3: AISLAMIENTO E IDENTIFICACIÓN ════════ -->
+      <!-- ════════ ETAPA 3: TRASPASO Y ENRIQUECIMIENTO SELECTIVO ════════ -->
       <div *ngIf="pasoActual() === 3" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
-              <ion-icon name="albums-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">3. Aislamiento e Identificación</h2>
+              <ion-icon name="beaker-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">3. Traspaso y Enriquecimiento Selectivo</h2>
             </div>
           </div>
           <div class="form-card-body">
-            <!-- Fase 4A: Datos de tiempo y Agares -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                Fase 4A: Traspaso y Lectura
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-                <div class="form-group">
-                  <label class="form-label text-xs">Fecha Traspaso a Agares</label>
-                  <input type="date" class="form-input" formControlName="e4_fechaTraspasoAgares" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora Traspaso</label>
-                  <input type="time" class="form-input" formControlName="e4_horaTraspasoAgares" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Analista Traspaso</label>
-                  <input type="text" class="form-input" formControlName="e4_analistaTraspasoAgares" />
-                </div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
-                <div class="form-group">
-                  <label class="form-label text-xs">Lote Agar XLD</label>
-                  <input type="text" class="form-input" formControlName="e4_loteAgarXLD" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Lote Agar SS</label>
-                  <input type="text" class="form-input" formControlName="e4_loteAgarSS" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Estufa Incubación Agares</label>
-                  <ion-select formControlName="e4_estufaIncubacionAgares" interface="popover" placeholder="Seleccione estufa" class="form-select">
-                    <ion-select-option *ngFor="let e of listaEstufas" [value]="e.idIncubacion">
-                      {{ e.nombreEquipo }} ({{ e.temperaturaRef }})
-                    </ion-select-option>
-                  </ion-select>
-                </div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
-                <div class="form-group">
-                  <label class="form-label text-xs">Fecha Lectura (24 Hrs)</label>
-                  <input type="date" class="form-input" formControlName="e4_fechaLectura24h" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora Lectura (24 Hrs)</label>
-                  <input type="time" class="form-input" formControlName="e4_horaLectura24h" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Analista Lectura (24 Hrs)</label>
-                  <input type="text" class="form-input" formControlName="e4_analistaLectura24h" />
-                </div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
-                <div class="form-group">
-                  <label class="form-label text-xs">Fecha Lectura (48 Hrs)</label>
-                  <input type="date" class="form-input" formControlName="e4_fechaLectura48h" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Hora Lectura (48 Hrs)</label>
-                  <input type="time" class="form-input" formControlName="e4_horaLectura48h" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label text-xs">Analista Lectura (48 Hrs)</label>
-                  <input type="text" class="form-input" formControlName="e4_analistaLectura48h" />
-                </div>
-              </div>
-            </div>
-
-            <!-- Fase 4B: Tabla de resultados en Agar -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                Fase 4B: Muestras en Agar
-              </p>
-
-              <!-- Controles Globales -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-3 bg-white rounded-lg border border-slate-100">
-                <div class="form-group">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) S. Enteritidis</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e4_controlPositivo" [(ngModel)]="e4_controlPositivo" value="cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e4_controlPositivo" [(ngModel)]="e4_controlPositivo" value="no_cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. Neumoneae</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e4_controlNegativo" [(ngModel)]="e4_controlNegativo" value="cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e4_controlNegativo" [(ngModel)]="e4_controlNegativo" value="no_cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <p class="text-xs font-semibold text-slate-600 mb-2">Blanco</p>
-                  <div class="flex gap-4">
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e4_blanco" [(ngModel)]="e4_blanco" value="cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-presencia text-[#00558f] bg-blue-100">Cumple</span>
-                    </label>
-                    <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="e4_blanco" [(ngModel)]="e4_blanco" value="no_cumple" [ngModelOptions]="{standalone: true}" />
-                      <span class="badge-ausencia text-red-700 bg-red-100">No Cumple</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Tabla Selenito -->
-              <p class="text-sm font-semibold text-slate-600 mt-4 mb-2">Resultados provenientes de Selenito</p>
-              <div class="tabla-wrapper overflow-x-auto mb-4">
-                <table class="tabla-submuestras w-full text-center text-xs">
-                  <thead>
-                    <tr class="bg-slate-700 text-white">
-                      <th class="p-2 border font-semibold">Nº Muestra</th>
-                      <th class="p-2 border font-semibold">XLD (24 Hrs)</th>
-                      <th class="p-2 border font-semibold">SS (24 Hrs)</th>
-                      <th class="p-2 border font-semibold">XLD (48 Hrs)</th>
-                      <th class="p-2 border font-semibold">SS (48 Hrs)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let m of muestrasEtapa4; let i = index" [class.bg-slate-50]="m.esDuplicado">
-                      <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
-                      <td class="p-2 border">
-                        <div class="flex justify-center gap-2 text-[10px]">
-                          <label class="flex items-center gap-0.5"><input type="radio" name="xld24Sel_{{i}}" value="+" [(ngModel)]="m.xld24hSel" [ngModelOptions]="{standalone: true}" />+</label>
-                          <label class="flex items-center gap-0.5"><input type="radio" name="xld24Sel_{{i}}" value="-" [(ngModel)]="m.xld24hSel" [ngModelOptions]="{standalone: true}" />-</label>
-                        </div>
-                      </td>
-                      <td class="p-2 border">
-                        <div class="flex justify-center gap-2 text-[10px]">
-                          <label class="flex items-center gap-0.5"><input type="radio" name="ss24Sel_{{i}}" value="+" [(ngModel)]="m.ss24hSel" [ngModelOptions]="{standalone: true}" />+</label>
-                          <label class="flex items-center gap-0.5"><input type="radio" name="ss24Sel_{{i}}" value="-" [(ngModel)]="m.ss24hSel" [ngModelOptions]="{standalone: true}" />-</label>
-                        </div>
-                      </td>
-                      <td class="p-2 border">
-                        <div class="flex justify-center gap-2 text-[10px]">
-                          <label class="flex items-center gap-0.5"><input type="radio" name="xld48Sel_{{i}}" value="+" [(ngModel)]="m.xld48hSel" [ngModelOptions]="{standalone: true}" />+</label>
-                          <label class="flex items-center gap-0.5"><input type="radio" name="xld48Sel_{{i}}" value="-" [(ngModel)]="m.xld48hSel" [ngModelOptions]="{standalone: true}" />-</label>
-                        </div>
-                      </td>
-                      <td class="p-2 border">
-                        <div class="flex justify-center gap-2 text-[10px]">
-                          <label class="flex items-center gap-0.5"><input type="radio" name="ss48Sel_{{i}}" value="+" [(ngModel)]="m.ss48hSel" [ngModelOptions]="{standalone: true}" />+</label>
-                          <label class="flex items-center gap-0.5"><input type="radio" name="ss48Sel_{{i}}" value="-" [(ngModel)]="m.ss48hSel" [ngModelOptions]="{standalone: true}" />-</label>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Tabla Rappaport -->
-              <p class="text-sm font-semibold text-slate-600 mt-4 mb-2">Resultados provenientes de Rappaport</p>
-              <div class="tabla-wrapper overflow-x-auto">
-                <table class="tabla-submuestras w-full text-center text-xs">
-                  <thead>
-                    <tr class="bg-slate-700 text-white">
-                      <th class="p-2 border font-semibold">Nº Muestra</th>
-                      <th class="p-2 border font-semibold">XLD (24 Hrs)</th>
-                      <th class="p-2 border font-semibold">SS (24 Hrs)</th>
-                      <th class="p-2 border font-semibold">XLD (48 Hrs)</th>
-                      <th class="p-2 border font-semibold">SS (48 Hrs)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let m of muestrasEtapa4; let i = index" [class.bg-slate-50]="m.esDuplicado">
-                      <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
-                      <td class="p-2 border">
-                        <div class="flex justify-center gap-2 text-[10px]">
-                          <label class="flex items-center gap-0.5"><input type="radio" name="xld24Rap_{{i}}" value="+" [(ngModel)]="m.xld24hRap" [ngModelOptions]="{standalone: true}" />+</label>
-                          <label class="flex items-center gap-0.5"><input type="radio" name="xld24Rap_{{i}}" value="-" [(ngModel)]="m.xld24hRap" [ngModelOptions]="{standalone: true}" />-</label>
-                        </div>
-                      </td>
-                      <td class="p-2 border">
-                        <div class="flex justify-center gap-2 text-[10px]">
-                          <label class="flex items-center gap-0.5"><input type="radio" name="ss24Rap_{{i}}" value="+" [(ngModel)]="m.ss24hRap" [ngModelOptions]="{standalone: true}" />+</label>
-                          <label class="flex items-center gap-0.5"><input type="radio" name="ss24Rap_{{i}}" value="-" [(ngModel)]="m.ss24hRap" [ngModelOptions]="{standalone: true}" />-</label>
-                        </div>
-                      </td>
-                      <td class="p-2 border">
-                        <div class="flex justify-center gap-2 text-[10px]">
-                          <label class="flex items-center gap-0.5"><input type="radio" name="xld48Rap_{{i}}" value="+" [(ngModel)]="m.xld48hRap" [ngModelOptions]="{standalone: true}" />+</label>
-                          <label class="flex items-center gap-0.5"><input type="radio" name="xld48Rap_{{i}}" value="-" [(ngModel)]="m.xld48hRap" [ngModelOptions]="{standalone: true}" />-</label>
-                        </div>
-                      </td>
-                      <td class="p-2 border">
-                        <div class="flex justify-center gap-2 text-[10px]">
-                          <label class="flex items-center gap-0.5"><input type="radio" name="ss48Rap_{{i}}" value="+" [(ngModel)]="m.ss48hRap" [ngModelOptions]="{standalone: true}" />+</label>
-                          <label class="flex items-center gap-0.5"><input type="radio" name="ss48Rap_{{i}}" value="-" [(ngModel)]="m.ss48hRap" [ngModelOptions]="{standalone: true}" />-</label>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
+            <app-sal-etapa3-traspaso
+              [formGroupFase3a]="fase3aGroup"
+              [formGroupFase3b]="fase3bGroup"
+              [muestras]="muestrasEtapa3"
+              (muestrasChange)="muestrasEtapa3 = $event"
+              [equiposIncubacion]="listaEstufas">
+            </app-sal-etapa3-traspaso>
           </div>
         </div>
       </div>
 
-      <!-- ════════ FASE 4: RESULTADO FINAL ════════ -->
+      <!-- ════════ ETAPA 4: AISLAMIENTO E IDENTIFICACIÓN ════════ -->
       <div *ngIf="pasoActual() === 4" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
-              <ion-icon name="checkmark-circle-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">4. Resultado Final</h2>
+              <ion-icon name="albums-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">4. Aislamiento e Identificación</h2>
             </div>
           </div>
           <div class="form-card-body">
-            <!-- Fase 5: Conclusión Final -->
-            <div class="control-card mb-6">
-              <p class="control-title text-blue-700 border-b border-slate-200 pb-2">
-                Conclusión Final: Presencia / Ausencia de Salmonella
-              </p>
-              <div class="overflow-x-auto mt-3">
-                <table class="tabla-submuestras w-full text-center text-xs">
-                  <thead>
-                    <tr class="bg-[#29588C] text-white">
-                      <th class="p-2 border font-semibold">Nº de Muestra (o Duplicado)</th>
-                      <th class="p-2 border font-semibold">Resultado Final (Presencia / Ausencia)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let m of muestrasEtapa5; let i = index" [class.bg-slate-50]="m.esDuplicado">
-                      <td class="font-semibold p-2 border text-left">{{ m.label }}</td>
-                      <td class="p-2 border">
-                        <div class="form-radio-group justify-center">
-                          <label class="form-check-label text-xs">
-                            <input type="radio" class="form-radio" name="resultadoFinal_{{i}}" [(ngModel)]="m.resultadoFinal" value="Presencia" [ngModelOptions]="{standalone: true}" />
-                            <span class="badge-ausencia">Presencia</span>
-                          </label>
-                          <label class="form-check-label text-xs">
-                            <input type="radio" class="form-radio" name="resultadoFinal_{{i}}" [(ngModel)]="m.resultadoFinal" value="Ausencia" [ngModelOptions]="{standalone: true}" />
-                            <span class="badge-presencia">Ausencia</span>
-                          </label>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+            <app-sal-etapa4-aislamiento
+              [formGroupFase4a]="fase4aGroup"
+              [muestras]="muestrasEtapa4"
+              (muestrasChange)="muestrasEtapa4 = $event"
+              [equiposIncubacion]="listaEstufas">
+            </app-sal-etapa4-aislamiento>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ ETAPA 5: RESULTADO FINAL ════════ -->
+      <div *ngIf="pasoActual() === 5" class="etapa-panel animate__animated animate__fadeIn">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="checkmark-circle-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">5. Resultado Final</h2>
             </div>
+          </div>
+          <div class="form-card-body">
+            <app-sal-etapa5-resultado
+              [resultados]="muestrasEtapa5"
+              [calculado]="calculado"
+              (calcular)="calcularResultadoFinal()">
+            </app-sal-etapa5-resultado>
           </div>
         </div>
       </div>

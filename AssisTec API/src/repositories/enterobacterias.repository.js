@@ -12,7 +12,7 @@ class EnterobacteriasRepository extends BaseFormRepository {
             analista: { select: { rutUsuario: true, nombreApellidoUsuario: true } },
             muestras: {
                 orderBy: { orden: 'asc' },
-                include: { solicitudMuestra: true }
+                include: { solicitudMuestra: true, resultado: true }
             },
             etapa1: {
                 include: {
@@ -22,7 +22,8 @@ class EnterobacteriasRepository extends BaseFormRepository {
                     analistaIncub: true,
                     balanza: true,
                     stomacher: true,
-                    loteAgarVrbg: true,
+                    medioAgarVrbg: true,
+                    medioTween80: true,
                     estufaSembrado: true,
                     micropipeta: true,
                     estufaIncub: true
@@ -164,6 +165,36 @@ class EnterobacteriasRepository extends BaseFormRepository {
                 create: { idEntFormulario: BigInt(idFormulario), ...etapaPayload },
                 update: etapaPayload
             });
+
+            if (Array.isArray(data.resultados)) {
+                for (const r of data.resultados) {
+                    if (r.idEntMuestra === undefined || r.idEntMuestra === null) continue;
+                    const idEntMuestra = BigInt(r.idEntMuestra);
+                    const resultadoPayload = {
+                        muestraB: r.muestraB ?? null,
+                        muestraA: r.muestraA ?? null,
+                        d: r.d ?? null,
+                        n1: r.n1 ?? null,
+                        n2: r.n2 ?? null,
+                        m: r.m ?? null,
+                        sumaA: r.sumaA ?? null,
+                        nEnterobacterias: r.nEnterobacterias ?? null,
+                        ufcPorG: r.ufcPorG ?? null,
+                        operador: r.operador ?? null,
+                        esEstimado: r.esEstimado ?? null,
+                        esSd: r.esSd ?? null,
+                        casoAplicado: r.casoAplicado ?? null,
+                        incongruenciaDetectada: r.incongruenciaDetectada ?? null,
+                        observacionIncongruencia: r.observacionIncongruencia ?? null
+                    };
+
+                    await tx.entEtapa3Resultado.upsert({
+                        where: { idEntMuestra },
+                        create: { idEntMuestra, ...resultadoPayload },
+                        update: resultadoPayload
+                    });
+                }
+            }
 
             await this.touchFormulario(idFormulario, {
                 etapaActual: data.etapaActual ?? 3,

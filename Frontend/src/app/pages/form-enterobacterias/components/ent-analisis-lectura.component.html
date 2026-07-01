@@ -63,7 +63,7 @@
       </button>
     </div>
 
-    <!-- NCh2676 grid: rows = diluciones, cols = Placa 1 | Placa 2 | D -->
+    <!-- NCh2676 grid: rows = diluciones, cols = Placa 1 | Placa 2 | D | A (confirmar) | b (Oxidasa⁻ y Glucosa⁺) -->
     <div class="table-wrapper">
       <table class="muestra-grid">
         <thead>
@@ -72,6 +72,10 @@
             <th>Placa 1 (C)</th>
             <th>Placa 2 (C)</th>
             <th>D (10^-n)</th>
+            <th>A (confirmar) P1</th>
+            <th>A (confirmar) P2</th>
+            <th>b (Oxidasa⁻ y Glucosa⁺) P1</th>
+            <th>b (Oxidasa⁻ y Glucosa⁺) P2</th>
           </tr>
         </thead>
         <tbody>
@@ -106,6 +110,34 @@
                 placeholder="1"
                 (input)="updateExponente(mi, di, $event)" />
             </td>
+            <td>
+              <input type="number" min="0" max="5" class="grid-input"
+                [value]="dil.confirmA"
+                [attr.readonly]="(rol | modoLectura) ? true : null"
+                placeholder="0"
+                (input)="updateConfirm(mi, di, 'confirmA', $event)" />
+            </td>
+            <td>
+              <input type="number" min="0" max="5" class="grid-input"
+                [value]="dil.confirmB"
+                [attr.readonly]="(rol | modoLectura) ? true : null"
+                placeholder="0"
+                (input)="updateConfirm(mi, di, 'confirmB', $event)" />
+            </td>
+            <td>
+              <input type="number" min="0" class="grid-input"
+                [value]="dil.confirmPosA"
+                [attr.readonly]="(rol | modoLectura) ? true : null"
+                placeholder="0"
+                (input)="updateConfirm(mi, di, 'confirmPosA', $event)" />
+            </td>
+            <td>
+              <input type="number" min="0" class="grid-input"
+                [value]="dil.confirmPosB"
+                [attr.readonly]="(rol | modoLectura) ? true : null"
+                placeholder="0"
+                (input)="updateConfirm(mi, di, 'confirmPosB', $event)" />
+            </td>
           </tr>
         </tbody>
       </table>
@@ -121,16 +153,30 @@
     <!-- Result panel -->
     <div class="resultado-card" *ngIf="muestra.resultado">
       <div class="resultado-main">
-        <span class="resultado-texto">{{ formatResultado(muestra.resultado) }}</span>
-        <span class="chip chip-caso"
-          *ngIf="muestra.resultado.casoAplicado !== 'PRIORIDAD_1' && muestra.resultado.casoAplicado !== 'PRIORIDAD_2'">
+        <span class="resultado-texto" [class.resultado-sd]="muestra.resultado.esSd">{{ formatResultado(muestra.resultado) }}</span>
+        <span class="chip chip-caso" *ngIf="muestra.resultado.casoAplicado !== 'NCh2676_porPlaca'">
           {{ muestra.resultado.casoAplicado }}
         </span>
         <span class="badge-estimado" *ngIf="muestra.resultado.esEstimado">Estimado</span>
       </div>
+
+      <div class="resultado-meta" *ngIf="muestra.resultado.sumaA !== undefined">
+        <span>Σa = {{ muestra.resultado.sumaA }}</span>
+        <span *ngIf="muestra.resultado.n1 !== undefined">n1 = {{ muestra.resultado.n1 }}</span>
+        <span *ngIf="muestra.resultado.n2 !== undefined">n2 = {{ muestra.resultado.n2 }}</span>
+        <span *ngIf="muestra.resultado.d !== undefined">d = {{ muestra.resultado.d }}</span>
+      </div>
+
       <div class="advertencia-item" *ngIf="muestra.resultado.incongruenciaDetectada">
         <ion-icon name="warning-outline"></ion-icon>
         Incongruencia detectada: {{ muestra.resultado.observacionIncongruencia }}
+      </div>
+
+      <div class="resultado-advertencias" *ngIf="muestra.resultado.advertencias?.length">
+        <div class="advertencia-item" *ngFor="let adv of muestra.resultado.advertencias">
+          <ion-icon name="warning-outline"></ion-icon>
+          <span>{{ adv }}</span>
+        </div>
       </div>
     </div>
 

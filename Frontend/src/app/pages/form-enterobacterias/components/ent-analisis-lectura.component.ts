@@ -69,6 +69,7 @@ export class EntAnalisisLecturaComponent {
   @Input() responsables: Responsable[] = [];
   @Input() muestras: EntMuestraLectura[] = [];
   @Output() muestrasChange = new EventEmitter<EntMuestraLectura[]>();
+  @Output() resultadoCalculado = new EventEmitter<{ muestra: EntMuestraLectura; resultado: EntResultadoCalculo }>();
 
   campoInvalido(nombre: string): boolean {
     const ctrl = this.formGroup.get(nombre);
@@ -137,23 +138,37 @@ export class EntAnalisisLecturaComponent {
     this.muestrasChange.emit(this.muestras);
   }
 
+  updateConfirm(muestraIdx: number, dilIdx: number, campo: 'confirmA' | 'confirmB' | 'confirmPosA' | 'confirmPosB', event: Event): void {
+    const value = this.numFromEvent(event);
+    this.muestras = this.muestras.map((m, i) => {
+      if (i !== muestraIdx) return m;
+      const dils = m.diluciones.map((d, j) =>
+        j === dilIdx ? { ...d, [campo]: value } : d
+      );
+      return { ...m, diluciones: dils };
+    });
+    this.muestrasChange.emit(this.muestras);
+  }
+
   async calcularMuestra(idx: number): Promise<void> {
     const muestra = this.muestras[idx];
     this.setLoading(idx, true);
 
     try {
-      const diluciones = muestra.diluciones.map(d => ({
-        dil: d.exponent,
-        colonias: [d.coloniasA ?? null, d.coloniasB ?? null],
-      }));
+      const placas: Array<{ dil: number; colonias: number | null; confirmA: number | null; confirmB: number | null }> = [];
+      for (const d of muestra.diluciones) {
+        placas.push({ dil: d.exponent, colonias: d.coloniasA, confirmA: d.confirmA, confirmB: d.confirmPosA });
+        placas.push({ dil: d.exponent, colonias: d.coloniasB, confirmA: d.confirmB, confirmB: d.confirmPosB });
+      }
 
       const resultado = await firstValueFrom(
-        this.http.post<EntResultadoCalculo>(this.apiUrl, { diluciones })
+        this.http.post<EntResultadoCalculo>(this.apiUrl, { volumen: 1, placas })
       );
 
       this.muestras = this.muestras.map((m, i) =>
         i === idx ? { ...m, resultado, isLoading: false } : m
       );
+      this.resultadoCalculado.emit({ muestra: this.muestras[idx], resultado });
     } catch {
       this.setLoading(idx, false);
     }

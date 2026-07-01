@@ -54,6 +54,8 @@ model Usuario {
   coliFase1Terminos      ColiFase1[]        @relation("ColiFase1_AnalistaTermino")
   coliFase3Analistas24h  ColiFase3[]        @relation("ColiFase3_Analista24h")
   coliFase3Analistas48h  ColiFase3[]        @relation("ColiFase3_Analista48h")
+  coliFase2AnalistasHomog   ColiFase2[]     @relation("ColiFase2_AnalistaHomog")
+  coliFase2AnalistasSiembra ColiFase2[]     @relation("ColiFase2_AnalistaSiembra")
   salFormularios         SalFormulario[]
   salFase2aResponsables  SalFase2a[]        @relation("SalFase2a_AnalistaResp")
   salFase3aCaldoApt      SalFase3a[]        @relation("SalFase3a_AnalistaCaldoApt")
@@ -843,16 +845,24 @@ model ColiFase1 {
 }
 
 model ColiFase2 {
-  idColiFase2          BigInt   @id @default(autoincrement()) @map("id_coli_fase2")
-  idColiFormulario     BigInt   @unique @map("id_coli_formulario")
-  idMedioCaldoLauril   Int      @map("id_medio_caldo_lauril")
-  idMedioTween80       Int?     @map("id_medio_tween_80")
-  completada           Boolean  @default(false)
-  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamp()
+  idColiFase2          BigInt    @id @default(autoincrement()) @map("id_coli_fase2")
+  idColiFormulario     BigInt    @unique @map("id_coli_formulario")
+  idMedioCaldoLauril   Int       @map("id_medio_caldo_lauril")
+  idMedioTween80       Int?      @map("id_medio_tween_80")
+  fechaHomog           DateTime? @map("fecha_homog") @db.Timestamp()
+  rutAnalistaHomog     String?   @map("rut_analista_homog") @db.VarChar(255)
+  fechaSiembra         DateTime? @map("fecha_siembra") @db.Timestamp()
+  rutAnalistaSiembra   String?   @map("rut_analista_siembra") @db.VarChar(255)
+  nMuestra10g90ml      Int?      @map("n_muestra_10g_90ml")
+  nMuestra50g450ml     Int?      @map("n_muestra_50g_450ml")
+  completada           Boolean   @default(false)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario     ColiFormulario @relation(fields: [idColiFormulario], references: [idColiFormulario])
   medioCaldoLauril MedioCultivo @relation("CaldoLauril", fields: [idMedioCaldoLauril], references: [idMedioCultivo])
   medioTween80     MedioCultivo? @relation("Tween80", fields: [idMedioTween80], references: [idMedioCultivo])
+  analistaHomog    Usuario?      @relation("ColiFase2_AnalistaHomog", fields: [rutAnalistaHomog], references: [rutUsuario])
+  analistaSiembra  Usuario?      @relation("ColiFase2_AnalistaSiembra", fields: [rutAnalistaSiembra], references: [rutUsuario])
 
   estufas      ColiFase2Estufa[]
   micropipetas ColiFase2Micropipeta[]
@@ -917,19 +927,28 @@ model ColiFase3Submuestra {
 }
 
 model ColiFase35Controles {
-  idColiFase35      BigInt   @id @default(autoincrement()) @map("id_coli_fase35")
-  idColiFormulario  BigInt   @unique @map("id_coli_formulario")
-  ctrlTotKAerogenes Boolean? @map("ctrl_tot_k_aerogenes")
-  ctrlTotSAureus    Boolean? @map("ctrl_tot_s_aureus")
-  blancoTotales     String?  @map("blanco_totales") @db.VarChar(100)
-  ctrlFecEColi      Boolean? @map("ctrl_fec_e_coli")
-  ctrlFecKAerogenes Boolean? @map("ctrl_fec_k_aerogenes")
-  blancoFecales     String?  @map("blanco_fecales") @db.VarChar(100)
-  ctrlEcoEColi      Boolean? @map("ctrl_eco_e_coli")
-  ctrlEcoKAerogenes Boolean? @map("ctrl_eco_k_aerogenes")
-  blancoEcoli       String?  @map("blanco_ecoli") @db.VarChar(100)
-  completada        Boolean  @default(false)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  idColiFase35         BigInt   @id @default(autoincrement()) @map("id_coli_fase35")
+  idColiFormulario     BigInt   @unique @map("id_coli_formulario")
+  ctrlTotKAerogenes24h Boolean? @map("ctrl_tot_k_aerogenes_24h")
+  ctrlTotKAerogenes48h Boolean? @map("ctrl_tot_k_aerogenes_48h")
+  ctrlTotSAureus24h    Boolean? @map("ctrl_tot_s_aureus_24h")
+  ctrlTotSAureus48h    Boolean? @map("ctrl_tot_s_aureus_48h")
+  blancoTotales24h     String?  @map("blanco_totales_24h") @db.VarChar(100)
+  blancoTotales48h     String?  @map("blanco_totales_48h") @db.VarChar(100)
+  ctrlFecEColi24h      Boolean? @map("ctrl_fec_e_coli_24h")
+  ctrlFecEColi48h      Boolean? @map("ctrl_fec_e_coli_48h")
+  ctrlFecKAerogenes24h Boolean? @map("ctrl_fec_k_aerogenes_24h")
+  ctrlFecKAerogenes48h Boolean? @map("ctrl_fec_k_aerogenes_48h")
+  blancoFecales24h     String?  @map("blanco_fecales_24h") @db.VarChar(100)
+  blancoFecales48h     String?  @map("blanco_fecales_48h") @db.VarChar(100)
+  ctrlEcoEColi24h      Boolean? @map("ctrl_eco_e_coli_24h")
+  ctrlEcoEColi48h      Boolean? @map("ctrl_eco_e_coli_48h")
+  ctrlEcoKAerogenes24h Boolean? @map("ctrl_eco_k_aerogenes_24h")
+  ctrlEcoKAerogenes48h Boolean? @map("ctrl_eco_k_aerogenes_48h")
+  blancoEcoli24h       String?  @map("blanco_ecoli_24h") @db.VarChar(100)
+  blancoEcoli48h       String?  @map("blanco_ecoli_48h") @db.VarChar(100)
+  completada           Boolean  @default(false)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario ColiFormulario @relation(fields: [idColiFormulario], references: [idColiFormulario])
 
@@ -1139,6 +1158,10 @@ model SalFase2c {
   resultadoCtrlPositivo   Boolean? @map("resultado_ctrl_positivo")
   ctrlSiembraAli          String?  @map("ctrl_siembra_ali") @db.VarChar(255)
   resultadoCtrlSiembra    Boolean? @map("resultado_ctrl_siembra")
+  desfavorable            Boolean? @map("desfavorable")
+  tablaPagina             String?  @map("tabla_pagina") @db.VarChar(200)
+  limite                  String?  @map("limite") @db.VarChar(200)
+  fechaHoraEntrega        DateTime? @map("fecha_hora_entrega") @db.Timestamp()
   completada              Boolean  @default(false)
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
@@ -1316,6 +1339,8 @@ model EntMuestra {
   formulario       EntFormulario    @relation(fields: [idEntFormulario], references: [idEntFormulario])
   solicitudMuestra SolicitudMuestra @relation(fields: [idSolicitudMuestra], references: [idSolicitudMuestra])
 
+  resultado EntEtapa3Resultado?
+
   @@map("ent_muestra")
 }
 
@@ -1392,6 +1417,7 @@ model EntEtapa2 {
   dilucion                Decimal   @map("dilucion") @db.Decimal(10, 2)
   coloniasContadas        Int       @map("colonias_contadas")
   ufcPorG                 Decimal?  @map("ufc_por_g") @db.Decimal(15, 4)
+  lecturaMuestras         Json?     @map("lectura_muestras")
   completada              Boolean   @default(false)
   updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
@@ -1426,13 +1452,6 @@ model EntEtapa3 {
   tablaPagina            String?   @map("tabla_pagina") @db.VarChar(200)
   limite                 String?   @map("limite") @db.VarChar(200)
   fechaHoraEntrega       DateTime? @map("fecha_hora_entrega") @db.Timestamp()
-  muestraB               Decimal?  @map("muestra_b") @db.Decimal(15, 4)
-  muestraA               Decimal?  @map("muestra_a") @db.Decimal(15, 4)
-  d                      Decimal?  @map("d") @db.Decimal(15, 4)
-  n1                     Int?      @map("n1")
-  n2                     Int?      @map("n2")
-  m                      Decimal?  @map("m") @db.Decimal(15, 4)
-  sumaA                  Decimal?  @map("suma_a") @db.Decimal(15, 4)
   observaciones          String?   @map("observaciones")
   completada             Boolean   @default(false)
   updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamp()
@@ -1445,4 +1464,29 @@ model EntEtapa3 {
   estufaConf       EquipoIncubacion? @relation("EntEtapa3_EstufaConf", fields: [idEstufaConf], references: [idIncubacion])
 
   @@map("ent_etapa3")
+}
+
+model EntEtapa3Resultado {
+  idEntEtapa3Resultado     BigInt   @id @default(autoincrement()) @map("id_ent_etapa3_resultado")
+  idEntMuestra             BigInt   @unique @map("id_ent_muestra")
+  muestraB                 Decimal? @map("muestra_b") @db.Decimal(15, 4)
+  muestraA                 Decimal? @map("muestra_a") @db.Decimal(15, 4)
+  d                        Decimal? @map("d") @db.Decimal(15, 4)
+  n1                       Int?     @map("n1")
+  n2                       Int?     @map("n2")
+  m                        Decimal? @map("m") @db.Decimal(15, 4)
+  sumaA                    Decimal? @map("suma_a") @db.Decimal(15, 4)
+  nEnterobacterias         Decimal? @map("n_enterobacterias") @db.Decimal(15, 4)
+  ufcPorG                  Decimal? @map("ufc_por_g") @db.Decimal(15, 4)
+  operador                 String?  @map("operador") @db.VarChar(5)
+  esEstimado               Boolean? @map("es_estimado")
+  esSd                     Boolean? @map("es_sd")
+  casoAplicado             String?  @map("caso_aplicado") @db.VarChar(50)
+  incongruenciaDetectada   Boolean? @map("incongruencia_detectada")
+  observacionIncongruencia String?  @map("observacion_incongruencia") @db.VarChar(255)
+  updatedAt                DateTime @updatedAt @map("updated_at") @db.Timestamp()
+
+  muestra EntMuestra @relation(fields: [idEntMuestra], references: [idEntMuestra])
+
+  @@map("ent_etapa3_resultado")
 }

@@ -17,6 +17,27 @@ export interface EntMuestra {
   esDuplicado: boolean;
   pesoMuestraTipo?: string;
   orden: number;
+  resultado?: EntEtapa3ResultadoRecord;
+}
+
+export interface EntEtapa3ResultadoRecord {
+  idEntEtapa3Resultado: number;
+  idEntMuestra: number;
+  muestraB?: number;
+  muestraA?: number;
+  d?: number;
+  n1?: number;
+  n2?: number;
+  m?: number;
+  sumaA?: number;
+  nEnterobacterias?: number;
+  ufcPorG?: number;
+  operador?: string;
+  esEstimado?: boolean;
+  esSd?: boolean;
+  casoAplicado?: string;
+  incongruenciaDetectada?: boolean;
+  observacionIncongruencia?: string;
 }
 
 export interface EntEtapa1 {
@@ -62,7 +83,7 @@ export interface EntEtapa2 {
   nMuestraLectura?: number;
   dilucion?: number;
   coloniasContadas?: number;
-  muestras?: EntMuestraLectura[];
+  lecturaMuestras?: EntMuestraLectura[];
   controlCalidad?: EntControlCalidadAli;
   duplicadoAli?: ResultadoControlCalidad; // Legacy flat API shape
   controlPositivoBlancoAli?: ResultadoControlCalidad; // Legacy flat API shape
@@ -176,7 +197,7 @@ export interface EntEtapa2Payload {
   n_muestra_lectura?: number;
   dilucion?: number;
   colonias_contadas?: number;
-  muestras?: EntMuestraLectura[];
+  lecturaMuestras?: EntMuestraLectura[];
   control_calidad?: EntControlCalidadAli;
 }
 
@@ -189,6 +210,40 @@ export interface EntEtapa3Payload {
   limite?: string;
   fecha_hora_entrega?: string;
   observaciones?: string;
+  fechaTraspaso?: string;
+  horaTraspaso?: string;
+  rutAnalistaTraspaso?: string;
+  idAgarNutritivo?: number;
+  idEstufaConf?: number;
+  fechaLectConf?: string;
+  horaLectConf?: string;
+  rutAnalistaLectConf?: string;
+  fechaOxidasa?: string;
+  horaOxidasa?: string;
+  rutAnalistaOxidasa?: string;
+  reactivoOxidasa?: string;
+  desaireadoAgarGlucosa?: string;
+  agarGlucosa?: string;
+  resultados?: EntEtapa3ResultadoPayload[];
+}
+
+export interface EntEtapa3ResultadoPayload {
+  idEntMuestra: number;
+  muestraB?: number;
+  muestraA?: number;
+  d?: number;
+  n1?: number;
+  n2?: number;
+  m?: number;
+  sumaA?: number;
+  nEnterobacterias?: number;
+  ufcPorG?: number;
+  operador?: string;
+  esEstimado?: boolean;
+  esSd?: boolean;
+  casoAplicado?: string;
+  incongruenciaDetectada?: boolean;
+  observacionIncongruencia?: string;
 }
 
 // ── Multi-sample reading model (Lectura 24h) ─────────────────────────────────
@@ -197,10 +252,10 @@ export interface EntDilucionLectura {
   exponent: number;           // e.g., -1 → d = 10⁻¹ = 0.1
   coloniasA: number | null;   // C value – Placa 1
   coloniasB: number | null;   // C value – Placa 2
-  confirmA: number | null;    // Legacy: A – colonies selected for confirmation, Placa 1
-  confirmB: number | null;    // Legacy: A – colonies selected for confirmation, Placa 2
-  confirmPosA: number | null; // Legacy: b – confirmed positive colonies, Placa 1
-  confirmPosB: number | null; // Legacy: b – confirmed positive colonies, Placa 2
+  confirmA: number | null;    // A – colonies selected for confirmation, Placa 1
+  confirmB: number | null;    // A – colonies selected for confirmation, Placa 2
+  confirmPosA: number | null; // b – confirmed positive colonies (oxidasa⁻ y glucosa⁺), Placa 1
+  confirmPosB: number | null; // b – confirmed positive colonies (oxidasa⁻ y glucosa⁺), Placa 2
 }
 
 export interface EntResultadoCalculo {
@@ -211,10 +266,27 @@ export interface EntResultadoCalculo {
   esEstimado: boolean;
   incongruenciaDetectada: boolean;
   observacionIncongruencia: string | null;
+  esSd?: boolean;
+  sumaA?: number;
+  n1?: number;
+  n2?: number;
+  d?: number;
+  advertencias?: string[];
+  detalle?: EntResultadoDetallePlaca[];
+}
+
+export interface EntResultadoDetallePlaca {
+  dil: number;
+  colonias: number;
+  A: number;
+  b: number;
+  a: number | null;
+  error?: string | null;
 }
 
 export interface EntMuestraLectura {
   label: string;
+  idEntMuestra?: number;
   diluciones: EntDilucionLectura[];
   resultado?: EntResultadoCalculo;
   isLoading: boolean;

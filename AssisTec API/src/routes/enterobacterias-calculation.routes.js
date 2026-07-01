@@ -2,8 +2,9 @@
  * Calculation route for Enterobacterias — NCh 2676.Of2002
  *
  * POST /api/formulario/ent/calcular-muestra
- *   Body: { diluciones: [{ dil: -1, colonias: [c1, c2] }] }
- *   Response: { nEnterobacterias, ufcPorG, casoAplicado, operador, esEstimado, incongruenciaDetectada, ... }
+ *   Body: { volumen?, placas: [{ dil, colonias, confirmA, confirmB }] }
+ *   Response: { nEnterobacterias, ufcPorG, casoAplicado, operador, esEstimado, incongruenciaDetectada,
+ *               observacionIncongruencia, esSd, sumaA, n1, n2, d, detalle, advertencias }
  */
 
 const { Router } = require('express');
@@ -14,16 +15,16 @@ const router = Router();
 
 router.post('/calcular-muestra', (req, res) => {
   try {
-    const { diluciones } = req.body;
+    const { placas, volumen } = req.body;
 
-    if (!Array.isArray(diluciones) || diluciones.length === 0) {
+    if (!Array.isArray(placas) || placas.length === 0) {
       return res.status(400).json({
         error: 'Faltan campos requeridos',
-        camposRequeridos: ['diluciones (array no vacío con { dil, colonias: [c1, c2] })']
+        camposRequeridos: ['placas (array no vacío con { dil, colonias, confirmA, confirmB })']
       });
     }
 
-    const resultado = calcularUfcEnt({ volumen: 1, diluciones });
+    const resultado = calcularUfcEnt({ volumen: volumen ?? 1, placas });
     return res.status(200).json(resultado);
   } catch (error) {
     winston.error('Error en /formulario/ent/calcular-muestra:', error);

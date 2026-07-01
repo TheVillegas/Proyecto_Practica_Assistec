@@ -18,6 +18,7 @@ import {
   ColiFormulario,
   ColiMuestra,
   ColiFase4CalidadManual,
+  ColiOrganismoResultado,
   SaveFase1Payload,
   SaveFase2Payload,
   SaveFase3Payload,
@@ -36,8 +37,6 @@ export interface EntradaMuestra {
   submuestras24h: Record<string, [ResultadoSubmuestra, ResultadoSubmuestra, ResultadoSubmuestra]>;
   /** submuestras48h[dilucion][tuboIndex] */
   submuestras48h: Record<string, [ResultadoSubmuestra, ResultadoSubmuestra, ResultadoSubmuestra]>;
-  /** submuestrasEcoli[dilucion][tuboIndex] */
-  submuestrasEcoli: Record<string, [ResultadoSubmuestra, ResultadoSubmuestra, ResultadoSubmuestra]>;
   /** Resultados NMP devueltos por el backend (se llenan tras calcularNMP) */
   resultados?: {
     ct: string;
@@ -64,7 +63,6 @@ function crearEntradaDesdeMuestra(muestra: ColiMuestra): EntradaMuestra {
     label: muestra.numeroMuestra,
     submuestras24h: crearSubmuestrasDefault(),
     submuestras48h: crearSubmuestrasDefault(),
-    submuestrasEcoli: crearSubmuestrasDefault(),
   };
 }
 
@@ -85,14 +83,13 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   private mediosCultivosService = inject(MediosCultivosService);
 
   // ─── Wizard ──────────────────────────────────────────────────────────────────
-  readonly TOTAL_ETAPAS = 5;
+  readonly TOTAL_ETAPAS = 4;
   etapaActual = 1;
   readonly NOMBRES_ETAPAS = [
     'Incubación',
     'Siembra',
     'Lecturas',
     'Controles',
-    'Resultados NMP',
   ];
 
   // ─── Formulario ──────────────────────────────────────────────────────────────
@@ -128,19 +125,35 @@ export class FormColiformesPage implements OnInit, OnDestroy {
   errorHora24h = '';
   errorHora48h = '';
 
-  // ─── Etapa 4: controles de calidad ──────────────────────────────────────────
-  ct_controlKAerogenes: ControlPresencia = 'sin_registrar';
-  ct_controlSAureus: ControlPresencia = 'sin_registrar';
+  // ─── Etapa 2: validación homogeneizado → siembra (≤30 min) ─────────────────
+  errorHomogSiembra = '';
+
+  // ─── Etapa 4: controles de calidad (24h) ────────────────────────────────────
+  ct_controlKAerogenes24h: ControlPresencia = 'sin_registrar';
+  ct_controlSAureus24h: ControlPresencia = 'sin_registrar';
   ct_controlEColi: ControlPresencia = 'sin_registrar';
-  ct_controlBlanco = '';
+  ct_controlBlanco24h = '';
 
-  cf_controlEColi: ControlPresencia = 'sin_registrar';
-  cf_controlKAerogenes: ControlPresencia = 'sin_registrar';
-  cf_controlBlanco = '';
+  cf_controlEColi24h: ControlPresencia = 'sin_registrar';
+  cf_controlKAerogenes24h: ControlPresencia = 'sin_registrar';
+  cf_controlBlanco24h = '';
 
-  ec_controlEColi: ControlPresencia = 'sin_registrar';
-  ec_controlKAerogenes: ControlPresencia = 'sin_registrar';
-  ec_controlBlanco = '';
+  ec_controlEColi24h: ControlPresencia = 'sin_registrar';
+  ec_controlKAerogenes24h: ControlPresencia = 'sin_registrar';
+  ec_controlBlanco24h = '';
+
+  // ─── Etapa 4: controles de calidad (48h) ────────────────────────────────────
+  ct_controlKAerogenes48h: ControlPresencia = 'sin_registrar';
+  ct_controlSAureus48h: ControlPresencia = 'sin_registrar';
+  ct_controlBlanco48h = '';
+
+  cf_controlEColi48h: ControlPresencia = 'sin_registrar';
+  cf_controlKAerogenes48h: ControlPresencia = 'sin_registrar';
+  cf_controlBlanco48h = '';
+
+  ec_controlEColi48h: ControlPresencia = 'sin_registrar';
+  ec_controlKAerogenes48h: ControlPresencia = 'sin_registrar';
+  ec_controlBlanco48h = '';
 
   // ─── Etapa 4: Manual de Inocuidad ───────────────────────────────────────────
   fase4Calidad: ColiFase4CalidadManual = {
@@ -281,6 +294,15 @@ export class FormColiformesPage implements OnInit, OnDestroy {
       estufas: [[] as number[]],
       micropipeta1ml: [null as Micropipeta | null],
       micropipeta10ml: [null as Micropipeta | null],
+      // Etapa 2 — homogeneizado / siembra
+      fechaHomog: [null as string | null],
+      horaHomog: [null as string | null],
+      rutAnalistaHomog: [null as string | null],
+      fechaSiembra: [null as string | null],
+      horaSiembra: [null as string | null],
+      rutAnalistaSiembra: [null as string | null],
+      nMuestra10g90ml: [null as number | null],
+      nMuestra50g450ml: [null as number | null],
     });
   }
 
@@ -306,7 +328,6 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         label: '1',
         submuestras24h: crearSubmuestrasDefault(),
         submuestras48h: crearSubmuestrasDefault(),
-        submuestrasEcoli: crearSubmuestrasDefault(),
       };
       this.localIdCounter--;
       const dup: EntradaMuestra = {
@@ -315,7 +336,6 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         label: '1 Dup',
         submuestras24h: crearSubmuestrasDefault(),
         submuestras48h: crearSubmuestrasDefault(),
-        submuestrasEcoli: crearSubmuestrasDefault(),
       };
       this.entradasMuestra = [m1, dup];
     }
@@ -337,6 +357,13 @@ export class FormColiformesPage implements OnInit, OnDestroy {
     if (formulario.fase2) {
       const f2 = formulario.fase2;
       const normCap = (c: string) => c.replace(/\s+/g, '').toLowerCase();
+      const splitFechaHora = (iso?: string): [string | null, string | null] => {
+        if (!iso) return [null, null];
+        const [fecha, hora] = iso.split('T');
+        return [fecha ?? null, hora ? hora.slice(0, 5) : null];
+      };
+      const [fechaHomog, horaHomog] = splitFechaHora(f2.fechaHomog);
+      const [fechaSiembra, horaSiembra] = splitFechaHora(f2.fechaSiembra);
       this.form.patchValue({
         idMedioCaldoLauril: (f2 as unknown as Record<string, number>)['idMedioCaldoLauril'] ?? null,
         idMedioTween80: (f2 as unknown as Record<string, number>)['idMedioTween80'] ?? null,
@@ -347,6 +374,14 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         micropipeta10ml: this.listaPipetas.find(p =>
           f2.micropipetas.some(mp => mp.idPipeta === p.idPipeta && normCap(mp.capacidad) === '10ml')
         ) || null,
+        fechaHomog,
+        horaHomog,
+        rutAnalistaHomog: f2.rutAnalistaHomog ?? null,
+        fechaSiembra,
+        horaSiembra,
+        rutAnalistaSiembra: f2.rutAnalistaSiembra ?? null,
+        nMuestra10g90ml: f2.nMuestra10g90ml ?? null,
+        nMuestra50g450ml: f2.nMuestra50g450ml ?? null,
       });
     }
 
@@ -355,7 +390,8 @@ export class FormColiformesPage implements OnInit, OnDestroy {
       for (const sub of formulario.fase3.submuestras) {
         const entrada = this.entradasMuestra.find(e => Number(e.id) === sub.idColiMuestra);
         if (!entrada) continue;
-        const target = entrada.submuestras24h;
+        if (sub.tipoLectura === 'ecoli') continue;
+        const target = sub.tipoLectura === 'fecales' ? entrada.submuestras48h : entrada.submuestras24h;
         if (target[sub.dilucion]) {
           target[sub.dilucion][sub.numeroTubo - 1] = sub.presencia === null
             ? 'sin_registrar'
@@ -367,16 +403,25 @@ export class FormColiformesPage implements OnInit, OnDestroy {
     // Cargar fase 3.5 (controles) — ahora en Etapa 4
     if (formulario.fase35Controles) {
       const c = formulario.fase35Controles as unknown as Record<string, string>;
-      this.ct_controlKAerogenes = this.toControlPresencia(c['ctrlTotKAerogenes'] ?? c['ctControlKAerogenes']);
-      this.ct_controlSAureus = this.toControlPresencia(c['ctrlTotSAureus'] ?? c['ctControlSAureus']);
+      this.ct_controlKAerogenes24h = this.toControlPresencia(c['ctrlTotKAerogenes24h'] ?? c['ctControlKAerogenes24h']);
+      this.ct_controlKAerogenes48h = this.toControlPresencia(c['ctrlTotKAerogenes48h'] ?? c['ctControlKAerogenes48h']);
+      this.ct_controlSAureus24h = this.toControlPresencia(c['ctrlTotSAureus24h'] ?? c['ctControlSAureus24h']);
+      this.ct_controlSAureus48h = this.toControlPresencia(c['ctrlTotSAureus48h'] ?? c['ctControlSAureus48h']);
       this.ct_controlEColi = this.toControlPresencia(c['ctControlEColi']);
-      this.ct_controlBlanco = c['blancoTotales'] ?? c['ctControlBlanco'] ?? '';
-      this.cf_controlEColi = this.toControlPresencia(c['ctrlFecEColi'] ?? c['cfControlEColi']);
-      this.cf_controlKAerogenes = this.toControlPresencia(c['ctrlFecKAerogenes'] ?? c['cfControlKAerogenes']);
-      this.cf_controlBlanco = c['blancoFecales'] ?? c['cfControlBlanco'] ?? '';
-      this.ec_controlEColi = this.toControlPresencia(c['ctrlEcoEColi'] ?? c['ecControlEColi']);
-      this.ec_controlKAerogenes = this.toControlPresencia(c['ctrlEcoKAerogenes'] ?? c['ecControlKAerogenes']);
-      this.ec_controlBlanco = c['blancoEcoli'] ?? c['ecControlBlanco'] ?? '';
+      this.ct_controlBlanco24h = c['blancoTotales24h'] ?? c['ctControlBlanco24h'] ?? '';
+      this.ct_controlBlanco48h = c['blancoTotales48h'] ?? c['ctControlBlanco48h'] ?? '';
+      this.cf_controlEColi24h = this.toControlPresencia(c['ctrlFecEColi24h'] ?? c['cfControlEColi24h']);
+      this.cf_controlEColi48h = this.toControlPresencia(c['ctrlFecEColi48h'] ?? c['cfControlEColi48h']);
+      this.cf_controlKAerogenes24h = this.toControlPresencia(c['ctrlFecKAerogenes24h'] ?? c['cfControlKAerogenes24h']);
+      this.cf_controlKAerogenes48h = this.toControlPresencia(c['ctrlFecKAerogenes48h'] ?? c['cfControlKAerogenes48h']);
+      this.cf_controlBlanco24h = c['blancoFecales24h'] ?? c['cfControlBlanco24h'] ?? '';
+      this.cf_controlBlanco48h = c['blancoFecales48h'] ?? c['cfControlBlanco48h'] ?? '';
+      this.ec_controlEColi24h = this.toControlPresencia(c['ctrlEcoEColi24h'] ?? c['ecControlEColi24h']);
+      this.ec_controlEColi48h = this.toControlPresencia(c['ctrlEcoEColi48h'] ?? c['ecControlEColi48h']);
+      this.ec_controlKAerogenes24h = this.toControlPresencia(c['ctrlEcoKAerogenes24h'] ?? c['ecControlKAerogenes24h']);
+      this.ec_controlKAerogenes48h = this.toControlPresencia(c['ctrlEcoKAerogenes48h'] ?? c['ecControlKAerogenes48h']);
+      this.ec_controlBlanco24h = c['blancoEcoli24h'] ?? c['ecControlBlanco24h'] ?? '';
+      this.ec_controlBlanco48h = c['blancoEcoli48h'] ?? c['ecControlBlanco48h'] ?? '';
     }
 
     // Cargar fase 4 (resultados NMP) — ahora en Etapa 5
@@ -386,13 +431,21 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         const entrada = this.entradasMuestra.find(e => Number(e.id) === r.idColiMuestra);
         if (entrada) {
           entrada.resultados = {
-            ct: String(r.coliformesTotales),
-            cf: String(r.coliformesFecales),
-            ecoli: String(r.eColi),
+            ct: this.formatearResultadoNmp(r.coliformesTotales, r.totales),
+            cf: this.formatearResultadoNmp(r.coliformesFecales, r.fecales),
+            ecoli: 'Pendiente confirmación',
           };
         }
       }
     }
+  }
+
+  private formatearResultadoNmp(mpn: number | null, detalle?: ColiOrganismoResultado): string {
+    if (mpn !== null && mpn !== undefined) return String(mpn);
+    if (detalle?.estado === 'mayor_que' && detalle.limiteInferior != null) {
+      return `> ${detalle.limiteInferior}`;
+    }
+    return 'Sin resultado válido';
   }
 
   private toControlPresencia(valor: string): ControlPresencia {
@@ -471,7 +524,6 @@ export class FormColiformesPage implements OnInit, OnDestroy {
       label: `${count}`,
       submuestras24h: crearSubmuestrasDefault(),
       submuestras48h: crearSubmuestrasDefault(),
-      submuestrasEcoli: crearSubmuestrasDefault(),
     };
     this.entradasMuestra.push(nueva);
   }
@@ -484,9 +536,35 @@ export class FormColiformesPage implements OnInit, OnDestroy {
     }
   }
 
-  calcularNmpPorMuestra(entrada: EntradaMuestra): void {
-    // Delegar al cálculo global (comparte estado) — se puede refinar a muestra individual
-    this.calcularNMP();
+  async calcularNmpPorMuestra(entrada: EntradaMuestra): Promise<void> {
+    this.calculando = true;
+    try {
+      const res = await firstValueFrom(
+        this.coliService.calcularNmp(this.idFormulario, this.buildCalculoNmpPayloadParaEntrada(entrada))
+      );
+
+      if (res.fase4Resultado && res.fase4Resultado.length > 0) {
+        const r = res.fase4Resultado[0];
+        entrada.resultados = {
+          ct: this.formatearResultadoNmp(r.coliformesTotales, r.totales),
+          cf: this.formatearResultadoNmp(r.coliformesFecales, r.fecales),
+          ecoli: 'Pendiente confirmación',
+        };
+        this.nmpCalculado = true;
+        this.mostrarToast('Resultados NMP calculados correctamente.', 'success');
+      } else {
+        this.mostrarToast('No se obtuvieron resultados del cálculo NMP.', 'warning');
+      }
+    } catch (err: unknown) {
+      const httpErr = err as { status?: number; error?: { codigo?: string } };
+      if (httpErr.status === 409) {
+        await this.manejarError409(httpErr);
+      } else {
+        this.mostrarToast('Error al calcular NMP. Intente nuevamente.', 'danger');
+      }
+    } finally {
+      this.calculando = false;
+    }
   }
 
   // ═════════════════════════════════════════════════════════════════════════════
@@ -520,6 +598,38 @@ export class FormColiformesPage implements OnInit, OnDestroy {
 
   onHora48hChange(): void {
     this.errorHora48h = this.validarRangoHora(this.horaLectura48h, this.datosImportados.horaIncubacion);
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════════
+  // VALIDACIÓN HOMOGENEIZADO → SIEMBRA (≤30 MINUTOS)
+  // ═════════════════════════════════════════════════════════════════════════════
+
+  private validarHomogSiembra(horaHomog: string, horaSiembra: string): string {
+    if (!horaHomog || !horaSiembra) return '';
+    const parseHora = (h: string): number => {
+      if (!h || typeof h !== 'string' || !h.includes(':')) return 0;
+      const parts = h.split(':');
+      if (parts.length < 2) return 0;
+      const hh = Number(parts[0]) || 0;
+      const mm = Number(parts[1]) || 0;
+      return hh * 60 + mm;
+    };
+    const minutos = parseHora(horaSiembra);
+    const base = parseHora(horaHomog);
+    if (Math.abs(minutos - base) > 30) {
+      return 'El tiempo entre homogeneizado y siembra debe ser menor a 30 minutos.';
+    }
+    return '';
+  }
+
+  onHomogChange(): void {
+    const v = this.form.value;
+    this.errorHomogSiembra = this.validarHomogSiembra(v.horaHomog, v.horaSiembra);
+  }
+
+  onSiembraChange(): void {
+    const v = this.form.value;
+    this.errorHomogSiembra = this.validarHomogSiembra(v.horaHomog, v.horaSiembra);
   }
 
   // ═════════════════════════════════════════════════════════════════════════════
@@ -593,6 +703,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         // Wizard Etapa 2 → backend fase 2
         const pip1 = this.form.value.micropipeta1ml as Micropipeta | null;
         const pip10 = this.form.value.micropipeta10ml as Micropipeta | null;
+        const v2 = this.form.value;
         const payload: SaveFase2Payload = {
           idMedioCaldoLauril: this.form.value.idMedioCaldoLauril,
           idMedioTween80: this.form.value.idMedioTween80 ?? undefined,
@@ -601,6 +712,16 @@ export class FormColiformesPage implements OnInit, OnDestroy {
             ...(pip1 ? [{ idPipeta: pip1.idPipeta, capacidad: pip1.capacidad }] : []),
             ...(pip10 ? [{ idPipeta: pip10.idPipeta, capacidad: pip10.capacidad }] : []),
           ],
+          fechaHomog: v2.fechaHomog && v2.horaHomog
+            ? `${v2.fechaHomog}T${v2.horaHomog}:00`
+            : undefined,
+          rutAnalistaHomog: v2.rutAnalistaHomog || undefined,
+          fechaSiembra: v2.fechaSiembra && v2.horaSiembra
+            ? `${v2.fechaSiembra}T${v2.horaSiembra}:00`
+            : undefined,
+          rutAnalistaSiembra: v2.rutAnalistaSiembra || undefined,
+          nMuestra10g90ml: v2.nMuestra10g90ml ?? undefined,
+          nMuestra50g450ml: v2.nMuestra50g450ml ?? undefined,
           completada,
         };
         return this.coliService.saveFase2(this.idFormulario, payload, this.formularioUpdatedAt).pipe(
@@ -635,16 +756,25 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         // Wizard Etapa 4 → backend fase 3.5 (controles de calidad)
         const payload: SaveFase35Payload = {
           controles: {
-            ctControlKAerogenes: this.ct_controlKAerogenes,
-            ctControlSAureus: this.ct_controlSAureus,
+            ctControlKAerogenes24h: this.ct_controlKAerogenes24h,
+            ctControlKAerogenes48h: this.ct_controlKAerogenes48h,
+            ctControlSAureus24h: this.ct_controlSAureus24h,
+            ctControlSAureus48h: this.ct_controlSAureus48h,
             ctControlEColi: this.ct_controlEColi,
-            ctControlBlanco: this.ct_controlBlanco,
-            cfControlEColi: this.cf_controlEColi,
-            cfControlKAerogenes: this.cf_controlKAerogenes,
-            cfControlBlanco: this.cf_controlBlanco,
-            ecControlEColi: this.ec_controlEColi,
-            ecControlKAerogenes: this.ec_controlKAerogenes,
-            ecControlBlanco: this.ec_controlBlanco,
+            ctControlBlanco24h: this.ct_controlBlanco24h,
+            ctControlBlanco48h: this.ct_controlBlanco48h,
+            cfControlEColi24h: this.cf_controlEColi24h,
+            cfControlEColi48h: this.cf_controlEColi48h,
+            cfControlKAerogenes24h: this.cf_controlKAerogenes24h,
+            cfControlKAerogenes48h: this.cf_controlKAerogenes48h,
+            cfControlBlanco24h: this.cf_controlBlanco24h,
+            cfControlBlanco48h: this.cf_controlBlanco48h,
+            ecControlEColi24h: this.ec_controlEColi24h,
+            ecControlEColi48h: this.ec_controlEColi48h,
+            ecControlKAerogenes24h: this.ec_controlKAerogenes24h,
+            ecControlKAerogenes48h: this.ec_controlKAerogenes48h,
+            ecControlBlanco24h: this.ec_controlBlanco24h,
+            ecControlBlanco48h: this.ec_controlBlanco48h,
           },
           completada,
         };
@@ -666,42 +796,40 @@ export class FormColiformesPage implements OnInit, OnDestroy {
 
   private buildSubmuestrasPayload(): Array<{
     idColiMuestra: number;
-    tipoLectura: 'totales';
+    tipoLectura: 'totales' | 'fecales' | 'ecoli';
     dilucion: string;
     numeroTubo: number;
     presencia: boolean | null;
   }> {
     const result: Array<{
       idColiMuestra: number;
-      tipoLectura: 'totales';
+      tipoLectura: 'totales' | 'fecales' | 'ecoli';
       dilucion: string;
       numeroTubo: number;
       presencia: boolean | null;
     }> = [];
 
+    const push = (
+      entrada: EntradaMuestra,
+      submuestras: EntradaMuestra['submuestras24h'],
+      tipoLectura: 'totales' | 'fecales' | 'ecoli'
+    ): void => {
+      for (const dil of this.DILUCIONES) {
+        submuestras[dil].forEach((valor, idx) => {
+          result.push({
+            idColiMuestra: Number(entrada.id),
+            tipoLectura,
+            dilucion: dil,
+            numeroTubo: idx + 1,
+            presencia: valor === 'sin_registrar' ? null : valor === 'positivo',
+          });
+        });
+      }
+    };
+
     for (const entrada of this.entradasMuestra) {
-      for (const dil of this.DILUCIONES) {
-        entrada.submuestras24h[dil].forEach((valor, idx) => {
-          result.push({
-            idColiMuestra: Number(entrada.id),
-            tipoLectura: 'totales' as const,
-            dilucion: dil,
-            numeroTubo: idx + 1,
-            presencia: valor === 'sin_registrar' ? null : valor === 'positivo',
-          });
-        });
-      }
-      for (const dil of this.DILUCIONES) {
-        entrada.submuestras48h[dil].forEach((valor, idx) => {
-          result.push({
-            idColiMuestra: Number(entrada.id),
-            tipoLectura: 'totales' as const,
-            dilucion: dil,
-            numeroTubo: idx + 1,
-            presencia: valor === 'sin_registrar' ? null : valor === 'positivo',
-          });
-        });
-      }
+      push(entrada, entrada.submuestras24h, 'totales');
+      push(entrada, entrada.submuestras48h, 'fecales');
     }
 
     return result;
@@ -715,57 +843,16 @@ export class FormColiformesPage implements OnInit, OnDestroy {
     );
   }
 
-  private buildCalculoNmpPayload(): CalcularNmpPayload {
+  private buildCalculoNmpPayloadParaEntrada(entrada: EntradaMuestra): CalcularNmpPayload {
     return {
-      muestras: this.entradasMuestra.map((entrada) => ({
+      muestras: [{
         idColiMuestra: Number(entrada.id),
         lecturas: {
           totales: this.submuestrasALecturas(entrada.submuestras24h),
           fecales: this.submuestrasALecturas(entrada.submuestras48h),
-          ecoli: this.submuestrasALecturas(entrada.submuestrasEcoli),
         },
-      })),
+      }],
     };
-  }
-
-  // ═════════════════════════════════════════════════════════════════════════════
-  // NMP / CÁLCULO
-  // ═════════════════════════════════════════════════════════════════════════════
-
-  async calcularNMP(): Promise<void> {
-    if (this.entradasMuestra.length === 0) return;
-    this.calculando = true;
-    try {
-      const res = await firstValueFrom(
-        this.coliService.calcularNmp(this.idFormulario, this.buildCalculoNmpPayload())
-      );
-
-      if (res.fase4Resultado && res.fase4Resultado.length > 0) {
-        this.nmpCalculado = true;
-        for (const r of res.fase4Resultado) {
-          const entrada = this.entradasMuestra.find(e => Number(e.id) === r.idColiMuestra);
-          if (entrada) {
-            entrada.resultados = {
-              ct: String(r.coliformesTotales),
-              cf: String(r.coliformesFecales),
-              ecoli: String(r.eColi),
-            };
-          }
-        }
-        this.mostrarToast('Resultados NMP calculados correctamente.', 'success');
-      } else {
-        this.mostrarToast('No se obtuvieron resultados del cálculo NMP.', 'warning');
-      }
-    } catch (err: unknown) {
-      const httpErr = err as { status?: number; error?: { codigo?: string } };
-      if (httpErr.status === 409) {
-        await this.manejarError409(httpErr);
-      } else {
-        this.mostrarToast('Error al calcular NMP. Intente nuevamente.', 'danger');
-      }
-    } finally {
-      this.calculando = false;
-    }
   }
 
   // ═════════════════════════════════════════════════════════════════════════════

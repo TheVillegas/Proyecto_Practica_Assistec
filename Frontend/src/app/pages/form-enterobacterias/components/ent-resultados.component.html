@@ -1,7 +1,7 @@
 <div [formGroup]="formGroup" class="subetapa-section">
 
   <!-- Tabla de cálculos -->
-  <p class="subseccion-title">Tabla de resultados finales</p>
+  <p class="subseccion-title">Tabla de resultados finales — {{ muestraLabel }}</p>
   <div class="tabla-wrapper">
     <table class="tabla-resultados">
       <thead>
@@ -65,17 +65,22 @@
   </div>
   <p class="tabla-hint">
     <ion-icon name="information-circle-outline"></ion-icon>
-    Campos opcionales. Si los completa, deben ser valores numéricos ≥ 0.
+    Campos autocompletados desde el cálculo. Puede corregirlos manualmente si es necesario.
   </p>
 
-  <!-- Observaciones -->
-  <div class="seccion-divider"></div>
-  <div class="form-group">
-    <label class="form-label" for="observaciones">Observaciones <span class="optional-tag">(opcional)</span></label>
-    <textarea id="observaciones" class="form-textarea" rows="4"
-      placeholder="Escriba comentarios, notas o incidencias del análisis..."
-      formControlName="observaciones"
-      [attr.readonly]="(rol | modoLectura) ? true : null"></textarea>
+  <!-- Resumen del cálculo -->
+  <div class="resultado-card" *ngIf="resultado">
+    <div class="resultado-main">
+      <span class="resultado-texto" [class.resultado-sd]="resultado.esSd">{{ formatUfc() }}</span>
+      <span class="chip chip-caso" *ngIf="resultado.casoAplicado && resultado.casoAplicado !== 'NCh2676_porPlaca'">
+        {{ resultado.casoAplicado }}
+      </span>
+      <span class="badge-estimado" *ngIf="resultado.esEstimado">Estimado</span>
+    </div>
+    <div class="advertencia-item" *ngIf="resultado.incongruenciaDetectada">
+      <ion-icon name="warning-outline"></ion-icon>
+      Incongruencia detectada: {{ resultado.observacionIncongruencia }}
+    </div>
   </div>
 
 </div>

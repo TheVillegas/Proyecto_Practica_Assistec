@@ -1,0 +1,146 @@
+<div [formGroup]="formGroupFase1" class="subetapa-section">
+  <p class="subseccion-title">Fase 1 · Configuración inicial de la muestra</p>
+
+  <div class="grid-2col">
+    <div class="form-group">
+      <label class="form-label" for="fechaIncubacion">Fecha inicio de incubación <span class="required-star">*</span></label>
+      <input id="fechaIncubacion" type="date" class="form-input"
+        [class.input-error]="campoInvalido(formGroupFase1, 'fechaIncubacion')"
+        formControlName="fechaIncubacion" [max]="hoy()" />
+      <span class="error-msg" *ngIf="campoInvalido(formGroupFase1, 'fechaIncubacion')">El campo Fecha inicio de incubación es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaIncubacion">Hora inicio de incubación <span class="required-star">*</span></label>
+      <input id="horaIncubacion" type="time" class="form-input"
+        [class.input-error]="campoInvalido(formGroupFase1, 'horaIncubacion')"
+        formControlName="horaIncubacion" />
+      <span class="error-msg" *ngIf="campoInvalido(formGroupFase1, 'horaIncubacion')">El campo Hora inicio de incubación es obligatorio.</span>
+    </div>
+  </div>
+
+  <div class="grid-3col mt-4 pt-4 border-t border-slate-100">
+    <div class="form-group">
+      <label class="form-label">Tipo de matriz</label>
+      <div class="form-radio-group">
+        <label class="form-check-label">
+          <input type="radio" class="form-radio" formControlName="tipoMatriz" value="Normal" />
+          <span>Normal</span>
+        </label>
+        <label class="form-check-label">
+          <input type="radio" class="form-radio" formControlName="tipoMatriz" value="Polvo" />
+          <span>Polvo</span>
+        </label>
+        <label class="form-check-label">
+          <input type="radio" class="form-radio" formControlName="tipoMatriz" value="Chocolate" />
+          <span>Chocolate</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Peso de muestra</label>
+      <div class="form-radio-group">
+        <label class="form-check-label">
+          <input type="radio" class="form-radio" formControlName="pesoMuestra" value="25g" />
+          <span>25g</span>
+        </label>
+        <label class="form-check-label">
+          <input type="radio" class="form-radio" formControlName="pesoMuestra" value="50g" />
+          <span>50g</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Caldo APT</label>
+      <div class="form-radio-group">
+        <label class="form-check-label">
+          <input type="radio" class="form-radio" formControlName="caldoAPT" value="Caldo APT" />
+          <span>Caldo APT</span>
+        </label>
+        <label class="form-check-label">
+          <input type="radio" class="form-radio" formControlName="caldoAPT" value="Leche descremada" />
+          <span>Leche desc. (450ml)</span>
+        </label>
+        <label class="form-check-label">
+          <input type="radio" class="form-radio" formControlName="caldoAPT" value="No" />
+          <span>No aplica</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2col mt-4 pt-4 border-t border-slate-100" *ngIf="formGroupFase1.get('tipoMatriz')?.value === 'Polvo'">
+    <div class="form-group">
+      <label class="form-label" for="horaInicioHidratacion">Hora de inicio de hidratación <span class="optional-tag">(solo polvo)</span></label>
+      <input id="horaInicioHidratacion" type="time" class="form-input" formControlName="horaInicioHidratacion" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaTerminoHidratacion">Hora término hidratación <span class="optional-tag">(solo polvo)</span></label>
+      <input id="horaTerminoHidratacion" type="time" class="form-input" formControlName="horaTerminoHidratacion" />
+    </div>
+  </div>
+</div>
+
+<div class="seccion-divider"></div>
+
+<div [formGroup]="formGroupFase2a" class="subetapa-section">
+  <p class="subseccion-title">Fase 2A · Datos de tiempo y trazabilidad</p>
+
+  <div class="grid-3col">
+    <div class="form-group">
+      <label class="form-label" for="fechaSiembra">Fecha de siembra <span class="required-star">*</span></label>
+      <input id="fechaSiembra" type="date" class="form-input"
+        [class.input-error]="campoInvalido(formGroupFase2a, 'fechaSiembra')"
+        formControlName="fechaSiembra" [max]="hoy()" />
+      <span class="error-msg" *ngIf="campoInvalido(formGroupFase2a, 'fechaSiembra')">El campo Fecha de siembra es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaHomogeneizacion">Hora de homogeneización <span class="required-star">*</span></label>
+      <input id="horaHomogeneizacion" type="time" class="form-input"
+        [class.input-error]="campoInvalido(formGroupFase2a, 'horaHomogeneizacion')"
+        formControlName="horaHomogeneizacion" />
+      <span class="error-msg" *ngIf="campoInvalido(formGroupFase2a, 'horaHomogeneizacion')">El campo Hora de homogeneización es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaTerminoHomogeneizacion">Hora término homog. / fin siembra <span class="required-star">*</span></label>
+      <input id="horaTerminoHomogeneizacion" type="time" class="form-input"
+        [class.input-error]="campoInvalido(formGroupFase2a, 'horaTerminoHomogeneizacion')"
+        formControlName="horaTerminoHomogeneizacion" />
+      <span class="error-msg" *ngIf="campoInvalido(formGroupFase2a, 'horaTerminoHomogeneizacion')">Este campo es obligatorio.</span>
+    </div>
+  </div>
+
+  <div class="grid-3col mt-4">
+    <div class="form-group">
+      <label class="form-label" for="horaIngresoEstufa">Hora ingreso a estufa <span class="required-star">*</span></label>
+      <input id="horaIngresoEstufa" type="time" class="form-input"
+        [class.input-error]="campoInvalido(formGroupFase2a, 'horaIngresoEstufa')"
+        formControlName="horaIngresoEstufa" />
+      <span class="error-msg" *ngIf="campoInvalido(formGroupFase2a, 'horaIngresoEstufa')">Este campo es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="analistaResponsable">Analista responsable <span class="required-star">*</span></label>
+      <ion-select id="analistaResponsable"
+        [class.input-error]="campoInvalido(formGroupFase2a, 'analistaResponsable')"
+        formControlName="analistaResponsable" interface="popover" placeholder="— Seleccionar analista —" class="form-select">
+        <ion-select-option value="">— Seleccionar analista —</ion-select-option>
+        <ion-select-option *ngFor="let r of responsables" [value]="r.rut">{{ r.nombreApellido }}</ion-select-option>
+      </ion-select>
+      <span class="error-msg" *ngIf="campoInvalido(formGroupFase2a, 'analistaResponsable')">Debe seleccionar un analista.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="fechaTerminoAnalisis">Término análisis <span class="required-star">*</span></label>
+      <input id="fechaTerminoAnalisis" type="date" class="form-input"
+        [class.input-error]="campoInvalido(formGroupFase2a, 'fechaTerminoAnalisis')"
+        formControlName="fechaTerminoAnalisis" />
+      <span class="error-msg" *ngIf="campoInvalido(formGroupFase2a, 'fechaTerminoAnalisis')">Este campo es obligatorio.</span>
+    </div>
+  </div>
+
+  <div *ngIf="alertaTiempo25min" class="alert-banner alert-banner--warning mt-4">
+    <ion-icon name="warning-outline" class="alert-banner__icon"></ion-icon>
+    <div class="alert-banner__content">
+      <strong>Alerta: tiempo homogeneización a estufa</strong>
+      <span>El tiempo entre homogeneización e ingreso a estufa supera los 25 minutos. Verifique el registro antes de continuar.</span>
+    </div>
+  </div>
+</div>

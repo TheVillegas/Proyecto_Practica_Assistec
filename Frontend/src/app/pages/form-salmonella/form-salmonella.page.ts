@@ -6,16 +6,16 @@ import { firstValueFrom, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { SalmonellaApiService } from '../../services/salmonella-api.service';
 import { CatalogosService } from '../../services/catalogos.service';
-import { EquipoIncubacion, LoteReactivo } from '../../interfaces/catalogo.interfaces';
+import { EquipoIncubacion, Responsable } from '../../interfaces/catalogo.interfaces';
 import {
   SalFormularioCompleto,
   SalMuestra,
   SalFasePayload
 } from '../../interfaces/salmonella.interfaces';
 
-type Cumple = 'cumple' | 'no_cumple' | 'sin_registrar';
+export type Cumple = 'cumple' | 'no_cumple' | '';
 
-interface MuestraEtapa3 {
+export interface MuestraEtapa3 {
   id: string;
   idSalMuestra: number;
   esDuplicado: boolean;
@@ -23,9 +23,12 @@ interface MuestraEtapa3 {
   caldoApt: boolean;
   selenito: boolean;
   rappaport: boolean;
+  ctrlPositivoSEnteritidis: boolean;
+  ctrlNegativoKPneumoniae: boolean;
+  ctrlBlanco: boolean;
 }
 
-interface MuestraEtapa4 {
+export interface MuestraEtapa4 {
   id: string;
   idSalMuestra: number;
   esDuplicado: boolean;
@@ -38,17 +41,18 @@ interface MuestraEtapa4 {
   ss24hRap: string;
   xld48hRap: string;
   ss48hRap: string;
+  ctrlPositivoSEnteritidis: boolean;
+  ctrlNegativoKPneumoniae: boolean;
+  ctrlBlanco: boolean;
 }
 
-interface MuestraEtapa5 {
+export interface MuestraEtapa5 {
   id: string;
   idSalMuestra: number;
   esDuplicado: boolean;
   label: string;
   resultadoFinal: string;
 }
-
-const N_MUESTRAS = 6;
 
 function crearMuestrasEtapa3(backend: SalMuestra[]): MuestraEtapa3[] {
   return backend.map((m) => ({
@@ -58,7 +62,10 @@ function crearMuestrasEtapa3(backend: SalMuestra[]): MuestraEtapa3[] {
     label: m.esDuplicado ? 'Duplicado' : `Muestra ${m.numeroMuestra}`,
     caldoApt: false,
     selenito: false,
-    rappaport: false
+    rappaport: false,
+    ctrlPositivoSEnteritidis: false,
+    ctrlNegativoKPneumoniae: false,
+    ctrlBlanco: false
   }));
 }
 
@@ -75,17 +82,24 @@ function crearMuestrasEtapa4(backend: SalMuestra[]): MuestraEtapa4[] {
     xld24hRap: '-',
     ss24hRap: '-',
     xld48hRap: '-',
-    ss48hRap: '-'
+    ss48hRap: '-',
+    ctrlPositivoSEnteritidis: false,
+    ctrlNegativoKPneumoniae: false,
+    ctrlBlanco: false
   }));
 }
 
-function crearMuestrasEtapa5(backend: SalMuestra[]): MuestraEtapa5[] {
+function crearMuestrasEtapa5(
+  backend: SalMuestra[],
+  resultados?: Array<{ idSalMuestra: string; resultadoFinal: string }>
+): MuestraEtapa5[] {
+  const mapaResultados = new Map((resultados ?? []).map((r) => [String(r.idSalMuestra), r.resultadoFinal]));
   return backend.map((m) => ({
     id: m.numeroMuestra,
     idSalMuestra: m.idSalMuestra,
     esDuplicado: m.esDuplicado,
     label: m.esDuplicado ? 'Duplicado' : `Muestra ${m.numeroMuestra}`,
-    resultadoFinal: ''
+    resultadoFinal: mapaResultados.get(String(m.idSalMuestra)) ?? ''
   }));
 }
 
@@ -96,30 +110,24 @@ function crearMuestrasEtapa5(backend: SalMuestra[]): MuestraEtapa5[] {
   standalone: false
 })
 export class FormSalmonellaPage implements OnInit {
-  readonly TOTAL_PASOS = 4;
+  readonly TOTAL_PASOS = 5;
   pasoActual = signal<number>(1);
 
   readonly NOMBRES_ETAPAS = [
     'Inicio e Incubación',
-    'Traspaso y Enriquecimiento',
+    'Controles de Calidad',
+    'Traspaso y Enriquecimiento Selectivo',
     'Aislamiento e Identificación',
     'Resultado Final'
   ];
 
-  readonly PASOS_POR_ETAPA = [1, 1, 1, 1];
-  readonly ETIQUETAS_PASOS = [
-    'Inicio e Incubación',
-    'Traspaso y Enriquecimiento',
-    'Aislamiento e Identificación',
-    'Resultado Final'
-  ];
-
-  // Maps frontend fase (1-4) to backend paso numbers (1-10)
+  // Mapea fase frontend (1-5) a los pasos backend (1-10)
   private readonly FASE_A_PASOS_BACKEND: Record<number, number[]> = {
-    1: [1, 2, 3, 4],
-    2: [5, 6, 7],
-    3: [8, 9],
-    4: [10],
+    1: [1, 2],
+    2: [3, 4],
+    3: [5, 6, 7],
+    4: [8, 9],
+    5: [10]
   };
 
   form!: FormGroup;
@@ -127,19 +135,6 @@ export class FormSalmonellaPage implements OnInit {
   muestras: SalMuestra[] = [];
   cargando = signal<boolean>(false);
   idSolicitudAnalisis = 0;
-
-  // ─── Variables Globales para Radios Personalizados ───
-  e2_resultadoAnalisis: Cumple = 'sin_registrar';
-  e2_resultadoControlBlanco: Cumple = 'sin_registrar';
-  e2_resultadoControlSiembra: Cumple = 'sin_registrar';
-
-  e3_controlPositivo: Cumple = 'sin_registrar';
-  e3_controlNegativo: Cumple = 'sin_registrar';
-  e3_blanco: Cumple = 'sin_registrar';
-
-  e4_controlPositivo: Cumple = 'sin_registrar';
-  e4_controlNegativo: Cumple = 'sin_registrar';
-  e4_blanco: Cumple = 'sin_registrar';
 
   // ─── Colecciones de Muestras ───
   muestrasEtapa3: MuestraEtapa3[] = [];
@@ -156,7 +151,15 @@ export class FormSalmonellaPage implements OnInit {
 
   // ─── Catálogos dinámicos ───
   listaEstufas: EquipoIncubacion[] = [];
-  listaLotesReactivo: LoteReactivo[] = [];
+  listaResponsables: Responsable[] = [];
+
+  get fase1Group(): FormGroup { return this.form.get('fase1') as FormGroup; }
+  get fase2aGroup(): FormGroup { return this.form.get('fase2a') as FormGroup; }
+  get fase2bGroup(): FormGroup { return this.form.get('fase2b') as FormGroup; }
+  get fase2cGroup(): FormGroup { return this.form.get('fase2c') as FormGroup; }
+  get fase3aGroup(): FormGroup { return this.form.get('fase3a') as FormGroup; }
+  get fase3bGroup(): FormGroup { return this.form.get('fase3b') as FormGroup; }
+  get fase4aGroup(): FormGroup { return this.form.get('fase4a') as FormGroup; }
 
   ngOnInit(): void {
     this.construirFormulario();
@@ -164,7 +167,7 @@ export class FormSalmonellaPage implements OnInit {
     const idParam = this.route.parent?.snapshot.paramMap.get('id')
       || this.route.snapshot.paramMap.get('id');
     this.idSolicitudAnalisis = idParam ? Number(idParam) : 0;
-    
+
     this.cargarFormulario();
   }
 
@@ -178,10 +181,10 @@ export class FormSalmonellaPage implements OnInit {
           return of([] as EquipoIncubacion[]);
         })
       ),
-      lotes: this.catalogos.getLotesReactivo('todos').pipe(
+      responsables: this.catalogos.getResponsables('analista').pipe(
         catchError(() => {
-          console.warn('[Salmonella] Catálogo lotes no disponible');
-          return of([] as LoteReactivo[]);
+          console.warn('[Salmonella] Catálogo responsables no disponible');
+          return of([] as Responsable[]);
         })
       ),
       formulario: this.idSolicitudAnalisis > 0
@@ -192,7 +195,7 @@ export class FormSalmonellaPage implements OnInit {
     }).subscribe({
       next: (res) => {
         this.listaEstufas = res.estufas;
-        this.listaLotesReactivo = res.lotes;
+        this.listaResponsables = res.responsables;
         this.cargando.set(false);
         if (res.formulario?.existe && res.formulario.formulario) {
           this.formulario = res.formulario.formulario;
@@ -212,82 +215,92 @@ export class FormSalmonellaPage implements OnInit {
 
   private construirFormulario(): void {
     this.form = this.fb.group({
-      e1_fechaIncubacion: [''],
-      e1_horaIncubacion: [''],
-      e1_tipoMatriz: ['Normal'],
-      e1_pesoMuestra: ['25g'],
-      e1_caldoAPT: ['Caldo APT'],
-      e1_horaInicioHidratacion: [''],
-      e1_horaTerminoHidratacion: [''],
-      e1_fechaSiembra: [''],
-      e1_horaHomogeneizacion: [''],
-      e1_horaTerminoHomogeneizacion: [''],
-      e1_horaIngresoEstufa: [''],
-      e1_analistaResponsable: [''],
-      e1_fechaTerminoAnalisis: [''],
-
-      e2_loteCaldo: [''],
-      e2_tween80: [false],
-      e2_micropipetas: [false],
-      e2_estufaIncubacion: [null as number | null],
-      e2_analisisDescripcion: [''],
-      e2_controlBlancoAli: [''],
-      e2_controlSiembraAli: [''],
-
-      e3_fechaTraspaso: [''],
-      e3_horaLecturaAPT: [''],
-      e3_analistaLecturaAPT: [''],
-      e3_horaLecturaCaldos: [''],
-      e3_analistaLecturaCaldos: [''],
-      e3_selenitoEstufa: [null as number | null],
-      e3_puntas1ml: [false],
-      e3_micropipetasUtilizadas: [false],
-      e3_pipetasDesechables: [false],
-      e3_micropipetasExtra: [false],
-
-      e4_fechaTraspasoAgares: [''],
-      e4_horaTraspasoAgares: [''],
-      e4_analistaTraspasoAgares: [''],
-      e4_loteAgarXLD: [''],
-      e4_loteAgarSS: [''],
-      e4_estufaIncubacionAgares: [null as number | null],
-      e4_fechaLectura24h: [''],
-      e4_horaLectura24h: [''],
-      e4_analistaLectura24h: [''],
-      e4_fechaLectura48h: [''],
-      e4_horaLectura48h: [''],
-      e4_analistaLectura48h: ['']
+      fase1: this.fb.group({
+        fechaIncubacion: [''],
+        horaIncubacion: [''],
+        tipoMatriz: ['Normal'],
+        pesoMuestra: ['25g'],
+        caldoAPT: ['Caldo APT'],
+        horaInicioHidratacion: [''],
+        horaTerminoHidratacion: ['']
+      }),
+      fase2a: this.fb.group({
+        fechaSiembra: [''],
+        horaHomogeneizacion: [''],
+        horaTerminoHomogeneizacion: [''],
+        horaIngresoEstufa: [''],
+        analistaResponsable: [''],
+        fechaTerminoAnalisis: ['']
+      }),
+      fase2b: this.fb.group({
+        loteCaldo: [''],
+        tween80: [false],
+        micropipetas: [false],
+        estufaIncubacion: [null as number | null]
+      }),
+      fase2c: this.fb.group({
+        analisisDescripcion: [''],
+        resultadoAnalisis: [''],
+        controlBlancoAli: [''],
+        resultadoControlBlanco: [''],
+        controlSiembraAli: [''],
+        resultadoControlSiembra: [''],
+        desfavorable: [''],
+        tablaPagina: [''],
+        limite: [''],
+        fechaHoraEntrega: ['']
+      }),
+      fase3a: this.fb.group({
+        fechaTraspaso: [''],
+        horaLecturaAPT: [''],
+        analistaLecturaAPT: [''],
+        horaLecturaCaldos: [''],
+        analistaLecturaCaldos: ['']
+      }),
+      fase3b: this.fb.group({
+        selenitoEstufa: [null as number | null],
+        puntas1ml: [false],
+        micropipetasUtilizadas: [false],
+        pipetasDesechables: [false],
+        micropipetasExtra: [false]
+      }),
+      fase4a: this.fb.group({
+        fechaTraspasoAgares: [''],
+        horaTraspasoAgares: [''],
+        analistaTraspasoAgares: [''],
+        loteAgarXLD: [''],
+        loteAgarSS: [''],
+        estufaIncubacionAgares: [null as number | null],
+        fechaLectura24h: [''],
+        horaLectura24h: [''],
+        analistaLectura24h: [''],
+        fechaLectura48h: [''],
+        horaLectura48h: [''],
+        analistaLectura48h: ['']
+      })
     });
 
-    this.form.get('e1_tipoMatriz')?.valueChanges.subscribe((val: string) => {
+    this.fase1Group.get('tipoMatriz')?.valueChanges.subscribe((val: string) => {
       if (val === 'Normal' || val === 'Polvo') {
-        this.form.get('e1_caldoAPT')?.setValue('Caldo APT');
+        this.fase1Group.get('caldoAPT')?.setValue('Caldo APT');
       } else if (val === 'Chocolate') {
-        this.form.get('e1_caldoAPT')?.setValue('Leche descremada');
+        this.fase1Group.get('caldoAPT')?.setValue('Leche descremada');
       }
     });
   }
 
+  /** Fallback SOLO para desarrollo roto (sin idSolicitudAnalisis válido). En producción
+   *  el backend autocrea el formulario con las muestras reales desde el primer
+   *  GET /por-analisis/:id, por lo que este mock nunca debería ejecutarse. */
   private inicializarMuestrasMock(): void {
-    const mock: SalMuestra[] = [];
-    for (let i = 1; i <= N_MUESTRAS; i++) {
-      mock.push({
-        idSalMuestra: i,
-        idSalFormulario: 0,
-        idSolicitudMuestra: i,
-        numeroMuestra: `M${i}`,
-        esDuplicado: false,
-        orden: i
-      });
-    }
-    mock.push({
-      idSalMuestra: 99,
+    const mock: SalMuestra[] = [{
+      idSalMuestra: 1,
       idSalFormulario: 0,
-      idSolicitudMuestra: 99,
-      numeroMuestra: 'DUP',
-      esDuplicado: true,
-      orden: 99
-    });
+      idSolicitudMuestra: 1,
+      numeroMuestra: '1',
+      esDuplicado: false,
+      orden: 1
+    }];
     this.muestras = mock;
     this.muestrasEtapa3 = crearMuestrasEtapa3(mock);
     this.muestrasEtapa4 = crearMuestrasEtapa4(mock);
@@ -297,75 +310,82 @@ export class FormSalmonellaPage implements OnInit {
   private hidratarFormulario(f: SalFormularioCompleto): void {
     this.muestrasEtapa3 = crearMuestrasEtapa3(f.muestras);
     this.muestrasEtapa4 = crearMuestrasEtapa4(f.muestras);
-    this.muestrasEtapa5 = crearMuestrasEtapa5(f.muestras);
+    this.muestrasEtapa5 = crearMuestrasEtapa5(f.muestras, f.fase5Resultado);
 
     if (f.fase1) {
-      this.form.patchValue({
-        e1_fechaIncubacion: f.fase1.fechaHoraInicioIncubacion.slice(0, 10),
-        e1_horaIncubacion: f.fase1.fechaHoraInicioIncubacion.slice(11, 16),
-        e1_tipoMatriz: f.fase1.tipoMatriz,
-        e1_pesoMuestra: f.fase1.pesoMuestra,
-        e1_caldoAPT: f.fase1.caldoHomogeneizacion,
-        e1_horaInicioHidratacion: f.fase1.horaInicioHidratacion ?? '',
-        e1_horaTerminoHidratacion: f.fase1.horaTerminoHidratacion ?? ''
+      this.fase1Group.patchValue({
+        fechaIncubacion: f.fase1.fechaHoraInicioIncubacion.slice(0, 10),
+        horaIncubacion: f.fase1.fechaHoraInicioIncubacion.slice(11, 16),
+        tipoMatriz: f.fase1.tipoMatriz,
+        pesoMuestra: f.fase1.pesoMuestra,
+        caldoAPT: f.fase1.caldoHomogeneizacion,
+        horaInicioHidratacion: f.fase1.horaInicioHidratacion ?? '',
+        horaTerminoHidratacion: f.fase1.horaTerminoHidratacion ?? ''
       });
     }
     if (f.fase2a) {
-      this.form.patchValue({
-        e1_fechaSiembra: f.fase2a.fechaSiembra,
-        e1_horaHomogeneizacion: f.fase2a.horaInicioHomo,
-        e1_horaTerminoHomogeneizacion: f.fase2a.horaTerminoHomo,
-        e1_horaIngresoEstufa: f.fase2a.horaIngresoEstufa,
-        e1_analistaResponsable: f.fase2a.rutAnalistaResponsable,
-        e1_fechaTerminoAnalisis: f.fase2a.fechaTerminoAnalisis ?? ''
+      this.fase2aGroup.patchValue({
+        fechaSiembra: f.fase2a.fechaSiembra,
+        horaHomogeneizacion: f.fase2a.horaInicioHomo,
+        horaTerminoHomogeneizacion: f.fase2a.horaTerminoHomo,
+        horaIngresoEstufa: f.fase2a.horaIngresoEstufa,
+        analistaResponsable: f.fase2a.rutAnalistaResponsable,
+        fechaTerminoAnalisis: f.fase2a.fechaTerminoAnalisis ?? ''
       });
     }
     if (f.fase2b) {
-      this.form.patchValue({
-        e2_loteCaldo: f.fase2b.codigoCaldoAptLeche,
-        e2_estufaIncubacion: f.fase2b.idEstufa
+      this.fase2bGroup.patchValue({
+        loteCaldo: f.fase2b.codigoCaldoAptLeche,
+        estufaIncubacion: f.fase2b.idEstufa
       });
     }
     if (f.fase2c) {
-      this.form.patchValue({
-        e2_analisisDescripcion: f.fase2c.descripcionCtrlAnalisis ?? '',
-        e2_controlBlancoAli: f.fase2c.ctrlPositivoBlancoAli ?? '',
-        e2_controlSiembraAli: f.fase2c.ctrlSiembraAli ?? ''
+      this.fase2cGroup.patchValue({
+        analisisDescripcion: f.fase2c.descripcionCtrlAnalisis ?? '',
+        resultadoAnalisis: this.booleanoACumple(f.fase2c.resultadoCtrlAnalisis),
+        controlBlancoAli: f.fase2c.ctrlPositivoBlancoAli ?? '',
+        resultadoControlBlanco: this.booleanoACumple(f.fase2c.resultadoCtrlPositivo),
+        controlSiembraAli: f.fase2c.ctrlSiembraAli ?? '',
+        resultadoControlSiembra: this.booleanoACumple(f.fase2c.resultadoCtrlSiembra),
+        desfavorable: f.fase2c.desfavorable === true ? 'si' : f.fase2c.desfavorable === false ? 'no' : '',
+        tablaPagina: f.fase2c.tablaPagina ?? '',
+        limite: f.fase2c.limite ?? '',
+        fechaHoraEntrega: f.fase2c.fechaHoraEntrega ?? ''
       });
     }
     if (f.fase3a) {
-      this.form.patchValue({
-        e3_fechaTraspaso: f.fase3a.fechaTraspaso,
-        e3_horaLecturaAPT: f.fase3a.horaLecturaCaldoApt,
-        e3_analistaLecturaAPT: f.fase3a.rutAnalistaCaldoApt,
-        e3_horaLecturaCaldos: f.fase3a.horaLecturaCaldosFinales ?? '',
-        e3_analistaLecturaCaldos: f.fase3a.rutAnalistaCaldosFinales ?? ''
+      this.fase3aGroup.patchValue({
+        fechaTraspaso: f.fase3a.fechaTraspaso,
+        horaLecturaAPT: f.fase3a.horaLecturaCaldoApt,
+        analistaLecturaAPT: f.fase3a.rutAnalistaCaldoApt,
+        horaLecturaCaldos: f.fase3a.horaLecturaCaldosFinales ?? '',
+        analistaLecturaCaldos: f.fase3a.rutAnalistaCaldosFinales ?? ''
       });
     }
     if (f.fase3b) {
-      this.form.patchValue({
-        e3_selenitoEstufa: f.fase3b.idEstufaSelenito
+      this.fase3bGroup.patchValue({
+        selenitoEstufa: f.fase3b.idEstufaSelenito
       });
     }
     if (f.fase4a) {
-      this.form.patchValue({
-        e4_fechaTraspasoAgares: f.fase4a.fechaHoraTraspasoAgares.slice(0, 10),
-        e4_horaTraspasoAgares: f.fase4a.fechaHoraTraspasoAgares.slice(11, 16),
-        e4_analistaTraspasoAgares: f.fase4a.rutAnalistaTraspaso,
-        e4_loteAgarXLD: f.fase4a.codigoAgarXld,
-        e4_loteAgarSS: f.fase4a.codigoAgarSs,
-        e4_estufaIncubacionAgares: f.fase4a.idEstufaAgares,
-        e4_fechaLectura24h: f.fase4a.fechaHoraLectura24h?.slice(0, 10) ?? '',
-        e4_horaLectura24h: f.fase4a.fechaHoraLectura24h?.slice(11, 16) ?? '',
-        e4_analistaLectura24h: f.fase4a.rutAnalistaLectura24h ?? '',
-        e4_fechaLectura48h: f.fase4a.fechaHoraLectura48h?.slice(0, 10) ?? '',
-        e4_horaLectura48h: f.fase4a.fechaHoraLectura48h?.slice(11, 16) ?? '',
-        e4_analistaLectura48h: f.fase4a.rutAnalistaLectura48h ?? ''
+      this.fase4aGroup.patchValue({
+        fechaTraspasoAgares: f.fase4a.fechaHoraTraspasoAgares.slice(0, 10),
+        horaTraspasoAgares: f.fase4a.fechaHoraTraspasoAgares.slice(11, 16),
+        analistaTraspasoAgares: f.fase4a.rutAnalistaTraspaso,
+        loteAgarXLD: f.fase4a.codigoAgarXld,
+        loteAgarSS: f.fase4a.codigoAgarSs,
+        estufaIncubacionAgares: f.fase4a.idEstufaAgares,
+        fechaLectura24h: f.fase4a.fechaHoraLectura24h?.slice(0, 10) ?? '',
+        horaLectura24h: f.fase4a.fechaHoraLectura24h?.slice(11, 16) ?? '',
+        analistaLectura24h: f.fase4a.rutAnalistaLectura24h ?? '',
+        fechaLectura48h: f.fase4a.fechaHoraLectura48h?.slice(0, 10) ?? '',
+        horaLectura48h: f.fase4a.fechaHoraLectura48h?.slice(11, 16) ?? '',
+        analistaLectura48h: f.fase4a.rutAnalistaLectura48h ?? ''
       });
     }
 
     const faseBackend = f.faseActual ?? 1;
-    const faseFrontend = faseBackend <= 4 ? 1 : faseBackend <= 7 ? 2 : faseBackend <= 9 ? 3 : 4;
+    const faseFrontend = faseBackend <= 2 ? 1 : faseBackend <= 4 ? 2 : faseBackend <= 7 ? 3 : faseBackend <= 9 ? 4 : 5;
     this.pasoActual.set(faseFrontend);
   }
 
@@ -378,7 +398,12 @@ export class FormSalmonellaPage implements OnInit {
   }
 
   get nombreEtapaVisualActual(): string {
-    return this.ETIQUETAS_PASOS[this.pasoActual() - 1] ?? '';
+    return this.NOMBRES_ETAPAS[this.pasoActual() - 1] ?? '';
+  }
+
+  /** True cuando la Etapa 5 ya tiene un resultado calculado por el backend. */
+  get calculado(): boolean {
+    return !!this.formulario?.fase5Resultado?.length;
   }
 
   avanzarPaso(): void {
@@ -453,90 +478,146 @@ export class FormSalmonellaPage implements OnInit {
     }
   }
 
+  /** Dispara el cálculo final de Presencia/Ausencia (fase backend 10). El backend
+   *  recalcula desde las lecturas de Fase 4B ya guardadas e ignora cualquier dato
+   *  que envíe el frontend. */
+  async calcularResultadoFinal(): Promise<void> {
+    if (!this.formulario) return;
+    this.cargando.set(true);
+
+    try {
+      const actualizado = await firstValueFrom(
+        this.api.guardarFase(
+          this.formulario.idSalFormulario,
+          10,
+          { completada: true } as SalFasePayload,
+          this.formulario.updatedAt
+        )
+      );
+      this.formulario = actualizado;
+      this.muestrasEtapa5 = crearMuestrasEtapa5(actualizado.muestras ?? this.muestras, actualizado.fase5Resultado);
+      this.cargando.set(false);
+      this.mostrarToast('Resultado final calculado correctamente', 'success');
+    } catch (err: unknown) {
+      this.cargando.set(false);
+      const httpErr = err as { status?: number };
+      if (httpErr.status === 409) {
+        this.mostrarToast(
+          'El formulario fue modificado por otro usuario. Recargue y vuelva a intentar.',
+          'warning'
+        );
+        this.cargarFormulario();
+      } else {
+        this.mostrarToast('Error al calcular el resultado final', 'danger');
+      }
+    }
+  }
+
   private construirPayload(paso: number, completada: boolean = true): unknown {
-    const v = this.form.value;
     switch (paso) {
-      case 1:
+      case 1: {
+        const f1 = this.fase1Group.getRawValue();
         return {
-          fechaHoraInicioIncubacion: `${v.e1_fechaIncubacion}T${v.e1_horaIncubacion}:00.000Z`,
-          tipoMatriz: v.e1_tipoMatriz,
-          pesoMuestra: v.e1_pesoMuestra,
-          caldoHomogeneizacion: v.e1_caldoAPT,
-          horaInicioHidratacion: v.e1_horaInicioHidratacion || undefined,
-          horaTerminoHidratacion: v.e1_horaTerminoHidratacion || undefined,
+          fechaHoraInicioIncubacion: `${f1.fechaIncubacion}T${f1.horaIncubacion}:00.000Z`,
+          tipoMatriz: f1.tipoMatriz,
+          pesoMuestra: f1.pesoMuestra,
+          caldoHomogeneizacion: f1.caldoAPT,
+          horaInicioHidratacion: f1.horaInicioHidratacion || undefined,
+          horaTerminoHidratacion: f1.horaTerminoHidratacion || undefined,
           completada
         };
-      case 2:
+      }
+      case 2: {
+        const f2a = this.fase2aGroup.getRawValue();
         return {
-          fechaSiembra: v.e1_fechaSiembra,
-          horaInicioHomo: v.e1_horaHomogeneizacion,
-          horaTerminoHomo: v.e1_horaTerminoHomogeneizacion,
-          horaIngresoEstufa: v.e1_horaIngresoEstufa,
-          rutAnalistaResponsable: v.e1_analistaResponsable,
-          fechaTerminoAnalisis: v.e1_fechaTerminoAnalisis,
+          fechaSiembra: f2a.fechaSiembra,
+          horaInicioHomo: f2a.horaHomogeneizacion,
+          horaTerminoHomo: f2a.horaTerminoHomogeneizacion,
+          horaIngresoEstufa: f2a.horaIngresoEstufa,
+          rutAnalistaResponsable: f2a.analistaResponsable,
+          fechaTerminoAnalisis: f2a.fechaTerminoAnalisis,
           completada
         };
-      case 3:
+      }
+      case 3: {
+        const f2b = this.fase2bGroup.getRawValue();
         return {
-          codigoCaldoAptLeche: v.e2_loteCaldo,
-          idEstufa: Number(v.e2_estufaIncubacion),
+          codigoCaldoAptLeche: f2b.loteCaldo,
+          idEstufa: Number(f2b.estufaIncubacion),
           completada
         };
-      case 4:
+      }
+      case 4: {
+        const f2c = this.fase2cGroup.getRawValue();
         return {
-          descripcionCtrlAnalisis: v.e2_analisisDescripcion || undefined,
-          resultadoCtrlAnalisis: this.cumpleABooleano(this.e2_resultadoAnalisis),
-          ctrlPositivoBlancoAli: v.e2_controlBlancoAli || undefined,
-          resultadoCtrlPositivo: this.cumpleABooleano(this.e2_resultadoControlBlanco),
-          ctrlSiembraAli: v.e2_controlSiembraAli || undefined,
-          resultadoCtrlSiembra: this.cumpleABooleano(this.e2_resultadoControlSiembra),
+          descripcionCtrlAnalisis: f2c.analisisDescripcion || undefined,
+          resultadoCtrlAnalisis: this.cumpleABooleano(f2c.resultadoAnalisis),
+          ctrlPositivoBlancoAli: f2c.controlBlancoAli || undefined,
+          resultadoCtrlPositivo: this.cumpleABooleano(f2c.resultadoControlBlanco),
+          ctrlSiembraAli: f2c.controlSiembraAli || undefined,
+          resultadoCtrlSiembra: this.cumpleABooleano(f2c.resultadoControlSiembra),
+          desfavorable: f2c.desfavorable === 'si' ? true : f2c.desfavorable === 'no' ? false : undefined,
+          tablaPagina: f2c.tablaPagina || undefined,
+          limite: f2c.limite || undefined,
+          fechaHoraEntrega: f2c.fechaHoraEntrega || undefined,
           completada
         };
-      case 5:
+      }
+      case 5: {
+        const f3a = this.fase3aGroup.getRawValue();
         return {
-          fechaTraspaso: v.e3_fechaTraspaso,
-          horaLecturaCaldoApt: v.e3_horaLecturaAPT,
-          rutAnalistaCaldoApt: v.e3_analistaLecturaAPT,
-          horaLecturaCaldosFinales: v.e3_horaLecturaCaldos || undefined,
-          rutAnalistaCaldosFinales: v.e3_analistaLecturaCaldos || undefined,
+          fechaTraspaso: f3a.fechaTraspaso,
+          horaLecturaCaldoApt: f3a.horaLecturaAPT,
+          rutAnalistaCaldoApt: f3a.analistaLecturaAPT,
+          horaLecturaCaldosFinales: f3a.horaLecturaCaldos || undefined,
+          rutAnalistaCaldosFinales: f3a.analistaLecturaCaldos || undefined,
           completada
         };
-      case 6:
+      }
+      case 6: {
+        const f3b = this.fase3bGroup.getRawValue();
         return {
-          idEstufaSelenito: Number(v.e3_selenitoEstufa),
+          idEstufaSelenito: Number(f3b.selenitoEstufa),
           completada
         };
+      }
       case 7:
         return {
           lecturas: this.muestrasEtapa3.map((m) => ({
             idSalMuestra: m.idSalMuestra,
             resultadoCaldoApt: m.caldoApt,
             resultadoseLenito: m.selenito,
-            resultadoRappaport: m.rappaport
+            resultadoRappaport: m.rappaport,
+            ctrlPositivoSEnteritidis: m.ctrlPositivoSEnteritidis,
+            ctrlNegativoKPneumoniae: m.ctrlNegativoKPneumoniae,
+            ctrlBlanco: m.ctrlBlanco
           })),
           completada
         };
-      case 8:
+      case 8: {
+        const f4a = this.fase4aGroup.getRawValue();
         return {
-          fechaHoraTraspasoAgares: `${v.e4_fechaTraspasoAgares}T${v.e4_horaTraspasoAgares}:00.000Z`,
-          rutAnalistaTraspaso: v.e4_analistaTraspasoAgares,
-          codigoAgarXld: v.e4_loteAgarXLD,
-          codigoAgarSs: v.e4_loteAgarSS,
-          idEstufaAgares: Number(v.e4_estufaIncubacionAgares),
-          fechaHoraLectura24h: v.e4_fechaLectura24h && v.e4_horaLectura24h
-            ? `${v.e4_fechaLectura24h}T${v.e4_horaLectura24h}:00.000Z`
+          fechaHoraTraspasoAgares: `${f4a.fechaTraspasoAgares}T${f4a.horaTraspasoAgares}:00.000Z`,
+          rutAnalistaTraspaso: f4a.analistaTraspasoAgares,
+          codigoAgarXld: f4a.loteAgarXLD,
+          codigoAgarSs: f4a.loteAgarSS,
+          idEstufaAgares: Number(f4a.estufaIncubacionAgares),
+          fechaHoraLectura24h: f4a.fechaLectura24h && f4a.horaLectura24h
+            ? `${f4a.fechaLectura24h}T${f4a.horaLectura24h}:00.000Z`
             : undefined,
-          rutAnalistaLectura24h: v.e4_analistaLectura24h || undefined,
-          fechaHoraLectura48h: v.e4_fechaLectura48h && v.e4_horaLectura48h
-            ? `${v.e4_fechaLectura48h}T${v.e4_horaLectura48h}:00.000Z`
+          rutAnalistaLectura24h: f4a.analistaLectura24h || undefined,
+          fechaHoraLectura48h: f4a.fechaLectura48h && f4a.horaLectura48h
+            ? `${f4a.fechaLectura48h}T${f4a.horaLectura48h}:00.000Z`
             : undefined,
-          rutAnalistaLectura48h: v.e4_analistaLectura48h || undefined,
+          rutAnalistaLectura48h: f4a.analistaLectura48h || undefined,
           completada
         };
+      }
       case 9:
         return {
           lecturas: this.muestrasEtapa4.map((m) => ({
             idSalMuestra: m.idSalMuestra,
+            // TODO: idSalFase4a no se puede completar hasta que el backend exponga el id en la respuesta de fase4a (bug preexistente, no introducido por este fix)
             resXld24hSelenito: this.mapResultadoAgarToBackend(m.xld24hSel),
             resSs24hSelenito: this.mapResultadoAgarToBackend(m.ss24hSel),
             resXld48hSelenito: this.mapResultadoAgarToBackend(m.xld48hSel),
@@ -544,7 +625,10 @@ export class FormSalmonellaPage implements OnInit {
             resXld24hRappaport: this.mapResultadoAgarToBackend(m.xld24hRap),
             resSs24hRappaport: this.mapResultadoAgarToBackend(m.ss24hRap),
             resXld48hRappaport: this.mapResultadoAgarToBackend(m.xld48hRap),
-            resSs48hRappaport: this.mapResultadoAgarToBackend(m.ss48hRap)
+            resSs48hRappaport: this.mapResultadoAgarToBackend(m.ss48hRap),
+            ctrlPositivoSEnteritidis: m.ctrlPositivoSEnteritidis,
+            ctrlNegativoKPneumoniae: m.ctrlNegativoKPneumoniae,
+            ctrlBlanco: m.ctrlBlanco
           })),
           completada
         };
@@ -561,6 +645,12 @@ export class FormSalmonellaPage implements OnInit {
     if (valor === 'cumple') return true;
     if (valor === 'no_cumple') return false;
     return undefined;
+  }
+
+  private booleanoACumple(valor: boolean | undefined): Cumple {
+    if (valor === true) return 'cumple';
+    if (valor === false) return 'no_cumple';
+    return '';
   }
 
   private mapResultadoAgarToBackend(valor: string): string | undefined {

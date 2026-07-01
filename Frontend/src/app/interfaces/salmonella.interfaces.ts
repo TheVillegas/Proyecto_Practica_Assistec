@@ -70,6 +70,10 @@ export interface SalFase2cPayload {
   resultadoCtrlPositivo?: boolean;
   ctrlSiembraAli?: string;
   resultadoCtrlSiembra?: boolean;
+  desfavorable?: boolean;
+  tablaPagina?: string;
+  limite?: string;
+  fechaHoraEntrega?: string;
   completada: boolean;
 }
 

@@ -1,128 +1,190 @@
 const { calcularUfcEnt } = require('../../src/calculators/ufcEnt.calculator');
 
-describe('T-UEC-001: UFC/g Enterobacterias Calculator', () => {
-    const VOLUMEN_DEFAULT = 1;
-
-    describe('Priority 1 — Rango optimo (15-300 colonias)', () => {
-        it('caso 1: debe calcular UFC/g para dilucion unica en rango optimo', () => {
+describe('T-UEC-001: UFC/g Enterobacterias Calculator (NCh 2676.Of2002 — método de confirmación)', () => {
+    describe('Cálculo por placa — caso feliz', () => {
+        it('caso 1: calcula a por placa y N para una única dilución con 2 placas', () => {
             const resultado = calcularUfcEnt({
-                volumen: VOLUMEN_DEFAULT,
-                diluciones: [
-                    { dil: -1, colonias: [50, 55] } // promedio 52.5, factor 0.1
+                volumen: 1,
+                placas: [
+                    { dil: -1, colonias: 45, confirmA: 5, confirmB: 3 }, // a = 45*(3/5) = 27
+                    { dil: -1, colonias: 50, confirmA: 5, confirmB: 4 }  // a = 50*(4/5) = 40
                 ]
             });
 
-            // UFC = 52.5 / (1 * 0.1) = 525
-            expect(resultado.ufcPorG).toBe(525);
-            expect(resultado.nEnterobacterias).toBe(525);
+            // sumaA = 67 ; n1=2, n2=0, d=0.1 ; divisor = 1*(2+0)*0.1 = 0.2
+            // N = 67 / 0.2 = 335
+            expect(resultado.sumaA).toBe(67);
+            expect(resultado.n1).toBe(2);
+            expect(resultado.n2).toBe(0);
+            expect(resultado.d).toBeCloseTo(0.1);
+            expect(resultado.nEnterobacterias).toBe(335);
+            expect(resultado.ufcPorG).toBe(335);
+            expect(resultado.operador).toBe('=');
+            expect(resultado.esEstimado).toBe(false);
+            expect(resultado.esSd).toBe(false);
+            expect(resultado.casoAplicado).toBe('NCh2676_porPlaca');
             expect(resultado.incongruenciaDetectada).toBe(false);
-            expect(resultado.operador).toBe('=');
-            expect(resultado.esEstimado).toBe(false);
-            expect(resultado.casoAplicado).toBe('PRIORIDAD_1');
+            expect(resultado.detalle).toHaveLength(2);
+            expect(resultado.detalle[0]).toMatchObject({ dil: -1, colonias: 45, A: 5, b: 3, a: 27 });
+            expect(resultado.detalle[1]).toMatchObject({ dil: -1, colonias: 50, A: 5, b: 4, a: 40 });
         });
     });
 
-    describe('Priority 2 — Rango bajo (<15 colonias)', () => {
-        it('caso 2: debe retornar limite inferior cuando todas las diluciones estan por debajo del optimo', () => {
+    describe('Σa/N con 2 diluciones — ponderación n1 + 0.1*n2', () => {
+        it('caso 2: combina dos diluciones aplicando el factor 0.1 sobre n2', () => {
             const resultado = calcularUfcEnt({
-                volumen: VOLUMEN_DEFAULT,
-                diluciones: [
-                    { dil: -2, colonias: [5, 7] } // promedio 6 < 15
+                volumen: 1,
+                placas: [
+                    { dil: -1, colonias: 45, confirmA: 5, confirmB: 3 }, // a = 27
+                    { dil: -1, colonias: 50, confirmA: 5, confirmB: 4 }, // a = 40
+                    { dil: -2, colonias: 8, confirmA: 5, confirmB: 5 },  // a = 8
+                    { dil: -2, colonias: 6, confirmA: 4, confirmB: 4 }   // a = 6
                 ]
             });
 
-            // resultado = 15 / (1 * 0.01) = 1500
-            expect(resultado.ufcPorG).toBe(1500);
-            expect(resultado.operador).toBe('<');
-            expect(resultado.esEstimado).toBe(false);
-            expect(resultado.casoAplicado).toBe('PRIORIDAD_2');
+            // sumaA = 27+40+8+6 = 81 ; n1=2, n2=2, d=0.1 (dilucion base -1)
+            // divisor = 1*(2 + 0.1*2)*0.1 = 0.22 ; N = 81/0.22 = 368.18... -> 368
+            expect(resultado.sumaA).toBe(81);
+            expect(resultado.n1).toBe(2);
+            expect(resultado.n2).toBe(2);
+            expect(resultado.d).toBeCloseTo(0.1);
+            expect(resultado.nEnterobacterias).toBe(368);
+            expect(resultado.ufcPorG).toBe(368);
+            expect(resultado.casoAplicado).toBe('NCh2676_porPlaca');
+            expect(resultado.esSd).toBe(false);
         });
     });
 
-    describe('Priority 3 — Rango exceso (>300 colonias)', () => {
-        it('caso 3: debe retornar estimado cuando promedio excede pero es menor que MNPC', () => {
-            const resultado = calcularUfcEnt({
-                volumen: VOLUMEN_DEFAULT,
-                diluciones: [
-                    { dil: -1, colonias: [350, 350] } // promedio 350, entre 300 y MNPC
-                ]
-            });
-
-            expect(resultado.casoAplicado).toBe('PRIORIDAD_3A');
-            expect(resultado.esEstimado).toBe(true);
-            expect(resultado.operador).toBe('=');
-            expect(resultado.ufcPorG).toBe(3500);
-        });
-
-        it('caso 4: debe retornar limite superior cuando promedio excede o iguala MNPC', () => {
-            const resultado = calcularUfcEnt({
-                volumen: VOLUMEN_DEFAULT,
-                diluciones: [
-                    { dil: -1, colonias: [400, 400] } // promedio 400 >= MNPC
-                ]
-            });
-
-            // resultado = MNPC / (1 * 0.1) = 4000
-            expect(resultado.ufcPorG).toBe(4000);
-            expect(resultado.operador).toBe('>');
-            expect(resultado.esEstimado).toBe(false);
-            expect(resultado.casoAplicado).toBe('PRIORIDAD_3B');
-        });
-    });
-
-    describe('Priority 4 — Sin crecimiento', () => {
-        it('caso 5: debe retornar limite inferior cuando no hay crecimiento', () => {
-            const resultado = calcularUfcEnt({
-                volumen: VOLUMEN_DEFAULT,
-                diluciones: [
-                    { dil: -1, colonias: [0, 0] }
-                ]
-            });
-
-            // resultado = 1 / (1 * 0.1) = 10
-            expect(resultado.ufcPorG).toBe(10);
-            expect(resultado.operador).toBe('<');
-            expect(resultado.casoAplicado).toBe('PRIORIDAD_4');
-        });
-    });
-
-    describe('Edge cases', () => {
-        it('caso 6: debe retornar SIN_DATOS cuando no hay diluciones', () => {
-            const resultado = calcularUfcEnt({
-                volumen: VOLUMEN_DEFAULT,
-                diluciones: []
-            });
+    describe('Casos SD', () => {
+        it('caso 3: SIN_DATOS cuando no hay placas', () => {
+            const resultado = calcularUfcEnt({ volumen: 1, placas: [] });
 
             expect(resultado.ufcPorG).toBeNull();
             expect(resultado.nEnterobacterias).toBeNull();
+            expect(resultado.esSd).toBe(true);
             expect(resultado.casoAplicado).toBe('SIN_DATOS');
             expect(resultado.incongruenciaDetectada).toBe(false);
         });
-    });
 
-    describe('Incongruencia detection', () => {
-        it('caso 7: debe detectar incongruencia cuando hay 0 y >0 en placas duplicadas', () => {
+        it('caso 4: SIN_DESARROLLO cuando todas las placas tienen 0 colonias', () => {
             const resultado = calcularUfcEnt({
-                volumen: VOLUMEN_DEFAULT,
-                diluciones: [
-                    { dil: -1, colonias: [0, 50] }
+                volumen: 1,
+                placas: [
+                    { dil: -1, colonias: 0, confirmA: 0, confirmB: 0 },
+                    { dil: -1, colonias: 0, confirmA: 0, confirmB: 0 }
                 ]
             });
 
-            expect(resultado.incongruenciaDetectada).toBe(true);
-            expect(resultado.observacionIncongruencia).toContain('Incongruencia');
+            expect(resultado.ufcPorG).toBeNull();
+            expect(resultado.esSd).toBe(true);
+            expect(resultado.casoAplicado).toBe('SIN_DESARROLLO');
         });
 
-        it('caso 8: debe detectar incongruencia cuando ratio max/min > 2', () => {
+        it('caso 5: SIN_CONFIRMACION cuando hay colonias pero Σa <= 0', () => {
             const resultado = calcularUfcEnt({
-                volumen: VOLUMEN_DEFAULT,
-                diluciones: [
-                    { dil: -1, colonias: [10, 50] } // ratio 5
+                volumen: 1,
+                placas: [
+                    { dil: -1, colonias: 10, confirmA: 5, confirmB: 0 }
+                ]
+            });
+
+            expect(resultado.sumaA).toBe(0);
+            expect(resultado.ufcPorG).toBeNull();
+            expect(resultado.esSd).toBe(true);
+            expect(resultado.casoAplicado).toBe('SIN_CONFIRMACION');
+        });
+    });
+
+    describe('Validaciones por placa', () => {
+        it('caso 6: A > maxA (5) excluye la placa y agrega advertencia', () => {
+            const resultado = calcularUfcEnt({
+                volumen: 1,
+                placas: [{ dil: -1, colonias: 10, confirmA: 6, confirmB: 3 }]
+            });
+
+            expect(resultado.detalle[0].error).toMatch(/A>5/);
+            expect(resultado.detalle[0].a).toBeNull();
+            expect(resultado.advertencias.length).toBeGreaterThan(0);
+            expect(resultado.casoAplicado).toBe('SIN_CONFIRMACION');
+        });
+
+        it('caso 7: b > A excluye la placa y agrega advertencia', () => {
+            const resultado = calcularUfcEnt({
+                volumen: 1,
+                placas: [{ dil: -1, colonias: 10, confirmA: 5, confirmB: 6 }]
+            });
+
+            expect(resultado.detalle[0].error).toMatch(/b>A/);
+            expect(resultado.detalle[0].a).toBeNull();
+            expect(resultado.casoAplicado).toBe('SIN_CONFIRMACION');
+        });
+
+        it('caso 8: A > colonias excluye la placa y agrega advertencia', () => {
+            const resultado = calcularUfcEnt({
+                volumen: 1,
+                placas: [{ dil: -1, colonias: 3, confirmA: 5, confirmB: 2 }]
+            });
+
+            expect(resultado.detalle[0].error).toMatch(/A>colonias/);
+            expect(resultado.detalle[0].a).toBeNull();
+            expect(resultado.casoAplicado).toBe('SIN_CONFIRMACION');
+        });
+
+        it('caso 9: colonias > 0 con A=0 excluye la placa (falta confirmación)', () => {
+            const resultado = calcularUfcEnt({
+                volumen: 1,
+                placas: [{ dil: -1, colonias: 10, confirmA: 0, confirmB: 0 }]
+            });
+
+            expect(resultado.detalle[0].error).toMatch(/falta confirmación/);
+            expect(resultado.detalle[0].a).toBeNull();
+            expect(resultado.casoAplicado).toBe('SIN_CONFIRMACION');
+        });
+    });
+
+    describe('Error de divisor', () => {
+        it('caso 10: ERROR_DIVISOR cuando volumen=0 anula el divisor', () => {
+            const resultado = calcularUfcEnt({
+                volumen: 0,
+                placas: [{ dil: -1, colonias: 45, confirmA: 5, confirmB: 3 }]
+            });
+
+            expect(resultado.sumaA).toBeGreaterThan(0);
+            expect(resultado.ufcPorG).toBeNull();
+            expect(resultado.esSd).toBe(true);
+            expect(resultado.casoAplicado).toBe('ERROR_DIVISOR');
+        });
+    });
+
+    describe('Incongruencia entre placas duplicadas (QC ortogonal)', () => {
+        it('caso 11: detecta incongruencia por ratio max/min > 2 sin alterar el cálculo', () => {
+            const resultado = calcularUfcEnt({
+                volumen: 1,
+                placas: [
+                    { dil: -1, colonias: 10, confirmA: 5, confirmB: 3 }, // a = 6
+                    { dil: -1, colonias: 50, confirmA: 5, confirmB: 3 }  // a = 30
                 ]
             });
 
             expect(resultado.incongruenciaDetectada).toBe(true);
             expect(resultado.observacionIncongruencia).toContain('ratio');
+            // sumaA = 36 ; divisor = 1*(2)*0.1 = 0.2 ; N = 180
+            expect(resultado.sumaA).toBe(36);
+            expect(resultado.ufcPorG).toBe(180);
+            expect(resultado.casoAplicado).toBe('NCh2676_porPlaca');
+        });
+
+        it('caso 12: detecta incongruencia cuando una placa tiene 0 y la otra >0', () => {
+            const resultado = calcularUfcEnt({
+                volumen: 1,
+                placas: [
+                    { dil: -1, colonias: 0, confirmA: 0, confirmB: 0 },
+                    { dil: -1, colonias: 50, confirmA: 5, confirmB: 3 }
+                ]
+            });
+
+            expect(resultado.incongruenciaDetectada).toBe(true);
+            expect(resultado.observacionIncongruencia).toContain('placa con 0 y placa con >0');
         });
     });
 });

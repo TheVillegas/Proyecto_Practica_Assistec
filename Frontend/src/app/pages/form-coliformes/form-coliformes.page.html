@@ -249,6 +249,62 @@
               </div>
             </div>
 
+            <!-- Tiempo entre homogeneizado y siembra -->
+            <div class="mt-4 border-t border-slate-100 pt-4">
+              <p class="text-sm font-semibold text-slate-700 mb-3">
+                Tiempo entre homogeneizado y siembra <span class="optional-tag">(&lt;30 minutos)</span>
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="form-group">
+                  <label class="form-label text-xs">Fecha Homogeneizado</label>
+                  <input type="date" class="form-input" formControlName="fechaHomog" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Hora Homogeneizado</label>
+                  <input type="time" class="form-input" [class.input-error]="errorHomogSiembra"
+                    formControlName="horaHomog" (change)="onHomogChange()" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Analista</label>
+                  <select class="form-select" formControlName="rutAnalistaHomog">
+                    <option [ngValue]="null">Seleccione...</option>
+                    <option *ngFor="let r of listaResponsables" [value]="r.rut">{{ r.nombreApellido }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                <div class="form-group">
+                  <label class="form-label text-xs">Fecha Siembra</label>
+                  <input type="date" class="form-input" formControlName="fechaSiembra" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Hora Siembra</label>
+                  <input type="time" class="form-input" [class.input-error]="errorHomogSiembra"
+                    formControlName="horaSiembra" (change)="onSiembraChange()" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label text-xs">Analista</label>
+                  <select class="form-select" formControlName="rutAnalistaSiembra">
+                    <option [ngValue]="null">Seleccione...</option>
+                    <option *ngFor="let r of listaResponsables" [value]="r.rut">{{ r.nombreApellido }}</option>
+                  </select>
+                </div>
+              </div>
+              <span class="error-msg" *ngIf="errorHomogSiembra">{{ errorHomogSiembra }}</span>
+            </div>
+
+            <!-- Nº de Muestra -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 border-t border-slate-100 pt-4">
+              <div class="form-group">
+                <label class="form-label">Nº de Muestra 10gr/90ml</label>
+                <input type="number" class="form-input" formControlName="nMuestra10g90ml" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nº de Muestra 50gr/450ml</label>
+                <input type="number" class="form-input" formControlName="nMuestra50g450ml" />
+              </div>
+            </div>
+
             <!-- Estufas -->
             <div class="form-group mt-4 border-t border-slate-100 pt-4">
               <label class="form-label">Estufa <span class="required-star">*</span></label>
@@ -389,7 +445,7 @@
             </div>
 
             <div class="muestra-card-body">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Lecturas 24h -->
                 <div class="mb-4">
                   <p class="text-xs font-semibold text-blue-700 mb-2 border-b border-blue-100 pb-1">Lectura 24h</p>
@@ -450,35 +506,6 @@
                   </div>
                 </div>
 
-                <!-- Lecturas E. coli -->
-                <div class="mb-4">
-                  <p class="text-xs font-semibold text-emerald-700 mb-2 border-b border-emerald-100 pb-1">Lectura E. coli</p>
-                  <div class="tabla-wrapper">
-                    <table class="tabla-submuestras tabla-submuestras--card">
-                      <thead>
-                        <tr>
-                          <th class="th-dilucion">Dilución</th>
-                          <th class="th-sub">S1</th>
-                          <th class="th-sub">S2</th>
-                          <th class="th-sub">S3</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr *ngFor="let dil of DILUCIONES">
-                          <td class="td-dilucion">{{ dil }}</td>
-                          <td *ngFor="let tubo of [0, 1, 2]" class="td-celda-radio">
-                            <button type="button" class="btn-resultado"
-                              [class.btn-positivo]="entrada.submuestrasEcoli[dil][tubo] === 'positivo'"
-                              (click)="setResultado(entrada, entrada.submuestrasEcoli, dil, tubo, 'positivo')">+</button>
-                            <button type="button" class="btn-resultado"
-                              [class.btn-negativo]="entrada.submuestrasEcoli[dil][tubo] === 'negativo'"
-                              (click)="setResultado(entrada, entrada.submuestrasEcoli, dil, tubo, 'negativo')">–</button>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
               </div>
 
               <!-- Botón calcular NMP por muestra -->
@@ -488,6 +515,21 @@
                   <ion-icon name="calculator-outline" slot="start"></ion-icon>
                   {{ calculando ? 'Calculando...' : 'Calcular NMP' }}
                 </ion-button>
+
+                <div *ngIf="entrada.resultados" class="nmp-grid mt-3">
+                  <div class="nmp-card" *ngIf="ctActivo">
+                    <p class="nmp-label">CT (NMP/g)</p>
+                    <p class="text-2xl font-bold text-[#1e3a8a]">{{ entrada.resultados.ct }}</p>
+                  </div>
+                  <div class="nmp-card" *ngIf="cfActivo">
+                    <p class="nmp-label">CF (NMP/g)</p>
+                    <p class="text-2xl font-bold text-[#1e3a8a]">{{ entrada.resultados.cf }}</p>
+                  </div>
+                  <div class="nmp-card" *ngIf="ecActivo">
+                    <p class="nmp-label">E. coli (NMP/g)</p>
+                    <p class="text-2xl font-bold text-[#1e3a8a]">{{ entrada.resultados.ecoli }}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -514,23 +556,26 @@
           </div>
           <div class="form-card-body flex flex-col gap-6">
 
-            <!-- CT Controles (solo si ctActivo) -->
+            <!-- ═══ Controles 24 horas ═══ -->
+            <h3 class="text-sm font-bold text-blue-800 border-b border-blue-200 pb-2">Controles 24 horas</h3>
+
+            <!-- CT Controles 24h (solo si ctActivo) -->
             <div *ngIf="ctActivo" class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
               <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
-                Control Coliformes Totales
+                Control Coliformes Totales (24hrs)
               </p>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-white p-3 rounded-lg border border-slate-100">
                   <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) K. aerogenes</p>
                   <div class="flex gap-4">
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="ct_controlKAerogenes"
-                        [(ngModel)]="ct_controlKAerogenes" [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <input type="radio" class="form-radio" name="ct_controlKAerogenes24h"
+                        [(ngModel)]="ct_controlKAerogenes24h" [ngModelOptions]="{standalone: true}" value="presencia" />
                       <span class="badge-presencia">Presencia</span>
                     </label>
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="ct_controlKAerogenes"
-                        [(ngModel)]="ct_controlKAerogenes" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <input type="radio" class="form-radio" name="ct_controlKAerogenes24h"
+                        [(ngModel)]="ct_controlKAerogenes24h" [ngModelOptions]="{standalone: true}" value="ausencia" />
                       <span class="badge-ausencia">Ausencia</span>
                     </label>
                   </div>
@@ -539,12 +584,12 @@
                   <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) S. aureus</p>
                   <div class="flex gap-4">
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="ct_controlSAureus" [(ngModel)]="ct_controlSAureus"
+                      <input type="radio" class="form-radio" name="ct_controlSAureus24h" [(ngModel)]="ct_controlSAureus24h"
                         [ngModelOptions]="{standalone: true}" value="presencia" />
                       <span class="badge-presencia">Presencia</span>
                     </label>
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="ct_controlSAureus" [(ngModel)]="ct_controlSAureus"
+                      <input type="radio" class="form-radio" name="ct_controlSAureus24h" [(ngModel)]="ct_controlSAureus24h"
                         [ngModelOptions]="{standalone: true}" value="ausencia" />
                       <span class="badge-ausencia">Ausencia</span>
                     </label>
@@ -552,7 +597,7 @@
                 </div>
                 <div class="bg-white p-3 rounded-lg border border-slate-100">
                   <label class="text-xs font-semibold text-slate-600 mb-2 block">Control blanco</label>
-                  <input type="text" class="form-input" placeholder="Descripción..." [(ngModel)]="ct_controlBlanco"
+                  <input type="text" class="form-input" placeholder="Descripción..." [(ngModel)]="ct_controlBlanco24h"
                     [ngModelOptions]="{standalone: true}" />
                 </div>
               </div>
@@ -575,22 +620,22 @@
               </div>
             </div>
 
-            <!-- CF Controles (solo si cfActivo) -->
+            <!-- CF Controles 24h (solo si cfActivo) -->
             <div *ngIf="cfActivo" class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
               <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
-                Control Coliformes Fecales
+                Control Coliformes Fecales (24hrs)
               </p>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-white p-3 rounded-lg border border-slate-100">
                   <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
                   <div class="flex gap-4">
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="cf_controlEColi" [(ngModel)]="cf_controlEColi"
+                      <input type="radio" class="form-radio" name="cf_controlEColi24h" [(ngModel)]="cf_controlEColi24h"
                         [ngModelOptions]="{standalone: true}" value="presencia" />
                       <span class="badge-presencia">Presencia</span>
                     </label>
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="cf_controlEColi" [(ngModel)]="cf_controlEColi"
+                      <input type="radio" class="form-radio" name="cf_controlEColi24h" [(ngModel)]="cf_controlEColi24h"
                         [ngModelOptions]="{standalone: true}" value="ausencia" />
                       <span class="badge-ausencia">Ausencia</span>
                     </label>
@@ -600,13 +645,13 @@
                   <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
                   <div class="flex gap-4">
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="cf_controlKAerogenes"
-                        [(ngModel)]="cf_controlKAerogenes" [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <input type="radio" class="form-radio" name="cf_controlKAerogenes24h"
+                        [(ngModel)]="cf_controlKAerogenes24h" [ngModelOptions]="{standalone: true}" value="presencia" />
                       <span class="badge-presencia">Presencia</span>
                     </label>
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="cf_controlKAerogenes"
-                        [(ngModel)]="cf_controlKAerogenes" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <input type="radio" class="form-radio" name="cf_controlKAerogenes24h"
+                        [(ngModel)]="cf_controlKAerogenes24h" [ngModelOptions]="{standalone: true}" value="ausencia" />
                       <span class="badge-ausencia">Ausencia</span>
                     </label>
                   </div>
@@ -615,26 +660,26 @@
               <div class="form-group mt-3">
                 <label class="form-label text-xs">Control blanco</label>
                 <input type="text" class="form-input bg-white" placeholder="Descripción..."
-                  [(ngModel)]="cf_controlBlanco" [ngModelOptions]="{standalone: true}" />
+                  [(ngModel)]="cf_controlBlanco24h" [ngModelOptions]="{standalone: true}" />
               </div>
             </div>
 
-            <!-- EC Controles (solo si ecActivo) -->
+            <!-- EC Controles 24h (solo si ecActivo) -->
             <div *ngIf="ecActivo" class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
               <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
-                Control Escherichia coli
+                Control E. Coli (24hrs)
               </p>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-white p-3 rounded-lg border border-slate-100">
                   <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
                   <div class="flex gap-4">
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="ec_controlEColi" [(ngModel)]="ec_controlEColi"
+                      <input type="radio" class="form-radio" name="ec_controlEColi24h" [(ngModel)]="ec_controlEColi24h"
                         [ngModelOptions]="{standalone: true}" value="presencia" />
                       <span class="badge-presencia">Presencia</span>
                     </label>
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="ec_controlEColi" [(ngModel)]="ec_controlEColi"
+                      <input type="radio" class="form-radio" name="ec_controlEColi24h" [(ngModel)]="ec_controlEColi24h"
                         [ngModelOptions]="{standalone: true}" value="ausencia" />
                       <span class="badge-ausencia">Ausencia</span>
                     </label>
@@ -644,13 +689,13 @@
                   <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
                   <div class="flex gap-4">
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="ec_controlKAerogenes"
-                        [(ngModel)]="ec_controlKAerogenes" [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <input type="radio" class="form-radio" name="ec_controlKAerogenes24h"
+                        [(ngModel)]="ec_controlKAerogenes24h" [ngModelOptions]="{standalone: true}" value="presencia" />
                       <span class="badge-presencia">Presencia</span>
                     </label>
                     <label class="form-check-label text-xs">
-                      <input type="radio" class="form-radio" name="ec_controlKAerogenes"
-                        [(ngModel)]="ec_controlKAerogenes" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <input type="radio" class="form-radio" name="ec_controlKAerogenes24h"
+                        [(ngModel)]="ec_controlKAerogenes24h" [ngModelOptions]="{standalone: true}" value="ausencia" />
                       <span class="badge-ausencia">Ausencia</span>
                     </label>
                   </div>
@@ -659,7 +704,142 @@
               <div class="form-group mt-3">
                 <label class="form-label text-xs">Control blanco</label>
                 <input type="text" class="form-input bg-white" placeholder="Descripción..."
-                  [(ngModel)]="ec_controlBlanco" [ngModelOptions]="{standalone: true}" />
+                  [(ngModel)]="ec_controlBlanco24h" [ngModelOptions]="{standalone: true}" />
+              </div>
+            </div>
+
+            <!-- ═══ Controles 48 horas ═══ -->
+            <h3 class="text-sm font-bold text-purple-800 border-b border-purple-200 pb-2">Controles 48 horas</h3>
+
+            <!-- CT Controles 48h (solo si ctActivo) -->
+            <div *ngIf="ctActivo" class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
+                Control Coliformes Totales (48hrs)
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) K. aerogenes</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ct_controlKAerogenes48h"
+                        [(ngModel)]="ct_controlKAerogenes48h" [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ct_controlKAerogenes48h"
+                        [(ngModel)]="ct_controlKAerogenes48h" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) S. aureus</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ct_controlSAureus48h" [(ngModel)]="ct_controlSAureus48h"
+                        [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ct_controlSAureus48h" [(ngModel)]="ct_controlSAureus48h"
+                        [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <label class="text-xs font-semibold text-slate-600 mb-2 block">Control blanco</label>
+                  <input type="text" class="form-input" placeholder="Descripción..." [(ngModel)]="ct_controlBlanco48h"
+                    [ngModelOptions]="{standalone: true}" />
+                </div>
+              </div>
+            </div>
+
+            <!-- CF Controles 48h (solo si cfActivo) -->
+            <div *ngIf="cfActivo" class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
+                Control Coliformes Fecales (48hrs)
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="cf_controlEColi48h" [(ngModel)]="cf_controlEColi48h"
+                        [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="cf_controlEColi48h" [(ngModel)]="cf_controlEColi48h"
+                        [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="cf_controlKAerogenes48h"
+                        [(ngModel)]="cf_controlKAerogenes48h" [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="cf_controlKAerogenes48h"
+                        [(ngModel)]="cf_controlKAerogenes48h" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group mt-3">
+                <label class="form-label text-xs">Control blanco</label>
+                <input type="text" class="form-input bg-white" placeholder="Descripción..."
+                  [(ngModel)]="cf_controlBlanco48h" [ngModelOptions]="{standalone: true}" />
+              </div>
+            </div>
+
+            <!-- EC Controles 48h (solo si ecActivo) -->
+            <div *ngIf="ecActivo" class="control-card border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p class="control-title text-[#1e3a8a] border-b border-slate-200 pb-2 mb-3 font-semibold">
+                Control E. Coli (48hrs)
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (+) E. coli</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ec_controlEColi48h" [(ngModel)]="ec_controlEColi48h"
+                        [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ec_controlEColi48h" [(ngModel)]="ec_controlEColi48h"
+                        [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-600 mb-2">Control (-) K. aerogenes</p>
+                  <div class="flex gap-4">
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ec_controlKAerogenes48h"
+                        [(ngModel)]="ec_controlKAerogenes48h" [ngModelOptions]="{standalone: true}" value="presencia" />
+                      <span class="badge-presencia">Presencia</span>
+                    </label>
+                    <label class="form-check-label text-xs">
+                      <input type="radio" class="form-radio" name="ec_controlKAerogenes48h"
+                        [(ngModel)]="ec_controlKAerogenes48h" [ngModelOptions]="{standalone: true}" value="ausencia" />
+                      <span class="badge-ausencia">Ausencia</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group mt-3">
+                <label class="form-label text-xs">Control blanco</label>
+                <input type="text" class="form-input bg-white" placeholder="Descripción..."
+                  [(ngModel)]="ec_controlBlanco48h" [ngModelOptions]="{standalone: true}" />
               </div>
             </div>
 
@@ -768,57 +948,6 @@
                 </div>
               </ng-container>
             </div>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- ═══════ ETAPA 5: RESULTADOS NMP ═══════ -->
-      <div *ngIf="etapaActual === 5" class="etapa-panel animate__animated animate__fadeIn">
-        <div class="form-card">
-          <div class="form-card-header">
-            <div class="form-card-title-group">
-              <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">5. Resultados NMP</h2>
-            </div>
-          </div>
-          <div class="form-card-body">
-
-            <div *ngIf="entradasMuestra.length === 0" class="text-center text-slate-400 py-8">
-              No hay muestras disponibles.
-            </div>
-
-            <ng-container *ngFor="let entrada of entradasMuestra">
-              <div class="nmp-banner mb-4">
-                <p class="text-sm font-semibold text-slate-700 mb-3">
-                  <ion-icon name="flask-outline" class="mr-1"></ion-icon>
-                  Muestra {{ entrada.label }}
-                  <span *ngIf="entrada.esDuplicado" class="badge-duplicado ml-2">Duplicado</span>
-                </p>
-
-                <div *ngIf="entrada.resultados; else sinResultadosNmp">
-                  <div class="nmp-grid">
-                    <div class="nmp-card" *ngIf="ctActivo">
-                      <p class="nmp-label">CT (NMP/g)</p>
-                      <p class="text-2xl font-bold text-[#1e3a8a]">{{ entrada.resultados.ct }}</p>
-                    </div>
-                    <div class="nmp-card" *ngIf="cfActivo">
-                      <p class="nmp-label">CF (NMP/g)</p>
-                      <p class="text-2xl font-bold text-[#1e3a8a]">{{ entrada.resultados.cf }}</p>
-                    </div>
-                    <div class="nmp-card" *ngIf="ecActivo">
-                      <p class="nmp-label">E. coli (NMP/g)</p>
-                      <p class="text-2xl font-bold text-[#1e3a8a]">{{ entrada.resultados.ecoli }}</p>
-                    </div>
-                  </div>
-                </div>
-                <ng-template #sinResultadosNmp>
-                  <div class="text-center py-4 text-xs text-slate-400 italic">
-                    Sin resultados calculados. Vuelva a la etapa anterior y presione "Calcular NMP".
-                  </div>
-                </ng-template>
-              </div>
-            </ng-container>
 
             <!-- Observaciones finales -->
             <div class="form-group mt-6 border-t border-slate-100 pt-4">

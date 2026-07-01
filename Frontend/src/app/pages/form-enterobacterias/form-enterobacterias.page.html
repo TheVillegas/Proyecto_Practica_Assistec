@@ -29,7 +29,7 @@
         <span>Modo lectura — solo Analista o Admin pueden editar.</span>
       </div>
 
-      <!-- ═══════════ STEPPER 5 ETAPAS ══════════ -->
+      <!-- ═══════════ STEPPER 6 ETAPAS ══════════ -->
       <div class="stepper-wrapper">
         <div class="stepper-bar">
           <div class="stepper-progress" [style.width.%]="progresoPorcentaje"></div>
@@ -49,13 +49,13 @@
 
       <form [formGroup]="form">
 
-        <!-- ════════ ETAPA 1: PESADO Y SIEMBRA ════════ -->
+        <!-- ════════ ETAPA 1: PESADO Y HOMOGENEIZACIÓN ════════ -->
         <div *ngIf="etapaActual() === 1" class="etapa-panel animate__animated animate__fadeIn">
           <div class="form-card">
             <div class="form-card-header">
               <div class="form-card-title-group">
                 <ion-icon name="scale-outline" class="card-header-icon"></ion-icon>
-                <h2 class="form-card-title">1. Pesado y Siembra</h2>
+                <h2 class="form-card-title">1. Pesado y Homogeneización</h2>
               </div>
             </div>
             <div class="form-card-body">
@@ -66,6 +66,25 @@
 
               <app-ent-homogeneizacion [formGroup]="homogeneizacionGroup" [rol]="rol"
                 [responsables]="catalogos.responsables()"></app-ent-homogeneizacion>
+            </div>
+          </div>
+        </div>
+
+        <!-- ════════ ETAPA 2: SIEMBRA E INCUBACIÓN ════════ -->
+        <div *ngIf="etapaActual() === 2" class="etapa-panel animate__animated animate__fadeIn">
+          <div class="form-card">
+            <div class="form-card-header">
+              <div class="form-card-title-group">
+                <ion-icon name="timer-outline" class="card-header-icon"></ion-icon>
+                <h2 class="form-card-title">2. Siembra e Incubación</h2>
+              </div>
+            </div>
+            <div class="form-card-body">
+              <app-ent-sembrado [formGroup]="sembradoGroup" [rol]="rol"
+                [equiposIncubacion]="catalogos.equiposIncubacion()"
+                [micropipetas]="catalogos.micropipetas()"
+                [mediosCultivos]="listaMediosCultivos"
+                [responsables]="catalogos.responsables()"></app-ent-sembrado>
 
               <!-- Time badge: homogeneización → siembra -->
               <ng-container *ngIf="tiempoHomoSiembraInfo as t">
@@ -80,25 +99,6 @@
 
               <div class="seccion-divider"></div>
 
-              <app-ent-sembrado [formGroup]="sembradoGroup" [rol]="rol"
-                [equiposIncubacion]="catalogos.equiposIncubacion()"
-                [micropipetas]="catalogos.micropipetas()"
-                [mediosCultivos]="listaMediosCultivos"
-                [responsables]="catalogos.responsables()"></app-ent-sembrado>
-            </div>
-          </div>
-        </div>
-
-        <!-- ════════ ETAPA 2: INCUBACIÓN ════════ -->
-        <div *ngIf="etapaActual() === 2" class="etapa-panel animate__animated animate__fadeIn">
-          <div class="form-card">
-            <div class="form-card-header">
-              <div class="form-card-title-group">
-                <ion-icon name="timer-outline" class="card-header-icon"></ion-icon>
-                <h2 class="form-card-title">2. Incubación</h2>
-              </div>
-            </div>
-            <div class="form-card-body">
               <app-ent-incubacion-prep [formGroup]="incubacionPrepGroup" [rol]="rol"
                 [equiposIncubacion]="catalogos.equiposIncubacion()"
                 [responsables]="catalogos.responsables()"></app-ent-incubacion-prep>
@@ -106,76 +106,43 @@
           </div>
         </div>
 
-        <!-- ════════ ETAPA 3: CONTROL DE CALIDAD ════════ -->
+        <!-- ════════ ETAPA 3: CONTROLES ALI + LECTURA 24H ════════ -->
         <div *ngIf="etapaActual() === 3" class="etapa-panel animate__animated animate__fadeIn">
           <div class="form-card">
             <div class="form-card-header">
               <div class="form-card-title-group">
                 <ion-icon name="shield-checkmark-outline" class="card-header-icon"></ion-icon>
-                <h2 class="form-card-title">3. Control de Calidad</h2>
+                <h2 class="form-card-title">3. Controles ALI + Lectura 24h</h2>
               </div>
             </div>
-            <div class="form-card-body" [formGroup]="controlCalidadGroup">
-              <p class="subseccion-title">Controles de Calidad en ALI</p>
-              <div class="grid-3col">
-                <div class="form-group">
-                  <label class="form-label" for="duplicadoAli">Duplicado en ALI</label>
-                  <select id="duplicadoAli" class="form-input" formControlName="duplicadoAli" [disabled]="modoLectura">
-                    <option value="">— Seleccionar —</option>
-                    <option value="Cumple">Cumple</option>
-                    <option value="No Cumple">No Cumple</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="controlPositivoBlancoAli">Control (+) y Blanco en ALI</label>
-                  <select id="controlPositivoBlancoAli" class="form-input" formControlName="controlPositivoBlancoAli" [disabled]="modoLectura">
-                    <option value="">— Seleccionar —</option>
-                    <option value="Cumple">Cumple</option>
-                    <option value="No Cumple">No Cumple</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="controlSiembraAli">Control de Siembra en ALI</label>
-                  <select id="controlSiembraAli" class="form-input" formControlName="controlSiembraAli" [disabled]="modoLectura">
-                    <option value="">— Seleccionar —</option>
-                    <option value="Cumple">Cumple</option>
-                    <option value="No Cumple">No Cumple</option>
-                  </select>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-        <!-- ════════ ETAPA 4: LECTURA 24H + RESULTADOS ════════ -->
-        <div *ngIf="etapaActual() === 4" class="etapa-panel animate__animated animate__fadeIn">
-          <div class="form-card">
-            <div class="form-card-header">
-              <div class="form-card-title-group">
-                <ion-icon name="analytics-outline" class="card-header-icon"></ion-icon>
-                <h2 class="form-card-title">4. Lectura 24h</h2>
-              </div>
-            </div>
-            <div class="form-card-body" [formGroup]="controlCalidadGroup">
-
-              <!-- Controls: E. coli / P. aeruginosa / Blanco -->
-              <p class="subseccion-title">Controles de rutina</p>
-              <div class="grid-3col">
-                <div class="form-group">
-                  <label class="form-label" for="controlPosEcoli4">Control (+) E. coli</label>
-                  <input id="controlPosEcoli4" type="text" class="form-input" formControlName="controlPosEcoli"
-                    placeholder="Resultado control positivo" [attr.readonly]="modoLectura ? true : null" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="controlNegPaer4">Control (-) P. aeruginosa</label>
-                  <input id="controlNegPaer4" type="text" class="form-input" formControlName="controlNegPaer"
-                    placeholder="Resultado control negativo" [attr.readonly]="modoLectura ? true : null" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="blanco4">Blanco</label>
-                  <input id="blanco4" type="text" class="form-input" formControlName="blanco"
-                    placeholder="Resultado blanco" [attr.readonly]="modoLectura ? true : null" />
+            <div class="form-card-body">
+              <div [formGroup]="controlCalidadAliGroup">
+                <p class="subseccion-title">Controles de Calidad en ALI</p>
+                <div class="grid-3col">
+                  <div class="form-group">
+                    <label class="form-label" for="duplicadoAli">Duplicado en ALI</label>
+                    <select id="duplicadoAli" class="form-input" formControlName="duplicadoAli" [disabled]="modoLectura">
+                      <option value="">— Seleccionar —</option>
+                      <option value="Cumple">Cumple</option>
+                      <option value="No Cumple">No Cumple</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="controlPositivoBlancoAli">Control (+) y Blanco en ALI</label>
+                    <select id="controlPositivoBlancoAli" class="form-input" formControlName="controlPositivoBlancoAli" [disabled]="modoLectura">
+                      <option value="">— Seleccionar —</option>
+                      <option value="Cumple">Cumple</option>
+                      <option value="No Cumple">No Cumple</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="controlSiembraAli">Control de Siembra en ALI</label>
+                    <select id="controlSiembraAli" class="form-input" formControlName="controlSiembraAli" [disabled]="modoLectura">
+                      <option value="">— Seleccionar —</option>
+                      <option value="Cumple">Cumple</option>
+                      <option value="No Cumple">No Cumple</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -187,52 +154,67 @@
                 [rol]="rol"
                 [responsables]="catalogos.responsables()"
                 [muestras]="muestrasLectura"
-                (muestrasChange)="muestrasLectura = $event"></app-ent-analisis-lectura>
-
-              <!-- Per-sample results summary -->
-              <ng-container *ngIf="muestrasConResultado.length > 0">
-                <div class="seccion-divider"></div>
-                <p class="subseccion-title">Resumen de resultados por muestra</p>
-                <div class="muestras-resultados-grid">
-                  <div class="muestra-resultado-card" *ngFor="let m of muestrasConResultado">
-                    <div class="mrc-header">{{ m.label }}</div>
-                    <div class="mrc-body">
-                      <div class="mrc-row mrc-row--result">
-                        <span class="mrc-label font-semibold">N Enterobact.</span>
-                        <span class="mrc-value font-bold text-blue-700">
-                          {{ m.resultado?.operador !== '=' ? (m.resultado?.operador + ' ') : '' }}{{ m.resultado?.nEnterobacterias !== null ? (m.resultado?.nEnterobacterias | number) : '—' }} UFC/g
-                        </span>
-                      </div>
-                      <div class="mrc-row" *ngIf="m.resultado?.casoAplicado && m.resultado?.casoAplicado !== 'PRIORIDAD_1' && m.resultado?.casoAplicado !== 'PRIORIDAD_2'">
-                        <span class="mrc-label">Caso</span>
-                        <span class="mrc-value chip chip-caso">{{ m.resultado?.casoAplicado }}</span>
-                      </div>
-                      <div class="mrc-row" *ngIf="m.resultado?.esEstimado">
-                        <span class="badge-estimado">Estimado</span>
-                      </div>
-                      <div class="mrc-row advertencia-item" *ngIf="m.resultado?.incongruenciaDetectada">
-                        <ion-icon name="warning-outline"></ion-icon>
-                        {{ m.resultado?.observacionIncongruencia }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </ng-container>
-
+                (muestrasChange)="onMuestrasChange($event)"
+                (resultadoCalculado)="onResultadoCalculado($event)"></app-ent-analisis-lectura>
             </div>
           </div>
         </div>
 
-        <!-- ════════ ETAPA 5: MANUAL DE INOCUIDAD ════════ -->
+        <!-- ════════ ETAPA 4: CONFIRMACIÓN BIOQUÍMICA ════════ -->
+        <div *ngIf="etapaActual() === 4" class="etapa-panel animate__animated animate__fadeIn">
+          <div class="form-card">
+            <div class="form-card-header">
+              <div class="form-card-title-group">
+                <ion-icon name="beaker-outline" class="card-header-icon"></ion-icon>
+                <h2 class="form-card-title">4. Confirmación Bioquímica</h2>
+              </div>
+            </div>
+            <div class="form-card-body">
+              <app-ent-incubacion-conf [formGroup]="traspasoConfGroup" [rol]="rol"
+                [equiposIncubacion]="catalogos.equiposIncubacion()"
+                [responsables]="catalogos.responsables()"></app-ent-incubacion-conf>
+
+              <div class="seccion-divider"></div>
+
+              <app-ent-lectura-oxidasa [formGroup]="confirmacionGroup" [rol]="rol"
+                [responsables]="catalogos.responsables()"></app-ent-lectura-oxidasa>
+            </div>
+          </div>
+        </div>
+
+        <!-- ════════ ETAPA 5: CÁLCULO FINAL ════════ -->
         <div *ngIf="etapaActual() === 5" class="etapa-panel animate__animated animate__fadeIn">
           <div class="form-card">
             <div class="form-card-header">
               <div class="form-card-title-group">
-                <ion-icon name="document-text-outline" class="card-header-icon"></ion-icon>
-                <h2 class="form-card-title">5. Manual de Inocuidad</h2>
+                <ion-icon name="calculator-outline" class="card-header-icon"></ion-icon>
+                <h2 class="form-card-title">5. Cálculo Final</h2>
               </div>
             </div>
-            <div class="form-card-body" [formGroup]="controlCalidadGroup">
+            <div class="form-card-body">
+              <p class="subseccion-title">Resultado final por muestra</p>
+              <ng-container *ngFor="let m of muestrasLectura; let last = last">
+                <app-ent-resultados
+                  [formGroup]="getResultadosGroup(m)"
+                  [rol]="rol"
+                  [muestraLabel]="m.label"
+                  [resultado]="m.resultado"></app-ent-resultados>
+                <div class="seccion-divider" *ngIf="!last"></div>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+
+        <!-- ════════ ETAPA 6: MANUAL DE INOCUIDAD / CIERRE ════════ -->
+        <div *ngIf="etapaActual() === 6" class="etapa-panel animate__animated animate__fadeIn">
+          <div class="form-card">
+            <div class="form-card-header">
+              <div class="form-card-title-group">
+                <ion-icon name="document-text-outline" class="card-header-icon"></ion-icon>
+                <h2 class="form-card-title">6. Manual de Inocuidad</h2>
+              </div>
+            </div>
+            <div class="form-card-body" [formGroup]="cierreGroup">
               <p class="subseccion-title">Cierre del análisis</p>
 
               <div class="grid-2col">

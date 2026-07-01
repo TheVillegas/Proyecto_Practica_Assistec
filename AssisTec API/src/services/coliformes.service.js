@@ -97,6 +97,12 @@ class ColiService {
         return {
             idMedioCaldoLauril: raw.id_medio_caldo_lauril ?? raw.idMedioCaldoLauril,
             idMedioTween80: raw.id_medio_tween_80 ?? raw.idMedioTween80,
+            fechaHomog: parseDate(raw.fecha_homog ?? raw.fechaHomog),
+            rutAnalistaHomog: raw.rut_analista_homog ?? raw.rutAnalistaHomog,
+            fechaSiembra: parseDate(raw.fecha_siembra ?? raw.fechaSiembra),
+            rutAnalistaSiembra: raw.rut_analista_siembra ?? raw.rutAnalistaSiembra,
+            nMuestra10g90ml: raw.n_muestra_10g_90ml ?? raw.nMuestra10g90ml,
+            nMuestra50g450ml: raw.n_muestra_50g_450ml ?? raw.nMuestra50g450ml,
             completada: raw.completada
         };
     }
@@ -117,15 +123,24 @@ class ColiService {
     mapFase35Payload(body) {
         const raw = resolvePayloadSection(body, 'fase');
         return {
-            ctrlTotKAerogenes: raw.ctrl_tot_k_aerogenes ?? raw.ctrlTotKAerogenes,
-            ctrlTotSAureus: raw.ctrl_tot_s_aureus ?? raw.ctrlTotSAureus,
-            blancoTotales: raw.blanco_totales ?? raw.blancoTotales,
-            ctrlFecEColi: raw.ctrl_fec_e_coli ?? raw.ctrlFecEColi,
-            ctrlFecKAerogenes: raw.ctrl_fec_k_aerogenes ?? raw.ctrlFecKAerogenes,
-            blancoFecales: raw.blanco_fecales ?? raw.blancoFecales,
-            ctrlEcoEColi: raw.ctrl_eco_e_coli ?? raw.ctrlEcoEColi,
-            ctrlEcoKAerogenes: raw.ctrl_eco_k_aerogenes ?? raw.ctrlEcoKAerogenes,
-            blancoEcoli: raw.blanco_ecoli ?? raw.blancoEcoli,
+            ctrlTotKAerogenes24h: raw.ctrl_tot_k_aerogenes_24h ?? raw.ctrlTotKAerogenes24h,
+            ctrlTotKAerogenes48h: raw.ctrl_tot_k_aerogenes_48h ?? raw.ctrlTotKAerogenes48h,
+            ctrlTotSAureus24h: raw.ctrl_tot_s_aureus_24h ?? raw.ctrlTotSAureus24h,
+            ctrlTotSAureus48h: raw.ctrl_tot_s_aureus_48h ?? raw.ctrlTotSAureus48h,
+            blancoTotales24h: raw.blanco_totales_24h ?? raw.blancoTotales24h,
+            blancoTotales48h: raw.blanco_totales_48h ?? raw.blancoTotales48h,
+            ctrlFecEColi24h: raw.ctrl_fec_e_coli_24h ?? raw.ctrlFecEColi24h,
+            ctrlFecEColi48h: raw.ctrl_fec_e_coli_48h ?? raw.ctrlFecEColi48h,
+            ctrlFecKAerogenes24h: raw.ctrl_fec_k_aerogenes_24h ?? raw.ctrlFecKAerogenes24h,
+            ctrlFecKAerogenes48h: raw.ctrl_fec_k_aerogenes_48h ?? raw.ctrlFecKAerogenes48h,
+            blancoFecales24h: raw.blanco_fecales_24h ?? raw.blancoFecales24h,
+            blancoFecales48h: raw.blanco_fecales_48h ?? raw.blancoFecales48h,
+            ctrlEcoEColi24h: raw.ctrl_eco_e_coli_24h ?? raw.ctrlEcoEColi24h,
+            ctrlEcoEColi48h: raw.ctrl_eco_e_coli_48h ?? raw.ctrlEcoEColi48h,
+            ctrlEcoKAerogenes24h: raw.ctrl_eco_k_aerogenes_24h ?? raw.ctrlEcoKAerogenes24h,
+            ctrlEcoKAerogenes48h: raw.ctrl_eco_k_aerogenes_48h ?? raw.ctrlEcoKAerogenes48h,
+            blancoEcoli24h: raw.blanco_ecoli_24h ?? raw.blancoEcoli24h,
+            blancoEcoli48h: raw.blanco_ecoli_48h ?? raw.blancoEcoli48h,
             completada: raw.completada
         };
     }
@@ -348,14 +363,15 @@ class ColiService {
 
             const usaNuevoContrato = lecturas &&
                 Array.isArray(lecturas.totales) &&
-                Array.isArray(lecturas.fecales) &&
-                Array.isArray(lecturas.ecoli);
+                Array.isArray(lecturas.fecales);
 
             if (usaNuevoContrato) {
                 resultadosPorTipo = {
                     totales: this._calcularDesdeLecturas(lecturas.totales),
                     fecales: this._calcularDesdeLecturas(lecturas.fecales),
-                    ecoli: this._calcularDesdeLecturas(lecturas.ecoli)
+                    ecoli: Array.isArray(lecturas.ecoli)
+                        ? this._calcularDesdeLecturas(lecturas.ecoli)
+                        : this._resultadoInvalido('Pendiente de confirmación bioquímica')
                 };
             } else {
                 resultadosPorTipo = {

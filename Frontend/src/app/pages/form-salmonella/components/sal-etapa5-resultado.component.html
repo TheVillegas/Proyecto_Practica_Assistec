@@ -1,0 +1,42 @@
+<div class="subetapa-section">
+  <p class="subseccion-title">Conclusión final · Presencia / ausencia de Salmonella</p>
+
+  <div *ngIf="!calculado" class="empty-state">
+    <ion-icon name="flask-outline" class="empty-state__icon"></ion-icon>
+    <p>Complete la Etapa 4 y presione <strong>Calcular resultado</strong> para obtener la conclusión final por muestra.</p>
+    <button type="button" class="btn-calcular" (click)="onCalcular()">
+      <ion-icon name="calculator-outline"></ion-icon>
+      Calcular resultado
+    </button>
+  </div>
+
+  <ng-container *ngIf="calculado">
+    <div class="tabla-wrapper">
+      <table class="tabla-placas">
+        <thead>
+          <tr>
+            <th>Nº de muestra (o duplicado)</th>
+            <th>Resultado final</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of resultados">
+            <td class="font-semibold text-left">{{ m.label }}</td>
+            <td>
+              <span class="badge-alerta" *ngIf="m.resultadoFinal === 'Presencia'">Presencia</span>
+              <span class="badge-seguro" *ngIf="m.resultadoFinal === 'Ausencia'">Ausencia</span>
+              <span class="text-slate-400" *ngIf="!m.resultadoFinal">Sin datos</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex justify-center mt-4">
+      <button type="button" class="btn-calcular" (click)="onCalcular()">
+        <ion-icon name="refresh-outline"></ion-icon>
+        Recalcular resultado
+      </button>
+    </div>
+  </ng-container>
+</div>

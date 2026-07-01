@@ -343,3 +343,46 @@
 
   ion-icon { font-size: 1rem; }
 }
+
+// ─── RESULT PANEL (per-sample calculation output) ────────────────────────────
+.resultado-card {
+  @apply mx-4 mb-3 mt-1 p-4 rounded-lg border border-slate-200 bg-white;
+}
+
+.resultado-main {
+  @apply flex flex-wrap items-center gap-2;
+}
+
+.resultado-texto {
+  @apply text-base font-bold text-slate-800;
+}
+
+.resultado-sd {
+  color: var(--brand-placas);
+}
+
+.resultado-meta {
+  @apply flex flex-wrap gap-4 mt-2 text-xs text-slate-500;
+}
+
+.resultado-advertencias {
+  @apply mt-2.5 flex flex-col gap-1;
+}
+
+.chip {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+}
+
+.chip-caso {
+  @apply bg-blue-100 text-blue-700;
+}
+
+.badge-estimado {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700;
+}
+
+.advertencia-item {
+  @apply flex items-center gap-1.5 text-xs text-orange-700 bg-orange-50 border border-orange-100 rounded px-2 py-1;
+
+  ion-icon { font-size: 14px; }
+}

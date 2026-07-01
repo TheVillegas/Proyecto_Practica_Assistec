@@ -1,0 +1,172 @@
+<div [formGroup]="formGroupFase4a" class="subetapa-section">
+  <p class="subseccion-title">Fase 4A · Datos de tiempo y agares</p>
+
+  <div class="grid-3col">
+    <div class="form-group">
+      <label class="form-label" for="fechaTraspasoAgares">Fecha traspaso a agares</label>
+      <input id="fechaTraspasoAgares" type="date" class="form-input" formControlName="fechaTraspasoAgares" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaTraspasoAgares">Hora traspaso a agares</label>
+      <input id="horaTraspasoAgares" type="time" class="form-input" formControlName="horaTraspasoAgares" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="analistaTraspasoAgares">Analista - traspaso a agares</label>
+      <input id="analistaTraspasoAgares" type="text" class="form-input" formControlName="analistaTraspasoAgares" />
+    </div>
+  </div>
+
+  <div class="grid-3col mt-4 pt-4 border-t border-slate-100">
+    <div class="form-group">
+      <label class="form-label" for="loteAgarXLD">Clave/lote Agar XLD</label>
+      <input id="loteAgarXLD" type="text" class="form-input" formControlName="loteAgarXLD" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="loteAgarSS">Clave/lote Agar SS</label>
+      <input id="loteAgarSS" type="text" class="form-input" formControlName="loteAgarSS" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="estufaIncubacionAgares">Estufa incubación de agares</label>
+      <ion-select id="estufaIncubacionAgares" formControlName="estufaIncubacionAgares" interface="popover" placeholder="— Seleccionar estufa —" class="form-select">
+        <ion-select-option value="">— Seleccionar estufa —</ion-select-option>
+        <ion-select-option *ngFor="let e of equiposIncubacion" [value]="e.idIncubacion">{{ e.nombreEquipo }} ({{ e.temperaturaRef }})</ion-select-option>
+      </ion-select>
+    </div>
+  </div>
+
+  <div class="grid-3col mt-4 pt-4 border-t border-slate-100">
+    <div class="form-group">
+      <label class="form-label" for="fechaLectura24h">Fecha/hora lectura agar (24 hrs)</label>
+      <input id="fechaLectura24h" type="date" class="form-input" formControlName="fechaLectura24h" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaLectura24h">Hora lectura (24 hrs)</label>
+      <input id="horaLectura24h" type="time" class="form-input" formControlName="horaLectura24h" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="analistaLectura24h">Analista - lectura agar (24 hrs)</label>
+      <input id="analistaLectura24h" type="text" class="form-input" formControlName="analistaLectura24h" />
+    </div>
+  </div>
+
+  <div class="grid-3col mt-4 pt-4 border-t border-slate-100">
+    <div class="form-group">
+      <label class="form-label" for="fechaLectura48h">Fecha/hora lectura agar (48 hrs)</label>
+      <input id="fechaLectura48h" type="date" class="form-input" formControlName="fechaLectura48h" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaLectura48h">Hora lectura (48 hrs)</label>
+      <input id="horaLectura48h" type="time" class="form-input" formControlName="horaLectura48h" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="analistaLectura48h">Analista - lectura agar (48 hrs)</label>
+      <input id="analistaLectura48h" type="text" class="form-input" formControlName="analistaLectura48h" />
+    </div>
+  </div>
+</div>
+
+<div class="seccion-divider"></div>
+
+<div class="subetapa-section">
+  <p class="subseccion-title">Fase 4B · Resultados en agar</p>
+
+  <p class="campo-hint mb-2">Resultados provenientes de Selenito</p>
+  <div class="tabla-wrapper mb-4">
+    <table class="tabla-placas">
+      <thead>
+        <tr>
+          <th>Nº muestra</th>
+          <th>XLD (24 hrs)</th>
+          <th>SS (24 hrs)</th>
+          <th>XLD (48 hrs)</th>
+          <th>SS (48 hrs)</th>
+          <th>Control (+) S. Enteritidis</th>
+          <th>Control (-) K. Pneumoniae</th>
+          <th>Blanco</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of muestras">
+          <td class="font-semibold text-left">{{ m.label }}</td>
+          <td>
+            <div class="flex justify-center gap-2 text-xs">
+              <label class="flex items-center gap-1"><input type="radio" name="xld24Sel_{{m.id}}" [checked]="m.xld24hSel === '+'" (change)="setCelda(m, 'xld24hSel', '+')" />+</label>
+              <label class="flex items-center gap-1"><input type="radio" name="xld24Sel_{{m.id}}" [checked]="m.xld24hSel === '-'" (change)="setCelda(m, 'xld24hSel', '-')" />-</label>
+            </div>
+          </td>
+          <td>
+            <div class="flex justify-center gap-2 text-xs">
+              <label class="flex items-center gap-1"><input type="radio" name="ss24Sel_{{m.id}}" [checked]="m.ss24hSel === '+'" (change)="setCelda(m, 'ss24hSel', '+')" />+</label>
+              <label class="flex items-center gap-1"><input type="radio" name="ss24Sel_{{m.id}}" [checked]="m.ss24hSel === '-'" (change)="setCelda(m, 'ss24hSel', '-')" />-</label>
+            </div>
+          </td>
+          <td>
+            <div class="flex justify-center gap-2 text-xs">
+              <label class="flex items-center gap-1"><input type="radio" name="xld48Sel_{{m.id}}" [checked]="m.xld48hSel === '+'" (change)="setCelda(m, 'xld48hSel', '+')" />+</label>
+              <label class="flex items-center gap-1"><input type="radio" name="xld48Sel_{{m.id}}" [checked]="m.xld48hSel === '-'" (change)="setCelda(m, 'xld48hSel', '-')" />-</label>
+            </div>
+          </td>
+          <td>
+            <div class="flex justify-center gap-2 text-xs">
+              <label class="flex items-center gap-1"><input type="radio" name="ss48Sel_{{m.id}}" [checked]="m.ss48hSel === '+'" (change)="setCelda(m, 'ss48hSel', '+')" />+</label>
+              <label class="flex items-center gap-1"><input type="radio" name="ss48Sel_{{m.id}}" [checked]="m.ss48hSel === '-'" (change)="setCelda(m, 'ss48hSel', '-')" />-</label>
+            </div>
+          </td>
+          <td><input type="checkbox" class="form-checkbox" [checked]="m.ctrlPositivoSEnteritidis" (change)="toggleControl(m, 'ctrlPositivoSEnteritidis')" /></td>
+          <td><input type="checkbox" class="form-checkbox" [checked]="m.ctrlNegativoKPneumoniae" (change)="toggleControl(m, 'ctrlNegativoKPneumoniae')" /></td>
+          <td><input type="checkbox" class="form-checkbox" [checked]="m.ctrlBlanco" (change)="toggleControl(m, 'ctrlBlanco')" /></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="campo-hint mb-2">Resultados provenientes de Rappaport</p>
+  <div class="tabla-wrapper">
+    <table class="tabla-placas">
+      <thead>
+        <tr>
+          <th>Nº muestra</th>
+          <th>XLD (24 hrs)</th>
+          <th>SS (24 hrs)</th>
+          <th>XLD (48 hrs)</th>
+          <th>SS (48 hrs)</th>
+          <th>Control (+) S. Enteritidis</th>
+          <th>Control (-) K. Pneumoniae</th>
+          <th>Blanco</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of muestras">
+          <td class="font-semibold text-left">{{ m.label }}</td>
+          <td>
+            <div class="flex justify-center gap-2 text-xs">
+              <label class="flex items-center gap-1"><input type="radio" name="xld24Rap_{{m.id}}" [checked]="m.xld24hRap === '+'" (change)="setCelda(m, 'xld24hRap', '+')" />+</label>
+              <label class="flex items-center gap-1"><input type="radio" name="xld24Rap_{{m.id}}" [checked]="m.xld24hRap === '-'" (change)="setCelda(m, 'xld24hRap', '-')" />-</label>
+            </div>
+          </td>
+          <td>
+            <div class="flex justify-center gap-2 text-xs">
+              <label class="flex items-center gap-1"><input type="radio" name="ss24Rap_{{m.id}}" [checked]="m.ss24hRap === '+'" (change)="setCelda(m, 'ss24hRap', '+')" />+</label>
+              <label class="flex items-center gap-1"><input type="radio" name="ss24Rap_{{m.id}}" [checked]="m.ss24hRap === '-'" (change)="setCelda(m, 'ss24hRap', '-')" />-</label>
+            </div>
+          </td>
+          <td>
+            <div class="flex justify-center gap-2 text-xs">
+              <label class="flex items-center gap-1"><input type="radio" name="xld48Rap_{{m.id}}" [checked]="m.xld48hRap === '+'" (change)="setCelda(m, 'xld48hRap', '+')" />+</label>
+              <label class="flex items-center gap-1"><input type="radio" name="xld48Rap_{{m.id}}" [checked]="m.xld48hRap === '-'" (change)="setCelda(m, 'xld48hRap', '-')" />-</label>
+            </div>
+          </td>
+          <td>
+            <div class="flex justify-center gap-2 text-xs">
+              <label class="flex items-center gap-1"><input type="radio" name="ss48Rap_{{m.id}}" [checked]="m.ss48hRap === '+'" (change)="setCelda(m, 'ss48hRap', '+')" />+</label>
+              <label class="flex items-center gap-1"><input type="radio" name="ss48Rap_{{m.id}}" [checked]="m.ss48hRap === '-'" (change)="setCelda(m, 'ss48hRap', '-')" />-</label>
+            </div>
+          </td>
+          <td><input type="checkbox" class="form-checkbox" [checked]="m.ctrlPositivoSEnteritidis" (change)="toggleControl(m, 'ctrlPositivoSEnteritidis')" /></td>
+          <td><input type="checkbox" class="form-checkbox" [checked]="m.ctrlNegativoKPneumoniae" (change)="toggleControl(m, 'ctrlNegativoKPneumoniae')" /></td>
+          <td><input type="checkbox" class="form-checkbox" [checked]="m.ctrlBlanco" (change)="toggleControl(m, 'ctrlBlanco')" /></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

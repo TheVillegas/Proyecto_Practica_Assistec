@@ -59,6 +59,12 @@ export interface ColiFase1 {
 export interface ColiFase2 {
   idMedioCaldoLauril: number;   // FK to medios_cultivos
   idMedioTween80?: number;      // FK to medios_cultivos
+  fechaHomog?: string;
+  rutAnalistaHomog?: string;
+  fechaSiembra?: string;
+  rutAnalistaSiembra?: string;
+  nMuestra10g90ml?: number;
+  nMuestra50g450ml?: number;
   estufas: ColiFase2Estufa[];
   micropipetas: ColiFase2Micropipeta[];
 }
@@ -86,30 +92,48 @@ export interface ColiFase3Submuestra {
 
 /** @deprecated Use ColiFase4Controles. Kept for backend API compatibility. */
 export interface ColiFase35Controles {
-  ctControlKAerogenes: string;
-  ctControlSAureus: string;
+  ctControlKAerogenes24h: string;
+  ctControlKAerogenes48h: string;
+  ctControlSAureus24h: string;
+  ctControlSAureus48h: string;
   ctControlEColi: string;
-  ctControlBlanco: string;
-  cfControlEColi: string;
-  cfControlKAerogenes: string;
-  cfControlBlanco: string;
-  ecControlEColi: string;
-  ecControlKAerogenes: string;
-  ecControlBlanco: string;
+  ctControlBlanco24h: string;
+  ctControlBlanco48h: string;
+  cfControlEColi24h: string;
+  cfControlEColi48h: string;
+  cfControlKAerogenes24h: string;
+  cfControlKAerogenes48h: string;
+  cfControlBlanco24h: string;
+  cfControlBlanco48h: string;
+  ecControlEColi24h: string;
+  ecControlEColi48h: string;
+  ecControlKAerogenes24h: string;
+  ecControlKAerogenes48h: string;
+  ecControlBlanco24h: string;
+  ecControlBlanco48h: string;
 }
 
 /** Controls section — now logically Etapa 4 in the 5-stage wizard */
 export interface ColiFase4Controles {
-  ctControlKAerogenes: string;
-  ctControlSAureus: string;
+  ctControlKAerogenes24h: string;
+  ctControlKAerogenes48h: string;
+  ctControlSAureus24h: string;
+  ctControlSAureus48h: string;
   ctControlEColi: string;
-  ctControlBlanco: string;
-  cfControlEColi: string;
-  cfControlKAerogenes: string;
-  cfControlBlanco: string;
-  ecControlEColi: string;
-  ecControlKAerogenes: string;
-  ecControlBlanco: string;
+  ctControlBlanco24h: string;
+  ctControlBlanco48h: string;
+  cfControlEColi24h: string;
+  cfControlEColi48h: string;
+  cfControlKAerogenes24h: string;
+  cfControlKAerogenes48h: string;
+  cfControlBlanco24h: string;
+  cfControlBlanco48h: string;
+  ecControlEColi24h: string;
+  ecControlEColi48h: string;
+  ecControlKAerogenes24h: string;
+  ecControlKAerogenes48h: string;
+  ecControlBlanco24h: string;
+  ecControlBlanco48h: string;
 }
 
 export interface ColiFase4CalidadManual {
@@ -122,11 +146,21 @@ export interface ColiFase4CalidadManual {
   desfavorableFechaEntrega?: string;
 }
 
+export interface ColiOrganismoResultado {
+  mpn: number | null;
+  estado: 'cero' | 'estimado' | 'mayor_que' | 'invalido';
+  limiteInferior: number | null;
+  limiteSuperior: number | null;
+}
+
 export interface ColiFase4Resultado {
   idColiMuestra: number;
-  coliformesTotales: number;
-  coliformesFecales: number;
-  eColi: number;
+  coliformesTotales: number | null;
+  coliformesFecales: number | null;
+  eColi: number | null;
+  totales?: ColiOrganismoResultado;
+  fecales?: ColiOrganismoResultado;
+  ecoli?: ColiOrganismoResultado;
 }
 
 export interface SaveFase1Payload {
@@ -140,6 +174,12 @@ export interface SaveFase1Payload {
 export interface SaveFase2Payload {
   idMedioCaldoLauril: number;
   idMedioTween80?: number;
+  fechaHomog?: string;
+  rutAnalistaHomog?: string;
+  fechaSiembra?: string;
+  rutAnalistaSiembra?: string;
+  nMuestra10g90ml?: number;
+  nMuestra50g450ml?: number;
   estufas: { idIncubacion: number }[];
   micropipetas: { idPipeta: number; capacidad: string }[];
   completada: boolean;
@@ -169,7 +209,7 @@ export interface CalcularNmpMuestraPayload {
   lecturas: {
     totales: boolean[][];
     fecales: boolean[][];
-    ecoli: boolean[][];
+    ecoli?: boolean[][];
   };
 }
 

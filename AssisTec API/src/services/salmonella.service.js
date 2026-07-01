@@ -120,6 +120,10 @@ class SalService {
             resultadoCtrlPositivo: raw.resultado_ctrl_positivo ?? raw.resultadoCtrlPositivo,
             ctrlSiembraAli: raw.ctrl_siembra_ali ?? raw.ctrlSiembraAli,
             resultadoCtrlSiembra: raw.resultado_ctrl_siembra ?? raw.resultadoCtrlSiembra,
+            desfavorable: raw.desfavorable,
+            tablaPagina: raw.tabla_pagina ?? raw.tablaPagina,
+            limite: raw.limite,
+            fechaHoraEntrega: parseDate(raw.fecha_hora_entrega ?? raw.fechaHoraEntrega),
             completada: raw.completada
         };
     }
