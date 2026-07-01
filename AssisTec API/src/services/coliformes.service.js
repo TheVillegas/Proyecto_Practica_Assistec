@@ -1,4 +1,3 @@
-const winston = require('winston');
 const coliRepository = require('../repositories/coliformes.repository');
 const prisma = require('../config/prisma');
 const ROLES = require('../config/roles');
@@ -15,11 +14,6 @@ const LABELS_INCONGRUENCIA = {
     fecales: 'coliformes fecales',
     ecoli: 'E. coli'
 };
-
-const logger = winston.createLogger({
-    level: 'warn',
-    transports: [new winston.transports.Console({ format: winston.format.simple() })]
-});
 
 class ColiService {
     assertCanWrite(usuario) {
@@ -338,25 +332,6 @@ class ColiService {
         return resultados;
     }
 
-    _construirConteosDesdeConteosPorDilucion(conteosPorDilucion) {
-        return conteosPorDilucion.map((positivos, index) => ({
-            positivos: Number(positivos) || 0,
-            tubos: 3,
-            volumenMuestraPorTubo: VOLUMENES_MUESTRA[index]
-        }));
-    }
-
-    _calcularResultadosLegacy(muestra) {
-        const conteosTotales = this._construirConteosDesdeConteosPorDilucion(muestra.tubosPositivos24h);
-        const conteosFecales = this._construirConteosDesdeConteosPorDilucion(muestra.tubosPositivos48h);
-
-        return {
-            totales: calcularMPN(conteosTotales),
-            fecales: calcularMPN(conteosFecales),
-            ecoli: calcularMPN(conteosFecales)
-        };
-    }
-
     async calcularNmp(idFormulario, body, usuario) {
         this.assertCanWrite(usuario);
 
@@ -382,14 +357,6 @@ class ColiService {
                     fecales: this._calcularDesdeLecturas(lecturas.fecales),
                     ecoli: this._calcularDesdeLecturas(lecturas.ecoli)
                 };
-            } else if (Array.isArray(muestra.tubosPositivos24h) || Array.isArray(muestra.tubosPositivos48h)) {
-                // TODO: fallback temporal para frontend que aun no envia el contrato nuevo.
-                // Se conserva solo hasta que el change de UI adopte lecturas {totales, fecales, ecoli}.
-                logger.warn(
-                    `calcularNmp recibio body legacy para idColiMuestra=${idColiMuestra}. ` +
-                    'Usando fallback tubosPositivos24h/48h.'
-                );
-                resultadosPorTipo = this._calcularResultadosLegacy(muestra);
             } else {
                 resultadosPorTipo = {
                     totales: this._resultadoInvalido('No se recibieron lecturas para coliformes totales'),

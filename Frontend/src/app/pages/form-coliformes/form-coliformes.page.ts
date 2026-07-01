@@ -36,6 +36,8 @@ export interface EntradaMuestra {
   submuestras24h: Record<string, [ResultadoSubmuestra, ResultadoSubmuestra, ResultadoSubmuestra]>;
   /** submuestras48h[dilucion][tuboIndex] */
   submuestras48h: Record<string, [ResultadoSubmuestra, ResultadoSubmuestra, ResultadoSubmuestra]>;
+  /** submuestrasEcoli[dilucion][tuboIndex] */
+  submuestrasEcoli: Record<string, [ResultadoSubmuestra, ResultadoSubmuestra, ResultadoSubmuestra]>;
   /** Resultados NMP devueltos por el backend (se llenan tras calcularNMP) */
   resultados?: {
     ct: string;
@@ -62,6 +64,7 @@ function crearEntradaDesdeMuestra(muestra: ColiMuestra): EntradaMuestra {
     label: muestra.numeroMuestra,
     submuestras24h: crearSubmuestrasDefault(),
     submuestras48h: crearSubmuestrasDefault(),
+    submuestrasEcoli: crearSubmuestrasDefault(),
   };
 }
 
@@ -303,6 +306,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         label: '1',
         submuestras24h: crearSubmuestrasDefault(),
         submuestras48h: crearSubmuestrasDefault(),
+        submuestrasEcoli: crearSubmuestrasDefault(),
       };
       this.localIdCounter--;
       const dup: EntradaMuestra = {
@@ -311,6 +315,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
         label: '1 Dup',
         submuestras24h: crearSubmuestrasDefault(),
         submuestras48h: crearSubmuestrasDefault(),
+        submuestrasEcoli: crearSubmuestrasDefault(),
       };
       this.entradasMuestra = [m1, dup];
     }
@@ -466,6 +471,7 @@ export class FormColiformesPage implements OnInit, OnDestroy {
       label: `${count}`,
       submuestras24h: crearSubmuestrasDefault(),
       submuestras48h: crearSubmuestrasDefault(),
+      submuestrasEcoli: crearSubmuestrasDefault(),
     };
     this.entradasMuestra.push(nueva);
   }
@@ -701,20 +707,23 @@ export class FormColiformesPage implements OnInit, OnDestroy {
     return result;
   }
 
-  private contarPositivosPorDilucion(
+  private submuestrasALecturas(
     submuestras: EntradaMuestra['submuestras24h']
-  ): [number, number, number] {
-    return this.DILUCIONES.map((dil) => (
-      submuestras[dil].filter((valor) => valor === 'positivo').length
-    )) as [number, number, number];
+  ): boolean[][] {
+    return this.DILUCIONES.map((dil) =>
+      submuestras[dil].map((valor) => valor === 'positivo')
+    );
   }
 
   private buildCalculoNmpPayload(): CalcularNmpPayload {
     return {
       muestras: this.entradasMuestra.map((entrada) => ({
         idColiMuestra: Number(entrada.id),
-        tubosPositivos24h: this.contarPositivosPorDilucion(entrada.submuestras24h),
-        tubosPositivos48h: this.contarPositivosPorDilucion(entrada.submuestras48h),
+        lecturas: {
+          totales: this.submuestrasALecturas(entrada.submuestras24h),
+          fecales: this.submuestrasALecturas(entrada.submuestras48h),
+          ecoli: this.submuestrasALecturas(entrada.submuestrasEcoli),
+        },
       })),
     };
   }

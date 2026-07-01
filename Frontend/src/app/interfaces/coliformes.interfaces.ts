@@ -166,8 +166,11 @@ export interface SaveFase4Payload {
 
 export interface CalcularNmpMuestraPayload {
   idColiMuestra: number;
-  tubosPositivos24h: [number, number, number];
-  tubosPositivos48h: [number, number, number];
+  lecturas: {
+    totales: boolean[][];
+    fecales: boolean[][];
+    ecoli: boolean[][];
+  };
 }
 
 export interface CalcularNmpPayload {

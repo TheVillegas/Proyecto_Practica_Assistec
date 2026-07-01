@@ -268,7 +268,7 @@ describe('ColiService', () => {
             expect(r.observacionIncongruencia).toContain('coliformes totales');
         });
 
-        it('fallback legacy: acepta tubosPositivos24h/48h sin romper', async () => {
+        it('payload legacy tubosPositivos24h/48h: no hace fallback, marca los 3 organismos como invalidos', async () => {
             ColiRepository.findById.mockResolvedValue({ idColiFormulario: BigInt(1) });
 
             const body = {
@@ -282,11 +282,12 @@ describe('ColiService', () => {
             const { fase4Resultado } = await ColiService.calcularNmp(1, body, usuarioAnalista);
             const r = fase4Resultado[0];
 
-            expect(r.coliformesTotales).toBeGreaterThan(0);
-            expect(r.coliformesFecales).toBe(0);
-            expect(r.eColi).toBe(0);
-            expect(r.totales.estado).toBe('estimado');
-            expect(r.fecales.estado).toBe('cero');
+            expect(r.coliformesTotales).toBeNull();
+            expect(r.coliformesFecales).toBeNull();
+            expect(r.eColi).toBeNull();
+            expect(r.totales.estado).toBe('invalido');
+            expect(r.fecales.estado).toBe('invalido');
+            expect(r.ecoli.estado).toBe('invalido');
         });
     });
 });
