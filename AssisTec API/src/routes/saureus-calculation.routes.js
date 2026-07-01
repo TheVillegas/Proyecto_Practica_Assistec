@@ -25,12 +25,12 @@ const prisma = new PrismaClient();
  */
 router.post('/calcular-muestra', (req, res) => {
   try {
-    const { solicitudAnalisisId, muestraId, placas } = req.body;
+    const { placas } = req.body;
 
-    if (!solicitudAnalisisId || !muestraId || !Array.isArray(placas) || placas.length === 0) {
+    if (!Array.isArray(placas) || placas.length === 0) {
       return res.status(400).json({
         error: 'Faltan campos requeridos',
-        camposRequeridos: ['solicitudAnalisisId', 'muestraId', 'placas (array no vacío)']
+        camposRequeridos: ['placas (array no vacío)']
       });
     }
 
