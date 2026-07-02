@@ -2,11 +2,10 @@
 
 set -e
 
-echo "Sincronizando Base de Datos con Prisma..."
-sleep 40 
+echo "Aplicando migraciones de Prisma..."
+sleep 5
 
-
-pnpm exec prisma db push --skip-generate
+pnpm exec prisma migrate deploy
 
 echo "Ejecutando Seeds de Prisma..."
 node run-seeds.js

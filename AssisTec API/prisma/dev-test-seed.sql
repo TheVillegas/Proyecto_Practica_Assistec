@@ -2,14 +2,17 @@
 -- Dev Test — Seed Data for Test Analyst
 -- ============================================================
 -- Crea cliente + solicitud validada con los 4 formularios
--- microbiológicos para que el analista revise y aplique hotfixes.
+-- microbiologicos para que el analista revise y aplique hotfixes.
 -- Idempotente: omite si ya existe ALI-003/2026.
 -- ============================================================
 -- Uso: make dev-test
 -- Analista: 0-0 (Analista Prueba)
+-- NOTA: Este archivo NO es una migracion de Prisma.
+--       Se carga manualmente via psql despues de migrate deploy
+--       y run-seeds.js, usando el esquema ACTUAL (post-migraciones).
 -- ============================================================
 
-DO $$ 
+DO $$
 DECLARE
     v_solicitud_id BIGINT;
     v_cliente_id   INT;
@@ -17,6 +20,9 @@ DECLARE
     v_muestra1_id  BIGINT;
     v_muestra2_id  BIGINT;
     v_muestra3_id  BIGINT;
+    v_medio_vrbg   INT;
+    v_medio_bp     INT;
+    v_medio_apt    INT;
 BEGIN
     -- ── Idempotencia ──
     IF EXISTS (SELECT 1 FROM solicitud_ingreso WHERE anio_ingreso = 2026 AND numero_ali = 3) THEN
@@ -24,8 +30,26 @@ BEGIN
         RETURN;
     END IF;
 
+    -- ── Resolver IDs de medios_cultivos (sembrados por migraciones) ──
+    SELECT id_medio_cultivo INTO v_medio_vrbg
+        FROM medios_cultivos WHERE nombre = 'Agar VRBG';
+    SELECT id_medio_cultivo INTO v_medio_bp
+        FROM medios_cultivos WHERE nombre = 'Agar Baird Parker';
+    SELECT id_medio_cultivo INTO v_medio_apt
+        FROM medios_cultivos WHERE nombre = 'Caldo APT';
+
+    IF v_medio_vrbg IS NULL THEN
+        RAISE EXCEPTION 'medios_cultivos "Agar VRBG" no encontrado — ejecutar migrate deploy primero';
+    END IF;
+    IF v_medio_bp IS NULL THEN
+        RAISE EXCEPTION 'medios_cultivos "Agar Baird Parker" no encontrado — ejecutar migrate deploy primero';
+    END IF;
+    IF v_medio_apt IS NULL THEN
+        RAISE EXCEPTION 'medios_cultivos "Caldo APT" no encontrado — ejecutar migrate deploy primero';
+    END IF;
+
     -- ═══════════════════════════════════════════════════════════════
-    -- 0. CLIENTE + DIRECCIÓN (si no existen)
+    -- 0. CLIENTE + DIRECCION (si no existen)
     -- ═══════════════════════════════════════════════════════════════
     INSERT INTO clientes (rut, nombre, email, telefono, activo)
     VALUES ('CL-TEST-01', 'Cliente Desarrollo Lab', 'cliente@devlab.cl', '+56 9 1234 5678', 'S')
@@ -66,7 +90,7 @@ BEGIN
         created_at, updated_at, created_by
     ) VALUES (
         2026, 3, 'ACTA-DEVTEST-001', '', NULL,
-        3, v_cliente_id, v_direccion_id,            -- cat=Alimento, cliente dinámico
+        3, v_cliente_id, v_direccion_id,            -- cat=Alimento, cliente dinamico
         '2026-06-25 09:00:00', 4.50,
         1,                                          -- termometro=id_equipo 1
         '2026-06-24 08:00:00', '2026-06-24 10:00:00',
@@ -74,8 +98,8 @@ BEGIN
         'Analista Prueba', 'Planta Proceso A',
         'IT-001', 'Cliente', 1,                     -- Freezer 33-M
         false,
-        'Solicitud de prueba — validar formularios microbiológicos',
-        'Requiere análisis completo microbiológico', '',
+        'Solicitud de prueba — validar formularios microbiologicos',
+        'Requiere analisis completo microbiologico', '',
         'validada',                                  -- Estado: formularios generables
         '3-3', '2-2', '1-1',                        -- Ingreso Prueba, Jefe Area, Coordinadora
         '2026-06-25 09:30:00', '2026-06-25 09:30:00', '',
@@ -86,12 +110,11 @@ BEGIN
         '2026-06-25 09:00:00', '2026-07-02',
         '2026-07-02', '2026-07-02',
         '2026-06-25', '2026-06-25', '3-3'
-    );
-
-    v_solicitud_id := 3;
+    )
+    RETURNING id_solicitud INTO v_solicitud_id;
 
     -- ═══════════════════════════════════════════════════════════════
-    -- 0b. LOTES REACTIVO (necesarios para ent_etapa1)
+    -- 0b. LOTES REACTIVO (necesarios para datos legacy)
     -- ═══════════════════════════════════════════════════════════════
     INSERT INTO lotes_reactivo (tipo, codigo_lote, fecha_vencimiento, activo)
     VALUES
@@ -103,40 +126,40 @@ BEGIN
     -- ═══════════════════════════════════════════════════════════════
     -- 1b. REGISTRO LEGACY — muestras_ali
     -- Necesario para que el backend encuentre esta solicitud
-    -- en el listado de búsqueda ALI (muestraAli.findAll / findByCodigoAli)
+    -- en el listado de busqueda ALI (muestraAli.findAll / findByCodigoAli)
     -- ═══════════════════════════════════════════════════════════════
     INSERT INTO muestras_ali (codigo_ali, codigo_otros, observaciones_cliente, observaciones_generales)
-    VALUES (3, 'TEST-DEV-003', 'Solicitud de prueba — 4 formularios microbiológicos', 'Datos generados por make dev-test')
+    VALUES (3, 'TEST-DEV-003', 'Solicitud de prueba — 4 formularios microbiologicos', 'Datos generados por make dev-test')
     ON CONFLICT (codigo_ali) DO NOTHING;
 
     -- ═══════════════════════════════════════════════════════════════
     -- 2. MUESTRAS (3 muestras)
     -- ═══════════════════════════════════════════════════════════════
-    INSERT INTO solicitud_muestra (id_solicitud) VALUES (3), (3), (3);
-    -- Las muestras reciben id 5, 6, 7 automáticamente (sequence)
+    INSERT INTO solicitud_muestra (id_solicitud) VALUES (v_solicitud_id), (v_solicitud_id), (v_solicitud_id);
+    -- Las muestras reciben id autoincremental (sequence)
 
     SELECT id INTO v_muestra1_id FROM (
         SELECT id_solicitud_muestra AS id
-        FROM solicitud_muestra WHERE id_solicitud = 3
+        FROM solicitud_muestra WHERE id_solicitud = v_solicitud_id
         ORDER BY id_solicitud_muestra LIMIT 1 OFFSET 0
     ) t;
 
     SELECT id INTO v_muestra2_id FROM (
         SELECT id_solicitud_muestra AS id
-        FROM solicitud_muestra WHERE id_solicitud = 3
+        FROM solicitud_muestra WHERE id_solicitud = v_solicitud_id
         ORDER BY id_solicitud_muestra LIMIT 1 OFFSET 1
     ) t;
 
     SELECT id INTO v_muestra3_id FROM (
         SELECT id_solicitud_muestra AS id
-        FROM solicitud_muestra WHERE id_solicitud = 3
+        FROM solicitud_muestra WHERE id_solicitud = v_solicitud_id
         ORDER BY id_solicitud_muestra LIMIT 1 OFFSET 2
     ) t;
 
     RAISE NOTICE 'Muestras creadas: id=%, id=%, id=%', v_muestra1_id, v_muestra2_id, v_muestra3_id;
 
     -- ═══════════════════════════════════════════════════════════════
-    -- 3. SOLICITUDES DE ANÁLISIS
+    -- 3. SOLICITUDES DE ANALISIS
     -- ═══════════════════════════════════════════════════════════════
     -- Muestra 1 → Salmonella (7) + S. aureus (8) + Coliformes/E.coli (9)
     -- Muestra 2 → Enterobacterias (10)
@@ -162,11 +185,12 @@ BEGIN
 
     INSERT INTO sau_etapa1 (
         id_sau_etapa1, id_sau_formulario, fecha_inicio_incubacion, rut_analista_inicio,
-        codigo_agar_baird_parker, peso_muestra_tipo, id_estufa, completada, updated_at
+        id_medio_agar_baird_parker, peso_muestra_tipo, id_estufa, completada, updated_at
     ) VALUES (
         2, 2,
         NOW() - INTERVAL '2 days', '0-0',
-        'BP-LOTE-001', '25g + 225ml', 1, true, NOW()
+        v_medio_bp,                                -- FK a medios_cultivos (Agar Baird Parker)
+        '25g + 225ml', 1, true, NOW()
     );
 
     -- ═══════════════════════════════════════════════════════════════
@@ -180,10 +204,10 @@ BEGIN
 
     INSERT INTO sal_fase1 (
         id_sal_fase1, id_sal_formulario, fecha_hora_inicio_incubacion,
-        tipo_matriz, peso_muestra, caldo_homogeneizacion, completada, updated_at
+        tipo_matriz, peso_muestra, id_medio_caldo_homogeneizacion, completada, updated_at
     ) VALUES (
         2, 2,
-        NOW() - INTERVAL '1 day', 'general', '25g', 'Caldo APT', true, NOW()
+        NOW() - INTERVAL '1 day', 'general', '25g', v_medio_apt, true, NOW()
     );
 
     -- ═══════════════════════════════════════════════════════════════
@@ -219,21 +243,21 @@ BEGIN
         fecha_inicio, hora_inicio, rut_analista_inicio,
         fecha_homog, hora_homog, rut_analista_homog,
         id_stomacher, tiempo_homogenizacion,
-        id_lote_agar_vrbg_sembrado, id_estufa_sembrado, placas_sembrado, id_micropipeta,
+        id_medio_agar_vrbg, id_estufa_sembrado, placas_sembrado, id_micropipeta,
         fecha_sembrado, hora_sembrado, rut_analista_sembrado,
         id_estufa_incub, fecha_inicio_incubacion, fecha_fin_incubacion, rut_analista_incub,
         completada, updated_at
     ) VALUES (
         1, 1, 'DEV-ALI-003', 'ACTA-DEVTEST-001',
-        'Homogénea', 1, NULL,
+        'Homogenea', 1, NULL,
         1,                                                          -- Balanza 1 (Cuchara)
         '2026-06-24', '09:00', '0-0',
         '2026-06-24', '09:05', '0-0',
         1, 2,                                                       -- Stomacher 1, 2 min
-        (SELECT id_lote_reactivo FROM lotes_reactivo WHERE codigo_lote = 'VRBG-DEV-001'),
+        v_medio_vrbg,                                               -- FK a medios_cultivos (Agar VRBG)
         1, 2, 1,                                                    -- Estufa 1, 2 placas, Pipeta 1
         '2026-06-24', '09:15', '0-0',
-        1,                                                          -- Estufa incubación 1
+        1,                                                          -- Estufa incubacion 1
         NOW() - INTERVAL '1 day', NOW() + INTERVAL '23 hours', '0-0',
         true, NOW()
     );
@@ -256,5 +280,5 @@ BEGIN
     INSERT INTO sal_muestra (id_sal_muestra, id_sal_formulario, id_solicitud_muestra, numero_muestra, es_duplicado, orden)
     VALUES (3, 3, v_muestra3_id, 'DEV-M3-C', false, 1);
 
-    RAISE NOTICE '✅ Seed completado: Solicitud #3 (2026/ALI-003) — 3 muestras, 6 análisis, formularios listos';
+    RAISE NOTICE '✅ Seed completado: Solicitud #3 (2026/ALI-003) — 3 muestras, 6 analisis, formularios listos';
 END $$;
