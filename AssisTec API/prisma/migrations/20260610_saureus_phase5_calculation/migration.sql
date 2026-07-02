@@ -1,5 +1,6 @@
 -- CreateTable
-CREATE TABLE "saureus_muestras" (
+-- NOTE: idempotent because the baseline migration already creates this table.
+CREATE TABLE IF NOT EXISTS "saureus_muestras" (
     "id" TEXT NOT NULL,
     "solicitud_analisis_id" BIGINT NOT NULL,
     "numero_muestra" INTEGER NOT NULL,
@@ -49,7 +50,18 @@ CREATE TABLE "saureus_muestras" (
 );
 
 -- CreateIndex
-CREATE INDEX "saureus_muestras_solicitud_analisis_id_idx" ON "saureus_muestras"("solicitud_analisis_id");
+CREATE INDEX IF NOT EXISTS "saureus_muestras_solicitud_analisis_id_idx" ON "saureus_muestras"("solicitud_analisis_id");
 
 -- AddForeignKey
-ALTER TABLE "saureus_muestras" ADD CONSTRAINT "saureus_muestras_solicitud_analisis_id_fkey" FOREIGN KEY ("solicitud_analisis_id") REFERENCES "solicitud_analisis"("id_solicitud_analisis") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'saureus_muestras_solicitud_analisis_id_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'saureus_muestras' AND column_name = 'solicitud_analisis_id'
+    ) THEN
+        ALTER TABLE "saureus_muestras" ADD CONSTRAINT "saureus_muestras_solicitud_analisis_id_fkey" FOREIGN KEY ("solicitud_analisis_id") REFERENCES "solicitud_analisis"("id_solicitud_analisis") ON DELETE RESTRICT   ON UPDATE CASCADE;
+    END IF;
+END $$;

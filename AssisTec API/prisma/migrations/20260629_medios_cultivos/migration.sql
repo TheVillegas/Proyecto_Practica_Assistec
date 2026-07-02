@@ -1,4 +1,4 @@
-CREATE TABLE "medios_cultivos" (
+CREATE TABLE IF NOT EXISTS "medios_cultivos" (
   "id_medio_cultivo"  SERIAL PRIMARY KEY,
   "nombre"            VARCHAR(100) NOT NULL UNIQUE,
   "descripcion"       TEXT,
