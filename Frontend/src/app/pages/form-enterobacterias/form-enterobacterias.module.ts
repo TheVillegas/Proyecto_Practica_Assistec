@@ -5,7 +5,6 @@ import { IonicModule } from '@ionic/angular';
 import { FormEnterobacteriasPageRoutingModule } from './form-enterobacterias-routing.module';
 import { FormEnterobacteriasPage } from './form-enterobacterias.page';
 import { ComponentsModule } from 'src/app/components/components-module/components.module';
-import { ModoLecturaPipe } from '../../pipes/modo-lectura.pipe';
 import { EntPesadoComponent } from './components/ent-pesado.component';
 import { EntHomogeneizacionComponent } from './components/ent-homogeneizacion.component';
 import { EntSembradoComponent } from './components/ent-sembrado.component';
@@ -26,7 +25,6 @@ import { EntResultadosComponent } from './components/ent-resultados.component';
   ],
   declarations: [
     FormEnterobacteriasPage,
-    ModoLecturaPipe,
     EntPesadoComponent,
     EntHomogeneizacionComponent,
     EntSembradoComponent,

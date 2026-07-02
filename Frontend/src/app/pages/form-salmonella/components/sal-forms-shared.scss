@@ -165,6 +165,70 @@
   }
 }
 
+// ─── TABLA DE MUESTRAS (patrón canónico design-system.md) ────────────────────
+.tabla-submuestras {
+  @apply w-full text-xs border-collapse;
+  min-width: 700px;
+
+  th, td {
+    @apply border border-gray-200 text-center;
+  }
+
+  thead {
+    background: var(--brand-navy);
+    color: #fff;
+
+    th {
+      @apply py-2 px-2 font-semibold text-white border-gray-600;
+    }
+
+    .th-dilucion {
+      @apply bg-slate-700 text-white sticky left-0 z-10 min-w-[64px];
+    }
+
+    .th-duplicado {
+      background: #7c3aed;
+    }
+
+    .th-sub {
+      @apply font-normal text-white/70 py-1 px-1;
+    }
+  }
+
+  tbody {
+    tr:hover {
+      @apply bg-blue-50;
+    }
+
+    .td-dilucion {
+      @apply bg-slate-100 font-semibold text-slate-600 sticky left-0 z-10 py-2 px-3 text-center whitespace-nowrap;
+    }
+
+    .td-celda {
+      @apply py-1.5 px-1 text-center;
+
+      .celda-badge {
+        @apply inline-flex items-center justify-center w-7 h-7 mx-0.5
+               text-xs font-bold rounded border border-slate-300
+               bg-white text-slate-400 cursor-pointer
+               transition-all duration-150 select-none;
+
+        &:hover {
+          @apply border-slate-400 bg-slate-50;
+        }
+      }
+
+      &.celda-pos .celda-badge {
+        @apply bg-green-600 text-white border-green-600;
+      }
+
+      &.celda-neg .celda-badge {
+        @apply bg-red-600 text-white border-red-600;
+      }
+    }
+  }
+}
+
 // ─── BADGES DE RESULTADO ─────────────────────────────────────────────────────
 // Cumple / No cumple (controles de calidad)
 .badge-presencia {

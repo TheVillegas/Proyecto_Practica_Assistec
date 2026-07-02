@@ -50,12 +50,12 @@ describe('SalmonellaApiService', () => {
     req.flush(mockResponse);
   });
 
-  it('debe guardar fase 1 bajo key fase', () => {
+  it('debe guardar fase 1 bajo key fase (snake_case, validado por Zod en el backend)', () => {
     const payload: SalFase1Payload = {
-      fechaHoraInicioIncubacion: '2026-06-24T10:00:00.000Z',
-      tipoMatriz: 'Chocolate',
-      pesoMuestra: '25g',
-      caldoHomogeneizacion: 'Caldo APT',
+      fecha_hora_inicio_incubacion: '2026-06-24T10:00:00.000Z',
+      tipo_matriz: 'Chocolate',
+      peso_muestra: '25g',
+      id_medio_caldo_homogeneizacion: 3,
       completada: true
     };
 
@@ -73,11 +73,11 @@ describe('SalmonellaApiService', () => {
 
   it('debe guardar fase 2 bajo key fase2a', () => {
     const payload: SalFase2aPayload = {
-      fechaSiembra: '2026-06-24',
-      horaInicioHomo: '10:00',
-      horaTerminoHomo: '10:00',
-      horaIngresoEstufa: '10:30',
-      rutAnalistaResponsable: '1-9',
+      fecha_siembra: '2026-06-24T00:00:00.000Z',
+      hora_inicio_homo: '2026-06-24T10:00:00.000Z',
+      hora_termino_homo: '2026-06-24T10:00:00.000Z',
+      hora_ingreso_estufa: '2026-06-24T10:30:00.000Z',
+      rut_analista_responsable: '1-9',
       completada: true
     };
 
@@ -93,9 +93,9 @@ describe('SalmonellaApiService', () => {
     req.flush({} as SalFormularioCompleto);
   });
 
-  it('debe guardar fase 7 bajo key lecturas', () => {
+  it('debe guardar fase 7 bajo key lecturas (sin wrapper fase)', () => {
     const payload: SalFase3cPayload = {
-      lecturas: [{ idSalMuestra: 1 }],
+      lecturas: [{ id_sal_muestra: 1 }],
       completada: true
     };
 
@@ -106,7 +106,30 @@ describe('SalmonellaApiService', () => {
     expect(req.request.body).toEqual({
       updated_at: '2026-06-24T10:00:00.000Z',
       completada: true,
-      lecturas: [{ idSalMuestra: 1 }]
+      lecturas: [{ id_sal_muestra: 1 }]
+    });
+    req.flush({} as SalFormularioCompleto);
+  });
+
+  it('debe incluir arreglos extra (tween_pipetas/micropipetas) para fase 3', () => {
+    const payload = {
+      id_medio_caldo: 1,
+      id_estufa: 2,
+      completada: false
+    };
+
+    service.guardarFase(1, 3, payload, '2026-06-24T10:00:00.000Z', {
+      tween_pipetas: [{ id_material: 5 }],
+      micropipetas: [{ id_pipeta: 7 }]
+    }).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/formulario/sal/1/fase/3`);
+    expect(req.request.body).toEqual({
+      updated_at: '2026-06-24T10:00:00.000Z',
+      completada: false,
+      fase: payload,
+      tween_pipetas: [{ id_material: 5 }],
+      micropipetas: [{ id_pipeta: 7 }]
     });
     req.flush({} as SalFormularioCompleto);
   });

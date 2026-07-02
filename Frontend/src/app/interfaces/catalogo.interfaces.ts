@@ -54,6 +54,15 @@ export interface EquipoIncubacion {
     temperaturaRef: string;
 }
 
+// 7b. Baños Térmicos (maestra propia, distinta de Equipos de Incubación — ver
+// .agent/skills/asistec-form-builder/references/maestras.md, excepcion confirmada
+// en el rediseño de Salmonella 2026-07-01)
+export interface BanoTermico {
+    idBano: number;
+    nombreEquipo: string;
+    temperaturaRef?: string;
+}
+
 // 8. Maestro Checklist Limpieza
 export interface ItemChecklistLimpieza {
     idItem: number;

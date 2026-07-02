@@ -17,10 +17,12 @@ import { Step8AnalisisDerivadosComponent } from '../solicitud-steps/step8-analis
 import { Step9FlujoValidacionComponent } from '../solicitud-steps/step9-flujo-validacion/step9-flujo-validacion.component';
 import { Step10TiemposEntregaComponent } from '../solicitud-steps/step10-tiempos-entrega/step10-tiempos-entrega.component';
 import { Step11ResumenInformesComponent } from '../solicitud-steps/step11-resumen-informes/step11-resumen-informes.component';
+import { ModoLecturaPipe } from '../../pipes/modo-lectura.pipe';
 
 @NgModule({
     declarations: [
         HeaderComponent,
+        ModoLecturaPipe,
         ALIItemAccordeonComponent,
         TitulosReportesComponent,
         FooterAccionesComponent,
@@ -44,6 +46,7 @@ import { Step11ResumenInformesComponent } from '../solicitud-steps/step11-resume
     ],
     exports: [
         HeaderComponent,
+        ModoLecturaPipe,
         ALIItemAccordeonComponent,
         TitulosReportesComponent,
         FooterAccionesComponent,

@@ -1,0 +1,85 @@
+<div class="control-card mb-6">
+  <p class="control-title text-blue-700 border-b border-slate-200 pb-2">Resultados en agar · Selenito</p>
+
+  <div class="tabla-wrapper">
+    <table class="tabla-submuestras">
+      <thead>
+        <tr>
+          <th>Muestra</th>
+          <th>XLD 24h</th>
+          <th>SS 24h</th>
+          <th>XLD 48h</th>
+          <th>SS 48h</th>
+          <th>Control (+) S. Enteritidis</th>
+          <th>Control (-) K. Pneumoniae</th>
+          <th>Blanco</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of muestras">
+          <td class="font-semibold">{{ m.label }}</td>
+          <td class="td-celda" [class.celda-pos]="m.xld24hSel === '+'" [class.celda-neg]="m.xld24hSel === '-'">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleAgar(m, 'xld24hSel')">{{ m.xld24hSel }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.ss24hSel === '+'" [class.celda-neg]="m.ss24hSel === '-'">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleAgar(m, 'ss24hSel')">{{ m.ss24hSel }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.xld48hSel === '+'" [class.celda-neg]="m.xld48hSel === '-'">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleAgar(m, 'xld48hSel')">{{ m.xld48hSel }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.ss48hSel === '+'" [class.celda-neg]="m.ss48hSel === '-'">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleAgar(m, 'ss48hSel')">{{ m.ss48hSel }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.ctrlPositivoSEnteritidis" [class.celda-neg]="!m.ctrlPositivoSEnteritidis">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleControl(m, 'ctrlPositivoSEnteritidis')">{{ m.ctrlPositivoSEnteritidis ? '+' : '-' }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.ctrlNegativoKPneumoniae" [class.celda-neg]="!m.ctrlNegativoKPneumoniae">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleControl(m, 'ctrlNegativoKPneumoniae')">{{ m.ctrlNegativoKPneumoniae ? '+' : '-' }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.ctrlBlanco" [class.celda-neg]="!m.ctrlBlanco">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleControl(m, 'ctrlBlanco')">{{ m.ctrlBlanco ? '+' : '-' }}</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="control-card">
+  <p class="control-title text-blue-700 border-b border-slate-200 pb-2">Resultados en agar · Rappaport</p>
+
+  <div class="tabla-wrapper">
+    <table class="tabla-submuestras">
+      <thead>
+        <tr>
+          <th>Muestra</th>
+          <th>XLD 24h</th>
+          <th>SS 24h</th>
+          <th>XLD 48h</th>
+          <th>SS 48h</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of muestras">
+          <td class="font-semibold">{{ m.label }}</td>
+          <td class="td-celda" [class.celda-pos]="m.xld24hRap === '+'" [class.celda-neg]="m.xld24hRap === '-'">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleAgar(m, 'xld24hRap')">{{ m.xld24hRap }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.ss24hRap === '+'" [class.celda-neg]="m.ss24hRap === '-'">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleAgar(m, 'ss24hRap')">{{ m.ss24hRap }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.xld48hRap === '+'" [class.celda-neg]="m.xld48hRap === '-'">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleAgar(m, 'xld48hRap')">{{ m.xld48hRap }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.ss48hRap === '+'" [class.celda-neg]="m.ss48hRap === '-'">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleAgar(m, 'ss48hRap')">{{ m.ss48hRap }}</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tabla-hint">
+    <ion-icon name="information-circle-outline"></ion-icon>
+    Los controles (+/-/blanco) de Rappaport comparten el mismo valor mostrado en la tabla de Selenito por muestra.
+  </p>
+</div>

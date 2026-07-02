@@ -30,28 +30,43 @@ describe('FormSalmonellaPage', () => {
     expect(component).toBeTruthy();
   });
 
-  it('debe iniciar en paso 1', () => {
+  it('debe iniciar en etapa 1', () => {
     expect(component.pasoActual()).toBe(1);
   });
 
-  it('debe avanzar y retroceder pasos', () => {
-    component.avanzarPaso();
+  it('debe tener 8 etapas', () => {
+    expect(component.TOTAL_ETAPAS).toBe(8);
+    expect(component.NOMBRES_ETAPAS.length).toBe(8);
+  });
+
+  it('debe avanzar y retroceder etapas', () => {
+    component.avanzarEtapa();
     expect(component.pasoActual()).toBe(2);
-    component.retrocederPaso();
+    component.retrocederEtapa();
+    expect(component.pasoActual()).toBe(1);
+  });
+
+  it('no debe avanzar más allá de la última etapa', () => {
+    component.pasoActual.set(8);
+    component.avanzarEtapa();
+    expect(component.pasoActual()).toBe(8);
+  });
+
+  it('no debe retroceder antes de la primera etapa', () => {
+    component.pasoActual.set(1);
+    component.retrocederEtapa();
     expect(component.pasoActual()).toBe(1);
   });
 
   it('debe calcular progreso correctamente', () => {
-    component.pasoActual.set(5);
-    expect(component.progresoPorcentaje).toBe(44);
+    component.pasoActual.set(8);
+    expect(component.progresoPorcentaje).toBe(100);
   });
 
-  it('debe mapear paso a etapa visual', () => {
-    component.pasoActual.set(2);
-    expect(component.etapaVisualActual).toBe(1);
-    component.pasoActual.set(6);
-    expect(component.etapaVisualActual).toBe(2);
-    component.pasoActual.set(9);
-    expect(component.etapaVisualActual).toBe(3);
+  it('debe permitir saltar a una etapa válida con irAEtapa', () => {
+    component.irAEtapa(5);
+    expect(component.pasoActual()).toBe(5);
+    component.irAEtapa(99);
+    expect(component.pasoActual()).toBe(5);
   });
 });

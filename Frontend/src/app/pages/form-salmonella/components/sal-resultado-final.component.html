@@ -1,0 +1,76 @@
+<div class="control-card mb-6">
+  <p class="control-title text-blue-700 border-b border-slate-200 pb-2">Presencia / ausencia de Salmonella</p>
+
+  <div *ngIf="!calculado" class="empty-state">
+    <ion-icon name="flask-outline" class="empty-state__icon"></ion-icon>
+    <p>Complete las etapas anteriores y presione <strong>Calcular resultado</strong> para obtener la conclusión final por muestra.</p>
+    <button type="button" class="btn-calcular" [disabled]="(rol | modoLectura)" (click)="onCalcular()">
+      <ion-icon name="calculator-outline"></ion-icon>
+      Calcular resultado
+    </button>
+  </div>
+
+  <ng-container *ngIf="calculado">
+    <div class="tabla-wrapper">
+      <table class="tabla-placas">
+        <thead>
+          <tr>
+            <th>Nº de muestra (o duplicado)</th>
+            <th>Resultado final</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of resultados">
+            <td class="font-semibold text-left">{{ m.label }}</td>
+            <td>
+              <span class="badge-alerta" *ngIf="m.resultadoFinal === 'Presencia'">Presencia</span>
+              <span class="badge-seguro" *ngIf="m.resultadoFinal === 'Ausencia'">Ausencia</span>
+              <span class="text-slate-400" *ngIf="!m.resultadoFinal">Sin datos</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex justify-center mt-4">
+      <button type="button" class="btn-calcular" [disabled]="(rol | modoLectura)" (click)="onCalcular()">
+        <ion-icon name="refresh-outline"></ion-icon>
+        Recalcular resultado
+      </button>
+    </div>
+  </ng-container>
+</div>
+
+<div [formGroup]="formGroup" class="control-card">
+  <p class="control-title text-blue-700 border-b border-slate-200 pb-2">Manual de inocuidad · Conclusión</p>
+  <div class="grid-2col">
+    <div class="form-group">
+      <label class="form-label">Resultado desfavorable <span class="optional-tag">(opcional)</span></label>
+      <div class="form-radio-group">
+        <label class="form-check-label">
+          <input type="radio" class="form-radio" formControlName="desfavorable" value="si" />
+          <span>Sí</span>
+        </label>
+        <label class="form-check-label">
+          <input type="radio" class="form-radio" formControlName="desfavorable" value="no" />
+          <span>No</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="fechaHoraEntrega">Fecha y hora de entrega <span class="optional-tag">(opcional)</span></label>
+      <input id="fechaHoraEntrega" type="datetime-local" class="form-input" formControlName="fechaHoraEntrega"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="tablaPagina">Tabla / página <span class="optional-tag">(opcional)</span></label>
+      <input id="tablaPagina" type="text" class="form-input" formControlName="tablaPagina" placeholder="Ej: Tabla 1 / Pág. 2"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="limite">Límite <span class="optional-tag">(opcional)</span></label>
+      <input id="limite" type="text" class="form-input" formControlName="limite" placeholder="Ej: Ausencia/25g"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+    </div>
+  </div>
+</div>

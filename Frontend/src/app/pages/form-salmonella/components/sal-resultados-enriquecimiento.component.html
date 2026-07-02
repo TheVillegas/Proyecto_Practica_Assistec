@@ -1,0 +1,46 @@
+<div class="control-card">
+  <p class="control-title text-blue-700 border-b border-slate-200 pb-2">Resultados por muestra en caldos de enriquecimiento</p>
+
+  <div class="tabla-wrapper">
+    <table class="tabla-submuestras">
+      <thead>
+        <tr>
+          <th>Muestra</th>
+          <th>Caldo APT</th>
+          <th>Selenito</th>
+          <th>Rappaport</th>
+          <th>Control (+) S. Enteritidis</th>
+          <th>Control (-) K. Pneumoniae</th>
+          <th>Blanco</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of muestras">
+          <td class="font-semibold">{{ m.label }}</td>
+          <td class="td-celda" [class.celda-pos]="m.caldoApt" [class.celda-neg]="!m.caldoApt">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleCelda(m, 'caldoApt')">{{ m.caldoApt ? '+' : '-' }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.selenito" [class.celda-neg]="!m.selenito">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleCelda(m, 'selenito')">{{ m.selenito ? '+' : '-' }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.rappaport" [class.celda-neg]="!m.rappaport">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleCelda(m, 'rappaport')">{{ m.rappaport ? '+' : '-' }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.ctrlPositivoSEnteritidis" [class.celda-neg]="!m.ctrlPositivoSEnteritidis">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleCelda(m, 'ctrlPositivoSEnteritidis')">{{ m.ctrlPositivoSEnteritidis ? '+' : '-' }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.ctrlNegativoKPneumoniae" [class.celda-neg]="!m.ctrlNegativoKPneumoniae">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleCelda(m, 'ctrlNegativoKPneumoniae')">{{ m.ctrlNegativoKPneumoniae ? '+' : '-' }}</button>
+          </td>
+          <td class="td-celda" [class.celda-pos]="m.ctrlBlanco" [class.celda-neg]="!m.ctrlBlanco">
+            <button type="button" class="celda-badge" [disabled]="(rol | modoLectura)" (click)="toggleCelda(m, 'ctrlBlanco')">{{ m.ctrlBlanco ? '+' : '-' }}</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tabla-hint">
+    <ion-icon name="information-circle-outline"></ion-icon>
+    Haga clic en cada celda para alternar entre positivo (+) y negativo (-).
+  </p>
+</div>

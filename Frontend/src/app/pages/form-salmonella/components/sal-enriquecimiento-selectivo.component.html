@@ -1,0 +1,134 @@
+<div [formGroup]="formGroupFase3a" class="control-card mb-6">
+  <p class="control-title text-blue-700 border-b border-slate-200 pb-2">Traspaso y lectura de caldo APT</p>
+
+  <div class="grid-3col">
+    <div class="form-group">
+      <label class="form-label" for="fechaTraspaso">Fecha de traspaso <span class="required-star">*</span></label>
+      <input id="fechaTraspaso" type="date" class="form-input"
+        [class.input-error]="campoInvalido(formGroupFase3a, 'fechaTraspaso')"
+        formControlName="fechaTraspaso"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido(formGroupFase3a, 'fechaTraspaso')">El campo Fecha de traspaso es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="horaLecturaCaldoApt">Hora lectura caldo APT <span class="required-star">*</span></label>
+      <input id="horaLecturaCaldoApt" type="time" class="form-input"
+        [class.input-error]="campoInvalido(formGroupFase3a, 'horaLecturaCaldoApt')"
+        formControlName="horaLecturaCaldoApt"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+      <span class="error-msg" *ngIf="campoInvalido(formGroupFase3a, 'horaLecturaCaldoApt')">Este campo es obligatorio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="rutAnalistaCaldoApt">Analista <span class="required-star">*</span></label>
+      <select id="rutAnalistaCaldoApt" class="form-select"
+        [class.input-error]="campoInvalido(formGroupFase3a, 'rutAnalistaCaldoApt')"
+        formControlName="rutAnalistaCaldoApt"
+        [disabled]="(rol | modoLectura)">
+        <option value="">Seleccionar analista...</option>
+        <option *ngFor="let r of listaResponsables" [value]="r.rut">{{ r.nombreApellido }}</option>
+      </select>
+      <span class="error-msg" *ngIf="campoInvalido(formGroupFase3a, 'rutAnalistaCaldoApt')">Debe seleccionar un analista.</span>
+    </div>
+  </div>
+
+  <div class="grid-2col mt-4">
+    <div class="form-group">
+      <label class="form-label" for="horaLecturaCaldosFinales">Hora lectura caldos finales <span class="optional-tag">(opcional)</span></label>
+      <input id="horaLecturaCaldosFinales" type="time" class="form-input" formControlName="horaLecturaCaldosFinales"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="rutAnalistaCaldosFinales">Analista lectura caldos finales <span class="optional-tag">(opcional)</span></label>
+      <select id="rutAnalistaCaldosFinales" class="form-select"
+        formControlName="rutAnalistaCaldosFinales"
+        [disabled]="(rol | modoLectura)">
+        <option value="">Seleccionar analista...</option>
+        <option *ngFor="let r of listaResponsables" [value]="r.rut">{{ r.nombreApellido }}</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div [formGroup]="formGroupFase3b" class="control-card mb-6">
+  <p class="control-title text-blue-700 border-b border-slate-200 pb-2">Enriquecimiento selectivo</p>
+
+  <div class="grid-2col">
+    <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
+      <p class="text-xs font-semibold text-slate-600 mb-2">Selenito</p>
+      <div class="form-group mb-3">
+        <label class="form-label" for="idEstufaSelenito">Estufa <span class="optional-tag">(opcional)</span></label>
+        <select id="idEstufaSelenito" class="form-select" formControlName="idEstufaSelenito" [disabled]="(rol | modoLectura)">
+          <option [ngValue]="null">Seleccionar estufa...</option>
+          <option *ngFor="let eq of listaEquiposIncubacion" [ngValue]="eq.idIncubacion">{{ eq.nombreEquipo }} ({{ eq.temperaturaRef }})</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="idBanoSelenito">Baño térmico <span class="optional-tag">(opcional)</span></label>
+        <select id="idBanoSelenito" class="form-select" formControlName="idBanoSelenito" [disabled]="(rol | modoLectura)">
+          <option [ngValue]="null">Seleccionar baño...</option>
+          <option *ngFor="let b of listaBanos" [ngValue]="b.idBano">{{ b.nombreEquipo }} ({{ b.temperaturaRef }})</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
+      <p class="text-xs font-semibold text-slate-600 mb-2">Rappaport</p>
+      <div class="form-group mb-3">
+        <label class="form-label" for="idEstufaRappaport">Estufa <span class="optional-tag">(opcional)</span></label>
+        <select id="idEstufaRappaport" class="form-select" formControlName="idEstufaRappaport" [disabled]="(rol | modoLectura)">
+          <option [ngValue]="null">Seleccionar estufa...</option>
+          <option *ngFor="let eq of listaEquiposIncubacion" [ngValue]="eq.idIncubacion">{{ eq.nombreEquipo }} ({{ eq.temperaturaRef }})</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="idBanoRappaport">Baño térmico <span class="optional-tag">(opcional)</span></label>
+        <select id="idBanoRappaport" class="form-select" formControlName="idBanoRappaport" [disabled]="(rol | modoLectura)">
+          <option [ngValue]="null">Seleccionar baño...</option>
+          <option *ngFor="let b of listaBanos" [ngValue]="b.idBano">{{ b.nombreEquipo }} ({{ b.temperaturaRef }})</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="control-card">
+  <p class="control-title text-blue-700 border-b border-slate-200 pb-2">Insumos utilizados</p>
+  <div class="grid-3col">
+    <div class="form-group">
+      <p class="form-label mb-1">Puntas 1 ml</p>
+      <div class="form-radio-group">
+        <label class="form-check-label" *ngFor="let ms of listaMaterialSiembra">
+          <input type="checkbox" class="form-checkbox"
+            [checked]="puntasSeleccionadas.includes(ms.idMaterialSiembra)"
+            [disabled]="(rol | modoLectura)"
+            (change)="togglePunta(ms.idMaterialSiembra)" />
+          <span>{{ ms.nombreMaterial }}</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <p class="form-label mb-1">Pipetas desechables</p>
+      <div class="form-radio-group">
+        <label class="form-check-label" *ngFor="let ms of listaMaterialSiembra">
+          <input type="checkbox" class="form-checkbox"
+            [checked]="pipetasDesechablesSeleccionadas.includes(ms.idMaterialSiembra)"
+            [disabled]="(rol | modoLectura)"
+            (change)="togglePipetaDesechable(ms.idMaterialSiembra)" />
+          <span>{{ ms.nombreMaterial }}</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <p class="form-label mb-1">Micropipetas</p>
+      <div class="form-radio-group">
+        <label class="form-check-label" *ngFor="let p of listaPipetas">
+          <input type="checkbox" class="form-checkbox"
+            [checked]="micropipetasSeleccionadas.includes(p.idPipeta)"
+            [disabled]="(rol | modoLectura)"
+            (change)="toggleMicropipeta(p.idPipeta)" />
+          <span>{{ p.codigoPipeta }} - {{ p.nombrePipeta }}</span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
