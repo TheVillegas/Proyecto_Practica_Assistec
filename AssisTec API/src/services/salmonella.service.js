@@ -78,12 +78,12 @@ class SalService {
             fechaHoraInicioIncubacion: parseDate(raw.fecha_hora_inicio_incubacion ?? raw.fechaHoraInicioIncubacion),
             tipoMatriz: raw.tipo_matriz ?? raw.tipoMatriz,
             pesoMuestra: raw.peso_muestra ?? raw.pesoMuestra,
-            caldoHomogeneizacion: raw.caldo_homogeneizacion ?? raw.caldoHomogeneizacion,
+            idMedioCaldoHomogeneizacion: raw.id_medio_caldo_homogeneizacion ?? raw.idMedioCaldoHomogeneizacion,
             caldoAsignadoAuto: raw.caldo_asignado_auto ?? raw.caldoAsignadoAuto,
             horaInicioHidratacion: parseDate(raw.hora_inicio_hidratacion ?? raw.horaInicioHidratacion),
             horaTerminoHidratacion: parseDate(raw.hora_termino_hidratacion ?? raw.horaTerminoHidratacion),
             hidratacionValida: raw.hidratacion_valida ?? raw.hidratacionValida,
-            completada: raw.completada
+            completada: body.completada ?? raw.completada
         };
     }
 
@@ -98,16 +98,18 @@ class SalService {
             alertaTiempo25min: raw.alerta_tiempo_25min ?? raw.alertaTiempo25min,
             rutAnalistaResponsable: raw.rut_analista_responsable ?? raw.rutAnalistaResponsable,
             fechaTerminoAnalisis: parseDate(raw.fecha_termino_analisis ?? raw.fechaTerminoAnalisis),
-            completada: raw.completada
+            completada: body.completada ?? raw.completada
         };
     }
 
     mapFase2bPayload(body) {
         const raw = resolvePayloadSection(body, 'fase');
         return {
-            codigoCaldoAptLeche: raw.codigo_caldo_apt_leche ?? raw.codigoCaldoAptLeche,
+            idMedioCaldo: raw.id_medio_caldo ?? raw.idMedioCaldo,
+            volumenCaldo: raw.volumen_caldo ?? raw.volumenCaldo,
             idEstufa: raw.id_estufa ?? raw.idEstufa,
-            completada: raw.completada
+            idBano: raw.id_bano ?? raw.idBano,
+            completada: body.completada ?? raw.completada
         };
     }
 
@@ -124,7 +126,7 @@ class SalService {
             tablaPagina: raw.tabla_pagina ?? raw.tablaPagina,
             limite: raw.limite,
             fechaHoraEntrega: parseDate(raw.fecha_hora_entrega ?? raw.fechaHoraEntrega),
-            completada: raw.completada
+            completada: body.completada ?? raw.completada
         };
     }
 
@@ -136,7 +138,7 @@ class SalService {
             rutAnalistaCaldoApt: raw.rut_analista_caldo_apt ?? raw.rutAnalistaCaldoApt,
             horaLecturaCaldosFinales: parseDate(raw.hora_lectura_caldos_finales ?? raw.horaLecturaCaldosFinales),
             rutAnalistaCaldosFinales: raw.rut_analista_caldos_finales ?? raw.rutAnalistaCaldosFinales,
-            completada: raw.completada
+            completada: body.completada ?? raw.completada
         };
     }
 
@@ -144,7 +146,10 @@ class SalService {
         const raw = resolvePayloadSection(body, 'fase');
         return {
             idEstufaSelenito: raw.id_estufa_selenito ?? raw.idEstufaSelenito,
-            completada: raw.completada
+            idBanoSelenito: raw.id_bano_selenito ?? raw.idBanoSelenito,
+            idEstufaRappaport: raw.id_estufa_rappaport ?? raw.idEstufaRappaport,
+            idBanoRappaport: raw.id_bano_rappaport ?? raw.idBanoRappaport,
+            completada: body.completada ?? raw.completada
         };
     }
 
@@ -153,14 +158,15 @@ class SalService {
         return {
             fechaHoraTraspasoAgares: parseDate(raw.fecha_hora_traspaso_agares ?? raw.fechaHoraTraspasoAgares),
             rutAnalistaTraspaso: raw.rut_analista_traspaso ?? raw.rutAnalistaTraspaso,
-            codigoAgarXld: raw.codigo_agar_xld ?? raw.codigoAgarXld,
-            codigoAgarSs: raw.codigo_agar_ss ?? raw.codigoAgarSs,
+            idMedioAgarXld: raw.id_medio_agar_xld ?? raw.idMedioAgarXld,
+            idMedioAgarSs: raw.id_medio_agar_ss ?? raw.idMedioAgarSs,
             idEstufaAgares: raw.id_estufa_agares ?? raw.idEstufaAgares,
+            idBanoAgares: raw.id_bano_agares ?? raw.idBanoAgares,
             fechaHoraLectura24h: parseDate(raw.fecha_hora_lectura_24h ?? raw.fechaHoraLectura24h),
             rutAnalistaLectura24h: raw.rut_analista_lectura_24h ?? raw.rutAnalistaLectura24h,
             fechaHoraLectura48h: parseDate(raw.fecha_hora_lectura_48h ?? raw.fechaHoraLectura48h),
             rutAnalistaLectura48h: raw.rut_analista_lectura_48h ?? raw.rutAnalistaLectura48h,
-            completada: raw.completada
+            completada: body.completada ?? raw.completada
         };
     }
 
@@ -254,18 +260,27 @@ class SalService {
     async _assertStageProgression(formulario, faseNum) {
         if (faseNum <= 1) return;
 
-        const fasesMap = {
-            2: ['fase1'],
-            3: ['fase1', 'fase2a', 'fase2b', 'fase2c'],
-            4: ['fase1', 'fase2a', 'fase2b', 'fase2c', 'fase3a', 'fase3b'],
-            5: ['fase1', 'fase2a', 'fase2b', 'fase2c', 'fase3a', 'fase3b', 'fase4a']
+        // faseNum es el paso del wizard en la URL (1-10). Cada paso requiere
+        // solo que el paso inmediatamente anterior este completado (mismo
+        // patron que EnterobacteriasService._assertStageProgression). Los
+        // pasos 7/9/10 dependen de fases basadas en arreglos (lecturas por
+        // muestra) que no tienen su propio flag `completada` a nivel de
+        // formulario, asi que se valida contra la ultima fase escalar previa.
+        const faseAnteriorMap = {
+            2: 'fase1',
+            3: 'fase2a',
+            4: 'fase2b',
+            5: 'fase2c',
+            6: 'fase3a',
+            7: 'fase3b',
+            8: 'fase3b',
+            9: 'fase4a',
+            10: 'fase4a'
         };
 
-        const requeridas = fasesMap[faseNum] || [];
-        for (const faseKey of requeridas) {
-            if (!formulario[faseKey]?.completada) {
-                throw new Error('INVALID_STAGE_PROGRESSION');
-            }
+        const faseKey = faseAnteriorMap[faseNum];
+        if (faseKey && !formulario[faseKey]?.completada) {
+            throw new Error('INVALID_STAGE_PROGRESSION');
         }
     }
 
@@ -273,14 +288,13 @@ class SalService {
         return body.fase_actual ?? body.faseActual ?? defaultValue;
     }
 
-    _asignarCaldoPorMatriz(tipoMatriz) {
+    async _asignarCaldoPorMatriz(tipoMatriz) {
         if (tipoMatriz === undefined || tipoMatriz === null) {
             throw new Error('TIPO_MATRIZ_REQUERIDO');
         }
-        if (tipoMatriz === 'Chocolate') {
-            return 'Leche descremada';
-        }
-        return 'Caldo APT';
+        const nombre = tipoMatriz === 'Chocolate' ? 'Leche descremada' : 'Caldo APT';
+        const medio = await prisma.medioCultivo.findUnique({ where: { nombre } });
+        return medio?.idMedioCultivo ?? null;
     }
 
     _validarHidratacion(horaInicio, horaTermino) {
@@ -340,7 +354,7 @@ class SalService {
         switch (faseNum) {
             case 1: {
                 const fase1Payload = this.mapFase1Payload(body);
-                fase1Payload.caldoAsignadoAuto = this._asignarCaldoPorMatriz(fase1Payload.tipoMatriz);
+                fase1Payload.caldoAsignadoAuto = await this._asignarCaldoPorMatriz(fase1Payload.tipoMatriz);
 
                 const raw = resolvePayloadSection(body, 'fase');
                 const hidratacion = this._validarHidratacion(
@@ -357,7 +371,7 @@ class SalService {
             }
             case 2: {
                 const fase2aData = body.fase2a || body.fase || {};
-                const fase2aPayload = this.mapFase2aPayload({ fase: fase2aData });
+                const fase2aPayload = this.mapFase2aPayload({ completada: body.completada, fase: fase2aData });
                 const alerta = this._calcularAlerta25min(
                     fase2aData.hora_termino_homo ?? fase2aData.horaTerminoHomo,
                     fase2aData.hora_ingreso_estufa ?? fase2aData.horaIngresoEstufa

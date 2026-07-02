@@ -67,7 +67,7 @@ describe('T-005: Zod Schemas Base', () => {
                 fecha_hora_inicio_incubacion: '2024-01-01T00:00:00.000Z',
                 tipo_matriz: 'polvo',
                 peso_muestra: '25g',
-                caldo_homogeneizacion: 'leche_descremada'
+                id_medio_caldo_homogeneizacion: 1
             }
         })).not.toThrow();
     });

@@ -19,13 +19,13 @@ class SalRepository extends BaseFormRepository {
                     fase5Resultados: true
                 }
             },
-            fase1: true,
+            fase1: { include: { medioCaldoHomogeneizacion: true } },
             fase2a: { include: { analistaResponsable: true } },
-            fase2b: { include: { estufa: true, tweenPipetas: { include: { material: true } }, micropipetas: { include: { micropipeta: true } } } },
+            fase2b: { include: { medioCaldo: true, estufa: true, bano: true, tweenPipetas: { include: { material: true } }, micropipetas: { include: { micropipeta: true } } } },
             fase2c: true,
             fase3a: { include: { analistaCaldoApt: true, analistaCaldosFinales: true } },
-            fase3b: { include: { estufaSelenito: true, pipetas: { include: { material: true } }, micropipetas: { include: { micropipeta: true } } } },
-            fase4a: { include: { estufaAgares: true, analistaTraspaso: true, analistaLectura24h: true, analistaLectura48h: true, fase4bLecturas: true } },
+            fase3b: { include: { estufaSelenito: true, banoSelenito: true, estufaRappaport: true, banoRappaport: true, pipetas: { include: { material: true } }, micropipetas: { include: { micropipeta: true } } } },
+            fase4a: { include: { medioAgarXld: true, medioAgarSs: true, estufaAgares: true, banoAgares: true, analistaTraspaso: true, analistaLectura24h: true, analistaLectura48h: true, fase4bLecturas: true } },
             fase5Resultado: true
         };
     }
@@ -77,8 +77,6 @@ class SalRepository extends BaseFormRepository {
 
     async upsertFase1(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
-
             await tx.salFase1.upsert({
                 where: { idSalFormulario: BigInt(idFormulario) },
                 create: { idSalFormulario: BigInt(idFormulario), ...data.etapa },
@@ -98,8 +96,6 @@ class SalRepository extends BaseFormRepository {
 
     async upsertFase2a(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
-
             await tx.salFase2a.upsert({
                 where: { idSalFormulario: BigInt(idFormulario) },
                 create: { idSalFormulario: BigInt(idFormulario), ...data.etapa },
@@ -119,8 +115,6 @@ class SalRepository extends BaseFormRepository {
 
     async upsertFase2b(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
-
             const fase2b = await tx.salFase2b.upsert({
                 where: { idSalFormulario: BigInt(idFormulario) },
                 create: { idSalFormulario: BigInt(idFormulario), ...data.etapa },
@@ -168,8 +162,6 @@ class SalRepository extends BaseFormRepository {
 
     async upsertFase2c(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
-
             await tx.salFase2c.upsert({
                 where: { idSalFormulario: BigInt(idFormulario) },
                 create: { idSalFormulario: BigInt(idFormulario), ...data.etapa },
@@ -189,8 +181,6 @@ class SalRepository extends BaseFormRepository {
 
     async upsertFase3a(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
-
             await tx.salFase3a.upsert({
                 where: { idSalFormulario: BigInt(idFormulario) },
                 create: { idSalFormulario: BigInt(idFormulario), ...data.etapa },
@@ -210,8 +200,6 @@ class SalRepository extends BaseFormRepository {
 
     async upsertFase3b(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
-
             const fase3b = await tx.salFase3b.upsert({
                 where: { idSalFormulario: BigInt(idFormulario) },
                 create: { idSalFormulario: BigInt(idFormulario), ...data.etapa },
@@ -260,8 +248,6 @@ class SalRepository extends BaseFormRepository {
 
     async upsertFase3cLectura(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
-
             if (Array.isArray(data.lecturas)) {
                 for (const lectura of data.lecturas) {
                     const idMuestra = BigInt(lectura.idSalMuestra);
@@ -304,8 +290,6 @@ class SalRepository extends BaseFormRepository {
 
     async upsertFase4a(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
-
             await tx.salFase4a.upsert({
                 where: { idSalFormulario: BigInt(idFormulario) },
                 create: { idSalFormulario: BigInt(idFormulario), ...data.etapa },
@@ -325,8 +309,6 @@ class SalRepository extends BaseFormRepository {
 
     async upsertFase4bLectura(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
-
             if (Array.isArray(data.lecturas)) {
                 for (const lectura of data.lecturas) {
                     const idMuestra = BigInt(lectura.idSalMuestra);
@@ -375,8 +357,6 @@ class SalRepository extends BaseFormRepository {
 
     async upsertFase5Resultado(idFormulario, data, expectedUpdatedAt) {
         return prisma.$transaction(async (tx) => {
-            await this.touchFormulario(idFormulario, {}, expectedUpdatedAt);
-
             for (const resultado of data.resultados ?? []) {
                 const idMuestra = BigInt(resultado.idSalMuestra);
                 await tx.salFase5Resultado.upsert({

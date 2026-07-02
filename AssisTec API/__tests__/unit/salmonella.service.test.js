@@ -1,9 +1,13 @@
 jest.mock('../../src/repositories/salmonella.repository');
 jest.mock('../../src/calculators/presenciaSal.calculator');
+jest.mock('../../src/config/prisma', () => ({
+    medioCultivo: { findUnique: jest.fn() }
+}));
 
 const SalService = require('../../src/services/salmonella.service');
 const SalRepository = require('../../src/repositories/salmonella.repository');
 const { determinarPresenciaAusencia } = require('../../src/calculators/presenciaSal.calculator');
+const prisma = require('../../src/config/prisma');
 
 describe('SalService', () => {
     const usuarioAnalista = { roles: [0] };
@@ -139,6 +143,7 @@ describe('SalService', () => {
                 updatedAt: new Date()
             });
             SalRepository.upsertFase1.mockResolvedValue({ idSalFormulario: BigInt(1), updatedAt: new Date() });
+            prisma.medioCultivo.findUnique.mockResolvedValue({ idMedioCultivo: 42, nombre: 'Leche descremada' });
 
             await SalService.guardarFase(1, 1, {
                 fase: {
@@ -150,8 +155,9 @@ describe('SalService', () => {
                 updated_at: new Date().toISOString()
             }, new Date(), usuarioAnalista);
 
+            expect(prisma.medioCultivo.findUnique).toHaveBeenCalledWith({ where: { nombre: 'Leche descremada' } });
             const callArgs = SalRepository.upsertFase1.mock.calls[0];
-            expect(callArgs[1].etapa.caldoAsignadoAuto).toBe('Leche descremada');
+            expect(callArgs[1].etapa.caldoAsignadoAuto).toBe(42);
             expect(callArgs[1].etapa.hidratacionValida).toBe(true);
         });
 
@@ -178,22 +184,36 @@ describe('SalService', () => {
         });
     });
 
-    describe('_asignarCaldoPorMatriz', () => {
-        test('Chocolate -> Leche descremada', () => {
-            expect(SalService._asignarCaldoPorMatriz('Chocolate')).toBe('Leche descremada');
+    describe('_asignarCaldoPorMatriz (async — resuelve id de medios_cultivos)', () => {
+        test('Chocolate -> id de Leche descremada', async () => {
+            prisma.medioCultivo.findUnique.mockResolvedValue({ idMedioCultivo: 42, nombre: 'Leche descremada' });
+
+            await expect(SalService._asignarCaldoPorMatriz('Chocolate')).resolves.toBe(42);
+            expect(prisma.medioCultivo.findUnique).toHaveBeenCalledWith({ where: { nombre: 'Leche descremada' } });
         });
 
-        test('Polvo -> Caldo APT', () => {
-            expect(SalService._asignarCaldoPorMatriz('Polvo')).toBe('Caldo APT');
+        test('Polvo -> id de Caldo APT', async () => {
+            prisma.medioCultivo.findUnique.mockResolvedValue({ idMedioCultivo: 7, nombre: 'Caldo APT' });
+
+            await expect(SalService._asignarCaldoPorMatriz('Polvo')).resolves.toBe(7);
+            expect(prisma.medioCultivo.findUnique).toHaveBeenCalledWith({ where: { nombre: 'Caldo APT' } });
         });
 
-        test('Normal -> Caldo APT', () => {
-            expect(SalService._asignarCaldoPorMatriz('Normal')).toBe('Caldo APT');
+        test('Normal -> id de Caldo APT', async () => {
+            prisma.medioCultivo.findUnique.mockResolvedValue({ idMedioCultivo: 7, nombre: 'Caldo APT' });
+
+            await expect(SalService._asignarCaldoPorMatriz('Normal')).resolves.toBe(7);
         });
 
-        test('tipoMatriz nulo -> TIPO_MATRIZ_REQUERIDO', () => {
-            expect(() => SalService._asignarCaldoPorMatriz(null)).toThrow('TIPO_MATRIZ_REQUERIDO');
-            expect(() => SalService._asignarCaldoPorMatriz(undefined)).toThrow('TIPO_MATRIZ_REQUERIDO');
+        test('medio no encontrado -> null', async () => {
+            prisma.medioCultivo.findUnique.mockResolvedValue(null);
+
+            await expect(SalService._asignarCaldoPorMatriz('Polvo')).resolves.toBeNull();
+        });
+
+        test('tipoMatriz nulo -> TIPO_MATRIZ_REQUERIDO', async () => {
+            await expect(SalService._asignarCaldoPorMatriz(null)).rejects.toThrow('TIPO_MATRIZ_REQUERIDO');
+            await expect(SalService._asignarCaldoPorMatriz(undefined)).rejects.toThrow('TIPO_MATRIZ_REQUERIDO');
         });
     });
 
