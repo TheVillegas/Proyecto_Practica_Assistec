@@ -35,7 +35,8 @@ export class SalmonellaApiService {
     idFormulario: number,
     fase: number,
     payload: SalFasePayload,
-    updatedAt: string
+    updatedAt: string,
+    extra?: Record<string, unknown>
   ): Observable<SalFormularioCompleto> {
     const body: Record<string, unknown> = {
       updated_at: updatedAt,
@@ -48,6 +49,12 @@ export class SalmonellaApiService {
       body['lecturas'] = (payload as SalFase3cPayload | SalFase4bPayload).lecturas;
     } else {
       body['fase'] = payload;
+    }
+
+    // Fase 3 (tween_pipetas/micropipetas) y fase 6 (pipetas/micropipetas)
+    // llevan arreglos adicionales fuera del objeto `fase`.
+    if (extra) {
+      Object.assign(body, extra);
     }
 
     return this.http

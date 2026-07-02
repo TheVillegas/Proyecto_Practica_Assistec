@@ -13,6 +13,7 @@ class CatalogoRepository {
             'acreditaciones': prisma.acreditacionInn,
             'diluyentes': prisma.diluyente,
             'equipos_incubacion': prisma.equipoIncubacion,
+            'banos': prisma.banoTermico,
             'instrumentos': prisma.instrumento,
             'checklist_limpieza': prisma.maestroChecklistLimpieza,
             'formas_calculo': prisma.maestroFormasCalculo,

@@ -1,0 +1,71 @@
+<div [formGroup]="formGroup" class="control-card mb-6">
+  <p class="control-title text-blue-700 border-b border-slate-200 pb-2">Control de análisis</p>
+  <div class="grid-2col">
+    <div class="form-group">
+      <label class="form-label" for="descripcionCtrlAnalisis">Descripción del control</label>
+      <input id="descripcionCtrlAnalisis" type="text" class="form-input" formControlName="descripcionCtrlAnalisis"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+    </div>
+    <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+      <p class="text-xs font-semibold text-slate-600 mb-2">Resultado</p>
+      <div class="flex gap-4">
+        <label class="form-check-label text-xs">
+          <input type="radio" class="form-radio" formControlName="resultadoCtrlAnalisis" value="cumple" />
+          <span class="badge-presencia">Cumple</span>
+        </label>
+        <label class="form-check-label text-xs">
+          <input type="radio" class="form-radio" formControlName="resultadoCtrlAnalisis" value="no_cumple" />
+          <span class="badge-ausencia">No Cumple</span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div [formGroup]="formGroup" class="control-card mb-6">
+  <p class="control-title text-blue-700 border-b border-slate-200 pb-2">Control (+) y blanco en ALI</p>
+  <div class="grid-2col">
+    <div class="form-group">
+      <label class="form-label" for="ctrlPositivoBlancoAli">Control (+) y blanco en ALI</label>
+      <input id="ctrlPositivoBlancoAli" type="text" class="form-input" formControlName="ctrlPositivoBlancoAli"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+    </div>
+    <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+      <p class="text-xs font-semibold text-slate-600 mb-2">Resultado</p>
+      <div class="flex gap-4">
+        <label class="form-check-label text-xs">
+          <input type="radio" class="form-radio" formControlName="resultadoCtrlPositivo" value="cumple" />
+          <span class="badge-presencia">Cumple</span>
+        </label>
+        <label class="form-check-label text-xs">
+          <input type="radio" class="form-radio" formControlName="resultadoCtrlPositivo" value="no_cumple" />
+          <span class="badge-ausencia">No Cumple</span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div [formGroup]="formGroup" class="control-card">
+  <p class="control-title text-blue-700 border-b border-slate-200 pb-2">Control de siembra</p>
+  <div class="grid-2col">
+    <div class="form-group">
+      <label class="form-label" for="ctrlSiembraAli">Control de siembra en ALI</label>
+      <input id="ctrlSiembraAli" type="text" class="form-input" formControlName="ctrlSiembraAli"
+        [attr.readonly]="(rol | modoLectura) ? true : null" />
+    </div>
+    <div class="form-group bg-white p-3 rounded-lg border border-slate-100">
+      <p class="text-xs font-semibold text-slate-600 mb-2">Resultado</p>
+      <div class="flex gap-4">
+        <label class="form-check-label text-xs">
+          <input type="radio" class="form-radio" formControlName="resultadoCtrlSiembra" value="cumple" />
+          <span class="badge-presencia">Cumple</span>
+        </label>
+        <label class="form-check-label text-xs">
+          <input type="radio" class="form-radio" formControlName="resultadoCtrlSiembra" value="no_cumple" />
+          <span class="badge-ausencia">No Cumple</span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>

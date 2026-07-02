@@ -16,7 +16,7 @@ VALUES ('Agar VRBG', 35.0, 'NCh 2676') ON CONFLICT ("nombre") DO NOTHING;
 -- 2. ent_etapa1: Migrate VRBG FK from lotes_reactivo to medios_cultivos
 -- ─────────────────────────────────────────────────────────────────────────────
 ALTER TABLE "ent_etapa1"
-    ADD COLUMN "id_medio_agar_vrbg" INTEGER
+    ADD COLUMN IF NOT EXISTS "id_medio_agar_vrbg" INTEGER
     REFERENCES "medios_cultivos"("id_medio_cultivo") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 UPDATE "ent_etapa1"

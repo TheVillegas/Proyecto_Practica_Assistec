@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
+    BanoTermico,
     CategoriaProducto,
     Diluyente,
     EquipoIncubacion,
@@ -73,6 +74,10 @@ export class CatalogosService {
 
     getEquiposIncubacion(): Observable<EquipoIncubacion[]> {
         return this.http.get<EquipoIncubacion[]>(`${this.apiUrl}/equipos_incubacion`);
+    }
+
+    getBanosTermicos(): Observable<BanoTermico[]> {
+        return this.http.get<BanoTermico[]>(`${this.apiUrl}/banos`);
     }
 
     getMicroPipetas(): Observable<Micropipeta[]> {

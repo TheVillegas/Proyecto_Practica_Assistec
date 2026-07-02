@@ -40,6 +40,13 @@ async function seedEquiposIncubacion() {
   ]);
 }
 
+async function seedBanosTermicos() {
+  await seedIfEmpty(prisma.banoTermico, 'Baños Termicos', [
+    { nombreEquipo: 'Baño 30-M', temperaturaRef: '41 a 42.5°C' },
+    { nombreEquipo: '96-M',      temperaturaRef: '41 a 42.5°C' },
+  ]);
+}
+
 async function seedEquiposLab() {
   await seedIfEmpty(prisma.equipoLab, 'Equipos Lab', [
     { nombreEquipo: 'Balanza 74-M',                codigoEquipo: '74-M'    },
@@ -453,6 +460,7 @@ async function main() {
   // Catalogos base (legacy + nuevo backend)
   await seedDiluyentes();
   await seedEquiposIncubacion();
+  await seedBanosTermicos();
   await seedEquiposLab();
   await seedInstrumentos();
   await seedLugaresAlmacenamiento();

@@ -1,0 +1,84 @@
+<div [formGroup]="formGroup" class="control-card mb-6">
+  <p class="control-title text-blue-700 border-b border-slate-200 pb-2">Caldo de siembra</p>
+
+  <div class="grid-3col">
+    <div class="form-group">
+      <label class="form-label" for="idMedioCaldo">Caldo APT / leche <span class="required-star">*</span></label>
+      <select id="idMedioCaldo" class="form-select"
+        [class.input-error]="campoInvalido('idMedioCaldo')"
+        formControlName="idMedioCaldo"
+        [disabled]="(rol | modoLectura)">
+        <option [ngValue]="null">Seleccionar medio...</option>
+        <option *ngFor="let m of listaMediosCultivo" [ngValue]="m.idMedioCultivo">{{ m.nombre }}</option>
+      </select>
+      <span class="error-msg" *ngIf="campoInvalido('idMedioCaldo')">Debe seleccionar un medio.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Volumen</label>
+      <div class="form-radio-group">
+        <label class="form-check-label">
+          <input type="radio" class="form-radio" formControlName="volumenCaldo" value="225ml" />
+          <span>225 ml</span>
+        </label>
+        <label class="form-check-label">
+          <input type="radio" class="form-radio" formControlName="volumenCaldo" value="450ml" />
+          <span>450 ml</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2col mt-4 pt-4 border-t border-slate-100">
+    <div class="form-group">
+      <label class="form-label" for="idEstufa">Estufa <span class="required-star">*</span></label>
+      <select id="idEstufa" class="form-select"
+        [class.input-error]="campoInvalido('idEstufa')"
+        formControlName="idEstufa"
+        [disabled]="(rol | modoLectura)">
+        <option [ngValue]="null">Seleccionar estufa...</option>
+        <option *ngFor="let eq of listaEquiposIncubacion" [ngValue]="eq.idIncubacion">{{ eq.nombreEquipo }} ({{ eq.temperaturaRef }})</option>
+      </select>
+      <span class="error-msg" *ngIf="campoInvalido('idEstufa')">Debe seleccionar una estufa.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="idBano">Baño térmico <span class="optional-tag">(opcional)</span></label>
+      <select id="idBano" class="form-select"
+        formControlName="idBano"
+        [disabled]="(rol | modoLectura)">
+        <option [ngValue]="null">Seleccionar baño...</option>
+        <option *ngFor="let b of listaBanos" [ngValue]="b.idBano">{{ b.nombreEquipo }} ({{ b.temperaturaRef }})</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="control-card">
+  <p class="control-title text-blue-700 border-b border-slate-200 pb-2">Insumos de siembra</p>
+
+  <div class="grid-2col">
+    <div class="form-group">
+      <p class="form-label mb-1">Tween 80 / Pipetas desechables</p>
+      <div class="form-radio-group">
+        <label class="form-check-label" *ngFor="let ms of listaMaterialSiembra">
+          <input type="checkbox" class="form-checkbox"
+            [checked]="tweenSeleccionados.includes(ms.idMaterialSiembra)"
+            [disabled]="(rol | modoLectura)"
+            (change)="toggleTween(ms.idMaterialSiembra)" />
+          <span>{{ ms.nombreMaterial }}</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <p class="form-label mb-1">Micropipetas</p>
+      <div class="form-radio-group">
+        <label class="form-check-label" *ngFor="let p of listaPipetas">
+          <input type="checkbox" class="form-checkbox"
+            [checked]="micropipetasSeleccionadas.includes(p.idPipeta)"
+            [disabled]="(rol | modoLectura)"
+            (change)="toggleMicropipeta(p.idPipeta)" />
+          <span>{{ p.codigoPipeta }} - {{ p.nombrePipeta }}</span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,17 +1,20 @@
 import { Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { Responsable } from '../../../interfaces/catalogo.interfaces';
+import { MedioCultivo } from '../../../services/medios-cultivos.service';
 
 @Component({
-  selector: 'app-sal-etapa1-inicio',
-  templateUrl: './sal-etapa1-inicio.component.html',
+  selector: 'app-sal-inicio-homogeneizacion',
+  templateUrl: './sal-inicio-homogeneizacion.component.html',
   styleUrls: ['./sal-forms-shared.scss'],
   standalone: false,
 })
-export class SalEtapa1InicioComponent {
+export class SalInicioHomogeneizacionComponent {
   @Input() formGroupFase1!: FormGroup;
   @Input() formGroupFase2a!: FormGroup;
-  @Input() responsables: Responsable[] = [];
+  @Input() listaResponsables: Responsable[] = [];
+  @Input() listaMediosCultivo: MedioCultivo[] = [];
+  @Input() rol?: number;
   @Input() alertaTiempo25min = false;
 
   campoInvalido(group: FormGroup, nombre: string): boolean {

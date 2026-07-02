@@ -3,7 +3,7 @@
 # ║  Comandos de desarrollo para el proyecto                        ║
 # ╚══════════════════════════════════════════════════════════════════╝
 
-.PHONY: help dev build stop restart logs migrate seed studio test test-backend test-frontend dev-test clean
+.PHONY: help dev build stop restart logs migrate migrate-deploy migrate-reset migrate-resolve-baseline seed studio test test-backend test-frontend dev-test clean prune
 
 # ══════════════════════════════════════════════════════════════════
 # HELP
@@ -20,16 +20,15 @@ help: ## Mostrar esta ayuda
 # DESARROLLO
 # ══════════════════════════════════════════════════════════════════
 
-dev: ## Levantar entorno completo + migraciones + seed
+dev: ## Levantar entorno completo + migraciones + seed (entrypoint las aplica)
 	@echo "🚀 Iniciando entorno de desarrollo..."
-	docker compose up --build -d
-	@echo "⏳ Esperando a que PostgreSQL esté listo..."
-	@sleep 8
-	$(MAKE) db-push
+	@docker compose up --build -d
+	@echo "⏳ Esperando migraciones del entrypoint (sleep 5 + migrate deploy + seeds)... "
+	@sleep 20
 	@echo ""
 	@echo "✅ Entorno listo!"
 	@echo "   Backend:  http://localhost:3001"
-	@echo "   Frontend: http://localhost:8000"
+	@echo "   Frontend: http://localhost:8000 (ng serve en local)"
 	@echo "   Database: localhost:5432"
 	@echo ""
 
@@ -52,12 +51,12 @@ down: ## Detener y eliminar volúmenes
 # BASE DE DATOS
 # ══════════════════════════════════════════════════════════════════
 
-migrate: ## Aplicar migraciones de Prisma
+migrate: ## Aplicar migraciones de Prisma (modo dev — crea nuevas migraciones)
 	@echo "📦 Aplicando migraciones..."
 	docker compose exec backend_asistec npx prisma migrate dev
 	@echo "✅ Migraciones aplicadas"
 
-migrate-deploy: ## Aplicar migraciones en modo deploy (producción)
+migrate-deploy: ## Aplicar migraciones existentes (sin crear nuevas)
 	@echo "📦 Aplicando migraciones (deploy)..."
 	docker compose exec backend_asistec npx prisma migrate deploy
 	@echo "✅ Migraciones aplicadas"
@@ -67,7 +66,16 @@ migrate-reset: ## Resetear base de datos (ELIMINA TODOS LOS DATOS)
 	@read -p "¿Estás seguro? (s/N): " confirm && [ "$$confirm" = "s" ] || exit 1
 	docker compose exec backend_asistec npx prisma migrate reset --force
 
-db-push: ## Sincronizar schema Prisma con la DB (shadow DB safe)
+migrate-resolve-baseline: ## Marcar baseline como aplicada en BD existente (db push + migraciones previas)
+	@echo "🔧 Marcando baseline 0_baseline_20260521000000 como aplicada..."
+	docker compose exec backend_asistec npx prisma migrate resolve --applied 0_baseline_20260521000000
+	@echo "✅ Baseline marcada. Ejecuta 'make migrate-deploy' para aplicar nuevas migraciones."
+
+db-push: ## [DEPRECATED] Sincronizar schema con DB directamente — usar 'make migrate' o 'make migrate-deploy'
+	@echo "⚠️  DEPRECATED: 'make db-push' está deprecado. No uses db push en flujos de trabajo."
+	@echo "   Usa 'make migrate' para crear migraciones o 'make migrate-deploy' para aplicarlas."
+	@echo "   Más información: docs/database-migrations-guide.md"
+	@echo ""
 	@echo "📦 Sincronizando schema con la base de datos..."
 	docker compose exec backend_asistec npx prisma db push
 	@echo "✅ Schema sincronizado"
@@ -138,26 +146,23 @@ format: ## Formatear código del backend
 # DEV TEST
 # ══════════════════════════════════════════════════════════════════
 
-dev-test: ## Iniciar servidores + cargar datos de prueba (1 comando)
+dev-test: ## Limpiar + iniciar servidores + datos de prueba (1 comando)
 	@echo "🧪 Preparando entorno de prueba completo..."
 	@echo ""
-	@echo "🚀 Paso 1/4 — Iniciando contenedores..."
-	@docker compose up -d 2>/dev/null; \
-	 echo "   ⏳ Esperando que la base de datos esté lista..." && \
-	 sleep 8
+	@echo "🧹 Paso 1/3 — Limpiando contenedores y volúmenes anteriores..."
+	@docker compose down -v 2>/dev/null || true
 	@echo ""
-	@echo "📦 Paso 2/4 — Sincronizando schema..."
-	@$(MAKE) db-push 2>/dev/null || true
+	@echo "🚀 Paso 2/3 — Iniciando contenedores limpios con seed de prueba..."
+	@LOAD_TEST_SEED=true docker compose up --build -d
+	@echo "   ⏳ Esperando migraciones y seeds del entrypoint..."
+	@sleep 30
 	@echo ""
-	@echo "🌱 Paso 3/4 — Seeds base (catálogos, usuarios)..."
-	@docker compose exec backend_asistec node run-seeds.js 2>/dev/null || true
-	@echo ""
-	@echo "🧪 Paso 4/4 — Cargando datos de prueba (cliente + solicitud #3)..."
-	@docker compose exec -T BD_AsisTec psql -U postgres -d asistectest < "AssisTec API/prisma/migrations/20260625_dev_test_seed_data/migration.sql"
+	@echo "🧪 Paso 3/3 — Verificando que el backend respondió..."
+	@docker compose logs --tail=20 backend_asistec
 	@echo ""
 	@echo "✅ Entorno listo!"
 	@echo "   📋 Solicitud #3 (2026/ALI-003) — 3 muestras, 6 análisis"
-	@echo "   🧪 Analista: 0-0 — http://localhost:8000"
+	@echo "   🧪 Analista: 0-0 — http://localhost:8000 (ng serve en local)"
 	@echo "   🔗 Backend API: http://localhost:3001"
 
 # ══════════════════════════════════════════════════════════════════

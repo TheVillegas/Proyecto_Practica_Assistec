@@ -1,6 +1,14 @@
 -- Drop old constraint and add new one with baird parker
 ALTER TABLE "lotes_reactivo" DROP CONSTRAINT IF EXISTS "lotes_reactivo_tipo_check";
-ALTER TABLE "lotes_reactivo" ADD CONSTRAINT "lotes_reactivo_tipo_check" CHECK ("tipo" IN ('agar_vrbg', 'tween_80', 'agar_baird_parker'));
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'lotes_reactivo_tipo_check'
+    ) THEN
+        ALTER TABLE "lotes_reactivo" ADD CONSTRAINT "lotes_reactivo_tipo_check" CHECK ("tipo" IN ('agar_vrbg', 'tween_80', 'agar_baird_parker'));
+    END IF;
+END $$;
 
 -- Insert default seed lot for Baird Parker agar
 INSERT INTO "lotes_reactivo" ("tipo", "codigo_lote", "fecha_vencimiento", "activo")

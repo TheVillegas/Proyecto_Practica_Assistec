@@ -196,7 +196,7 @@ BD/
     └── 02_add_user_photo.sql
 ```
 
-El nuevo backend usa `prisma db push` para sincronizar el schema — no usa los archivos SQL de `BD/init/` directamente. Los archivos SQL son de referencia y para el backend legacy.
+El nuevo backend gestiona el schema mediante Prisma Migrate (`prisma migrate dev` / `prisma migrate deploy`). El uso de `prisma db push` está **deprecado** para el flujo de trabajo del proyecto; ver la [Guía de Migraciones](database-migrations-guide.md) para el workflow oficial, la baseline migration y la reconciliación de bases de datos existentes. Los archivos SQL de `BD/init/` son de referencia y para el backend legacy.
 
 ---
 

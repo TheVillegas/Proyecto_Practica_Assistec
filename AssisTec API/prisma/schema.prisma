@@ -34,44 +34,44 @@ model Usuario {
   urlFoto               String       @map("url_foto") @db.VarChar(255)
   roles                 UsuarioRol[]
 
-  solicitudesResponsable SolicitudIngreso[] @relation("ResponsableIngreso")
-  solicitudesJefaArea    SolicitudIngreso[] @relation("JefaArea")
-  solicitudesCoord       SolicitudIngreso[] @relation("CoordinadoraRecepcion")
-  solicitudesCreadas     SolicitudIngreso[] @relation("CreadoPor")
-  sauFormularios         SauFormulario[]
-  sauEtapa1Inicios       SauEtapa1[]        @relation("SauEtapa1_AnalistaInicio")
-  sauEtapa1Terminos      SauEtapa1[]        @relation("SauEtapa1_AnalistaTermino")
-  sauEtapa2Analistas24h  SauEtapa2[]        @relation("SauEtapa2_Analista24h")
-  sauEtapa2Analistas48h  SauEtapa2[]        @relation("SauEtapa2_Analista48h")
-  sauEtapa3Traspasos     SauEtapa3[]        @relation("SauEtapa3_AnalistaTraspaso")
-  sauEtapa3Lecturas      SauEtapa3[]        @relation("SauEtapa3_AnalistaLectura")
-  sauEtapa4Pruebas       SauEtapa4[]        @relation("SauEtapa4_AnalistaPrueba")
-  sauEtapa4Analistas46h  SauEtapa4[]        @relation("SauEtapa4_Analista46h")
-  sauEtapa4Analistas24h  SauEtapa4[]        @relation("SauEtapa4_Analista24h")
-  sauEtapa6Cierres       SauEtapa6Cierre[]
-  coliFormularios        ColiFormulario[]
-  coliFase1Inicios       ColiFase1[]        @relation("ColiFase1_AnalistaInicio")
-  coliFase1Terminos      ColiFase1[]        @relation("ColiFase1_AnalistaTermino")
-  coliFase3Analistas24h  ColiFase3[]        @relation("ColiFase3_Analista24h")
-  coliFase3Analistas48h  ColiFase3[]        @relation("ColiFase3_Analista48h")
-  coliFase2AnalistasHomog   ColiFase2[]     @relation("ColiFase2_AnalistaHomog")
-  coliFase2AnalistasSiembra ColiFase2[]     @relation("ColiFase2_AnalistaSiembra")
-  salFormularios         SalFormulario[]
-  salFase2aResponsables  SalFase2a[]        @relation("SalFase2a_AnalistaResp")
-  salFase3aCaldoApt      SalFase3a[]        @relation("SalFase3a_AnalistaCaldoApt")
-  salFase3aCaldosFinales SalFase3a[]        @relation("SalFase3a_AnalistaCaldosFinales")
-  salFase4aTraspasos     SalFase4a[]        @relation("SalFase4a_AnalistaTraspaso")
-  salFase4aLecturas24h   SalFase4a[]        @relation("SalFase4a_AnalistaLectura24h")
-  salFase4aLecturas48h   SalFase4a[]        @relation("SalFase4a_AnalistaLectura48h")
-  entFormularios         EntFormulario[]
-  entEtapa1Inicios       EntEtapa1[]        @relation("EntEtapa1_AnalistaInicio")
-  entEtapa1Homogs        EntEtapa1[]        @relation("EntEtapa1_AnalistaHomog")
-  entEtapa1Sembrados     EntEtapa1[]        @relation("EntEtapa1_AnalistaSembrado")
-  entEtapa1Incubs        EntEtapa1[]        @relation("EntEtapa1_AnalistaIncub")
-  entEtapa2Lecturas      EntEtapa2[]        @relation("EntEtapa2_AnalistaLectura")
-  entEtapa3Traspasos     EntEtapa3[]        @relation("EntEtapa3_AnalistaTraspaso")
-  entEtapa3LectConfs     EntEtapa3[]        @relation("EntEtapa3_AnalistaLectConf")
-  entEtapa3Oxidasas      EntEtapa3[]        @relation("EntEtapa3_AnalistaOxidasa")
+  solicitudesResponsable    SolicitudIngreso[] @relation("ResponsableIngreso")
+  solicitudesJefaArea       SolicitudIngreso[] @relation("JefaArea")
+  solicitudesCoord          SolicitudIngreso[] @relation("CoordinadoraRecepcion")
+  solicitudesCreadas        SolicitudIngreso[] @relation("CreadoPor")
+  sauFormularios            SauFormulario[]
+  sauEtapa1Inicios          SauEtapa1[]        @relation("SauEtapa1_AnalistaInicio")
+  sauEtapa1Terminos         SauEtapa1[]        @relation("SauEtapa1_AnalistaTermino")
+  sauEtapa2Analistas24h     SauEtapa2[]        @relation("SauEtapa2_Analista24h")
+  sauEtapa2Analistas48h     SauEtapa2[]        @relation("SauEtapa2_Analista48h")
+  sauEtapa3Traspasos        SauEtapa3[]        @relation("SauEtapa3_AnalistaTraspaso")
+  sauEtapa3Lecturas         SauEtapa3[]        @relation("SauEtapa3_AnalistaLectura")
+  sauEtapa4Pruebas          SauEtapa4[]        @relation("SauEtapa4_AnalistaPrueba")
+  sauEtapa4Analistas46h     SauEtapa4[]        @relation("SauEtapa4_Analista46h")
+  sauEtapa4Analistas24h     SauEtapa4[]        @relation("SauEtapa4_Analista24h")
+  sauEtapa6Cierres          SauEtapa6Cierre[]
+  coliFormularios           ColiFormulario[]
+  coliFase1Inicios          ColiFase1[]        @relation("ColiFase1_AnalistaInicio")
+  coliFase1Terminos         ColiFase1[]        @relation("ColiFase1_AnalistaTermino")
+  coliFase3Analistas24h     ColiFase3[]        @relation("ColiFase3_Analista24h")
+  coliFase3Analistas48h     ColiFase3[]        @relation("ColiFase3_Analista48h")
+  coliFase2AnalistasHomog   ColiFase2[]        @relation("ColiFase2_AnalistaHomog")
+  coliFase2AnalistasSiembra ColiFase2[]        @relation("ColiFase2_AnalistaSiembra")
+  salFormularios            SalFormulario[]
+  salFase2aResponsables     SalFase2a[]        @relation("SalFase2a_AnalistaResp")
+  salFase3aCaldoApt         SalFase3a[]        @relation("SalFase3a_AnalistaCaldoApt")
+  salFase3aCaldosFinales    SalFase3a[]        @relation("SalFase3a_AnalistaCaldosFinales")
+  salFase4aTraspasos        SalFase4a[]        @relation("SalFase4a_AnalistaTraspaso")
+  salFase4aLecturas24h      SalFase4a[]        @relation("SalFase4a_AnalistaLectura24h")
+  salFase4aLecturas48h      SalFase4a[]        @relation("SalFase4a_AnalistaLectura48h")
+  entFormularios            EntFormulario[]
+  entEtapa1Inicios          EntEtapa1[]        @relation("EntEtapa1_AnalistaInicio")
+  entEtapa1Homogs           EntEtapa1[]        @relation("EntEtapa1_AnalistaHomog")
+  entEtapa1Sembrados        EntEtapa1[]        @relation("EntEtapa1_AnalistaSembrado")
+  entEtapa1Incubs           EntEtapa1[]        @relation("EntEtapa1_AnalistaIncub")
+  entEtapa2Lecturas         EntEtapa2[]        @relation("EntEtapa2_AnalistaLectura")
+  entEtapa3Traspasos        EntEtapa3[]        @relation("EntEtapa3_AnalistaTraspaso")
+  entEtapa3LectConfs        EntEtapa3[]        @relation("EntEtapa3_AnalistaLectConf")
+  entEtapa3Oxidasas         EntEtapa3[]        @relation("EntEtapa3_AnalistaOxidasa")
 
   @@map("usuarios")
 }
@@ -332,21 +332,35 @@ model Diluyente {
 }
 
 model EquipoIncubacion {
-  idIncubacion     Int               @id @default(autoincrement()) @map("id_incubacion")
-  nombreEquipo     String            @map("nombre_equipo") @db.VarChar(100)
-  temperaturaRef   String?           @map("temperatura_ref") @db.VarChar(50)
-  sauEtapa1s       SauEtapa1[]
-  sauEtapa3s       SauEtapa3[]
-  sauEtapa4s       SauEtapa4[]
-  coliFase2Estufas ColiFase2Estufa[]
-  salFase2Bs       SalFase2b[]
-  salFase3bSelenito SalFase3b[]       @relation("SalFase3b_EstufaSelenito")
-  salFase4As       SalFase4a[]
+  idIncubacion       Int               @id @default(autoincrement()) @map("id_incubacion")
+  nombreEquipo       String            @map("nombre_equipo") @db.VarChar(100)
+  temperaturaRef     String?           @map("temperatura_ref") @db.VarChar(50)
+  sauEtapa1s         SauEtapa1[]
+  sauEtapa3s         SauEtapa3[]
+  sauEtapa4s         SauEtapa4[]
+  coliFase2Estufas   ColiFase2Estufa[]
+  salFase2Bs         SalFase2b[]
+  salFase3bSelenito  SalFase3b[]       @relation("SalFase3b_EstufaSelenito")
+  salFase3bRappaport SalFase3b[]       @relation("SalFase3b_EstufaRappaport")
+  salFase4As         SalFase4a[]
   entEtapa1Sembrados EntEtapa1[]       @relation("EntEtapa1_EstufaSembrado")
-  entEtapa1Incubs  EntEtapa1[]         @relation("EntEtapa1_EstufaIncub")
-  entEtapa3Confs   EntEtapa3[]          @relation("EntEtapa3_EstufaConf")
+  entEtapa1Incubs    EntEtapa1[]       @relation("EntEtapa1_EstufaIncub")
+  entEtapa3Confs     EntEtapa3[]       @relation("EntEtapa3_EstufaConf")
 
   @@map("equipos_incubacion")
+}
+
+model BanoTermico {
+  idBano         Int     @id @default(autoincrement()) @map("id_bano")
+  nombreEquipo   String  @unique @map("nombre_equipo") @db.VarChar(100)
+  temperaturaRef String? @map("temperatura_ref") @db.VarChar(50)
+
+  salFase2Bs         SalFase2b[]
+  salFase3bSelenito  SalFase3b[] @relation("SalFase3b_BanoSelenito")
+  salFase3bRappaport SalFase3b[] @relation("SalFase3b_BanoRappaport")
+  salFase4As         SalFase4a[]
+
+  @@map("banos_termicos")
 }
 
 model Instrumento {
@@ -354,9 +368,9 @@ model Instrumento {
   nombreInstrumento String  @map("nombre_instrumento") @db.VarChar(100)
   codigoInstrumento String? @map("codigo_instrumento") @db.VarChar(50)
 
-  entEtapa1Balanzas EntEtapa1[] @relation("EntEtapa1_Balanza")
+  entEtapa1Balanzas   EntEtapa1[] @relation("EntEtapa1_Balanza")
   entEtapa1Stomachers EntEtapa1[] @relation("EntEtapa1_Stomacher")
-  entEtapa2Cuentas  EntEtapa2[] @relation("EntEtapa2_EquipoCuenta")
+  entEtapa2Cuentas    EntEtapa2[] @relation("EntEtapa2_EquipoCuenta")
 
   @@map("instrumentos")
 }
@@ -409,11 +423,11 @@ model Micropipeta {
 
   @@map("micropipetas")
 }
+
 enum PresenciaAusencia {
   Presencia
   Ausencia
 }
-
 
 // ============================================================
 // TABLAS LEGACY (Solo lectura/escritura puente)
@@ -457,13 +471,13 @@ model RamReporte {
 // ============================================================
 
 model SauFormulario {
-  idSauFormulario     BigInt    @id @default(autoincrement()) @map("id_sau_formulario")
-  idSolicitudAnalisis BigInt    @map("id_solicitud_analisis")
-  etapaActual         Int       @default(1) @map("etapa_actual") @db.SmallInt
-  estado              String    @default("en_proceso") @db.VarChar(50)
-  rutAnalista         String?   @map("rut_analista") @db.VarChar(255)
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamp()
-  updatedAt           DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+  idSauFormulario     BigInt   @id @default(autoincrement()) @map("id_sau_formulario")
+  idSolicitudAnalisis BigInt   @map("id_solicitud_analisis")
+  etapaActual         Int      @default(1) @map("etapa_actual") @db.SmallInt
+  estado              String   @default("en_proceso") @db.VarChar(50)
+  rutAnalista         String?  @map("rut_analista") @db.VarChar(255)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt           DateTime @default(now()) @map("updated_at") @db.Timestamp()
 
   solicitudAnalisis SolicitudAnalisis @relation(fields: [idSolicitudAnalisis], references: [idSolicitudAnalisis])
   analista          Usuario?          @relation(fields: [rutAnalista], references: [rutUsuario])
@@ -504,62 +518,62 @@ model SauMuestra {
 // ──────────────────────────────────────────────
 
 model SaureusMuestra {
-  id              String   @id @default(uuid())
-  solicitudAnalisisId BigInt @map("solicitud_analisis_id")
-  numeroMuestra   Int      @map("numero_muestra")       // 1-6
-  esDuplicado     Boolean  @default(false) @map("es_duplicado")
-  aliReferencia   Int?     @map("ali_referencia")       // Solo si es duplicado: ALI origen
+  id                  String  @id @default(uuid())
+  solicitudAnalisisId BigInt  @map("solicitud_analisis_id")
+  numeroMuestra       Int     @map("numero_muestra") // 1-6
+  esDuplicado         Boolean @default(false) @map("es_duplicado")
+  aliReferencia       Int?    @map("ali_referencia") // Solo si es duplicado: ALI origen
 
   // ── Recuento Padre (hasta 2 diluciones, como RAM) ──
-  dil1            Decimal? @map("dil_1")                 // 10^-2 = -2
-  c1              Int?                                  // Placa A, dilución 1
-  c2              Int?                                  // Placa B, dilución 1
-  dil2            Decimal? @map("dil_2")                 // 10^-3 = -3 (opcional)
-  c3              Int?                                  // Placa A, dilución 2
-  c4              Int?                                  // Placa B, dilución 2
+  dil1 Decimal? @map("dil_1") // 10^-2 = -2
+  c1   Int? // Placa A, dilución 1
+  c2   Int? // Placa B, dilución 1
+  dil2 Decimal? @map("dil_2") // 10^-3 = -3 (opcional)
+  c3   Int? // Placa A, dilución 2
+  c4   Int? // Placa B, dilución 2
 
   // ── Selección y Confirmación ──
-  coloniasPosibles1 Int? @map("colonias_posibles_1")      // Colonias posibles S. aureus, Placa A
-  coloniasPosibles2 Int? @map("colonias_posibles_2")      // Colonias posibles S. aureus, Placa B
-  colConfirmar1   Int?     @map("col_confirmar_1")       // Colonias características traspasadas, máx. 5 total
-  colConfirmar2   Int?     @map("col_confirmar_2")
+  coloniasPosibles1 Int? @map("colonias_posibles_1") // Colonias posibles S. aureus, Placa A
+  coloniasPosibles2 Int? @map("colonias_posibles_2") // Colonias posibles S. aureus, Placa B
+  colConfirmar1     Int? @map("col_confirmar_1") // Colonias características traspasadas, máx. 5 total
+  colConfirmar2     Int? @map("col_confirmar_2")
 
   // ── Coagulasa 4 hrs ──
-  confirmadas4h1  Int?     @map("confirmadas_4h_1")      // Coagulasa +, Placa A
-  confirmadas4h2  Int?     @map("confirmadas_4h_2")      // Coagulasa +, Placa B
-  fechaLectura4h  DateTime? @map("fecha_lectura_4h")
-  horaLectura4h   String?  @map("hora_lectura_4h")
-  analistaLectura4h String? @map("analista_lectura_4h")
+  confirmadas4h1    Int?      @map("confirmadas_4h_1") // Coagulasa +, Placa A
+  confirmadas4h2    Int?      @map("confirmadas_4h_2") // Coagulasa +, Placa B
+  fechaLectura4h    DateTime? @map("fecha_lectura_4h")
+  horaLectura4h     String?   @map("hora_lectura_4h")
+  analistaLectura4h String?   @map("analista_lectura_4h")
 
   // ── Coagulasa 24 horas ──
-  confirmadas24h1 Int?     @map("confirmadas_24h_1")     // Coagulasa +, Placa A
-  confirmadas24h2 Int?     @map("confirmadas_24h_2")     // Coagulasa +, Placa B
-  fechaLectura24h DateTime? @map("fecha_lectura_24h")
-  horaLectura24h  String?  @map("hora_lectura_24h")
-  analistaLectura24h String? @map("analista_lectura_24h")
+  confirmadas24h1    Int?      @map("confirmadas_24h_1") // Coagulasa +, Placa A
+  confirmadas24h2    Int?      @map("confirmadas_24h_2") // Coagulasa +, Placa B
+  fechaLectura24h    DateTime? @map("fecha_lectura_24h")
+  horaLectura24h     String?   @map("hora_lectura_24h")
+  analistaLectura24h String?   @map("analista_lectura_24h")
 
   // ── Resultado calculado (solo lectura, lo pone el backend) ──
-  resultadoUfc    Decimal? @map("resultado_ufc")
-  resultadoTexto  String?  @map("resultado_texto")       // "1,9 x 10⁴ UFC/g"
-  operador        String?  @default("=")                 // "=", "<", ">"
-  esSd            Boolean  @default(false) @map("es_sd") // Sin desarrollo
-  aPlacaA         Int?       @map("a_placa_a")     // a calculado para placa A
-  aPlacaB         Int?       @map("a_placa_b")     // a calculado para placa B
-  sumaA           Int?       @map("suma_a")         // Σa = aPlacaA + aPlacaB
-  coagulasaUsada  String?    @map("coagulasa_usada") // "4 hrs" | "24 horas" | null (SD)
-  proporcionA     Decimal?   @map("proporcion_a")   // b/A placa A (para depuración)
-  proporcionB     Decimal?   @map("proporcion_b")   // b/A placa B
-  regla80AplicadaA Boolean?  @map("regla_80_a")     // si se aplicó regla 80% en placa A
-  regla80AplicadaB Boolean?  @map("regla_80_b")     // si se aplicó regla 80% en placa B
-  sumaColonias    Int?     @map("suma_colonias")
-  n1              Int?                                   // Placas 1ra dilución
-  n2              Int?                                   // Placas 2da dilución
-  factorDilucion  Decimal? @map("factor_dilucion")
-  casoAplicado    String?  @map("caso_aplicado")         // PRIORIDAD_1-4
+  resultadoUfc     Decimal? @map("resultado_ufc")
+  resultadoTexto   String?  @map("resultado_texto") // "1,9 x 10⁴ UFC/g"
+  operador         String?  @default("=") // "=", "<", ">"
+  esSd             Boolean  @default(false) @map("es_sd") // Sin desarrollo
+  aPlacaA          Int?     @map("a_placa_a") // a calculado para placa A
+  aPlacaB          Int?     @map("a_placa_b") // a calculado para placa B
+  sumaA            Int?     @map("suma_a") // Σa = aPlacaA + aPlacaB
+  coagulasaUsada   String?  @map("coagulasa_usada") // "4 hrs" | "24 horas" | null (SD)
+  proporcionA      Decimal? @map("proporcion_a") // b/A placa A (para depuración)
+  proporcionB      Decimal? @map("proporcion_b") // b/A placa B
+  regla80AplicadaA Boolean? @map("regla_80_a") // si se aplicó regla 80% en placa A
+  regla80AplicadaB Boolean? @map("regla_80_b") // si se aplicó regla 80% en placa B
+  sumaColonias     Int?     @map("suma_colonias")
+  n1               Int? // Placas 1ra dilución
+  n2               Int? // Placas 2da dilución
+  factorDilucion   Decimal? @map("factor_dilucion")
+  casoAplicado     String?  @map("caso_aplicado") // PRIORIDAD_1-4
 
   // ── Metadata ──
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // ── Relaciones ──
   solicitudAnalisis SolicitudAnalisis @relation(fields: [solicitudAnalisisId], references: [idSolicitudAnalisis])
@@ -567,37 +581,36 @@ model SaureusMuestra {
   @@map("saureus_muestras")
 }
 
-
 model SauEtapa1 {
-  idSauEtapa1           BigInt    @id @default(autoincrement()) @map("id_sau_etapa1")
-  idSauFormulario       BigInt    @unique @map("id_sau_formulario")
-  fechaInicioIncubacion DateTime  @map("fecha_inicio_incubacion") @db.Timestamp()
-  rutAnalistaInicio     String    @map("rut_analista_inicio") @db.VarChar(255)
-  fechaTerminoAnalisis  DateTime? @map("fecha_termino_analisis") @db.Timestamp()
-  rutAnalistaTermino    String?   @map("rut_analista_termino") @db.VarChar(255)
-  tiempoHomoSiembraMin  Decimal?  @map("tiempo_homo_siembra_min") @db.Decimal(5, 2)
-  tiempoHomoValido      Boolean?  @map("tiempo_homo_valido")
-  horaHomogeneizado     String?   @map("hora_homogeneizado") @db.VarChar(5)
-  horaSiembra           String?   @map("hora_siembra") @db.VarChar(5)
-  nMuestra10g90ml       Int?      @map("n_muestra_10g_90ml")
-  nMuestra50g450ml      Int?      @map("n_muestra_50g_450ml")
-  idMicropipeta         Int?      @map("id_micropipeta")
-  codigoMicropipeta     String?   @map("codigo_micropipeta") @db.VarChar(100)
+  idSauEtapa1            BigInt    @id @default(autoincrement()) @map("id_sau_etapa1")
+  idSauFormulario        BigInt    @unique @map("id_sau_formulario")
+  fechaInicioIncubacion  DateTime  @map("fecha_inicio_incubacion") @db.Timestamp()
+  rutAnalistaInicio      String    @map("rut_analista_inicio") @db.VarChar(255)
+  fechaTerminoAnalisis   DateTime? @map("fecha_termino_analisis") @db.Timestamp()
+  rutAnalistaTermino     String?   @map("rut_analista_termino") @db.VarChar(255)
+  tiempoHomoSiembraMin   Decimal?  @map("tiempo_homo_siembra_min") @db.Decimal(5, 2)
+  tiempoHomoValido       Boolean?  @map("tiempo_homo_valido")
+  horaHomogeneizado      String?   @map("hora_homogeneizado") @db.VarChar(5)
+  horaSiembra            String?   @map("hora_siembra") @db.VarChar(5)
+  nMuestra10g90ml        Int?      @map("n_muestra_10g_90ml")
+  nMuestra50g450ml       Int?      @map("n_muestra_50g_450ml")
+  idMicropipeta          Int?      @map("id_micropipeta")
+  codigoMicropipeta      String?   @map("codigo_micropipeta") @db.VarChar(100)
   idMedioAgarBairdParker Int       @map("id_medio_agar_baird_parker")
-  pesoMuestraTipo       String    @map("peso_muestra_tipo") @db.VarChar(20)
-  idEstufa              Int       @map("id_estufa")
-  duplicadoAliRef       String?   @map("duplicado_ali_ref") @db.VarChar(100)
-  ctrlDuplicadoCumple   Boolean?  @map("ctrl_duplicado_cumple")
-  ctrlPositivoBlancoAli String?   @map("ctrl_positivo_blanco_ali") @db.VarChar(255)
-  ctrlPositivoCumple    Boolean?  @map("ctrl_positivo_cumple")
-  ctrlSiembraAli        String?   @map("ctrl_siembra_ali") @db.VarChar(255)
-  ctrlSiembraCumple     Boolean?  @map("ctrl_siembra_cumple")
-  completada            Boolean   @default(false)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  pesoMuestraTipo        String    @map("peso_muestra_tipo") @db.VarChar(20)
+  idEstufa               Int       @map("id_estufa")
+  duplicadoAliRef        String?   @map("duplicado_ali_ref") @db.VarChar(100)
+  ctrlDuplicadoCumple    Boolean?  @map("ctrl_duplicado_cumple")
+  ctrlPositivoBlancoAli  String?   @map("ctrl_positivo_blanco_ali") @db.VarChar(255)
+  ctrlPositivoCumple     Boolean?  @map("ctrl_positivo_cumple")
+  ctrlSiembraAli         String?   @map("ctrl_siembra_ali") @db.VarChar(255)
+  ctrlSiembraCumple      Boolean?  @map("ctrl_siembra_cumple")
+  completada             Boolean   @default(false)
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
-  formulario      SauFormulario    @relation(fields: [idSauFormulario], references: [idSauFormulario])
-  analistaInicio  Usuario          @relation("SauEtapa1_AnalistaInicio", fields: [rutAnalistaInicio], references: [rutUsuario])
-  analistaTermino Usuario?         @relation("SauEtapa1_AnalistaTermino", fields: [rutAnalistaTermino], references: [rutUsuario])
+  formulario           SauFormulario    @relation(fields: [idSauFormulario], references: [idSauFormulario])
+  analistaInicio       Usuario          @relation("SauEtapa1_AnalistaInicio", fields: [rutAnalistaInicio], references: [rutUsuario])
+  analistaTermino      Usuario?         @relation("SauEtapa1_AnalistaTermino", fields: [rutAnalistaTermino], references: [rutUsuario])
   estufa               EquipoIncubacion @relation(fields: [idEstufa], references: [idIncubacion])
   medioAgarBairdParker MedioCultivo     @relation("SauAgarBairdParker", fields: [idMedioAgarBairdParker], references: [idMedioCultivo])
 
@@ -644,7 +657,7 @@ model SauEtapa2 {
   fechaLectura48h        DateTime? @map("fecha_lectura_48h") @db.Timestamp()
   rutAnalista48h         String?   @map("rut_analista_48h") @db.VarChar(255)
   completada             Boolean   @default(false)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario  SauFormulario @relation(fields: [idSauFormulario], references: [idSauFormulario])
   analista24h Usuario?      @relation("SauEtapa2_Analista24h", fields: [rutAnalista24h], references: [rutUsuario])
@@ -668,13 +681,13 @@ model SauEtapa3 {
   rutAnalistaLectura      String?   @map("rut_analista_lectura") @db.VarChar(255)
   observaciones           String?
   completada              Boolean   @default(false)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario       SauFormulario    @relation(fields: [idSauFormulario], references: [idSauFormulario])
-  analistaTraspaso Usuario           @relation("SauEtapa3_AnalistaTraspaso", fields: [rutAnalistaTraspaso], references: [rutUsuario])
-  analistaLectura  Usuario?          @relation("SauEtapa3_AnalistaLectura", fields: [rutAnalistaLectura], references: [rutUsuario])
-  estufa           EquipoIncubacion  @relation(fields: [idEstufa], references: [idIncubacion])
-  medioCaldoBhi    MedioCultivo?     @relation("SauCaldoBhi", fields: [idMedioCaldoBhi], references: [idMedioCultivo])
+  analistaTraspaso Usuario          @relation("SauEtapa3_AnalistaTraspaso", fields: [rutAnalistaTraspaso], references: [rutUsuario])
+  analistaLectura  Usuario?         @relation("SauEtapa3_AnalistaLectura", fields: [rutAnalistaLectura], references: [rutUsuario])
+  estufa           EquipoIncubacion @relation(fields: [idEstufa], references: [idIncubacion])
+  medioCaldoBhi    MedioCultivo?    @relation("SauCaldoBhi", fields: [idMedioCaldoBhi], references: [idMedioCultivo])
 
   lecturas SauEtapa3Lectura[]
 
@@ -720,14 +733,14 @@ model SauEtapa4 {
   completada            Boolean   @default(false)
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
-  formulario     SauFormulario    @relation(fields: [idSauFormulario], references: [idSauFormulario])
-  analistaPrueba    Usuario          @relation("SauEtapa4_AnalistaPrueba", fields: [rutAnalistaPrueba], references: [rutUsuario])
-  analista46h       Usuario?         @relation("SauEtapa4_Analista46h", fields: [rutAnalista46h], references: [rutUsuario])
-  analista24h       Usuario?         @relation("SauEtapa4_Analista24h", fields: [rutAnalista24h], references: [rutUsuario])
-  micropipeta       Micropipeta?     @relation(fields: [idMicropipeta], references: [idPipeta])
-  estufa            EquipoIncubacion @relation(fields: [idEstufa], references: [idIncubacion])
-  medioBacident     MedioCultivo?    @relation("SauBacident", fields: [idMedioBacident], references: [idMedioCultivo])
-  medioAguaEsteril  MedioCultivo?    @relation("SauAguaEsteril", fields: [idMedioAguaEsteril], references: [idMedioCultivo])
+  formulario       SauFormulario    @relation(fields: [idSauFormulario], references: [idSauFormulario])
+  analistaPrueba   Usuario          @relation("SauEtapa4_AnalistaPrueba", fields: [rutAnalistaPrueba], references: [rutUsuario])
+  analista46h      Usuario?         @relation("SauEtapa4_Analista46h", fields: [rutAnalista46h], references: [rutUsuario])
+  analista24h      Usuario?         @relation("SauEtapa4_Analista24h", fields: [rutAnalista24h], references: [rutUsuario])
+  micropipeta      Micropipeta?     @relation(fields: [idMicropipeta], references: [idPipeta])
+  estufa           EquipoIncubacion @relation(fields: [idEstufa], references: [idIncubacion])
+  medioBacident    MedioCultivo?    @relation("SauBacident", fields: [idMedioBacident], references: [idMedioCultivo])
+  medioAguaEsteril MedioCultivo?    @relation("SauAguaEsteril", fields: [idMedioAguaEsteril], references: [idMedioCultivo])
 
   lecturas SauEtapa4Lectura[]
 
@@ -787,13 +800,13 @@ model SauEtapa6Cierre {
 // ============================================================
 
 model ColiFormulario {
-  idColiFormulario    BigInt    @id @default(autoincrement()) @map("id_coli_formulario")
-  idSolicitudAnalisis BigInt    @map("id_solicitud_analisis")
-  faseActual          Int       @default(1) @map("fase_actual") @db.SmallInt
-  estado              String    @default("en_proceso") @db.VarChar(50)
-  rutAnalista         String?   @map("rut_analista") @db.VarChar(255)
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamp()
-  updatedAt           DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+  idColiFormulario    BigInt   @id @default(autoincrement()) @map("id_coli_formulario")
+  idSolicitudAnalisis BigInt   @map("id_solicitud_analisis")
+  faseActual          Int      @default(1) @map("fase_actual") @db.SmallInt
+  estado              String   @default("en_proceso") @db.VarChar(50)
+  rutAnalista         String?  @map("rut_analista") @db.VarChar(255)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt           DateTime @default(now()) @map("updated_at") @db.Timestamp()
 
   solicitudAnalisis SolicitudAnalisis @relation(fields: [idSolicitudAnalisis], references: [idSolicitudAnalisis])
   analista          Usuario?          @relation(fields: [rutAnalista], references: [rutUsuario])
@@ -845,24 +858,24 @@ model ColiFase1 {
 }
 
 model ColiFase2 {
-  idColiFase2          BigInt    @id @default(autoincrement()) @map("id_coli_fase2")
-  idColiFormulario     BigInt    @unique @map("id_coli_formulario")
-  idMedioCaldoLauril   Int       @map("id_medio_caldo_lauril")
-  idMedioTween80       Int?      @map("id_medio_tween_80")
-  fechaHomog           DateTime? @map("fecha_homog") @db.Timestamp()
-  rutAnalistaHomog     String?   @map("rut_analista_homog") @db.VarChar(255)
-  fechaSiembra         DateTime? @map("fecha_siembra") @db.Timestamp()
-  rutAnalistaSiembra   String?   @map("rut_analista_siembra") @db.VarChar(255)
-  nMuestra10g90ml      Int?      @map("n_muestra_10g_90ml")
-  nMuestra50g450ml     Int?      @map("n_muestra_50g_450ml")
-  completada           Boolean   @default(false)
-  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  idColiFase2        BigInt    @id @default(autoincrement()) @map("id_coli_fase2")
+  idColiFormulario   BigInt    @unique @map("id_coli_formulario")
+  idMedioCaldoLauril Int       @map("id_medio_caldo_lauril")
+  idMedioTween80     Int?      @map("id_medio_tween_80")
+  fechaHomog         DateTime? @map("fecha_homog") @db.Timestamp()
+  rutAnalistaHomog   String?   @map("rut_analista_homog") @db.VarChar(255)
+  fechaSiembra       DateTime? @map("fecha_siembra") @db.Timestamp()
+  rutAnalistaSiembra String?   @map("rut_analista_siembra") @db.VarChar(255)
+  nMuestra10g90ml    Int?      @map("n_muestra_10g_90ml")
+  nMuestra50g450ml   Int?      @map("n_muestra_50g_450ml")
+  completada         Boolean   @default(false)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
-  formulario     ColiFormulario @relation(fields: [idColiFormulario], references: [idColiFormulario])
-  medioCaldoLauril MedioCultivo @relation("CaldoLauril", fields: [idMedioCaldoLauril], references: [idMedioCultivo])
-  medioTween80     MedioCultivo? @relation("Tween80", fields: [idMedioTween80], references: [idMedioCultivo])
-  analistaHomog    Usuario?      @relation("ColiFase2_AnalistaHomog", fields: [rutAnalistaHomog], references: [rutUsuario])
-  analistaSiembra  Usuario?      @relation("ColiFase2_AnalistaSiembra", fields: [rutAnalistaSiembra], references: [rutUsuario])
+  formulario       ColiFormulario @relation(fields: [idColiFormulario], references: [idColiFormulario])
+  medioCaldoLauril MedioCultivo   @relation("CaldoLauril", fields: [idMedioCaldoLauril], references: [idMedioCultivo])
+  medioTween80     MedioCultivo?  @relation("Tween80", fields: [idMedioTween80], references: [idMedioCultivo])
+  analistaHomog    Usuario?       @relation("ColiFase2_AnalistaHomog", fields: [rutAnalistaHomog], references: [rutUsuario])
+  analistaSiembra  Usuario?       @relation("ColiFase2_AnalistaSiembra", fields: [rutAnalistaSiembra], references: [rutUsuario])
 
   estufas      ColiFase2Estufa[]
   micropipetas ColiFase2Micropipeta[]
@@ -903,7 +916,7 @@ model ColiFase3 {
   rutAnalista48h         String?   @map("rut_analista_48h") @db.VarChar(255)
   lectura48hEnTolerancia Boolean?  @map("lectura_48h_en_tolerancia")
   completada             Boolean   @default(false)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario  ColiFormulario @relation(fields: [idColiFormulario], references: [idColiFormulario])
   analista24h Usuario?       @relation("ColiFase3_Analista24h", fields: [rutAnalista24h], references: [rutUsuario])
@@ -965,29 +978,29 @@ model ColiFase4Resultado {
   observacionIncongruencia String?  @map("observacion_incongruencia")
 
   // Campos estadisticos del motor MPN (coli-mpn-engine-replacement)
-  totalesLog10Mpn          Decimal? @map("totales_log10_mpn") @db.Decimal(15, 6)
-  totalesSdLog10           Decimal? @map("totales_sd_log10") @db.Decimal(15, 6)
-  totalesLimiteInferior    Decimal? @map("totales_limite_inferior") @db.Decimal(15, 4)
-  totalesLimiteSuperior    Decimal? @map("totales_limite_superior") @db.Decimal(15, 4)
-  totalesRarityIndex       Decimal? @map("totales_rarity_index") @db.Decimal(15, 6)
-  totalesCategoriaRareza   Int?     @map("totales_categoria_rareza") @db.SmallInt
-  totalesEstado            String?  @map("totales_estado") @db.VarChar(50)
+  totalesLog10Mpn        Decimal? @map("totales_log10_mpn") @db.Decimal(15, 6)
+  totalesSdLog10         Decimal? @map("totales_sd_log10") @db.Decimal(15, 6)
+  totalesLimiteInferior  Decimal? @map("totales_limite_inferior") @db.Decimal(15, 4)
+  totalesLimiteSuperior  Decimal? @map("totales_limite_superior") @db.Decimal(15, 4)
+  totalesRarityIndex     Decimal? @map("totales_rarity_index") @db.Decimal(15, 6)
+  totalesCategoriaRareza Int?     @map("totales_categoria_rareza") @db.SmallInt
+  totalesEstado          String?  @map("totales_estado") @db.VarChar(50)
 
-  fecalesLog10Mpn          Decimal? @map("fecales_log10_mpn") @db.Decimal(15, 6)
-  fecalesSdLog10           Decimal? @map("fecales_sd_log10") @db.Decimal(15, 6)
-  fecalesLimiteInferior    Decimal? @map("fecales_limite_inferior") @db.Decimal(15, 4)
-  fecalesLimiteSuperior    Decimal? @map("fecales_limite_superior") @db.Decimal(15, 4)
-  fecalesRarityIndex       Decimal? @map("fecales_rarity_index") @db.Decimal(15, 6)
-  fecalesCategoriaRareza   Int?     @map("fecales_categoria_rareza") @db.SmallInt
-  fecalesEstado            String?  @map("fecales_estado") @db.VarChar(50)
+  fecalesLog10Mpn        Decimal? @map("fecales_log10_mpn") @db.Decimal(15, 6)
+  fecalesSdLog10         Decimal? @map("fecales_sd_log10") @db.Decimal(15, 6)
+  fecalesLimiteInferior  Decimal? @map("fecales_limite_inferior") @db.Decimal(15, 4)
+  fecalesLimiteSuperior  Decimal? @map("fecales_limite_superior") @db.Decimal(15, 4)
+  fecalesRarityIndex     Decimal? @map("fecales_rarity_index") @db.Decimal(15, 6)
+  fecalesCategoriaRareza Int?     @map("fecales_categoria_rareza") @db.SmallInt
+  fecalesEstado          String?  @map("fecales_estado") @db.VarChar(50)
 
-  ecoliLog10Mpn            Decimal? @map("ecoli_log10_mpn") @db.Decimal(15, 6)
-  ecoliSdLog10             Decimal? @map("ecoli_sd_log10") @db.Decimal(15, 6)
-  ecoliLimiteInferior      Decimal? @map("ecoli_limite_inferior") @db.Decimal(15, 4)
-  ecoliLimiteSuperior      Decimal? @map("ecoli_limite_superior") @db.Decimal(15, 4)
-  ecoliRarityIndex         Decimal? @map("ecoli_rarity_index") @db.Decimal(15, 6)
-  ecoliCategoriaRareza     Int?     @map("ecoli_categoria_rareza") @db.SmallInt
-  ecoliEstado              String?  @map("ecoli_estado") @db.VarChar(50)
+  ecoliLog10Mpn        Decimal? @map("ecoli_log10_mpn") @db.Decimal(15, 6)
+  ecoliSdLog10         Decimal? @map("ecoli_sd_log10") @db.Decimal(15, 6)
+  ecoliLimiteInferior  Decimal? @map("ecoli_limite_inferior") @db.Decimal(15, 4)
+  ecoliLimiteSuperior  Decimal? @map("ecoli_limite_superior") @db.Decimal(15, 4)
+  ecoliRarityIndex     Decimal? @map("ecoli_rarity_index") @db.Decimal(15, 6)
+  ecoliCategoriaRareza Int?     @map("ecoli_categoria_rareza") @db.SmallInt
+  ecoliEstado          String?  @map("ecoli_estado") @db.VarChar(50)
 
   muestra                        ColiMuestra     @relation(fields: [idColiMuestra], references: [idColiMuestra])
   coliFormulario                 ColiFormulario? @relation(fields: [coliFormularioIdColiFormulario], references: [idColiFormulario])
@@ -1020,6 +1033,11 @@ model MedioCultivo {
   entEtapa1AgarVrbg EntEtapa1[] @relation("EntAgarVrbg")
   entEtapa1Tween80  EntEtapa1[] @relation("EntTween80")
 
+  salFase1CaldoHomog SalFase1[]  @relation("SalFase1_MedioCaldoHomog")
+  salFase2bCaldo     SalFase2b[] @relation("SalFase2b_MedioCaldo")
+  salFase4aAgarXld   SalFase4a[] @relation("SalFase4a_MedioAgarXld")
+  salFase4aAgarSs    SalFase4a[] @relation("SalFase4a_MedioAgarSs")
+
   @@map("medios_cultivos")
 }
 
@@ -1028,13 +1046,13 @@ model MedioCultivo {
 // ============================================================
 
 model SalFormulario {
-  idSalFormulario     BigInt    @id @default(autoincrement()) @map("id_sal_formulario")
-  idSolicitudAnalisis BigInt    @map("id_solicitud_analisis")
-  faseActual          Int       @default(1) @map("fase_actual") @db.SmallInt
-  estado              String    @default("en_proceso") @db.VarChar(50)
-  rutAnalista         String?   @map("rut_analista") @db.VarChar(255)
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamp()
-  updatedAt           DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+  idSalFormulario     BigInt   @id @default(autoincrement()) @map("id_sal_formulario")
+  idSolicitudAnalisis BigInt   @map("id_solicitud_analisis")
+  faseActual          Int      @default(1) @map("fase_actual") @db.SmallInt
+  estado              String   @default("en_proceso") @db.VarChar(50)
+  rutAnalista         String?  @map("rut_analista") @db.VarChar(255)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt           DateTime @default(now()) @map("updated_at") @db.Timestamp()
 
   solicitudAnalisis SolicitudAnalisis @relation(fields: [idSolicitudAnalisis], references: [idSolicitudAnalisis])
   analista          Usuario?          @relation(fields: [rutAnalista], references: [rutUsuario])
@@ -1072,20 +1090,21 @@ model SalMuestra {
 }
 
 model SalFase1 {
-  idSalFase1                BigInt    @id @default(autoincrement()) @map("id_sal_fase1")
-  idSalFormulario           BigInt    @unique @map("id_sal_formulario")
-  fechaHoraInicioIncubacion DateTime  @map("fecha_hora_inicio_incubacion") @db.Timestamp()
-  tipoMatriz                String    @map("tipo_matriz") @db.VarChar(20)
-  pesoMuestra               String    @map("peso_muestra") @db.VarChar(20)
-  caldoHomogeneizacion      String    @map("caldo_homogeneizacion") @db.VarChar(30)
-  caldoAsignadoAuto         String?   @map("caldo_asignado_auto") @db.VarChar(30)
-  horaInicioHidratacion     DateTime? @map("hora_inicio_hidratacion") @db.Time()
-  horaTerminoHidratacion    DateTime? @map("hora_termino_hidratacion") @db.Time()
-  hidratacionValida         Boolean?  @map("hidratacion_valida")
-  completada                Boolean   @default(false)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  idSalFase1                  BigInt    @id @default(autoincrement()) @map("id_sal_fase1")
+  idSalFormulario             BigInt    @unique @map("id_sal_formulario")
+  fechaHoraInicioIncubacion   DateTime  @map("fecha_hora_inicio_incubacion") @db.Timestamp()
+  tipoMatriz                  String    @map("tipo_matriz") @db.VarChar(20)
+  pesoMuestra                 String    @map("peso_muestra") @db.VarChar(20)
+  idMedioCaldoHomogeneizacion Int       @map("id_medio_caldo_homogeneizacion")
+  caldoAsignadoAuto           Int?      @map("caldo_asignado_auto")
+  horaInicioHidratacion       DateTime? @map("hora_inicio_hidratacion") @db.Time()
+  horaTerminoHidratacion      DateTime? @map("hora_termino_hidratacion") @db.Time()
+  hidratacionValida           Boolean?  @map("hidratacion_valida")
+  completada                  Boolean   @default(false)
+  updatedAt                   DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
-  formulario SalFormulario @relation(fields: [idSalFormulario], references: [idSalFormulario])
+  formulario                SalFormulario @relation(fields: [idSalFormulario], references: [idSalFormulario])
+  medioCaldoHomogeneizacion MedioCultivo  @relation("SalFase1_MedioCaldoHomog", fields: [idMedioCaldoHomogeneizacion], references: [idMedioCultivo])
 
   @@map("sal_fase1")
 }
@@ -1102,7 +1121,7 @@ model SalFase2a {
   rutAnalistaResponsable String    @map("rut_analista_responsable") @db.VarChar(255)
   fechaTerminoAnalisis   DateTime? @map("fecha_termino_analisis") @db.Date()
   completada             Boolean   @default(false)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario          SalFormulario @relation(fields: [idSalFormulario], references: [idSalFormulario])
   analistaResponsable Usuario       @relation("SalFase2a_AnalistaResp", fields: [rutAnalistaResponsable], references: [rutUsuario])
@@ -1111,15 +1130,19 @@ model SalFase2a {
 }
 
 model SalFase2b {
-  idSalFase2b         BigInt   @id @default(autoincrement()) @map("id_sal_fase2b")
-  idSalFormulario     BigInt   @unique @map("id_sal_formulario")
-  codigoCaldoAptLeche String   @map("codigo_caldo_apt_leche") @db.VarChar(100)
-  idEstufa            Int      @map("id_estufa")
-  completada          Boolean  @default(false)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  idSalFase2b     BigInt   @id @default(autoincrement()) @map("id_sal_fase2b")
+  idSalFormulario BigInt   @unique @map("id_sal_formulario")
+  idMedioCaldo    Int      @map("id_medio_caldo")
+  volumenCaldo    String?  @map("volumen_caldo") @db.VarChar(20)
+  idEstufa        Int      @map("id_estufa")
+  idBano          Int?     @map("id_bano")
+  completada      Boolean  @default(false)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario SalFormulario    @relation(fields: [idSalFormulario], references: [idSalFormulario])
+  medioCaldo MedioCultivo     @relation("SalFase2b_MedioCaldo", fields: [idMedioCaldo], references: [idMedioCultivo])
   estufa     EquipoIncubacion @relation(fields: [idEstufa], references: [idIncubacion])
+  bano       BanoTermico?     @relation(fields: [idBano], references: [idBano])
 
   tweenPipetas SalFase2bTweenPipeta[]
   micropipetas SalFase2bMicropipeta[]
@@ -1150,20 +1173,20 @@ model SalFase2bMicropipeta {
 }
 
 model SalFase2c {
-  idSalFase2c             BigInt   @id @default(autoincrement()) @map("id_sal_fase2c")
-  idSalFormulario         BigInt   @unique @map("id_sal_formulario")
-  descripcionCtrlAnalisis String?  @map("descripcion_ctrl_analisis") @db.VarChar(255)
-  resultadoCtrlAnalisis   Boolean? @map("resultado_ctrl_analisis")
-  ctrlPositivoBlancoAli   String?  @map("ctrl_positivo_blanco_ali") @db.VarChar(255)
-  resultadoCtrlPositivo   Boolean? @map("resultado_ctrl_positivo")
-  ctrlSiembraAli          String?  @map("ctrl_siembra_ali") @db.VarChar(255)
-  resultadoCtrlSiembra    Boolean? @map("resultado_ctrl_siembra")
-  desfavorable            Boolean? @map("desfavorable")
-  tablaPagina             String?  @map("tabla_pagina") @db.VarChar(200)
-  limite                  String?  @map("limite") @db.VarChar(200)
+  idSalFase2c             BigInt    @id @default(autoincrement()) @map("id_sal_fase2c")
+  idSalFormulario         BigInt    @unique @map("id_sal_formulario")
+  descripcionCtrlAnalisis String?   @map("descripcion_ctrl_analisis") @db.VarChar(255)
+  resultadoCtrlAnalisis   Boolean?  @map("resultado_ctrl_analisis")
+  ctrlPositivoBlancoAli   String?   @map("ctrl_positivo_blanco_ali") @db.VarChar(255)
+  resultadoCtrlPositivo   Boolean?  @map("resultado_ctrl_positivo")
+  ctrlSiembraAli          String?   @map("ctrl_siembra_ali") @db.VarChar(255)
+  resultadoCtrlSiembra    Boolean?  @map("resultado_ctrl_siembra")
+  desfavorable            Boolean?  @map("desfavorable")
+  tablaPagina             String?   @map("tabla_pagina") @db.VarChar(200)
+  limite                  String?   @map("limite") @db.VarChar(200)
   fechaHoraEntrega        DateTime? @map("fecha_hora_entrega") @db.Timestamp()
-  completada              Boolean  @default(false)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  completada              Boolean   @default(false)
+  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario SalFormulario @relation(fields: [idSalFormulario], references: [idSalFormulario])
 
@@ -1179,7 +1202,7 @@ model SalFase3a {
   horaLecturaCaldosFinales DateTime? @map("hora_lectura_caldos_finales") @db.Time()
   rutAnalistaCaldosFinales String?   @map("rut_analista_caldos_finales") @db.VarChar(255)
   completada               Boolean   @default(false)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario            SalFormulario @relation(fields: [idSalFormulario], references: [idSalFormulario])
   analistaCaldoApt      Usuario       @relation("SalFase3a_AnalistaCaldoApt", fields: [rutAnalistaCaldoApt], references: [rutUsuario])
@@ -1189,14 +1212,20 @@ model SalFase3a {
 }
 
 model SalFase3b {
-  idSalFase3b      BigInt   @id @default(autoincrement()) @map("id_sal_fase3b")
-  idSalFormulario  BigInt   @unique @map("id_sal_formulario")
-  idEstufaSelenito Int      @map("id_estufa_selenito")
-  completada       Boolean  @default(false)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  idSalFase3b       BigInt   @id @default(autoincrement()) @map("id_sal_fase3b")
+  idSalFormulario   BigInt   @unique @map("id_sal_formulario")
+  idEstufaSelenito  Int?     @map("id_estufa_selenito")
+  idBanoSelenito    Int?     @map("id_bano_selenito")
+  idEstufaRappaport Int?     @map("id_estufa_rappaport")
+  idBanoRappaport   Int?     @map("id_bano_rappaport")
+  completada        Boolean  @default(false)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamp()
 
-  formulario     SalFormulario    @relation(fields: [idSalFormulario], references: [idSalFormulario])
-  estufaSelenito EquipoIncubacion @relation("SalFase3b_EstufaSelenito", fields: [idEstufaSelenito], references: [idIncubacion])
+  formulario      SalFormulario     @relation(fields: [idSalFormulario], references: [idSalFormulario])
+  estufaSelenito  EquipoIncubacion? @relation("SalFase3b_EstufaSelenito", fields: [idEstufaSelenito], references: [idIncubacion])
+  banoSelenito    BanoTermico?      @relation("SalFase3b_BanoSelenito", fields: [idBanoSelenito], references: [idBano])
+  estufaRappaport EquipoIncubacion? @relation("SalFase3b_EstufaRappaport", fields: [idEstufaRappaport], references: [idIncubacion])
+  banoRappaport   BanoTermico?      @relation("SalFase3b_BanoRappaport", fields: [idBanoRappaport], references: [idBano])
 
   pipetas      SalFase3bPipeta[]
   micropipetas SalFase3bMicropipeta[]
@@ -1247,21 +1276,25 @@ model SalFase4a {
   idSalFormulario         BigInt    @unique @map("id_sal_formulario")
   fechaHoraTraspasoAgares DateTime  @map("fecha_hora_traspaso_agares") @db.Timestamp()
   rutAnalistaTraspaso     String    @map("rut_analista_traspaso") @db.VarChar(255)
-  codigoAgarXld           String    @map("codigo_agar_xld") @db.VarChar(100)
-  codigoAgarSs            String    @map("codigo_agar_ss") @db.VarChar(100)
+  idMedioAgarXld          Int       @map("id_medio_agar_xld")
+  idMedioAgarSs           Int       @map("id_medio_agar_ss")
   idEstufaAgares          Int       @map("id_estufa_agares")
+  idBanoAgares            Int?      @map("id_bano_agares")
   fechaHoraLectura24h     DateTime? @map("fecha_hora_lectura_24h") @db.Timestamp()
   rutAnalistaLectura24h   String?   @map("rut_analista_lectura_24h") @db.VarChar(255)
   fechaHoraLectura48h     DateTime? @map("fecha_hora_lectura_48h") @db.Timestamp()
   rutAnalistaLectura48h   String?   @map("rut_analista_lectura_48h") @db.VarChar(255)
   completada              Boolean   @default(false)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario         SalFormulario    @relation(fields: [idSalFormulario], references: [idSalFormulario])
   analistaTraspaso   Usuario          @relation("SalFase4a_AnalistaTraspaso", fields: [rutAnalistaTraspaso], references: [rutUsuario])
   analistaLectura24h Usuario?         @relation("SalFase4a_AnalistaLectura24h", fields: [rutAnalistaLectura24h], references: [rutUsuario])
   analistaLectura48h Usuario?         @relation("SalFase4a_AnalistaLectura48h", fields: [rutAnalistaLectura48h], references: [rutUsuario])
   estufaAgares       EquipoIncubacion @relation(fields: [idEstufaAgares], references: [idIncubacion])
+  banoAgares         BanoTermico?     @relation(fields: [idBanoAgares], references: [idBano])
+  medioAgarXld       MedioCultivo     @relation("SalFase4a_MedioAgarXld", fields: [idMedioAgarXld], references: [idMedioCultivo])
+  medioAgarSs        MedioCultivo     @relation("SalFase4a_MedioAgarSs", fields: [idMedioAgarSs], references: [idMedioCultivo])
 
   fase4bLecturas SalFase4bLectura[]
 
@@ -1291,8 +1324,8 @@ model SalFase4bLectura {
 }
 
 model SalFase5Resultado {
-  idSalFase5Resultado BigInt @id @default(autoincrement()) @map("id_sal_fase5_resultado")
-  idSalMuestra        BigInt @unique @map("id_sal_muestra")
+  idSalFase5Resultado BigInt            @id @default(autoincrement()) @map("id_sal_fase5_resultado")
+  idSalMuestra        BigInt            @unique @map("id_sal_muestra")
   resultadoFinal      PresenciaAusencia @map("resultado_final")
 
   muestra                      SalMuestra     @relation(fields: [idSalMuestra], references: [idSalMuestra])
@@ -1301,19 +1334,20 @@ model SalFase5Resultado {
 
   @@map("sal_fase5_resultado")
 }
+
 // ============================================================
 // FORMULARIO ENTEROBACTERIAS (ent_)
 // ============================================================
 
 model EntFormulario {
-  idEntFormulario     BigInt    @id @default(autoincrement()) @map("id_ent_formulario")
-  idSolicitudAnalisis BigInt    @map("id_solicitud_analisis")
-  etapaActual         Int       @default(1) @map("etapa_actual") @db.SmallInt
-  subetapaActual      Int       @default(1) @map("subetapa_actual") @db.SmallInt
-  estado              String    @default("en_proceso") @db.VarChar(50)
-  rutAnalista         String?   @map("rut_analista") @db.VarChar(255)
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamp()
-  updatedAt           DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+  idEntFormulario     BigInt   @id @default(autoincrement()) @map("id_ent_formulario")
+  idSolicitudAnalisis BigInt   @map("id_solicitud_analisis")
+  etapaActual         Int      @default(1) @map("etapa_actual") @db.SmallInt
+  subetapaActual      Int      @default(1) @map("subetapa_actual") @db.SmallInt
+  estado              String   @default("en_proceso") @db.VarChar(50)
+  rutAnalista         String?  @map("rut_analista") @db.VarChar(255)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt           DateTime @default(now()) @map("updated_at") @db.Timestamp()
 
   solicitudAnalisis SolicitudAnalisis @relation(fields: [idSolicitudAnalisis], references: [idSolicitudAnalisis])
   analista          Usuario?          @relation(fields: [rutAnalista], references: [rutUsuario])
@@ -1359,67 +1393,67 @@ model LoteReactivo {
 }
 
 model EntEtapa1 {
-  idEntEtapa1            BigInt    @id @default(autoincrement()) @map("id_ent_etapa1")
-  idEntFormulario        BigInt    @unique @map("id_ent_formulario")
-  codigoAli              String    @map("codigo_ali") @db.VarChar(100)
-  nActa                  String    @map("n_acta") @db.VarChar(100)
-  tipoMuestra            String    @map("tipo_muestra") @db.VarChar(20)
-  nMuestra10g90ml        Int?      @map("n_muestra_10g_90ml")
-  nMuestra50g450ml       Int?      @map("n_muestra_50g_450ml")
-  idBalanza              Int?      @map("id_balanza")
-  fechaInicio            DateTime  @map("fecha_inicio") @db.Date
-  horaInicio             String    @map("hora_inicio") @db.VarChar(10)
-  rutAnalistaInicio      String    @map("rut_analista_inicio") @db.VarChar(255)
-  fechaHomog             DateTime  @map("fecha_homog") @db.Date
-  horaHomog              String    @map("hora_homog") @db.VarChar(10)
-  rutAnalistaHomog       String    @map("rut_analista_homog") @db.VarChar(255)
-  idStomacher            Int?      @map("id_stomacher")
-  tiempoHomogenizacion   Int?      @map("tiempo_homogenizacion") @db.SmallInt
-  idMedioAgarVrbg        Int       @map("id_medio_agar_vrbg")
-  idMedioTween80         Int?      @map("id_medio_tween_80")
-  idEstufaSembrado       Int       @map("id_estufa_sembrado")
-  placasSembrado         Int       @map("placas_sembrado") @db.SmallInt
-  idMicropipeta          Int       @map("id_micropipeta")
-  fechaSembrado          DateTime  @map("fecha_sembrado") @db.Date
-  horaSembrado           String    @map("hora_sembrado") @db.VarChar(10)
-  rutAnalistaSembrado    String    @map("rut_analista_sembrado") @db.VarChar(255)
-  idEstufaIncub          Int       @map("id_estufa_incub")
-  fechaInicioIncubacion  DateTime  @map("fecha_inicio_incubacion") @db.Timestamp()
-  fechaFinIncubacion     DateTime  @map("fecha_fin_incubacion") @db.Timestamp()
-  rutAnalistaIncub       String    @map("rut_analista_incub") @db.VarChar(255)
-  completada             Boolean   @default(false)
-  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  idEntEtapa1           BigInt   @id @default(autoincrement()) @map("id_ent_etapa1")
+  idEntFormulario       BigInt   @unique @map("id_ent_formulario")
+  codigoAli             String   @map("codigo_ali") @db.VarChar(100)
+  nActa                 String   @map("n_acta") @db.VarChar(100)
+  tipoMuestra           String   @map("tipo_muestra") @db.VarChar(20)
+  nMuestra10g90ml       Int?     @map("n_muestra_10g_90ml")
+  nMuestra50g450ml      Int?     @map("n_muestra_50g_450ml")
+  idBalanza             Int?     @map("id_balanza")
+  fechaInicio           DateTime @map("fecha_inicio") @db.Date
+  horaInicio            String   @map("hora_inicio") @db.VarChar(10)
+  rutAnalistaInicio     String   @map("rut_analista_inicio") @db.VarChar(255)
+  fechaHomog            DateTime @map("fecha_homog") @db.Date
+  horaHomog             String   @map("hora_homog") @db.VarChar(10)
+  rutAnalistaHomog      String   @map("rut_analista_homog") @db.VarChar(255)
+  idStomacher           Int?     @map("id_stomacher")
+  tiempoHomogenizacion  Int?     @map("tiempo_homogenizacion") @db.SmallInt
+  idMedioAgarVrbg       Int      @map("id_medio_agar_vrbg")
+  idMedioTween80        Int?     @map("id_medio_tween_80")
+  idEstufaSembrado      Int      @map("id_estufa_sembrado")
+  placasSembrado        Int      @map("placas_sembrado") @db.SmallInt
+  idMicropipeta         Int      @map("id_micropipeta")
+  fechaSembrado         DateTime @map("fecha_sembrado") @db.Date
+  horaSembrado          String   @map("hora_sembrado") @db.VarChar(10)
+  rutAnalistaSembrado   String   @map("rut_analista_sembrado") @db.VarChar(255)
+  idEstufaIncub         Int      @map("id_estufa_incub")
+  fechaInicioIncubacion DateTime @map("fecha_inicio_incubacion") @db.Timestamp()
+  fechaFinIncubacion    DateTime @map("fecha_fin_incubacion") @db.Timestamp()
+  rutAnalistaIncub      String   @map("rut_analista_incub") @db.VarChar(255)
+  completada            Boolean  @default(false)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamp()
 
-  formulario         EntFormulario   @relation(fields: [idEntFormulario], references: [idEntFormulario])
-  analistaInicio     Usuario         @relation("EntEtapa1_AnalistaInicio", fields: [rutAnalistaInicio], references: [rutUsuario])
-  analistaHomog      Usuario         @relation("EntEtapa1_AnalistaHomog", fields: [rutAnalistaHomog], references: [rutUsuario])
-  analistaSembrado   Usuario         @relation("EntEtapa1_AnalistaSembrado", fields: [rutAnalistaSembrado], references: [rutUsuario])
-  analistaIncub      Usuario         @relation("EntEtapa1_AnalistaIncub", fields: [rutAnalistaIncub], references: [rutUsuario])
-  balanza            Instrumento?    @relation("EntEtapa1_Balanza", fields: [idBalanza], references: [idInstrumento])
-  stomacher          Instrumento?    @relation("EntEtapa1_Stomacher", fields: [idStomacher], references: [idInstrumento])
-  medioAgarVrbg      MedioCultivo    @relation("EntAgarVrbg", fields: [idMedioAgarVrbg], references: [idMedioCultivo])
-  medioTween80       MedioCultivo?   @relation("EntTween80", fields: [idMedioTween80], references: [idMedioCultivo])
-  estufaSembrado     EquipoIncubacion @relation("EntEtapa1_EstufaSembrado", fields: [idEstufaSembrado], references: [idIncubacion])
-  micropipeta        Micropipeta     @relation(fields: [idMicropipeta], references: [idPipeta])
-  estufaIncub        EquipoIncubacion @relation("EntEtapa1_EstufaIncub", fields: [idEstufaIncub], references: [idIncubacion])
+  formulario       EntFormulario    @relation(fields: [idEntFormulario], references: [idEntFormulario])
+  analistaInicio   Usuario          @relation("EntEtapa1_AnalistaInicio", fields: [rutAnalistaInicio], references: [rutUsuario])
+  analistaHomog    Usuario          @relation("EntEtapa1_AnalistaHomog", fields: [rutAnalistaHomog], references: [rutUsuario])
+  analistaSembrado Usuario          @relation("EntEtapa1_AnalistaSembrado", fields: [rutAnalistaSembrado], references: [rutUsuario])
+  analistaIncub    Usuario          @relation("EntEtapa1_AnalistaIncub", fields: [rutAnalistaIncub], references: [rutUsuario])
+  balanza          Instrumento?     @relation("EntEtapa1_Balanza", fields: [idBalanza], references: [idInstrumento])
+  stomacher        Instrumento?     @relation("EntEtapa1_Stomacher", fields: [idStomacher], references: [idInstrumento])
+  medioAgarVrbg    MedioCultivo     @relation("EntAgarVrbg", fields: [idMedioAgarVrbg], references: [idMedioCultivo])
+  medioTween80     MedioCultivo?    @relation("EntTween80", fields: [idMedioTween80], references: [idMedioCultivo])
+  estufaSembrado   EquipoIncubacion @relation("EntEtapa1_EstufaSembrado", fields: [idEstufaSembrado], references: [idIncubacion])
+  micropipeta      Micropipeta      @relation(fields: [idMicropipeta], references: [idPipeta])
+  estufaIncub      EquipoIncubacion @relation("EntEtapa1_EstufaIncub", fields: [idEstufaIncub], references: [idIncubacion])
 
   @@map("ent_etapa1")
 }
 
 model EntEtapa2 {
-  idEntEtapa2             BigInt    @id @default(autoincrement()) @map("id_ent_etapa2")
-  idEntFormulario         BigInt    @unique @map("id_ent_formulario")
-  fechaLectura24h         DateTime  @map("fecha_lectura_24h") @db.Timestamp()
-  horaLectura24h          String    @map("hora_lectura_24h") @db.VarChar(10)
-  rutAnalistaLectura      String    @map("rut_analista_lectura") @db.VarChar(255)
-  idEquipoCuentaColonias  Int       @map("id_equipo_cuenta_colonias")
-  nMuestraLectura         Int       @map("n_muestra_lectura")
-  dilucion                Decimal   @map("dilucion") @db.Decimal(10, 2)
-  coloniasContadas        Int       @map("colonias_contadas")
-  ufcPorG                 Decimal?  @map("ufc_por_g") @db.Decimal(15, 4)
-  lecturaMuestras         Json?     @map("lectura_muestras")
-  completada              Boolean   @default(false)
-  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  idEntEtapa2            BigInt   @id @default(autoincrement()) @map("id_ent_etapa2")
+  idEntFormulario        BigInt   @unique @map("id_ent_formulario")
+  fechaLectura24h        DateTime @map("fecha_lectura_24h") @db.Timestamp()
+  horaLectura24h         String   @map("hora_lectura_24h") @db.VarChar(10)
+  rutAnalistaLectura     String   @map("rut_analista_lectura") @db.VarChar(255)
+  idEquipoCuentaColonias Int      @map("id_equipo_cuenta_colonias")
+  nMuestraLectura        Int      @map("n_muestra_lectura")
+  dilucion               Decimal  @map("dilucion") @db.Decimal(10, 2)
+  coloniasContadas       Int      @map("colonias_contadas")
+  ufcPorG                Decimal? @map("ufc_por_g") @db.Decimal(15, 4)
+  lecturaMuestras        Json?    @map("lectura_muestras")
+  completada             Boolean  @default(false)
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario      EntFormulario @relation(fields: [idEntFormulario], references: [idEntFormulario])
   analistaLectura Usuario       @relation("EntEtapa2_AnalistaLectura", fields: [rutAnalistaLectura], references: [rutUsuario])
@@ -1429,32 +1463,32 @@ model EntEtapa2 {
 }
 
 model EntEtapa3 {
-  idEntEtapa3            BigInt    @id @default(autoincrement()) @map("id_ent_etapa3")
-  idEntFormulario        BigInt    @unique @map("id_ent_formulario")
-  fechaTraspaso          DateTime? @map("fecha_traspaso") @db.Date
-  horaTraspaso           String?   @map("hora_traspaso") @db.VarChar(10)
-  rutAnalistaTraspaso    String?   @map("rut_analista_traspaso") @db.VarChar(255)
-  idAgarNutritivo        BigInt?   @map("id_agar_nutritivo")
-  idEstufaConf           Int?      @map("id_estufa_conf")
-  fechaLectConf          DateTime? @map("fecha_lect_conf") @db.Date
-  horaLectConf           String?   @map("hora_lect_conf") @db.VarChar(10)
-  rutAnalistaLectConf    String?   @map("rut_analista_lect_conf") @db.VarChar(255)
-  fechaOxidasa           DateTime? @map("fecha_oxidasa") @db.Date
-  horaOxidasa            String?   @map("hora_oxidasa") @db.VarChar(10)
-  rutAnalistaOxidasa     String?   @map("rut_analista_oxidasa") @db.VarChar(255)
-  reactivoOxidasa        String?   @map("reactivo_oxidasa") @db.VarChar(20)
-  desaireadoAgarGlucosa  String?   @map("desaireado_agar_glucosa") @db.VarChar(100)
-  agarGlucosa            String?   @map("agar_glucosa") @db.VarChar(100)
-  controlPosEcoli        String?   @map("control_pos_ecoli") @db.VarChar(20)
-  controlNegPaer         String?   @map("control_neg_paer") @db.VarChar(20)
-  blanco                 String?   @map("blanco") @db.VarChar(20)
-  desfavorable           Boolean?  @map("desfavorable")
-  tablaPagina            String?   @map("tabla_pagina") @db.VarChar(200)
-  limite                 String?   @map("limite") @db.VarChar(200)
-  fechaHoraEntrega       DateTime? @map("fecha_hora_entrega") @db.Timestamp()
-  observaciones          String?   @map("observaciones")
-  completada             Boolean   @default(false)
-  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamp()
+  idEntEtapa3           BigInt    @id @default(autoincrement()) @map("id_ent_etapa3")
+  idEntFormulario       BigInt    @unique @map("id_ent_formulario")
+  fechaTraspaso         DateTime? @map("fecha_traspaso") @db.Date
+  horaTraspaso          String?   @map("hora_traspaso") @db.VarChar(10)
+  rutAnalistaTraspaso   String?   @map("rut_analista_traspaso") @db.VarChar(255)
+  idAgarNutritivo       BigInt?   @map("id_agar_nutritivo")
+  idEstufaConf          Int?      @map("id_estufa_conf")
+  fechaLectConf         DateTime? @map("fecha_lect_conf") @db.Date
+  horaLectConf          String?   @map("hora_lect_conf") @db.VarChar(10)
+  rutAnalistaLectConf   String?   @map("rut_analista_lect_conf") @db.VarChar(255)
+  fechaOxidasa          DateTime? @map("fecha_oxidasa") @db.Date
+  horaOxidasa           String?   @map("hora_oxidasa") @db.VarChar(10)
+  rutAnalistaOxidasa    String?   @map("rut_analista_oxidasa") @db.VarChar(255)
+  reactivoOxidasa       String?   @map("reactivo_oxidasa") @db.VarChar(20)
+  desaireadoAgarGlucosa String?   @map("desaireado_agar_glucosa") @db.VarChar(100)
+  agarGlucosa           String?   @map("agar_glucosa") @db.VarChar(100)
+  controlPosEcoli       String?   @map("control_pos_ecoli") @db.VarChar(20)
+  controlNegPaer        String?   @map("control_neg_paer") @db.VarChar(20)
+  blanco                String?   @map("blanco") @db.VarChar(20)
+  desfavorable          Boolean?  @map("desfavorable")
+  tablaPagina           String?   @map("tabla_pagina") @db.VarChar(200)
+  limite                String?   @map("limite") @db.VarChar(200)
+  fechaHoraEntrega      DateTime? @map("fecha_hora_entrega") @db.Timestamp()
+  observaciones         String?   @map("observaciones")
+  completada            Boolean   @default(false)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp()
 
   formulario       EntFormulario     @relation(fields: [idEntFormulario], references: [idEntFormulario])
   analistaTraspaso Usuario?          @relation("EntEtapa3_AnalistaTraspaso", fields: [rutAnalistaTraspaso], references: [rutUsuario])

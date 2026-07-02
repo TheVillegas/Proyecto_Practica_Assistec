@@ -15,7 +15,7 @@ ON CONFLICT ("nombre") DO NOTHING;
 
 -- 2a. Add FK column (nullable initially)
 ALTER TABLE "sau_etapa1"
-  ADD COLUMN "id_medio_agar_baird_parker" INTEGER REFERENCES "medios_cultivos"("id_medio_cultivo");
+  ADD COLUMN IF NOT EXISTS "id_medio_agar_baird_parker" INTEGER REFERENCES "medios_cultivos"("id_medio_cultivo");
 
 -- 2b. Backfill all existing rows to the seeded Agar Baird Parker entry
 UPDATE "sau_etapa1"
@@ -29,7 +29,7 @@ ALTER TABLE "sau_etapa1"
 
 -- 2d. Drop old text column
 ALTER TABLE "sau_etapa1"
-  DROP COLUMN "codigo_agar_baird_parker";
+  DROP COLUMN IF EXISTS "codigo_agar_baird_parker";
 
 -- ============================================================
 -- sau_etapa3: codigo_caldo_bhi -> id_medio_caldo_bhi (nullable)
@@ -37,18 +37,26 @@ ALTER TABLE "sau_etapa1"
 
 -- 3a. Add FK column (nullable)
 ALTER TABLE "sau_etapa3"
-  ADD COLUMN "id_medio_caldo_bhi" INTEGER REFERENCES "medios_cultivos"("id_medio_cultivo");
+  ADD COLUMN IF NOT EXISTS "id_medio_caldo_bhi" INTEGER REFERENCES "medios_cultivos"("id_medio_cultivo");
 
 -- 3b. Backfill rows that had a caldo BHI code
-UPDATE "sau_etapa3"
-SET "id_medio_caldo_bhi" = (
-  SELECT "id_medio_cultivo" FROM "medios_cultivos" WHERE "nombre" = 'Caldo BHI'
-)
-WHERE "codigo_caldo_bhi" IS NOT NULL AND "codigo_caldo_bhi" != '';
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'sau_etapa3' AND column_name = 'codigo_caldo_bhi'
+    ) THEN
+        UPDATE "sau_etapa3"
+        SET "id_medio_caldo_bhi" = (
+          SELECT "id_medio_cultivo" FROM "medios_cultivos" WHERE "nombre" = 'Caldo BHI'
+        )
+        WHERE "codigo_caldo_bhi" IS NOT NULL AND "codigo_caldo_bhi" != '';
+    END IF;
+END $$;
 
 -- 3c. Drop old text column
 ALTER TABLE "sau_etapa3"
-  DROP COLUMN "codigo_caldo_bhi";
+  DROP COLUMN IF EXISTS "codigo_caldo_bhi";
 
 -- ============================================================
 -- sau_etapa4: codigo_bacident_agua -> id_medio_bacident + id_medio_agua_esteril
@@ -56,16 +64,24 @@ ALTER TABLE "sau_etapa3"
 
 -- 4a. Add two FK columns (both nullable — coagulasa reagents are optional)
 ALTER TABLE "sau_etapa4"
-  ADD COLUMN "id_medio_bacident"     INTEGER REFERENCES "medios_cultivos"("id_medio_cultivo"),
-  ADD COLUMN "id_medio_agua_esteril" INTEGER REFERENCES "medios_cultivos"("id_medio_cultivo");
+  ADD COLUMN IF NOT EXISTS "id_medio_bacident"     INTEGER REFERENCES "medios_cultivos"("id_medio_cultivo"),
+  ADD COLUMN IF NOT EXISTS "id_medio_agua_esteril" INTEGER REFERENCES "medios_cultivos"("id_medio_cultivo");
 
 -- 4b. Backfill rows that had a bacident/agua code
-UPDATE "sau_etapa4"
-SET
-  "id_medio_bacident"     = (SELECT "id_medio_cultivo" FROM "medios_cultivos" WHERE "nombre" = 'Bacident coagulasa'),
-  "id_medio_agua_esteril" = (SELECT "id_medio_cultivo" FROM "medios_cultivos" WHERE "nombre" = 'Agua esteril')
-WHERE "codigo_bacident_agua" IS NOT NULL AND "codigo_bacident_agua" != '';
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'sau_etapa4' AND column_name = 'codigo_bacident_agua'
+    ) THEN
+        UPDATE "sau_etapa4"
+        SET
+          "id_medio_bacident"     = (SELECT "id_medio_cultivo" FROM "medios_cultivos" WHERE "nombre" = 'Bacident coagulasa'),
+          "id_medio_agua_esteril" = (SELECT "id_medio_cultivo" FROM "medios_cultivos" WHERE "nombre" = 'Agua esteril')
+        WHERE "codigo_bacident_agua" IS NOT NULL AND "codigo_bacident_agua" != '';
+    END IF;
+END $$;
 
 -- 4c. Drop old combined text column
 ALTER TABLE "sau_etapa4"
-  DROP COLUMN "codigo_bacident_agua";
+  DROP COLUMN IF EXISTS "codigo_bacident_agua";

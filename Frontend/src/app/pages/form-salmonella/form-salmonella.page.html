@@ -10,7 +10,7 @@
       Análisis de Salmonella
     </ion-title>
     <ion-buttons slot="end">
-      <span class="badge-etapa">{{ pasoActual() }}/{{ TOTAL_PASOS }}</span>
+      <span class="badge-etapa">{{ pasoActual() }}/{{ TOTAL_ETAPAS }}</span>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
@@ -26,7 +26,7 @@
       <div class="stepper-steps">
         <button *ngFor="let nombre of NOMBRES_ETAPAS; let i = index" class="step-btn" type="button"
           [class.step-btn--active]="pasoActual() === i + 1" [class.step-btn--done]="pasoActual() > i + 1"
-          (click)="irAPaso(i + 1)">
+          (click)="irAEtapa(i + 1)">
           <span class="step-circle">
             <ion-icon *ngIf="pasoActual() > i + 1" name="checkmark-outline"></ion-icon>
             <span *ngIf="pasoActual() <= i + 1">{{ i + 1 }}</span>
@@ -38,101 +38,180 @@
 
     <form [formGroup]="form">
 
-      <!-- ════════ ETAPA 1: INICIO E INCUBACIÓN ════════ -->
+      <!-- ════════ ETAPA 1: INICIO, HIDRATACIÓN Y HOMOGENEIZACIÓN ════════ -->
       <div *ngIf="pasoActual() === 1" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
               <ion-icon name="time-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">1. Inicio e Incubación</h2>
+              <h2 class="form-card-title">1. {{ NOMBRES_ETAPAS[0] }}</h2>
             </div>
           </div>
           <div class="form-card-body">
-            <app-sal-etapa1-inicio
+            <app-sal-inicio-homogeneizacion
               [formGroupFase1]="fase1Group"
               [formGroupFase2a]="fase2aGroup"
-              [responsables]="listaResponsables"
+              [listaResponsables]="listaResponsables"
+              [listaMediosCultivo]="listaMediosCultivo"
+              [rol]="rol"
               [alertaTiempo25min]="formulario?.fase2a?.alertaTiempo25min === true">
-            </app-sal-etapa1-inicio>
+            </app-sal-inicio-homogeneizacion>
           </div>
         </div>
       </div>
 
-      <!-- ════════ ETAPA 2: CONTROLES DE CALIDAD ════════ -->
+      <!-- ════════ ETAPA 2: SIEMBRA E INSUMOS ════════ -->
       <div *ngIf="pasoActual() === 2" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
-              <ion-icon name="shield-checkmark-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">2. Controles de Calidad</h2>
+              <ion-icon name="beaker-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">2. {{ NOMBRES_ETAPAS[1] }}</h2>
             </div>
           </div>
           <div class="form-card-body">
-            <app-sal-etapa2-controles
-              [formGroupFase2b]="fase2bGroup"
-              [formGroupFase2c]="fase2cGroup"
-              [equiposIncubacion]="listaEstufas">
-            </app-sal-etapa2-controles>
+            <app-sal-siembra-insumos
+              [formGroup]="fase2bGroup"
+              [listaMediosCultivo]="listaMediosCultivo"
+              [listaEquiposIncubacion]="listaEquiposIncubacion"
+              [listaBanos]="listaBanos"
+              [listaMaterialSiembra]="listaMaterialSiembra"
+              [listaPipetas]="listaPipetas"
+              [tweenSeleccionados]="tweenSeleccionados"
+              (tweenSeleccionadosChange)="tweenSeleccionados = $event"
+              [micropipetasSeleccionadas]="micropipetasEtapa2"
+              (micropipetasSeleccionadasChange)="micropipetasEtapa2 = $event"
+              [rol]="rol">
+            </app-sal-siembra-insumos>
           </div>
         </div>
       </div>
 
-      <!-- ════════ ETAPA 3: TRASPASO Y ENRIQUECIMIENTO SELECTIVO ════════ -->
+      <!-- ════════ ETAPA 3: CONTROLES DE CALIDAD EN ALI ════════ -->
       <div *ngIf="pasoActual() === 3" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
-              <ion-icon name="beaker-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">3. Traspaso y Enriquecimiento Selectivo</h2>
+              <ion-icon name="shield-checkmark-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">3. {{ NOMBRES_ETAPAS[2] }}</h2>
             </div>
           </div>
           <div class="form-card-body">
-            <app-sal-etapa3-traspaso
-              [formGroupFase3a]="fase3aGroup"
-              [formGroupFase3b]="fase3bGroup"
-              [muestras]="muestrasEtapa3"
-              (muestrasChange)="muestrasEtapa3 = $event"
-              [equiposIncubacion]="listaEstufas">
-            </app-sal-etapa3-traspaso>
+            <app-sal-controles-calidad
+              [formGroup]="fase2cGroup"
+              [rol]="rol">
+            </app-sal-controles-calidad>
           </div>
         </div>
       </div>
 
-      <!-- ════════ ETAPA 4: AISLAMIENTO E IDENTIFICACIÓN ════════ -->
+      <!-- ════════ ETAPA 4: TRASPASO A ENRIQUECIMIENTO SELECTIVO ════════ -->
       <div *ngIf="pasoActual() === 4" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
-              <ion-icon name="albums-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">4. Aislamiento e Identificación</h2>
+              <ion-icon name="swap-horizontal-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">4. {{ NOMBRES_ETAPAS[3] }}</h2>
             </div>
           </div>
           <div class="form-card-body">
-            <app-sal-etapa4-aislamiento
-              [formGroupFase4a]="fase4aGroup"
-              [muestras]="muestrasEtapa4"
-              (muestrasChange)="muestrasEtapa4 = $event"
-              [equiposIncubacion]="listaEstufas">
-            </app-sal-etapa4-aislamiento>
+            <app-sal-enriquecimiento-selectivo
+              [formGroupFase3a]="fase3aGroup"
+              [formGroupFase3b]="fase3bGroup"
+              [listaResponsables]="listaResponsables"
+              [listaEquiposIncubacion]="listaEquiposIncubacion"
+              [listaBanos]="listaBanos"
+              [listaMaterialSiembra]="listaMaterialSiembra"
+              [listaPipetas]="listaPipetas"
+              [puntasSeleccionadas]="puntasSeleccionadas"
+              (puntasSeleccionadasChange)="puntasSeleccionadas = $event"
+              [pipetasDesechablesSeleccionadas]="pipetasDesechablesSeleccionadas"
+              (pipetasDesechablesSeleccionadasChange)="pipetasDesechablesSeleccionadas = $event"
+              [micropipetasSeleccionadas]="micropipetasEtapa4"
+              (micropipetasSeleccionadasChange)="micropipetasEtapa4 = $event"
+              [rol]="rol">
+            </app-sal-enriquecimiento-selectivo>
           </div>
         </div>
       </div>
 
-      <!-- ════════ ETAPA 5: RESULTADO FINAL ════════ -->
+      <!-- ════════ ETAPA 5: RESULTADOS DE ENRIQUECIMIENTO ════════ -->
       <div *ngIf="pasoActual() === 5" class="etapa-panel animate__animated animate__fadeIn">
         <div class="form-card">
           <div class="form-card-header">
             <div class="form-card-title-group">
-              <ion-icon name="checkmark-circle-outline" class="card-header-icon"></ion-icon>
-              <h2 class="form-card-title">5. Resultado Final</h2>
+              <ion-icon name="albums-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">5. {{ NOMBRES_ETAPAS[4] }}</h2>
             </div>
           </div>
           <div class="form-card-body">
-            <app-sal-etapa5-resultado
-              [resultados]="muestrasEtapa5"
+            <app-sal-resultados-enriquecimiento
+              [muestras]="muestrasResEnriquecimiento"
+              (muestrasChange)="muestrasResEnriquecimiento = $event"
+              [rol]="rol">
+            </app-sal-resultados-enriquecimiento>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ ETAPA 6: AISLAMIENTO EN AGARES ════════ -->
+      <div *ngIf="pasoActual() === 6" class="etapa-panel animate__animated animate__fadeIn">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="git-branch-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">6. {{ NOMBRES_ETAPAS[5] }}</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <app-sal-aislamiento-agares
+              [formGroup]="fase4aGroup"
+              [listaResponsables]="listaResponsables"
+              [listaMediosCultivo]="listaMediosCultivo"
+              [listaEquiposIncubacion]="listaEquiposIncubacion"
+              [listaBanos]="listaBanos"
+              [rol]="rol">
+            </app-sal-aislamiento-agares>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ ETAPA 7: RESULTADOS DE AISLAMIENTO ════════ -->
+      <div *ngIf="pasoActual() === 7" class="etapa-panel animate__animated animate__fadeIn">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="grid-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">7. {{ NOMBRES_ETAPAS[6] }}</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <app-sal-resultados-aislamiento
+              [muestras]="muestrasResAislamiento"
+              (muestrasChange)="muestrasResAislamiento = $event"
+              [rol]="rol">
+            </app-sal-resultados-aislamiento>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ ETAPA 8: RESULTADO FINAL Y CONCLUSIÓN ════════ -->
+      <div *ngIf="pasoActual() === 8" class="etapa-panel animate__animated animate__fadeIn">
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title-group">
+              <ion-icon name="checkmark-circle-outline" class="card-header-icon"></ion-icon>
+              <h2 class="form-card-title">8. {{ NOMBRES_ETAPAS[7] }}</h2>
+            </div>
+          </div>
+          <div class="form-card-body">
+            <app-sal-resultado-final
+              [formGroup]="fase2cGroup"
+              [resultados]="muestrasResultadoFinal"
               [calculado]="calculado"
-              (calcular)="calcularResultadoFinal()">
-            </app-sal-etapa5-resultado>
+              (calcular)="calcularResultadoFinal()"
+              [rol]="rol">
+            </app-sal-resultado-final>
           </div>
         </div>
       </div>
@@ -146,7 +225,7 @@
         Cancelar
       </button>
       <div class="nav-footer__actions">
-        <button type="button" class="btn-secondary" (click)="retrocederPaso()" *ngIf="pasoActual() > 1">
+        <button type="button" class="btn-secondary" (click)="retrocederEtapa()" *ngIf="pasoActual() > 1">
           <ion-icon name="arrow-back-outline"></ion-icon>
           Anterior
         </button>
@@ -154,11 +233,11 @@
           <ion-icon name="document-outline"></ion-icon>
           Guardar
         </button>
-        <button type="button" class="btn-primary" (click)="avanzarPaso()" *ngIf="pasoActual() < TOTAL_PASOS">
+        <button type="button" class="btn-primary" (click)="avanzarEtapa()" *ngIf="pasoActual() < TOTAL_ETAPAS">
           Siguiente
           <ion-icon name="arrow-forward-outline"></ion-icon>
         </button>
-        <button type="button" class="btn-save" (click)="enviarFormulario()" *ngIf="pasoActual() === TOTAL_PASOS">
+        <button type="button" class="btn-save" (click)="enviarFormulario()" *ngIf="pasoActual() === TOTAL_ETAPAS">
           <ion-icon name="checkmark-done-outline"></ion-icon>
           Confirmar Registro
         </button>

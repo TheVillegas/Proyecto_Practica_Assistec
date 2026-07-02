@@ -3,7 +3,7 @@
 -- ============================================================
 
 -- CreateTable: lotes_reactivo (maestra)
-CREATE TABLE "lotes_reactivo" (
+CREATE TABLE IF NOT EXISTS "lotes_reactivo" (
     "id_lote_reactivo" BIGSERIAL NOT NULL,
     "tipo" VARCHAR(20) NOT NULL,
     "codigo_lote" VARCHAR(50) NOT NULL,
@@ -18,10 +18,10 @@ CREATE TABLE "lotes_reactivo" (
 );
 
 -- CreateIndex
-CREATE INDEX "idx_lotes_reactivo_tipo" ON "lotes_reactivo"("tipo") WHERE "activo" = true;
+CREATE INDEX IF NOT EXISTS "idx_lotes_reactivo_tipo" ON "lotes_reactivo"("tipo") WHERE "activo" = true;
 
 -- CreateTable: ent_formulario
-CREATE TABLE "ent_formulario" (
+CREATE TABLE IF NOT EXISTS "ent_formulario" (
     "id_ent_formulario" BIGSERIAL NOT NULL,
     "id_solicitud_analisis" BIGINT NOT NULL,
     "etapa_actual" SMALLINT NOT NULL DEFAULT 1,
@@ -37,14 +37,36 @@ CREATE TABLE "ent_formulario" (
 );
 
 -- CreateIndex
-CREATE INDEX "idx_ent_formulario_solicitud" ON "ent_formulario"("id_solicitud_analisis");
+CREATE INDEX IF NOT EXISTS "idx_ent_formulario_solicitud" ON "ent_formulario"("id_solicitud_analisis");
 
 -- AddForeignKey
-ALTER TABLE "ent_formulario" ADD CONSTRAINT "ent_formulario_id_solicitud_analisis_fkey" FOREIGN KEY ("id_solicitud_analisis") REFERENCES "solicitud_analisis"("id_solicitud_analisis") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "ent_formulario" ADD CONSTRAINT "ent_formulario_rut_analista_fkey" FOREIGN KEY ("rut_analista") REFERENCES "usuarios"("rut_usuario") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_formulario_id_solicitud_analisis_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_formulario' AND column_name = 'id_solicitud_analisis'
+    ) THEN
+        ALTER TABLE "ent_formulario" ADD CONSTRAINT "ent_formulario_id_solicitud_analisis_fkey" FOREIGN KEY ("id_solicitud_analisis") REFERENCES "solicitud_analisis"("id_solicitud_analisis") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_formulario_rut_analista_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_formulario' AND column_name = 'rut_analista'
+    ) THEN
+        ALTER TABLE "ent_formulario" ADD CONSTRAINT "ent_formulario_rut_analista_fkey" FOREIGN KEY ("rut_analista") REFERENCES "usuarios"("rut_usuario") ON DELETE SET NULL   ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- CreateTable: ent_muestra
-CREATE TABLE "ent_muestra" (
+CREATE TABLE IF NOT EXISTS "ent_muestra" (
     "id_ent_muestra" BIGSERIAL NOT NULL,
     "id_ent_formulario" BIGINT NOT NULL,
     "id_solicitud_muestra" BIGINT NOT NULL,
@@ -57,14 +79,36 @@ CREATE TABLE "ent_muestra" (
 );
 
 -- CreateIndex
-CREATE INDEX "idx_ent_muestra_formulario" ON "ent_muestra"("id_ent_formulario");
+CREATE INDEX IF NOT EXISTS "idx_ent_muestra_formulario" ON "ent_muestra"("id_ent_formulario");
 
 -- AddForeignKey
-ALTER TABLE "ent_muestra" ADD CONSTRAINT "ent_muestra_id_ent_formulario_fkey" FOREIGN KEY ("id_ent_formulario") REFERENCES "ent_formulario"("id_ent_formulario") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "ent_muestra" ADD CONSTRAINT "ent_muestra_id_solicitud_muestra_fkey" FOREIGN KEY ("id_solicitud_muestra") REFERENCES "solicitud_muestra"("id_solicitud_muestra") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_muestra_id_ent_formulario_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_muestra' AND column_name = 'id_ent_formulario'
+    ) THEN
+        ALTER TABLE "ent_muestra" ADD CONSTRAINT "ent_muestra_id_ent_formulario_fkey" FOREIGN KEY ("id_ent_formulario") REFERENCES "ent_formulario"("id_ent_formulario") ON DELETE CASCADE    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_muestra_id_solicitud_muestra_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_muestra' AND column_name = 'id_solicitud_muestra'
+    ) THEN
+        ALTER TABLE "ent_muestra" ADD CONSTRAINT "ent_muestra_id_solicitud_muestra_fkey" FOREIGN KEY ("id_solicitud_muestra") REFERENCES "solicitud_muestra"("id_solicitud_muestra") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- CreateTable: ent_etapa1 (Preparacion — 4 sub-etapas aplanadas)
-CREATE TABLE "ent_etapa1" (
+CREATE TABLE IF NOT EXISTS "ent_etapa1" (
     "id_ent_etapa1" BIGSERIAL NOT NULL,
     "id_ent_formulario" BIGINT NOT NULL,
     "codigo_ali" VARCHAR(100) NOT NULL,
@@ -105,20 +149,141 @@ CREATE TABLE "ent_etapa1" (
 );
 
 -- AddForeignKey
-ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_ent_formulario_fkey" FOREIGN KEY ("id_ent_formulario") REFERENCES "ent_formulario"("id_ent_formulario") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_balanza_fkey" FOREIGN KEY ("id_balanza") REFERENCES "instrumentos"("id_instrumento") ON DELETE SET NULL ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_rut_analista_inicio_fkey" FOREIGN KEY ("rut_analista_inicio") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_rut_analista_homog_fkey" FOREIGN KEY ("rut_analista_homog") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_stomacher_fkey" FOREIGN KEY ("id_stomacher") REFERENCES "instrumentos"("id_instrumento") ON DELETE SET NULL ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_lote_agar_vrbg_sembrado_fkey" FOREIGN KEY ("id_lote_agar_vrbg_sembrado") REFERENCES "lotes_reactivo"("id_lote_reactivo") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_estufa_sembrado_fkey" FOREIGN KEY ("id_estufa_sembrado") REFERENCES "equipos_incubacion"("id_incubacion") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_micropipeta_fkey" FOREIGN KEY ("id_micropipeta") REFERENCES "micropipetas"("id_pipeta") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_estufa_incub_fkey" FOREIGN KEY ("id_estufa_incub") REFERENCES "equipos_incubacion"("id_incubacion") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_rut_analista_sembrado_fkey" FOREIGN KEY ("rut_analista_sembrado") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_rut_analista_incub_fkey" FOREIGN KEY ("rut_analista_incub") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa1_id_ent_formulario_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa1' AND column_name = 'id_ent_formulario'
+    ) THEN
+        ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_ent_formulario_fkey" FOREIGN KEY ("id_ent_formulario") REFERENCES "ent_formulario"("id_ent_formulario") ON DELETE CASCADE    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa1_id_balanza_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa1' AND column_name = 'id_balanza'
+    ) THEN
+        ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_balanza_fkey" FOREIGN KEY ("id_balanza") REFERENCES "instrumentos"("id_instrumento") ON DELETE SET NULL   ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa1_rut_analista_inicio_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa1' AND column_name = 'rut_analista_inicio'
+    ) THEN
+        ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_rut_analista_inicio_fkey" FOREIGN KEY ("rut_analista_inicio") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa1_rut_analista_homog_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa1' AND column_name = 'rut_analista_homog'
+    ) THEN
+        ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_rut_analista_homog_fkey" FOREIGN KEY ("rut_analista_homog") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa1_id_stomacher_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa1' AND column_name = 'id_stomacher'
+    ) THEN
+        ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_stomacher_fkey" FOREIGN KEY ("id_stomacher") REFERENCES "instrumentos"("id_instrumento") ON DELETE SET NULL   ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa1_id_lote_agar_vrbg_sembrado_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa1' AND column_name = 'id_lote_agar_vrbg_sembrado'
+    ) THEN
+        ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_lote_agar_vrbg_sembrado_fkey" FOREIGN KEY ("id_lote_agar_vrbg_sembrado") REFERENCES "lotes_reactivo"("id_lote_reactivo") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa1_id_estufa_sembrado_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa1' AND column_name = 'id_estufa_sembrado'
+    ) THEN
+        ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_estufa_sembrado_fkey" FOREIGN KEY ("id_estufa_sembrado") REFERENCES "equipos_incubacion"("id_incubacion") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa1_id_micropipeta_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa1' AND column_name = 'id_micropipeta'
+    ) THEN
+        ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_micropipeta_fkey" FOREIGN KEY ("id_micropipeta") REFERENCES "micropipetas"("id_pipeta") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa1_id_estufa_incub_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa1' AND column_name = 'id_estufa_incub'
+    ) THEN
+        ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_id_estufa_incub_fkey" FOREIGN KEY ("id_estufa_incub") REFERENCES "equipos_incubacion"("id_incubacion") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa1_rut_analista_sembrado_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa1' AND column_name = 'rut_analista_sembrado'
+    ) THEN
+        ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_rut_analista_sembrado_fkey" FOREIGN KEY ("rut_analista_sembrado") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa1_rut_analista_incub_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa1' AND column_name = 'rut_analista_incub'
+    ) THEN
+        ALTER TABLE "ent_etapa1" ADD CONSTRAINT "ent_etapa1_rut_analista_incub_fkey" FOREIGN KEY ("rut_analista_incub") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- CreateTable: ent_etapa2 (Analisis — Lectura 24h)
-CREATE TABLE "ent_etapa2" (
+CREATE TABLE IF NOT EXISTS "ent_etapa2" (
     "id_ent_etapa2" BIGSERIAL NOT NULL,
     "id_ent_formulario" BIGINT NOT NULL,
     "fecha_lectura_24h" TIMESTAMP(6) NOT NULL,
@@ -139,12 +304,45 @@ CREATE TABLE "ent_etapa2" (
 );
 
 -- AddForeignKey
-ALTER TABLE "ent_etapa2" ADD CONSTRAINT "ent_etapa2_id_ent_formulario_fkey" FOREIGN KEY ("id_ent_formulario") REFERENCES "ent_formulario"("id_ent_formulario") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa2" ADD CONSTRAINT "ent_etapa2_id_equipo_cuenta_colonias_fkey" FOREIGN KEY ("id_equipo_cuenta_colonias") REFERENCES "instrumentos"("id_instrumento") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa2" ADD CONSTRAINT "ent_etapa2_rut_analista_lectura_fkey" FOREIGN KEY ("rut_analista_lectura") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa2_id_ent_formulario_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa2' AND column_name = 'id_ent_formulario'
+    ) THEN
+        ALTER TABLE "ent_etapa2" ADD CONSTRAINT "ent_etapa2_id_ent_formulario_fkey" FOREIGN KEY ("id_ent_formulario") REFERENCES "ent_formulario"("id_ent_formulario") ON DELETE CASCADE    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa2_id_equipo_cuenta_colonias_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa2' AND column_name = 'id_equipo_cuenta_colonias'
+    ) THEN
+        ALTER TABLE "ent_etapa2" ADD CONSTRAINT "ent_etapa2_id_equipo_cuenta_colonias_fkey" FOREIGN KEY ("id_equipo_cuenta_colonias") REFERENCES "instrumentos"("id_instrumento") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa2_rut_analista_lectura_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa2' AND column_name = 'rut_analista_lectura'
+    ) THEN
+        ALTER TABLE "ent_etapa2" ADD CONSTRAINT "ent_etapa2_rut_analista_lectura_fkey" FOREIGN KEY ("rut_analista_lectura") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- CreateTable: ent_etapa3 (Confirmacion — 3 sub-etapas aplanadas)
-CREATE TABLE "ent_etapa3" (
+CREATE TABLE IF NOT EXISTS "ent_etapa3" (
     "id_ent_etapa3" BIGSERIAL NOT NULL,
     "id_ent_formulario" BIGINT NOT NULL,
     "fecha_traspaso" DATE NOT NULL,
@@ -181,12 +379,78 @@ CREATE TABLE "ent_etapa3" (
 );
 
 -- AddForeignKey
-ALTER TABLE "ent_etapa3" ADD CONSTRAINT "ent_etapa3_id_ent_formulario_fkey" FOREIGN KEY ("id_ent_formulario") REFERENCES "ent_formulario"("id_ent_formulario") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa3" ADD CONSTRAINT "ent_etapa3_id_agar_nutritivo_fkey" FOREIGN KEY ("id_agar_nutritivo") REFERENCES "lotes_reactivo"("id_lote_reactivo") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa3" ADD CONSTRAINT "ent_etapa3_id_estufa_conf_fkey" FOREIGN KEY ("id_estufa_conf") REFERENCES "equipos_incubacion"("id_incubacion") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa3" ADD CONSTRAINT "ent_etapa3_rut_analista_traspaso_fkey" FOREIGN KEY ("rut_analista_traspaso") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa3" ADD CONSTRAINT "ent_etapa3_rut_analista_lect_conf_fkey" FOREIGN KEY ("rut_analista_lect_conf") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "ent_etapa3" ADD CONSTRAINT "ent_etapa3_rut_analista_oxidasa_fkey" FOREIGN KEY ("rut_analista_oxidasa") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa3_id_ent_formulario_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa3' AND column_name = 'id_ent_formulario'
+    ) THEN
+        ALTER TABLE "ent_etapa3" ADD CONSTRAINT "ent_etapa3_id_ent_formulario_fkey" FOREIGN KEY ("id_ent_formulario") REFERENCES "ent_formulario"("id_ent_formulario") ON DELETE CASCADE    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa3_id_agar_nutritivo_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa3' AND column_name = 'id_agar_nutritivo'
+    ) THEN
+        ALTER TABLE "ent_etapa3" ADD CONSTRAINT "ent_etapa3_id_agar_nutritivo_fkey" FOREIGN KEY ("id_agar_nutritivo") REFERENCES "lotes_reactivo"("id_lote_reactivo") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa3_id_estufa_conf_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa3' AND column_name = 'id_estufa_conf'
+    ) THEN
+        ALTER TABLE "ent_etapa3" ADD CONSTRAINT "ent_etapa3_id_estufa_conf_fkey" FOREIGN KEY ("id_estufa_conf") REFERENCES "equipos_incubacion"("id_incubacion") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa3_rut_analista_traspaso_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa3' AND column_name = 'rut_analista_traspaso'
+    ) THEN
+        ALTER TABLE "ent_etapa3" ADD CONSTRAINT "ent_etapa3_rut_analista_traspaso_fkey" FOREIGN KEY ("rut_analista_traspaso") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa3_rut_analista_lect_conf_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa3' AND column_name = 'rut_analista_lect_conf'
+    ) THEN
+        ALTER TABLE "ent_etapa3" ADD CONSTRAINT "ent_etapa3_rut_analista_lect_conf_fkey" FOREIGN KEY ("rut_analista_lect_conf") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'ent_etapa3_rut_analista_oxidasa_fkey'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'ent_etapa3' AND column_name = 'rut_analista_oxidasa'
+    ) THEN
+        ALTER TABLE "ent_etapa3" ADD CONSTRAINT "ent_etapa3_rut_analista_oxidasa_fkey" FOREIGN KEY ("rut_analista_oxidasa") REFERENCES "usuarios"("rut_usuario") ON DELETE RESTRICT    ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- Seed data: lotes reactivo
 INSERT INTO "lotes_reactivo" ("tipo", "codigo_lote", "fecha_vencimiento", "activo") VALUES
