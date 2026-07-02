@@ -11,15 +11,27 @@ Estas SÍ son tablas maestras del backend (confirmado con el usuario):
 | Concepto | Variable Angular | Binding / label típico |
 |---|---|---|
 | Responsables / Analistas | `listaResponsables` | `[value]="r.rut"` → `{{ r.nombreApellido }}` |
-| Equipos de incubación (estufas y baños) | `listaEquiposIncubacion` | `[ngValue]="eq.idIncubacion"` → `{{ eq.nombreEquipo }}` |
+| Equipos de incubación (estufas) | `listaEquiposIncubacion` | `[ngValue]="eq.idIncubacion"` → `{{ eq.nombreEquipo }}` |
+| Baños térmicos | `listaBanos` | `[ngValue]="b.idBano"` → `{{ b.nombreEquipo }}` |
 | Micropipetas / instrumentos | `listaPipetas` | `[ngValue]="p.idPipeta"` → `{{ p.codigoPipeta }} - {{ p.nombrePipeta }}` |
 | Lotes de reactivo (agar/caldo) | `listaLotesReactivo` | `[value]="lote.idLoteReactivo"` → `{{ lote.codigoLote }}` |
+| Medios de cultivo (agares/caldos) | `listaMediosCultivo` | `[ngValue]="m.idMedioCultivo"` → `{{ m.nombre }}` |
+| Materiales de siembra (puntas, pipetas desechables) | `listaMaterialSiembra` | `[ngValue]="ms.idMaterialSiembra"` → `{{ ms.nombreMaterial }}` |
 
 Notas:
-- Las **estufas y baños** (Estufa 2-M, Estufa 73-M, Baño 30-M, 96-M…) son todos "equipos de
-  incubación" → una sola maestra `listaEquiposIncubacion`.
+- **Estufas y Baños son DOS maestras distintas** (`listaEquiposIncubacion` y `listaBanos`,
+  tablas `equipos_incubacion` y `banos_termicos`), pese a jugar un rol similar (incubación).
+  Excepción confirmada explícitamente con el usuario en el rediseño de Salmonella
+  (2026-07-01): las estufas ya existían como su propio concepto en el sistema, por lo que
+  Baños se modeló como tabla propia en vez de sumarse como filas de `equipos_incubacion`.
+  Cuando un formulario ofrezca elegir equipo de incubación y el Excel muestre baños como
+  alternativa a una estufa (p. ej. Selenito en Salmonella), renderiza dos `<select>`
+  independientes y opcionales, uno por maestra — no un combo único.
 - Las micropipetas de 1 ml y de 10 ml comparten maestra `listaPipetas` (distinguir por atributo,
   no por dos listas separadas).
+- `listaMediosCultivo` y `listaMaterialSiembra` ya existen en BD (usadas por Enterobacterias,
+  S. Aureus y Coliformes) pero no estaban documentadas aquí; se agregan en el rediseño de
+  Salmonella (2026-07-01) para que el catálogo quede completo.
 
 ## Convención de nombres (normalización)
 Unifica nombres inconsistentes encontrados en los formularios actuales:
